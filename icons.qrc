@@ -1,0 +1,39 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+<file alias="play.png">icons/play.png</file>
+<file alias="pause.png">icons/pause.png</file>
+<file alias="next.png">icons/next.png</file>
+<file alias="previous.png">icons/previous.png</file>
+<file alias="faster.png">icons/faster.png</file>
+<file alias="slower.png">icons/slower.png</file>
+<file alias="open.png">icons/open.png</file>
+<file alias="append.png">icons/append.png</file>
+<file alias="record.png">icons/record.png</file>
+<file alias="snapshot.png">icons/snapshot.png</file>
+<file alias="minus.png">icons/minus.png</file>
+<file alias="plus.png">icons/plus.png</file>
+<file alias="AA.png">icons/AA.png</file>
+<file alias="A.png">icons/A.png</file>
+<file alias="axis.png">icons/axis.png</file>
+<file alias="fill.png">icons/fill.png</file>
+<file alias="projection.png">icons/projection.png</file>
+<file alias="lighton.png">icons/lighton.png</file>
+<file alias="lightoff.png">icons/lightoff.png</file>
+<file alias="newtab.png">icons/newtab.png</file>
+<file alias="xplus.png">icons/xplus.png</file>
+<file alias="xminus.png">icons/xminus.png</file>
+<file alias="zminus.png">icons/zminus.png</file>
+<file alias="zplus.png">icons/zplus.png</file>
+<file alias="yplus.png">icons/yplus.png</file>
+<file alias="yminus.png">icons/yminus.png</file>
+<file alias="repeat.png">icons/repeat.png</file>
+<file alias="palindrome.png">icons/palindrome.png</file>
+<file alias="foreground.png">icons/foreground.png</file>
+<file alias="background.png">icons/background.png</file>
+<file alias="refresh.png">icons/refresh.png</file>
+<file alias="dump.png">icons/dump.png</file>
+<file alias="write.png">icons/write.png</file>
+<file alias="ruler.png">icons/ruler.png</file>
+<file alias="compass.png">icons/compass.png</file>
+</qresource>
+</RCC>

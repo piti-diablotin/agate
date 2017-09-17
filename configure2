@@ -1,0 +1,65 @@
+AC_CONFIG_FILES([bin/Makefile])
+AC_CONFIG_FILES([doc/Makefile])
+AC_CONFIG_FILES([FINDSYM/Makefile])
+AC_CONFIG_FILES([Win_x86/Makefile])
+AC_CONFIG_FILES([Makefile])
+
+AC_OUTPUT
+
+echo
+echo "================================================================================"
+echo "===  Summury                                                                    " 
+echo "================================================================================"
+echo
+echo " - Architectures -"
+echo " ~~~~~~~~~~~~~~~~~~~~"
+echo " * Host....: $host"
+echo " * Build...: $build"
+echo
+echo " - Compiler options -"
+echo " ~~~~~~~~~~~~~~~~~~~~"
+echo " * CPPFLAGS.: $CPPFLAGS"
+echo " * CXXFLAGS.: $CXXFLAGS"
+echo " * LIBS.....: $LIBS"
+echo " * LDFLAGS..: $LDFLAGS"
+echo " * pthread..: $have_pthread"
+echo " * OpenMP...: $have_omp"
+echo
+echo " - Libraries (Tools) -"
+echo " ~~~~~~~~~~~~~~~~~~~~~"
+echo " * cURL.....: $have_curl_usable"
+echo " * gnuplot..: $GNUPLOT"
+echo " * NetCDF...: $have_netcdf_usable"
+if test x"$have_netcdfcxx4_usable" == x"yes"; then
+  echo "              (C++4)"
+else 
+  if test x"$have_netcdfcpp_usable" == x"yes"; then
+    echo "              (C++)"
+  fi
+fi
+echo " * XML2.....: $have_libxml2_usable"
+echo " * FreeType.: $have_freetype_usable"
+if test x"$have_freetype_usable" == x"yes"; then
+  echo "              (Font to use: $default_font)"
+fi
+echo " * Eigen....: $have_eigen_usable"
+echo " * Spglib...: $have_spglib_usable"
+echo " * Yaml-cpp.: $have_yamlcpp_usable"
+echo " * FFTW3....: $have_fftw3_usable"
+echo
+echo " - Libraries (Graphics) -"
+echo " ~~~~~~~~~~~~~~~~~~~~~~~~"
+echo " * OpenGL...: $have_gl_usable"
+echo " * GLEXT....: $have_glext_usable"
+echo " * GLU......: $have_glu_usable"
+echo " * GLFW.....: $have_glfw_usable" 
+if test x"$have_glfw_usable" == x"yes"; then
+  echo "              (version $glfw_version)"
+fi
+echo " * Qt.......: $have_qt_usable" 
+if test x"$have_qt_usable" == x"yes"; then
+  echo "              ($QT_VERSION_MAJOR)"
+fi
+echo " * LibJPEG..: $have_libjpeg_usable"
+echo " * LibPNG...: $have_libpng_usable"
+

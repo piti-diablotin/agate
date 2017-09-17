@@ -1,0 +1,1682 @@
+# Basic information
+PACKAGE = AbiOut
+VERSION = 0.0.7
+MAIL = jordan.bieder@cea.fr
+
+# Initial information about the package
+AC_INIT([AbiOut],[0.0.7],[jordan.bieder@cea.fr])
+
+# Check source directory
+AC_CONFIG_SRCDIR([bin/agate.cpp])
+AC_CONFIG_SRCDIR([src/base/exception.cpp])
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([m4])
+# Check include directory
+AC_CONFIG_HEADER([config.h])
+#AC_CONFIG_HEADER(config.h)
+
+# Check for c++ preprocessor and compiler
+CPPFLAGS="$CPPFLAGS -I/usr/include -I/usr/local/include"
+LDFLAGS="$LDFLAGS -L/usr/lib"
+if test -d "-L/usr/local/lib"; then
+  LDFLAGS="$LDFLAGS -L/usr/local/lib"
+fi
+OLD_CXXFLAGS=$CXXFLAGS
+OLD_CPPFLAGS=$CPPFLAGS
+AC_PROG_CXXCPP
+#---# Precheck for NetCDF compiler #---#
+AC_MSG_CHECKING([for user defined NetCDF library prefix])
+AC_ARG_WITH([netcdf],
+              [AS_HELP_STRING([--with-netcdf],
+                              [prefix used for include and lib directories]
+                             )
+              ],
+              [netcdf_prefix="$with_netcdf";resultnetcdf=yes],
+              [netcdf_prefix="";resultnetcdf=no]
+             )
+AC_MSG_RESULT([$resultnetcdf])
+OLDPATH=$PATH
+PATH="$PATH:$netcdf_prefix/bin"
+AC_PATH_PROGS([NCCONFIG],[nc-config],[no])
+PATH=$OLDPATH
+if test x"$NCCONFIG" != x"no"
+then
+  NC_CC=$($NCCONFIG --cc)
+else
+  NC_CC=$CXX
+fi
+#---# END #---#
+
+AC_PROG_CXX([$NC_CC $CXX])
+CXXFLAGS=$OLD_CXXFLAGS
+CPPFLAGS=$OLD_CPPFLAGS
+
+# Check for automak >= v1.9
+AM_INIT_AUTOMAKE([1.14])
+AM_SILENT_RULES([yes])
+
+# Set main langage to c++
+AC_LANG([C++])
+AC_GNU_SOURCE
+
+echo
+echo "================================================================================"
+echo "=== Tools                                                                       "
+echo "================================================================================"
+# Tools
+AC_PROG_GREP
+AC_PROG_SED
+
+# To build libraries
+AC_PROG_RANLIB
+AM_PROG_AR
+
+AC_CANONICAL_HOST
+
+case $host in
+  *linux*)
+    default_prefix=/usr
+    GL_PREFIX=GL
+    AC_DEFINE([HAVE_LINUX],[1],[Define to 1 if we are on linux])
+    ;;
+  *bsd*|*apple*)
+    default_prefix=/usr/local
+    GL_PREFIX=OpenGL
+    ;;
+ *mingw32*)
+    AC_DEFINE([HAVE_MINGW],[1],[Define to 1 if we are running on WINGW])
+    GL_PREFIX=GL
+    ;;
+  *)
+    default_prefix=/usr
+    GL_PREFIX=GL
+esac
+
+AC_DEFINE_UNQUOTED([COMPILE_HOST],"$host", [Host on which the code was compile])
+AC_DEFINE_UNQUOTED([COMPILE_BUILD],"$build", [Build target : on which target should run the code])
+
+
+##########################################################################
+# Gnuplot
+##########################################################################
+AC_MSG_CHECKING([whether we have a user defined gnuplot prefix])                                                  
+AC_ARG_WITH([gnuplot],                                                                              
+            [
+             AS_HELP_STRING([--with-gnuplot],                                                     
+                            [path to gnuplot executable]
+                            )                                 
+            ],                                                                                    
+            [gnuplot_prefix="$with_gnuplot";resultgnuplot=yes],
+            [gnuplot_prefix="";resultgnuplot=no]
+            )
+
+AC_MSG_RESULT([$resultgnuplot])                                                                             
+
+AC_PATH_PROG([GNUPLOT],[gnuplot],[no],[$PATH$PATH_SEPARATOR$gnuplot_prefix])                                                             
+if test x"$GNUPLOT" != x"no";                                                                          
+then                                                                                            
+  AC_DEFINE(HAVE_GNUPLOT,1,[Define if gnuplot is usable])                                       
+  AC_DEFINE_UNQUOTED(GNUPLOT_BIN,"$GNUPLOT",[Gnuplot binary])                             
+fi                                                                                              
+
+##########################################################################
+# C++ support
+##########################################################################
+echo 
+echo "================================================================================"
+echo "===  C/C++ functions                                                            " 
+echo "================================================================================"
+AC_CHECK_HEADER([getopt.h],[AC_DEFINE([HAVE_GETOPT_H],[1],[Define to 1 if we have getopt.])],[])
+AC_CHECK_HEADER([cmath],[LIBS="$LIBS -lm"],[
+                 AC_MSG_ERROR([--> Need mathematical library])])
+
+
+##########################################################################
+# C++11 support
+##########################################################################
+echo 
+echo "================================================================================"
+echo "===  C++11 compilers requirements                                               " 
+echo "================================================================================"
+
+##########################
+# Check for C++11
+##########################
+AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_CXXFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+
+##########################
+# Use -lm library
+##########################
+#AC_MSG_CHECKING([wheaher to use -lm])
+#AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include<cmath>]],[[float a = std::floor((float)2.555);a+=1.0;]])],
+#                  [
+#                   AC_MSG_RESULT([no])
+#                  ],
+#                  [
+#                   OLD_LIBS=$LIBS
+#                   LIBS="$LIBS -lm"
+#                   AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include<cmath>]],[[float a = std::floor((float)2.555);a+=1.0;]])],
+#                                     [
+#                                      AC_MSG_RESULT([yes])
+#                                     ],
+#                                     [
+#                                      AC_MSG_RESULT([broken])
+#                                      AC_MSG_ERROR([Can not link with libm (cmath).])
+#                                     ]
+#                                    )
+#                   ]
+#                 )
+
+##########################
+# use -lstdc++ 
+##########################
+AC_MSG_CHECKING([whether to use -lstdc++])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include<exception>
+#include<vector>
+#include<iostream>]],[[
+try
+{ 
+std::vector<int> vec;
+for ( auto it = vec.begin() ; it != vec.end() ; ++it){}
+throw std::exception(); 
+}
+catch(std::exception& e)
+{std::cout << e.what();}]])],
+                  [
+                   AC_MSG_RESULT([no])
+                  ],
+                  [
+                   OLD_LIBS=$LISB
+                   LIBS="$LIBS -lstdc++"
+                   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include<exception>
+#include<vector>
+#include<iostream>]],
+                   [[
+try
+{ 
+std::vector<int> vec;
+for ( auto it = vec.begin() ; it != vec.end() ; ++it){}
+throw std::exception(); 
+}
+catch(std::exception& e)
+{std::cout << e.what();}]])],
+                                     [
+                                      AC_MSG_RESULT([yes])
+                                     ],
+                                     [
+                                      AC_MSG_RESULT([broken])
+                                      AC_MSG_ERROR([Can not use exception.])
+                                     ]
+                                    )
+                   ]
+                 )
+
+##########################
+# Accept shrink_to_fit
+##########################
+AC_MSG_CHECKING([whether we have shrink_to_fit])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include<vector>
+]],[[
+std::vector<int> vec;
+vec.push_back(1);
+vec.shrink_to_fit();
+]])],
+                  [
+                   AC_MSG_RESULT([yes])
+                   AC_DEFINE([HAVE_SHRINK_TO_FIT],[1],[Define to 1 if shrink_to_fit can be used])
+                  ],
+                  [
+                   AC_MSG_RESULT([no])
+                  ]
+                 )
+
+##########################
+# Accept noexcept
+##########################
+AC_MSG_CHECKING([whether we have noexcept])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+void function(void) noexcept {}]],[[
+function();
+]])],
+                  [
+                   AC_MSG_RESULT([yes])
+                   AC_DEFINE([_NOEXCEPT],[noexcept],[define to noexcept if noexcept can be used])
+                  ],
+                  [
+                   AC_MSG_RESULT([no])
+                   AC_DEFINE([_NOEXCEPT],[],[Define to nothing if noexcept cannot be used])
+                  ]
+                 )
+
+##########################
+# Accept long long
+##########################
+AC_MSG_CHECKING([whether we have long long])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],[[
+long long val = 0;
+unsigned long long uval = 1;
+]])],
+                  [
+                   AC_MSG_RESULT([yes])
+                   AC_DEFINE([HAVE_LONG_LONG],[1],[Define to nothing if we have (unsigned) long long type])
+                  ],
+                  [
+                   AC_MSG_RESULT([no])
+                  ]
+                 )
+
+##########################
+# Accept long double
+##########################
+AC_MSG_CHECKING([whether we have long double])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],[[
+long double val = 0.0;
+]])],
+                  [
+                   AC_MSG_RESULT([yes])
+                   AC_DEFINE([HAVE_LONG_LONG],[1],[Define to nothing if we have (unsigned) long long type])
+                  ],
+                  [
+                   AC_MSG_RESULT([no])
+                  ]
+                 )
+
+##########################
+# Accept std::to_string
+##########################
+AC_MSG_CHECKING([whether we have to_string])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <string>
+]],[[
+int ival = 0;
+unsigned uval = 0;
+long lval = 0;
+std::string test = std::to_string(ival) + std::to_string(uval) + std::to_string(lval);
+]])],
+                  [
+                   AC_MSG_RESULT([yes])
+                   AC_DEFINE([HAVE_TO_STRING],[1],[Define to nothing if we have std::to_string])
+                  ],
+                  [
+                   AC_MSG_RESULT([no])
+                  ]
+                 )
+
+##########################
+# Accept std::stoi
+##########################
+AC_MSG_CHECKING([whether we have stoi])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <string>
+]],[[
+std::string test("42");
+std::stoi(test);
+]])],
+                  [
+                   AC_MSG_RESULT([yes])
+                   AC_DEFINE([HAVE_STOI],[1],[Define to nothing if we have std::stoi])
+                  ],
+                  [
+                   AC_MSG_RESULT([no])
+                  ]
+                 )
+
+##########################
+# Accept std::stod
+##########################
+AC_MSG_CHECKING([whether we have stod])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <string>
+]],[[
+std::string test("42.666");
+std::stod(test);
+]])],
+                  [
+                   AC_MSG_RESULT([yes])
+                   AC_DEFINE([HAVE_STOD],[1],[Define to nothing if we have std::stod])
+                  ],
+                  [
+                   AC_MSG_RESULT([no])
+                  ]
+                 )
+
+###########################
+## Accept find_first_not_of
+###########################
+#AC_MSG_CHECKING([whether we have find_first_not_of])
+#AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+##include <string>
+#]],[[
+#std::string foo("abcdef");
+#foo.find_first_not_of("abc");
+#]])],
+#                  [
+#                   AC_MSG_RESULT([yes])
+#                   AC_DEFINE([HAVE_FIND_FIRST_NOT_OF],[1],[Define to nothing if we have std::string::find_first_not_of])
+#                  ],
+#                  [
+#                   AC_MSG_RESULT([no])
+#                  ]
+#                 )
+#
+###########################
+## Accept find_last_not_of
+###########################
+#AC_MSG_CHECKING([whether we have find_last_not_of])
+#AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+##include <string>
+#]],[[
+#std::string foo("abcdef");
+#foo.find_last_not_of("def");
+#]])],
+#                  [
+#                   AC_MSG_RESULT([yes])
+#                   AC_DEFINE([HAVE_FIND_LAST_NOT_OF],[1],[Define to nothing if we have std::string::find_last_not_of])
+#                  ],
+#                  [
+#                   AC_MSG_RESULT([no])
+#                  ]
+#                 )
+##########################
+# Accept std::accumulate
+##########################
+AC_MSG_CHECKING([whether we have std::accumulate])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include<numeric>
+]],[[
+double data[10] ={0};
+std::accumulate(&data[0],&data[10],0.);
+]])],
+                  [
+                   AC_MSG_RESULT([yes])
+                   AC_DEFINE([HAVE_ACCUMULATE],[1],[Define to 1 if ACCUMULATE can be used])
+                  ],
+                  [
+                   AC_MSG_RESULT([no])
+                  ]
+                 )
+
+
+##########################################################################
+# C++11 threads
+##########################################################################
+OLD_LIBS=$LIBS;
+#CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
+# Default option
+#CXXFLAGS="$CXXFLAGS -pthread"
+PTHREAD_BUGFIX="-Wl,--no-as-needed"
+
+# check for pthread
+AC_MSG_CHECKING([whether we have threads])
+# try to compile a file that includes a header of the library libjpeg
+PTHREADH_TRYME="#include<thread>
+
+void thread_func() {
+  int a=0;
+  ++a;
+}
+"
+PTHREADC_TRYME="  std::thread pt(thread_func);
+  pt.join();
+"
+
+TRY_PTHREAD_FIX=0
+PTHREAD_WORK=0
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[$PTHREADH_TRYME]],[[$PTHREADC_TRYME]])],
+               [
+                AC_MSG_RESULT([yes]);
+                PTHREAD_WORK=1;
+               ],
+               [
+                LIBS="$LIBS -pthread";
+                AC_RUN_IFELSE([AC_LANG_PROGRAM([[$PTHREADH_TRYME]],[[$PTHREADC_TRYME]])],
+                               [
+                                AC_MSG_RESULT([yes]);
+                                TRY_PTHREAD_FIX=0;
+                                PTHREAD_WORK=1;
+                               ],
+                               [
+                                AC_MSG_RESULT([[might need a fix]]);
+                                TRY_PTHREAD_FIX=1
+                               ]
+                              )
+                ]
+               )
+
+if test $TRY_PTHREAD_FIX != 0;
+then
+  LIBS="$LIBS $PTHREAD_BUGFIX"
+  AC_MSG_CHECKING([whether running threads with fix works])
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([[$PTHREADH_TRYME]],[[$PTHREADC_TRYME]])],
+                [AC_MSG_RESULT([yes])]
+                  PTHREAD_WORK=1,
+                [AC_MSG_RESULT([no])],
+                []
+               )
+fi
+
+have_pthread="no"
+
+# handle check results
+if test $PTHREAD_WORK != 1; 
+then
+  AC_MSG_NOTICE([]);
+  AC_MSG_WARN([Threads do not seem to be working.]);
+  HAVE_PTHREAD=0
+  #try_audio="no"
+# reset original *FLAGS
+  LIBS=$OLD_LIBS
+else
+  #try_audio="yes"
+  have_pthread="yes"
+  AC_MSG_CHECKING([whether we have std::this_thread::yield])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <thread>]],[[std::this_thread::yield();]])],
+               [
+                AC_MSG_RESULT([yes]);
+                AC_DEFINE(HAVE_CPPTHREAD_YIELD,1,[Define to 1 if std::this_thread::yield is available])
+               ],
+               [
+                AC_MSG_RESULT([no]);
+               ]
+               )
+  AC_DEFINE(HAVE_CPPTHREAD,1,[Define if the threads are usable])
+fi
+AC_SUBST(HAVE_CPPTHREAD)
+
+
+echo 
+echo "================================================================================"
+echo "===  Compilation options (optimization/debugging)                               " 
+echo "================================================================================"
+
+#=========================================================================
+# debug compilation support
+#=========================================================================
+
+AC_MSG_CHECKING([whether to build with debug information])
+AC_ARG_ENABLE([debug],
+              [AS_HELP_STRING([--enable-debug],
+                              [enable debug data generation (default=no)])
+              ],
+              [case "${enableval}" in
+               yes) debugit="yes"; debugcustom="no" ;;
+               no)  debugit="no"; debugcustom="no";;
+               thread) debugit="yes"; debugcustom="thread";;
+               proof) debugit="yes"; debugcustom="proof";;
+               *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+               esac
+              ],
+              [debugit="no"]
+             )
+AC_MSG_RESULT([$debugit])
+
+AC_MSG_CHECKING([whether to build with aggressive optimizations])
+AC_ARG_ENABLE([optim],
+              [AS_HELP_STRING([--enable-optim],
+                              [enable cpu-dependant optimizations (default=no)])
+              ],
+              [case "${enableval}" in
+               yes) optimit="yes"; optimcustom="no" ;;
+               no)  optimit="no"; optimcustom="no";;
+               *) AC_MSG_ERROR([bad value ${enableval} for --enable-optim]) ;;
+               esac
+              ],
+              [optimit="no"]
+             )
+AC_MSG_RESULT([$optimit])
+
+EXFLAGS=""
+#AX_CHECK_COMPILE_FLAG([-Werror],[EXFLAGS="-Werror"])
+AX_CHECK_COMPILE_FLAG([-rpath],\
+                         [CPPFLAGS="$CPPFLAGS"],[],[$EXFLAGS])
+if test x"$debugit" = x"yes"; then
+  AC_DEFINE([DEBUG],[],[Debug Mode])
+  DEBUGLDFLAGS=""
+  DEBUGFLAGS=$EXFLAGS
+  AX_CHECK_COMPILE_FLAG([-g],\
+                         [DEBUGFLAGS="$DEBUGFLAGS -g"],[],[$EXFLAGS])
+  AX_CHECK_COMPILE_FLAG([-O0],\
+                         [DEBUGFLAGS="$DEBUGFLAGS -O0"],[],[$EXFLAGS])
+  AX_CHECK_COMPILE_FLAG([-Wall],\
+                         [DEBUGFLAGS="$DEBUGFLAGS -Wall"],[],[$EXFLAGS])
+  AX_CHECK_COMPILE_FLAG([-Wno-uninitialized],\
+                         [DEBUGFLAGS="$DEBUGFLAGS -Wno-uninitialized"],[],[$EXFLAGS]) AX_CHECK_COMPILE_FLAG([-Wextra],\
+                       [DEBUGFLAGS="$DEBUGFLAGS -Wextra"],[],[$EXFLAGS])
+  AX_CHECK_COMPILE_FLAG([-Weffc++],\
+                       [DEBUGFLAGS="$DEBUGFLAGS -Weffc++"],[],[$EXFLAGS])
+  if test x"$debugcustom" = x"thread"; then
+    AX_CHECK_COMPILE_FLAG([-fsanitize=thread -fPIE],\
+                         [DEBUGFLAGS="$DEBUGFLAGS -fsanitize=thread -fPIE";DEBUGLDFLAGS="-pie"],[],[$EXFLAGS])
+  fi
+  if test x"$debugcustom" = x"proof"; then
+    AX_CHECK_COMPILE_FLAG([-pg],\
+                         [DEBUGFLAGS="$DEBUGFLAGS -pg"])
+  fi
+  CXXFLAGS="$CXXFLAGS $DEBUGFLAGS"
+  LDFLAGS="$LDFLAGS $DEBUGLDFLAGS"
+else 
+    if test x"$optimit" = x"yes"; then
+      AC_DEFINE([NDEBUG],[],[No-debug Mode])
+      AX_CHECK_COMPILE_FLAG([-O3],[FASTFLAGS="$FASTFLAGS -O3"],[],[$EXFLAGS])
+      AX_CHECK_COMPILE_FLAG([-ffast-math],[FASTFLAGS="$FASTFLAGS -ffast-math"],[],[$EXFLAGS])
+      AX_CHECK_COMPILE_FLAG([-fast],[FASTFLAGS="$FASTFLAGS -fast"],[],[$EXFLAGS])
+      AX_CHECK_COMPILE_FLAG([-march=native],[FASTFLAGS="$FASTFLAGS -march=native"],[],[$EXFLAGS])
+      AX_CHECK_COMPILE_FLAG([-mtune=native],[FASTFLAGS="$FASTFLAGS -mtune=native"],[],[$EXFLAGS])
+      AX_CHECK_COMPILE_FLAG([-xHOST],[FASTFLAGS="$FASTFLAGS -xHOST"],[],[$EXFLAGS])
+      CXXFLAGS="$CXXFLAGS $FASTFLAGS"
+    fi
+fi
+
+AC_MSG_CHECKING([whether to build with OpenMP support])
+AC_ARG_ENABLE([openmp],
+              [AS_HELP_STRING([--enable-openmp],
+                              [enable OpenMP for big loops (default=yes)])
+              ],
+              [case "${enableval}" in
+               yes) useomp="yes";;
+               no)  useomp="no";;
+               *) AC_MSG_ERROR([bad value ${enableval} for --enable-openmp]) ;;
+               esac
+              ],
+              [useomp="yes"]
+             )
+AC_MSG_RESULT([$useomp])
+
+if test x"$useomp" = x"yes"; then
+  have_omp=yes
+  OMPFLAGS=''
+  omp_input="int a = omp_get_num_threads();
+#pragma omp for private(a)
+  for ( int i = 0 ; i < 2 ; ++i)
+    a+=i;"
+  AC_MSG_CHECKING([whether C++ compiler need a flag for OpenMP])
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <omp.h>],[$omp_input])],
+                    [ompneedsflag=no;have_omp=yes;],
+                    [ompneedsflag=yes;]
+                   )
+  AC_MSG_RESULT([$ompneedsflag])
+  if test x"$ompneedsflag" = x"yes"; then
+    AX_CHECK_COMPILE_FLAG([-fopenmp],
+                          [OMPFLAGS=" -fopenmp";have_omp=yes;
+                          ],
+                          [have_omp=no],
+                          [],
+                          [AC_LANG_PROGRAM([#include <omp.h>],[$omp_input])]
+                         )
+    CXXFLAGS="$CXXFLAGS$OMPFLAGS"
+  fi
+
+  if test x"$ompneedsflag" = x"yes" && test x"$have_omp" = x"no"; then
+    AX_CHECK_COMPILE_FLAG([-openmp],
+                          [OMPFLAGS=" -openmp";have_omp=yes;
+                          ],
+                          [have_omp=no],
+                          [],
+                          [AC_LANG_PROGRAM([#include <omp.h>],[$omp_input])]
+                         )
+    CXXFLAGS="$CXXFLAGS$OMPFLAGS"
+  fi
+
+  if test x"$have_omp" = x"yes"; then
+    AC_DEFINE([HAVE_OMP],[1],[Define to 1 if OpenMP is usable.])
+  else
+    AC_MSG_WARN([OpenMP does not seem to be working -> Not used])
+  fi
+fi
+
+AC_SUBST([AM_CXXFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+#=========================================================================
+# build static
+#=========================================================================
+
+AC_MSG_CHECKING([whether to enable static build])
+AC_ARG_ENABLE([static],
+              [AS_HELP_STRING([--enable-static],
+                              [build a static executable (default=no)]
+                             )
+              ],
+              [case "${enableval}" in
+               yes) buildstatic="yes" ;;
+               no)  buildstatic="no";;
+               *) AC_MSG_ERROR([bad value ${enableval} for --enable-static.]) ;;
+               esac
+              ],
+              [buildstatic=no]
+             )
+AC_MSG_RESULT([$buildstatic])
+
+if test x"$buildstatic" = x"yes"
+then
+  AX_CHECK_COMPILE_FLAG([-static],[LDFLAGS="-static $LDFLAGS"],[AC_MSG_ERROR([Can not build static executable.])])
+  AX_CHECK_COMPILE_FLAG([-static-libgcc],[LDFLAGS="-static-libgcc $LDFLAGS"],[AC_MSG_ERROR([Can not build static executable.])])
+  AX_CHECK_COMPILE_FLAG([-static-libstdc++],[LDFLAGS="-static-libstdc++ $LDFLAGS"],[AC_MSG_ERROR([Can not build static executable.])])
+AX_CHECK_ZLIB(,[
+                if test x"$buildstatic" = x"yes"
+                then
+                  AC_MSG_ERROR([zlib does not work and is needed to have a static executable.])
+                else
+                  AC_MSG_WARN([zlib does not work and might prevent the final executable to work.])
+                fi
+               ])
+AC_DEFINE([CURL_STATICLIB],[1],[define to 1 to specify that we are using static libcurl])
+fi
+AC_SUBST([AM_LDFLAGS])
+
+
+  
+
+##########################################################################
+
+echo 
+echo "================================================================================"
+echo "===  Libraries                                                                  " 
+echo "================================================================================"
+
+#=========================================================================
+# cURL
+#=========================================================================
+
+AC_MSG_CHECKING([for user defined curl library prefix])
+AC_ARG_WITH([curl],
+              [AS_HELP_STRING([--with-curl],
+                              [prefix used for include and lib directories]
+                             )
+              ],
+              [curl_prefix="$with_curl";resultcurl=yes],
+              [curl_prefix="";resultcurl=no]
+             )
+AC_MSG_RESULT([$resultcurl])
+
+# store current *FLAGS and merge with AM_*FLAGS for compilation and linker check   
+OLD_CPPFLAGS=$CPPFLAGS;
+OLD_LIBS=$LIBS;
+
+#if test $resultcurl == "yes"
+#then
+#  CPPFLAGS="$AM_CPPFLAGS -I$curl_prefix/include"
+#  LDFLAGS="$AM_LDFLAGS -L$curl_prefix/lib"
+#fi
+
+OLDPATH=$PATH
+PATH="$PATH:$curl_prefix/bin"
+AC_PATH_PROGS([CURLCONFIG],[curl-config],[no])
+PATH=$OLDPATH
+
+if test x"$CURLCONFIG" != x"no"; then
+  CURL_CFLAGS=$($CURLCONFIG --cflags)
+  CPPFLAGS="$CPPFLAGS $CURL_CFLAGS"
+fi
+
+if test x"$buildstatic" = x"yes"
+then
+  CURL_LIBS=$($CURLCONFIG --static-libs) 
+  LIBS="$LIBS $CURL_LIBS"
+else
+  CURL_LIBS=$($CURLCONFIG --libs) 
+  LIBS="$LIBS $CURL_LIBS"
+fi
+
+# check for curl library headers   
+AC_CHECK_HEADER([curl/curl.h],[curl_check_h=yes],[curl_check_h=no])
+AC_CHECK_LIB([curl],[curl_easy_init],[curl_check_lib=yes],[curl_check_lib=no])
+
+# handle check results
+if test x"$curl_check_h" == x"yes" && test x"$curl_check_lib" == x"yes"
+then
+  have_curl_usable="yes"
+  AC_DEFINE([HAVE_CURL],[1],[Define to 1 if libcurl is usable.])
+else
+  have_curl_usable="no"
+  LIBS=$OLD_LIBS;
+  CPPFLAGS=$OLD_CPPFLAGS;
+  if test  $resultcurl == "yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-curl for the curl library was set.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to use '--with-curl=ABSOLUTE_PATH' ?!?]);
+  fi
+fi
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+#=========================================================================
+# EIGEN
+#=========================================================================
+
+AC_MSG_CHECKING([for user defined eigen library prefix])
+AC_ARG_WITH([eigen],
+              [AS_HELP_STRING([--with-eigen],
+                              [Specify the directory to find the Eigen headers]
+                             )
+              ],
+              [eigen_prefix="$with_eigen";resulteigen=yes],
+              [eigen_prefix=$default_prefix/include/;resulteigen=no]
+             )
+AC_MSG_RESULT([$resulteigen])
+
+# store current *FLAGS and merge with AM_*FLAGS for compilation and linker check   
+OLD_CPPFLAGS=$CPPFLAGS;
+CPPFLAGS="$CPPFLAGS -I$eigen_prefix/eigen3"
+
+EIGEN_PATCH='
+#ifdef __GNUC__
+#  if __GNUC__ >= 4
+#    if __GNUC_MINOR__ >= 6
+#      pragma GCC diagnostic push
+#      pragma GCC diagnostic ignored "-Weffc++"
+#    endif
+#  endif
+#endif
+'
+# check for eigen headers   
+AC_CHECK_HEADER([Eigen/Dense],[eigen_check_h=yes],[eigen_check_h=no],[$EIGEN_PATCH])
+
+# handle check results
+if test x"$eigen_check_h" == x"yes"
+then
+  have_eigen_usable="yes"
+  AC_DEFINE([HAVE_EIGEN],[1],[Define to 1 if eigen is usable.])
+else
+  have_eigen_usable="no"
+  if test  $resulteigen == "yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-eigen for the eigen library was set.]);
+    AC_MSG_NOTICE([ Check that the directory Eigen is present in that prefix.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to download Eigen3 at http://eigen.tuxfamily.org ?!?]);
+    AC_MSG_NOTICE([ and use the  '--with-eigen=ABSOLUTE_PATH' ?!?]);
+  fi
+fi
+
+AC_SUBST([AM_CPPFLAGS])
+
+#=========================================================================
+# NetCDF
+#=========================================================================
+
+#---# Already done at the very beginning
+#AC_MSG_CHECKING([for user defined NetCDF library prefix])
+#AC_ARG_WITH([netcdf],
+#              [AS_HELP_STRING([--with-netcdf],
+#                              [prefix used for include and lib directories]
+#                             )
+#              ],
+#              [netcdf_prefix="$with_netcdf";resultnetcdf=yes],
+#              [netcdf_prefix="";resultnetcdf=no]
+#             )
+#AC_MSG_RESULT([$resultnetcdf])
+
+# store current *FLAGS and merge with AM_*FLAGS for compilation and linker check   
+OLD_OLD_CPPFLAGS=$CPPFLAGS;
+OLD_OLD_LIBS=$LIBS;
+OLD_LDFLAGS=$LDFLAGS;
+
+#---# Already done at the very begining
+#OLDPATH=$PATH
+#PATH="$PATH:$netcdf_prefix/bin"
+#AC_PATH_PROGS([NCCONFIG],[nc-config],[no])
+#PATH=$OLDPATH
+
+if test x"$NCCONFIG" == x"no"
+then
+  NC_CFLAGS="-I$netcdf_prefix/include"
+  NC_LIBS="-L$netcdf_prefix/lib -lnetcdf"
+else
+  NC_CFLAGS=$($NCCONFIG --cflags)
+  NC_LIBS=$($NCCONFIG --libs)
+fi
+CPPFLAGS="$CPPFLAGS $NC_CFLAGS"
+LIBS="$LIBS $NC_LIBS"
+
+# check for netcdf library headers   
+AC_CHECK_HEADER([netcdf.h],[netcdf_check_h=yes],[netcdf_check_h=no])
+AC_CHECK_LIB([netcdf],[nc_open],[netcdf_check_lib=yes],[netcdf_check_lib=no])
+
+# handle check results
+if test x"$netcdf_check_h" == x"yes" && test x"$netcdf_check_lib" == x"yes"
+then
+  have_netcdf_usable="yes"
+  AC_DEFINE([HAVE_NETCDF],[1],[Define to 1 if netCDF is usable.])
+else
+  have_netcdf_usable="no"
+  LIBS=$OLD_OLD_LIBS;
+  CPPFLAGS=$OLD_CPPFLAGS;
+  LDFLAGS=$OLD_LDFLAGS;
+  if test  $resultnetcdf == "yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-netcdf for the NetCDF library was set.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to use '--with-netcdf=ABSOLUTE_PATH' ?!?]);
+  fi
+fi
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+##########################################################################
+# check for libxml2
+##########################################################################
+
+
+AC_MSG_CHECKING([for user defined libxml2 library prefix])
+AC_ARG_WITH([libxml2],
+              [AS_HELP_STRING([--with-libxml2],
+                              [prefix used for include and lib directories]
+                             )
+              ],
+              [libxml2_prefix="$with_libjpeg";resultxml2=yes],
+              [libxml2_prefix=$default_prefix;resultxml2=no]
+             )
+AC_MSG_RESULT([$resultxml2])
+
+OLD_CPPFLAGS=$CPPFLAGS;
+OLD_LDFLAGS=$LDFLAGS;
+OLD_LIBS=$LIBS
+
+OLDPATH=$PATH
+if test x"$resultxml2" = x"yes"
+then
+  PATH="$PATH:$libxml2_prefix/bin"
+fi
+AC_CHECK_PROGS([XML2CONFIG],[xml2-config])
+PATH=$OLDPATH
+CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS $($XML2CONFIG --cflags)"
+LIBS="$LIBS $($XML2CONFIG --libs)"
+
+AC_CHECK_HEADER([libxml/tree.h],[libxml2_check_h=yes],[libxml2_check_h=no])
+AC_CHECK_LIB([xml2],[xmlParseFile],[libxml2_check_lib=yes],[libxml2_check_lib=no])
+
+# handle check results
+have_libxml2_usable="no"
+if test x"$libxml2_check_h" == x"yes" && test x"$libxml2_check_lib" == x"yes"
+then
+  have_libxml2_usable="yes"
+  AC_DEFINE([HAVE_LIBXML2],[1],[Define to 1 if libxml2 is usable.])
+else
+  LIBS=$OLD_LIBS;
+  CPPFLAGS=$OLD_CPPFLAGS;
+  LDFLAGS=$OLD_LDFLAGS;
+  if test  x"$resultlibxml2" == x"yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-libxml2 for the XML library was set.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to use '--with-libxml2=ABSOLUTE_PATH' ?!?]);
+  fi
+fi
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+
+##########################################################################
+# check for SPGlib
+##########################################################################
+
+
+AC_MSG_CHECKING([for user defined spglib library prefix])
+AC_ARG_WITH([spglib],
+              [AS_HELP_STRING([--with-spglib],
+                              [prefix used for include and lib directories]
+                             )
+              ],
+              [spglib_prefix="$with_spglib";resultspglib=yes],
+              [spglib_prefix=$default_prefix;resultspglib=no]
+             )
+AC_MSG_RESULT([$resultspglib])
+
+OLD_CPPFLAGS=$CPPFLAGS;
+OLD_LDFLAGS=$LDFLAGS;
+OLD_LIBS=$LIBS
+
+if test x"$resultspglib" = x"yes"
+then
+  CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I$spglib_prefix/include"
+  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L$spglib_prefix/lib"
+fi
+
+AC_CHECK_HEADER([spglib/spglib.h],[spglib_check_h=yes],[spglib_check_h=no])
+AC_CHECK_LIB([symspg],[spg_get_international],[spglib_check_lib=yes;LIBS="$LIBS -lsymspg"],[spglib_check_lib=no])
+
+# handle check results
+have_spglib_usable="no"
+if test x"$spglib_check_h" == x"yes" && test x"$spglib_check_lib" == x"yes"
+then
+  have_spglib_usable="yes"
+  AC_DEFINE([HAVE_SPGLIB],[1],[Define to 1 if spglib is usable.])
+  AC_CHECK_LIB([symspg],[spg_get_major_version],[AC_DEFINE([HAVE_SPGLIB_VERSION],[1],[Define to 1 if spglib has version fonctions.])])
+else
+  #AC_PATH_PROG([TAR],[tar],"none")
+  #LIBS=$OLD_LIBS;
+  #CPPFLAGS=$OLD_CPPFLAGS;
+  #LDFLAGS=$OLD_LDFLAGS;
+  #if test x"$TAR" != x"none";
+  #then
+  #  $TAR xfz $(dirname $0)/spglib-1.8.2.2.tar.gz
+  #  ac_configure_args_old="$ac_configure_args"
+  #  ac_configure_args="--disable-shared"
+  #  AC_CONFIG_SUBDIRS(spglib-1.8.2.2)
+  #  ac_configure_args="$ac_configure_args_old"
+  #  CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I${PWD}/spglib-1.8.2.2/src"
+  #  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L${PWD}/spglib-1.8.2.2/src/.lib/"
+  #  LIBS="$LIBS -lsymspg"
+  #  SPGLIB="$PWD/spglib-1.8.2.2"
+  #  AC_SUBST(SPGLIB)
+  #fi
+
+  if test  x"$resultspglib" == x"yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-spglib for the SPG library was set.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to use '--with-spglib=ABSOLUTE_PATH' ?!?]);
+  fi
+fi
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+
+##########################################################################
+# check for yaml-cpp
+##########################################################################
+
+AC_MSG_CHECKING([for user defined yaml-cpp library prefix])
+AC_ARG_WITH([yaml-cpp],
+              [AS_HELP_STRING([--with-yaml-cpp],
+                              [prefix used for include and lib directories]
+                             )
+              ],
+              [yamlcpp_prefix="$with_yaml_cpp";resultyamlcpp=yes],
+              [yamlcpp_prefix=$default_prefix;resultyamlcpp=no]
+             )
+AC_MSG_RESULT([$resultyamlcpp])
+
+OLD_CPPFLAGS=$CPPFLAGS;
+OLD_LDFLAGS=$LDFLAGS;
+OLD_LIBS=$LIBS
+
+if test x"$resultyamlcpp" = x"yes"
+then
+  CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I$yamlcpp_prefix/include"
+  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L$yamlcpp_prefix/lib"
+fi
+LIBS="$LIBS -lyaml-cpp"
+
+AC_CHECK_HEADER([yaml-cpp/yaml.h],[yamlcpp_check_h=yes],[yamlcpp_check_h=no])
+AC_MSG_CHECKING([whether yaml-cpp can be linked])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <yaml-cpp/yaml.h>]],[[ YAML::Node primes = YAML::LoadFile("dummy.yaml");]])],
+[AC_MSG_RESULT([yes]);yamlcpp_check_lib=yes],
+[AC_MSG_RESULT([no]);yamlcpp_check_lib=no]
+)
+
+# handle check results
+have_yamlcpp_usable="no"
+if test x"$yamlcpp_check_h" == x"yes" && test x"$yamlcpp_check_lib" == x"yes"
+then
+  have_yamlcpp_usable="yes"
+  AC_DEFINE([HAVE_YAMLCPP],[1],[Define to 1 if yaml-cpp is usable.])
+else
+  if test  x"$resultyamlcpp" == x"yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-yaml-cpp for the yaml-cpp library was set.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to use '--with-yaml-cpp=ABSOLUTE_PATH' ?!?]);
+  fi
+  CPPFLAGS=$OLD_CPPFLAGS
+  LDFLAGS=$OLD_LDFLAGS
+  LIBS=$OLD_LIBS
+fi
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+##########################################################################
+# check for fftw3
+##########################################################################
+
+AC_MSG_CHECKING([for user defined fftw3 library prefix])
+AC_ARG_WITH([fftw3],
+              [AS_HELP_STRING([--with-fftw3],
+                              [prefix used for include and lib directories]
+                             )
+              ],
+              [fftw3_prefix="$with_fftw3_cpp";resultfftw3=yes],
+              [fftw3_prefix=$default_prefix;resultfftw3=no]
+             )
+AC_MSG_RESULT([$resultfftw3])
+
+OLD_CPPFLAGS=$CPPFLAGS;
+OLD_LDFLAGS=$LDFLAGS;
+OLD_LIBS=$LIBS
+
+if test x"$resultfftw3" = x"yes"
+then
+  CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I$fftw3_prefix/include"
+  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L$fftw3_prefix/lib"
+fi
+
+AC_CHECK_HEADER([fftw3.h],[fftw3_check_h=yes],[fftw3_check_h=no])
+AC_CHECK_LIB([fftw3],[fftw_execute],[fftw3_check_lib=yes],[fftw3_check_lib=no])
+#AC_MSG_CHECKING([whether fftw3 can be linked])
+#AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <fftw3.h>]],[[ fftw_plan toto; fftw_execute(toto);]])],
+#[AC_MSG_RESULT([yes]);fftw3_check_lib=yes],
+#[AC_MSG_RESULT([no]);fftw3_check_lib=no]
+#)
+
+
+# handle check results
+have_fftw3_usable="no"
+if test x"$fftw3_check_h" == x"yes" && test x"$fftw3_check_lib" == x"yes"
+then
+  have_fftw3_usable="yes"
+  LIBS="$LIBS -lfftw3"
+  AC_DEFINE([HAVE_FFTW3],[1],[Define to 1 if FFTW3 is usable.])
+  # Check for fftw3 with threads
+  AC_CHECK_HEADER([fftw3.h],[fftw3_thread_check_h=yes],[fftw3_thread_check_h=no])
+  AC_CHECK_LIB([fftw3_omp],[fftw_init_threads],[fftw3_thread_check_lib=yes],[fftw3_thread_check_lib=no])
+  if test x"$fftw3_thread_check_lib" == x"yes"
+  then
+    AC_DEFINE([HAVE_FFTW3_THREADS],[1],[Define to 1 if FFTW3_THREADS is usable.])
+    LIBS="$LIBS -lfftw3_omp"
+  fi
+else
+  if test  x"$resultfftw3" == x"yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-fftw3 for the fftw3 library was set.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to use '--with-fftw3=ABSOLUTE_PATH' ?!?]);
+  fi
+  CPPFLAGS=$OLD_CPPFLAGS
+  LDFLAGS=$OLD_LDFLAGS
+  LIBS=$OLD_LIBS
+fi
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+
+##########################################################################
+# check for Xlib library
+##########################################################################
+
+#AC_MSG_CHECKING([whether to build with Xlib support])
+#AC_ARG_ENABLE([xlib],
+#              [AS_HELP_STRING([--enable-xlib],
+#                              [enable Xlib support (default=yes)])
+#              ],
+#              [case "${enableval}" in
+#               yes) xlibsupport="yes"; userdef="yes" ;;
+#               no)  xlibsupport="no" ; userdef="yes";;
+#               *) AC_MSG_ERROR([bad value ${enableval} for --enable-xlib]) ;;
+#               esac
+#              ],
+#              [xlibsupport="yes";userdef="no"]
+#             )
+#AC_MSG_RESULT([$xlibsupport])
+#
+#have_xlib_usable="no"
+#if test x"$xlibsupport" = x"yes"; then
+#  AC_CHECK_HEADER([X11/Xlib.h],[xlib_check_h=yes],[xlib_check_h=no])
+#  AC_CHECK_LIB([X11],[XOpenDisplay],[xlib_check_lib=yes],[xlib_check_lib=no])
+#  if test x"$xlib_check_h" == x"yes" && test x"$xlib_check_lib" == x"yes"
+#  then
+#    LIBS="$LIBS -lX11"
+#    have_xlib_usable="yes"
+#  else
+#    if test x"$userdef" = x"yes"; then
+#      AC_MSG_ERROR([Xlib is explicitely enabled but is not working.])
+#    else
+#      AC_MSG_WARN([Xlib does not work -> automatically disabled.])
+#    fi
+#  fi
+#fi
+#
+#if test x"$have_xlib_usable" = x"yes"; then
+#  AC_DEFINE(HAVE_XLIB,1,[Define to 1 if Xlib is usable])
+#fi
+
+##########################################################################
+# check for OpenGL
+##########################################################################
+
+AC_MSG_CHECKING([whether to build with OpenGL support])
+AC_ARG_ENABLE([gl],
+              [AS_HELP_STRING([--enable-gl],
+                              [enable GL support (default=yes)])
+              ],
+              [case "${enableval}" in
+               yes) glsupport="yes"; userdef="yes" ;;
+               no)  glsupport="no" ; userdef="yes";;
+               *) AC_MSG_ERROR([bad value ${enableval} for --enable-gl]) ;;
+               esac
+              ],
+              [glsupport="yes";userdef="no"]
+             )
+AC_MSG_RESULT([$glsupport])
+
+have_gl_usable="no"
+have_glext_usable="no"
+have_glu_usable="no"
+have_glfw_usable="no"
+
+if test x"$glsupport" = x"yes"; then
+
+  # OPENGL
+  AC_CHECK_HEADER([$GL_PREFIX/gl.h],[gl_check_h=yes],[gl_check_h=no])
+  if test x"$host_vendor" == x"apple"; then
+    LIBS="$LIBS -framework OpenGL"
+    AC_MSG_WARN([On apple device, OpenGL support is assumed.])
+    gl_check_lib=yes
+  else
+    AC_CHECK_LIB([GL],[glBegin],[gl_check_lib=yes],[gl_check_lib=no])
+  fi
+  if test x"$gl_check_h" = x"yes" && test x"$gl_check_lib" = x"yes"
+  then
+    if test x"$host_vendor" != x"apple"; then
+      LIBS="$LIBS -l$GL_PREFIX"
+    fi
+    have_gl_usable="yes"
+    AC_DEFINE(HAVE_GL,1,[Define to 1 if OpenGL is usable])
+  fi
+
+  # GLEXT
+  AC_CHECK_HEADER([$GL_PREFIX/glext.h],[glext_check_h=yes],[glext_check_h=no],
+                  [[
+#ifdef HAVE_GL
+# ifdef __APPLE__
+#  include <OpenGL/gl.h>
+# else
+#  include <GL/gl.h>
+# endif
+#endif
+                   ]])
+  if test x"$host_vendor" == x"apple"; then
+    glext_check_lib=yes
+  else
+    AC_CHECK_LIB([GL],[glBindBuffer],[glext_check_lib=yes],[glext_check_lib=no])
+  fi
+  if test x"$glext_check_h" = x"yes" && test x"$glext_check_lib" = x"yes"
+  then
+    have_glext_usable="yes"
+    AC_DEFINE(HAVE_GLEXT,1,[Define to 1 if OpenGL is usable])
+  fi
+
+  # GLU
+  AC_CHECK_HEADER([$GL_PREFIX/glu.h],[glu_check_h=yes],[glu_check_h=no])
+  if test x"$host_vendor" == x"apple"; then
+    AC_MSG_WARN([On apple device, GLU support is assumed.])
+    glu_check_lib=yes
+  else
+    AC_CHECK_LIB([GLU],[gluLookAt],[glu_check_lib=yes],[glu_check_lib=no])
+  fi
+  if test x"$glu_check_h" = x"yes" && test x"$glu_check_lib" = x"yes"
+  then
+    if test x"$host_vendor" != x"apple"; then
+      LIBS="$LIBS -lGLU"
+    fi
+    have_glu_usable="yes"
+    AC_DEFINE(HAVE_GLU,1,[Define to 1 if GLU is usable])
+  fi
+
+  # GLX
+  #AC_CHECK_HEADER([$GL_PREFIX/glx.h],[glx_check_h=yes],[glx_check_h=no])
+  #if test x"$host_vendor" != x"apple"; then
+  #  AC_CHECK_LIB([GL],[glXChooseVisual],[glx_check_lib=yes],[glx_check_lib=no])
+  #else
+  #  AC_MSG_WARN([On apple device, GLX support is disabled.])
+  #  glx_check_lib=no
+  #fi
+  #if test x"$glx_check_h" = x"yes" && test x"$glx_check_lib" = x"yes"
+  #then
+  #  if test x"$have_xlib_usable" = x"yes"
+  #  then
+  #    have_glx_usable="yes"
+  #    AC_DEFINE(HAVE_GLX,1,[Define to 1 if OpenGLFW is usable])
+  #  else 
+  #    AC_MSG_WARN("Xlib not usable so GLX can not be used.")
+  #  fi
+  #fi
+
+##########################################################################
+# check for GLFW 2 or 3
+##########################################################################
+  AC_MSG_CHECKING([for user defined GLFW library prefix])
+  AC_ARG_WITH([glfw],
+                [AS_HELP_STRING([--with-glfw],
+                                [prefix used for include and lib directories]
+                               )
+                ],
+                [glfw_prefix="$with_glfw";resultglfw=yes],
+                [glfw_prefix="";resultglfw=no]
+               )
+  AC_MSG_RESULT([$resultglfw])
+  
+  # store current *FLAGS and merge with AM_*FLAGS for compilation and linker check   
+  OLD_CPPFLAGS=$CPPFLAGS;
+  OLD_LIBS=$LIBS;
+  OLD_LDFLAGS=$LDFLAGS;
+  
+  if test ! -z "$glfw_prefix";then
+  CPPFLAGS="$CPPFLAGS -I$glfw_prefix/include"
+  LDFLAGS="$LDFLAGS -L$glfw_prefix/lib"
+  fi
+
+  if test x"$host_vendor" == x"apple"; then
+    GLFW_EXTRA="-framework Cocoa -framework IOKit -framework CoreVideo"
+  else
+    GLFW_EXTRA="-lrt -lXrandr -lXinerama -lXi -lXcursor -lm -ldl -lXrender -ldrm -lXdamage -lX11-xcb -lxcb-glx -lxcb-dri2 -lxcb-dri3 -lxcb-present -lxcb-sync -lxshmfence -lXxf86vm -lXfixes -lXext -lX11 -lpthread -lxcb -lXau -lXdmcp"
+    GLFW_EXTRA="-lX11 -lXxf86vm -lXrandr -lXinerama -lXcursor -lXi"
+  fi
+
+  TMP_LIBS=$LIBS
+
+  # GLFW2
+  AC_CHECK_HEADER([$GL_PREFIX/glfw.h],[glfw2_check_h=yes],[glfw2_check_h=no])
+  AC_CHECK_LIB([glfw],[glfwOpenWindow],[glfw2_check_lib=yes;glfw_suf=''],[
+                AC_CHECK_LIB([glfw2],[glfwOpenWindow],[glfw2_check_lib=yes;glfw_suf=2],[glfw2_check_lib=no;glfw_ver=0])])
+
+  
+  # GLFW3
+  AC_CHECK_HEADER([GLFW/glfw3.h],[glfw3_check_h=yes],[glfw3_check_h=no])
+  AC_CHECK_LIB([glfw],[glfwCreateWindow],[glfw3_check_lib=yes;glfw_suf=''],[
+                AC_CHECK_LIB([glfw3],[glfwCreateWindow],[glfw3_check_lib=yes;glfw_suf=3],[glfw3_check_lib=no],[$GLFW_EXTRA])])
+
+  have_glfw_usable="no"
+  glfw_version=""
+  if test x"$glfw3_check_h" = x"yes" && test x"$glfw3_check_lib" = x"yes"
+  then
+    AC_MSG_NOTICE([Using GLFW3])
+    if test x"$glfw_suf" = x"3"
+    then
+      AC_CHECK_LIB([glfw$glfw_suf],[glfwSetDropCallback],[glfw3_has_drop=yes],[glfw3_has_drop=no],[$GLFW_EXTRA])
+    else
+      AC_CHECK_LIB([glfw$glfw_suf],[glfwSetDropCallback],[glfw3_has_drop=yes],[glfw3_has_drop=no])
+    fi
+    LIBS="$TMP_LIBS -lglfw$glfw_suf"
+    if test x"$glfw_suf" = x"3"
+    then
+      LIBS="$LIBS $GLFW_EXTRA"
+    fi
+    have_glfw_usable="yes"
+    glfw_version=3
+    AC_DEFINE(HAVE_GLFW3,1,[Define to 1 if OpenGLFW is usable])
+    if test x"$glfw3_has_drop" = x"yes"; 
+    then
+      AC_DEFINE(HAVE_GLFW3_DROP,1,[Define to 1 if OpenGLFW is usable])
+    fi
+  else 
+    if  test x"$glfw2_check_h" = x"yes" && test x"$glfw2_check_lib" = x"yes"
+    then
+      have_glfw_usable="yes"
+      glfw_version=2
+      AC_MSG_NOTICE([Using GLFW2])
+      LIBS="$TMP_LIBS -lglfw$glfw_suf"
+      AC_DEFINE(HAVE_GLFW2,1,[Define to 1 if OpenGLFW is usable])
+    else
+      LIBS=$OLD_LIBS
+      CPPFLAGS=$OLD_CPPFLAGS
+      LDFLAGS=$OLD_LDFLAGS
+    fi
+  fi
+fi
+
+##########################################################################
+
+##########################################################################
+# check for QT
+##########################################################################
+have_qt_usable="no"
+TROLL="on" 
+AT_WITH_QT([+opengl +widgets])
+if test x"$QT_VERSION_MAJOR" != x""
+then
+  have_qt_usable="yes"
+fi
+AM_CONDITIONAL([HAVE_QT],[test x"$have_qt_usable" = x"yes"])
+
+##########################################################################
+
+
+##########################################################################
+# check for libjpeg
+##########################################################################
+
+
+AC_MSG_CHECKING([for user defined libjpeg library prefix])
+AC_ARG_WITH([libjpeg],
+              [AS_HELP_STRING([--with-libjpeg],
+                              [prefix used for include and lib directories]
+                             )
+              ],
+              [libjpeg_prefix="$with_libjpeg";resultjpeg=yes],
+              [libjpeg_prefix=$default_prefix;resultjpeg=no]
+             )
+AC_MSG_RESULT([$resultjpeg])
+
+OLD_CPPFLAGS=$CPPFLAGS;
+OLD_LDFLAGS=$LDFLAGS;
+OLD_LIBS=$LIBS
+
+if test x"$resultjpeg" = x"yes"
+then
+  CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I$libjpeg_prefix/include"
+  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L$libjpeg_prefix/lib"
+fi
+
+LIBS="$LIBS -ljpeg"
+
+AC_CHECK_HEADER([jpeglib.h],[libjpeg_check_h=yes],[libjpeg_check_h=no])
+AC_CHECK_LIB([jpeg],[jpeg_start_compress],[libjpeg_check_lib=yes],[libjpeg_check_lib=no])
+
+# handle check results
+have_libjpeg_usable="no"
+if test x"$libjpeg_check_h" == x"yes" && test x"$libjpeg_check_lib" == x"yes"
+then
+  have_libjpeg_usable="yes"
+  AC_DEFINE([HAVE_LIBJPEG],[1],[Define to 1 if libjpeg is usable.])
+else
+  LIBS=$OLD_LIBS;
+  CPPFLAGS=$OLD_CPPFLAGS;
+  LDFLAGS=$OLD_LDFLAGS;
+  if test  x"$resultlibjpeg" == x"yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-libjpeg for the JPEG library was set.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to use '--with-libjpeg=ABSOLUTE_PATH' ?!?]);
+  fi
+fi
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+
+##########################################################################
+# check for libpng
+##########################################################################
+
+
+AC_MSG_CHECKING([for user defined libpng library prefix])
+AC_ARG_WITH([libpng],
+              [AS_HELP_STRING([--with-libpng],
+                              [prefix used for include and lib directories]
+                             )
+              ],
+              [libpng_prefix="$with_libpng";resultpng=yes],
+              [libpng_prefix=$default_prefix;resultpng=no]
+             )
+AC_MSG_RESULT([$resultpng])
+
+OLD_CPPFLAGS=$CPPFLAGS;
+OLD_LDFLAGS=$LDFLAGS;
+OLD_LIBS=$LIBS
+
+if test x"$resultpng" = x"yes"
+then
+  CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I$libpng_prefix/include"
+  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L$libpng_prefix/lib"
+fi
+
+LIBS="$LIBS -lpng"
+
+AC_CHECK_HEADER([png.h],[libpng_check_h=yes],[libpng_check_h=no])
+AC_CHECK_LIB([png],[png_create_write_struct],[libpng_check_lib=yes],[libpng_check_lib=no])
+
+# handle check results
+have_libpng_usable="no"
+if test x"$libpng_check_h" == x"yes" && test x"$libpng_check_lib" == x"yes"
+then
+  have_libpng_usable="yes"
+  AC_DEFINE([HAVE_LIBPNG],[1],[Define to 1 if libpng is usable.])
+else
+  LIBS=$OLD_LIBS;
+  CPPFLAGS=$OLD_CPPFLAGS;
+  LDFLAGS=$OLD_LDFLAGS;
+  if test  x"$resultlibpng" == x"yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-libpng for the PNG library was set.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to use '--with-libpng=ABSOLUTE_PATH' ?!?]);
+  fi
+fi
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+#=========================================================================
+# Freetype
+#=========================================================================
+
+AC_MSG_CHECKING([for user defined freetype library prefix])
+AC_ARG_WITH([freetype],
+              [AS_HELP_STRING([--with-freetype],
+                              [prefix used for include and lib directories]
+                             )
+              ],
+              [freetype_prefix="$with_freetype";resultft=yes],
+              [freetype_prefix="$default_prefix";resultft=no]
+             )
+AC_MSG_RESULT([$resultft])
+
+# store current *FLAGS and merge with AM_*FLAGS for compilation and linker check   
+OLD_CPPFLAGS=$CPPFLAGS;
+OLD_LIBS=$LIBS
+OLD_LDFLAGS=$LDFLAGS;
+
+
+CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I$freetype_prefix/include/freetype2"
+if test x"$freetype_prefix" != x"$default_prefix" ;then
+  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L$freetype_prefix/lib"
+fi
+
+LIBS="-lfreetype $LIBS"
+
+AC_CHECK_HEADER([ft2build.h],[freetype_check_h=yes],[freetype_check_h=no])
+AC_CHECK_LIB([freetype],[FT_Init_FreeType],[freetype_check_lib=yes],[freetype_check_lib=no])
+
+# handle check results
+have_freetype_usable="no"
+if test x"$freetype_check_h" == x"yes" && test x"$freetype_check_lib" == x"yes"
+then
+  have_freetype_usable="yes"
+  AC_DEFINE([HAVE_FREETYPE],[1],[Define to 1 if FreeType is usable.])
+else
+  LIBS=$OLD_LIBS;
+  CPPFLAGS=$OLD_CPPFLAGS;
+  LDFLAGS=$OLD_LDFLAGS;
+  if test  x"$resultfreetype" == x"yes" ; 
+  then
+    AC_MSG_NOTICE([ The install prefix --with-freetype for the FreeType2 library was set.]);
+    AC_MSG_ERROR([ --> Maybe wrong ???]);
+  else
+    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+    AC_MSG_NOTICE([ --> You might want to use '--with-freetype=ABSOLUTE_PATH' ?!?]);
+  fi
+fi
+
+AC_SUBST([AM_CXXFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+############################
+# Check for default font
+############################
+
+case $host in
+  *apple*)
+    default_font="/System/Library/Fonts/HelveticaNeueDeskInterface.ttc"
+    ;;
+  *)
+    default_font="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
+    ;;
+esac
+
+AC_ARG_WITH([font],
+              [AS_HELP_STRING([--with-font],
+                              [default font to render text]
+                             )
+              ],
+              [user_default_font="$with_font";user_set_font="yes"],
+              [user_default_font=$default_font;user_set_font="no"]
+             )
+if test x"$user_set_font" = x"yes"
+then
+  if test ! -r "$user_default_font"
+  then
+    AC_MSG_WARN([Unreadable font $user_default_font])
+    AC_MSG_NOTICE([Will try to automatically detect font])
+    user_set_font="no"
+  else
+    default_font=$user_default_font
+  fi
+fi
+
+if test x"$user_set_font" = x"no"
+then
+  AC_CHECK_PROGS([FC_MATCH],[fc-match])
+  if test -z "$FC_MATCH"
+  then
+    AC_MSG_WARN([Default font set to $default_font])
+    #AC_MSG_WARN([ --> You might want to use the -F option when running code.])
+  else
+    AC_MSG_CHECKING([for a default font to use])
+    try_font="$($FC_MATCH -v UbuntuMono | $GREP file | $SED 's/.*\"\(.*\)\".*/\1/')"
+    if test -z "$try_font"
+    then
+      AC_MSG_WARN([Default font set to $default_font])
+      #AC_MSG_WARN([ --> You might want to use the -F option when running code.])
+    else
+      default_font="$try_font"
+      AC_MSG_RESULT([found])
+    fi
+  fi
+fi
+
+AC_MSG_NOTICE([Default font to use : $default_font])
+AC_DEFINE_UNQUOTED(DEFAULT_FONT,"$default_font",[default font to use])
+
+
+echo 
+echo "================================================================================"
+echo "===  Documentation                                                              " 
+echo "================================================================================"
+
+AC_MSG_CHECKING([whether to build documentation])
+AC_ARG_ENABLE([doc-html],
+              [AS_HELP_STRING([--enable-doc-html],
+                              [enable documentation in html (default=yes)])
+              ],
+              [case "${enableval}" in
+               yes) dochtml="yes" ;;
+               no)  dochtml="false" ;;
+               *) AC_MSG_ERROR([bad value ${enableval} for --enable-doc-html]) ;;
+               esac
+              ],
+              [dochtml="yes"]
+             )
+AC_ARG_ENABLE([doc-latex],
+              [AS_HELP_STRING([--enable-doc-latex],
+                              [enable documentation in latex (PDF) (default=no)])
+              ],
+              [case "${enableval}" in
+               yes) doclatex="yes" ;;
+               no)  doclatex="no" ;;
+               *) AC_MSG_ERROR([bad value ${enableval} for --enable-doc-latex]) ;;
+               esac
+              ],
+              [doclatex="no"]
+             )
+AC_ARG_ENABLE([doc],
+              [AS_HELP_STRING([--enable-doc],
+                              [enable documentation in latex (PDF) (default=no)])
+              ],
+              [case "${enableval}" in
+               yes) dbuilddoc="yes" ;;
+               no)  dbuilddoc="no" ;;
+               *) AC_MSG_ERROR([bad value ${enableval} for --enable-doc]) ;;
+               esac
+              ],
+              [dbuilddoc="no"]
+             )
+if test x"$dbuilddoc" = x"yes" && ( test "$dochtml" = "yes" || test "$doclatex" = "yes" );
+then 
+  builddoc="yes";
+else 
+  builddoc="no";
+fi
+AC_MSG_RESULT([$builddoc])
+
+if test "$builddoc" = "yes";
+then
+  AC_CHECK_PROGS([DOXYGEN],[doxygen])
+  if test -z "$DOXYGEN";
+  then 
+    AC_MSG_WARN([Doxygen not found - documentation will not be built.])
+  else
+
+    DOXY_VERSION=`$DOXYGEN --version`
+    AX_COMPARE_VERSION([$DOXY_VERSION],[ge],[1.8],[doxyversion="yes"],[doxyversion="no"])
+    if test x"$doxyversion" = x"no";
+    then
+      AC_MSG_WARN([Your doxygen might be too old to work properly but will be tried.])
+    fi
+
+    if test x"$doclatex" = x"yes";
+    then
+      AC_CHECK_PROGS([PDFLATEX],[pdflatex])
+      if test -z "$PDFLATEX"  && test "$doclatex" = "yes";
+      then 
+        AC_MSG_WARN([Pdflatex not found - PDF documentation will not be generated (only latex files).])
+      fi
+    fi
+    
+    AC_CHECK_PROGS([DOT],[dot])
+    if test -z "$DOT"
+    then 
+      HAVE_DOT="NO"
+    else
+      HAVE_DOT="YES"
+    fi
+    AC_SUBST(HAVE_DOT)
+
+  fi
+fi
+
+AM_CONDITIONAL([HAVE_PDFLATEX],[test -n "$PDFLATEX"])
+AM_CONDITIONAL([HAVE_DOXYGEN], [test -n "$DOXYGEN"])
+AM_COND_IF([HAVE_DOXYGEN],
+           [AC_CONFIG_FILES([doc/Doxyfile])]
+           )
+
+echo
+echo "================================================================================"
+echo "===  Creating Makefiles                                                         " 
+echo "================================================================================"
+
+AC_DEFINE_UNQUOTED(COMPILE_CPPFLAGS,"$CPPFLAGS",[Flags used for preprocessor compilation])
+AC_DEFINE_UNQUOTED(COMPILE_CXXFLAGS,"$CXXFLAGS",[Flags used for c++ compilation])
+AC_DEFINE_UNQUOTED(COMPILE_LIBS,"$LIBS",[Flags used for linking])
+AC_DEFINE_UNQUOTED(COMPILE_LDFLAGS,"$LDFLAGS",[Flags used for libs search])
+

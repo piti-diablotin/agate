@@ -18,6 +18,16 @@ then
     depcomp \
     install-sh \
     missing \
+    Win_x86/Makefile.am \
+    Win_x86/Makefile.in \
+    configure.ac \
+    m4/ar-lib \
+    m4/compile \
+    m4/config.guess \
+    m4/config.sub \
+    m4/depcomp \
+    m4/install-sh \
+    m4/missing \
     src/*/Makefile \
     src/*/Makefile.in \
     src/*/Makefile.am \

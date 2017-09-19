@@ -221,7 +221,7 @@ namespace geometry {
    * @param scale Scaling factor
    * @return The scaled mat3d
    */
-  inline vec3d operator*(const mat3d mat, const vec3d& vec) {
+  inline vec3d operator*(const mat3d& mat, const vec3d& vec) {
     return vec3d({{
         mat[0]*vec[0]+mat[1]*vec[1]+mat[2]*vec[2],
         mat[3]*vec[0]+mat[4]*vec[1]+mat[5]*vec[2],
@@ -236,21 +236,26 @@ namespace geometry {
    * @param scale Scaling factor
    * @return The scaled mat3d
    */
-  inline vec3d operator*(const vec3d& vec, const mat3d mat) {
+  inline vec3d operator*(const vec3d& vec, const mat3d& mat) {
     return vec3d({{
         mat[0]*vec[0]+mat[3]*vec[1]+mat[6]*vec[2],
         mat[1]*vec[0]+mat[4]*vec[1]+mat[7]*vec[2],
         mat[2]*vec[0]+mat[5]*vec[1]+mat[8]*vec[2],
         }});
   }
-
-
-  /**
-   * Compute the angles between the axis (column) 1 -> (2,3) 2->(1,3) 3->(1,2)
-   * @param rprim The axis vectors
-   * @return The angles between all three vectors
+  /** 
+   * Multiply a matrix by a matrix
+   * @param mat1 The mat3d
+   * @param mat2 The mat3d
+   * @return The produc of mat1*mat2
    */
-  double angle(const vec3d& vec1, const vec3d& vec2);
+  inline mat3d operator*(const mat3d& mat1, const mat3d& mat2) {
+    return mat3d({{
+        mat1[0]*mat2[0]+mat1[1]*mat2[3]+mat1[2]*mat2[6], mat1[0]*mat2[1]+mat1[1]*mat2[4]+mat1[2]*mat2[7], mat1[0]*mat2[2]+mat1[1]*mat2[5]+mat1[2]*mat2[8],
+        mat1[3]*mat2[0]+mat1[4]*mat2[3]+mat1[5]*mat2[6], mat1[3]*mat2[1]+mat1[4]*mat2[4]+mat1[5]*mat2[7], mat1[3]*mat2[2]+mat1[4]*mat2[5]+mat1[5]*mat2[8],
+        mat1[6]*mat2[0]+mat1[6]*mat2[3]+mat1[8]*mat2[6], mat1[6]*mat2[1]+mat1[6]*mat2[4]+mat1[8]*mat2[7], mat1[6]*mat2[2]+mat1[6]*mat2[5]+mat1[8]*mat2[8],
+        }});
+  }
 
 
   /**
@@ -258,6 +263,14 @@ namespace geometry {
    * @param vec1 vector 1.
    * @param vec2 vector 2.
    * @return The angle between the two vectors
+   */
+  double angle(const vec3d& vec1, const vec3d& vec2);
+
+
+  /**
+   * Compute the angles between the axis (column) 1 -> (2,3) 2->(1,3) 3->(1,2)
+   * @param rprim The axis vectors
+   * @return The angles between all three vectors
    */
   vec3d angle(const mat3d& rprim);
 

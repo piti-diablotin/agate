@@ -93,10 +93,10 @@ void HistDataNC::readFromFile(const std::string& filename) {
         std::string(" instead of being between 4 and 8"),ERRDIV);
   }
 
-  if ( nc_inq_nvars(ncid, &varid) || varid < 12 ) {
+  if ( nc_inq_nvars(ncid, &varid) || varid < 11 ) {
     nc_close(ncid);
     throw EXCEPTION(std::string("Bad number of variables: ")+utils::to_string(varid)+
-        std::string(" instead of at least 12"),ERRABT);
+        std::string(" instead of at least 11"),ERRABT);
   }
 
   // Read dimensions.
@@ -439,9 +439,11 @@ void HistDataNC::readFromFile(const std::string& filename) {
       /**
        * READ TIME DATA
        */
+      int local_ncid;
       try {
         int local_ncid;
         bool has_spinat = !_spinat.empty();
+        bool has_entropy = true;
         if ( nc_open(_filename.c_str(), NC_NOWRITE, &local_ncid)) 
           throw EXCEPTION(std::string("File ")+_filename+" could not be correctly opened",ERRDIV);
         const auto chunksize = std::max((size_t)1,10*100000/(sizeof(double)*_natom*_xyz));
@@ -478,7 +480,15 @@ void HistDataNC::readFromFile(const std::string& filename) {
               get_var(local_ncid,start,count,&_time   [itime],"mdtime");
               get_var(local_ncid,start,count,&_etotal [itime],"etotal");
               get_var(local_ncid,start,count,&_ekin   [itime],"ekin");
-              get_var(local_ncid,start,count,&_entropy[itime],"entropy");
+              try {
+                if ( has_entropy )
+                  get_var(local_ncid,start,count,&_entropy[itime],"entropy");
+              }
+              catch ( Exception e ) {
+                e.ADD("Ignoring error",ERRWAR);
+                std::cerr << e.fullWhat() << std::endl;
+                has_entropy = false;
+              }
             }
           }
           else {
@@ -630,6 +640,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
           }
           _ntimeAvail += adjust_count;
         }
+        nc_close(local_ncid);
       } 
       catch (Exception &e) {
         std::cerr << e.fullWhat() << std::endl;
@@ -637,6 +648,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
           _ntimeAvail = 1;
           _ntime = 0;
         }
+        nc_close(local_ncid);
       }
     if ( _ntimeAvail == _ntime && _ntime > 1 ) {
       std::ostringstream thermo;
@@ -776,12 +788,24 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
     //fcart(time,natom,xyz)
     units = "Ha/bohr" ;
     mnemo = "atom Forces in CARTesian coordinates" ;
-    put_var(ncid,"fcart",units,mnemo,NC_DOUBLE,3,dimids,countp,&_fcart[tbegin*_natom*_xyz]);
+    if ( _fcart.size() < 3*_ntime*_natom){
+      auto f = _fcart;
+      f.resize(3*_ntime*_natom);
+      put_var(ncid,"fcart",units,mnemo,NC_DOUBLE,3,dimids,countp,&f[tbegin*_natom*_xyz]);
+    }
+    else
+      put_var(ncid,"fcart",units,mnemo,NC_DOUBLE,3,dimids,countp,&_fcart[tbegin*_natom*_xyz]);
 
     //fred(time,natom,xyz)
     units = "dimensionless" ;
     mnemo = "atom Forces in REDuced coordinates" ;
-    put_var(ncid,"fred",units,mnemo,NC_DOUBLE,3,dimids,countp,&_fcart[tbegin*_natom*_xyz]);
+    if ( _fcart.size() < 3*_ntime*_natom){
+      auto f = _fcart;
+      f.resize(3*_ntime*_natom);
+      put_var(ncid,"fred",units,mnemo,NC_DOUBLE,3,dimids,countp,&f[tbegin*_natom*_xyz]);
+    }
+    else
+      put_var(ncid,"fred",units,mnemo,NC_DOUBLE,3,dimids,countp,&_fcart[tbegin*_natom*_xyz]);
 
     //vel(time,natom,xyz)
     units = "bohr*Ha/hbar" ;
@@ -882,7 +906,6 @@ void HistDataNC::dump(HistData &hist, const std::string& filename, unsigned tbeg
   }
   else {
     HistDataNC histTmp(std::move(hist));
-
     histTmp.dump(filename,tbegin,tend);
     hist = std::move(histTmp);
   }

@@ -50,6 +50,9 @@ extern "C" {
 #  include "bind/findsym.hpp"
 #  include "io/cifparser.hpp"
 #endif
+#include "base/phys.hpp"
+#include "base/mendeleev.hpp"
+#include "base/geometry.hpp"
 #include "phonons/supercell.hpp"
 #include <memory>
 #include <utility>
@@ -281,8 +284,17 @@ HistData& HistData::operator=(HistData&& hist) {
   return *this;
 }
 
+void HistData::waitTime(unsigned t) const {
+  while(t >= _ntimeAvail && _ntimeAvail < _ntime) {
+#ifdef HAVE_CPPTHREAD_YIELD
+      std::this_thread::yield();
+#endif
+  }
+}
+
 //
 const double* HistData::getXcart(unsigned time, unsigned* natom) const {
+  this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for time ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
@@ -293,6 +305,7 @@ const double* HistData::getXcart(unsigned time, unsigned* natom) const {
 
 //
 const double* HistData::getXred(unsigned time, unsigned* natom) const {
+  this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for time ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
@@ -303,6 +316,7 @@ const double* HistData::getXred(unsigned time, unsigned* natom) const {
 
 //
 const double* HistData::getFcart(unsigned time, unsigned* natom) const {
+  this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for time ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
@@ -315,6 +329,7 @@ const double* HistData::getFcart(unsigned time, unsigned* natom) const {
 
 //
 const double* HistData::getAcell(unsigned time) const {
+  this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for time ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
@@ -323,6 +338,7 @@ const double* HistData::getAcell(unsigned time) const {
 
 //
 const double* HistData::getRprimd(unsigned time) const {
+  this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for time ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
@@ -333,6 +349,7 @@ const double* HistData::getRprimd(unsigned time) const {
 
 //
 double HistData::getEtotal(unsigned time) const {
+  this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for time ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
@@ -341,6 +358,7 @@ double HistData::getEtotal(unsigned time) const {
 
 //
 const double* HistData::getStress(unsigned time) const {
+  this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for stress ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
@@ -350,6 +368,7 @@ const double* HistData::getStress(unsigned time) const {
 //
 const double* HistData::getSpinat(unsigned time, unsigned* natom) const {
   if ( _ntime == 0 ) return nullptr;
+  this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for spinat ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
@@ -361,6 +380,7 @@ const double* HistData::getSpinat(unsigned time, unsigned* natom) const {
 
 //
 double HistData::getTime(unsigned time) const {
+  this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for time ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);

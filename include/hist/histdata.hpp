@@ -104,6 +104,8 @@ class HistData {
      */
     static std::vector<double> acf(std::vector<double>::const_iterator begin, std::vector<double>::const_iterator end, const int howmany);
 
+    void waitTime(unsigned t) const;
+
   public :
 
 

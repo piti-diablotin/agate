@@ -142,15 +142,6 @@ cat >> Makefile.am << EOF
 \$(top_builddir)/src/io/libio.a \
 \$(top_builddir)/src/bind/libbind.a \
 \$(top_builddir)/src/base/libbase.a
-
-EXTRA_DIST=animemd qanimemd
-
-depreciateddir=\$(bindir)
-if HAVE_QT
-depreciated_DATA=animemd qanimemd
-else
-depreciated_DATA=animemd 
-endif
 EOF
 #  for lib in $(find ../src -type d | sed -e '1d' -e '/qt/d')
 #  do

@@ -219,7 +219,7 @@ void Multibinit::readFromFile(const std::string& filename) {
     double det = _rprimd[0] * t1 + _rprimd[3] * t2 + _rprimd[6] * t3 ;
 
     //Make sure matrix is not singular
-    if (abs(det)>1.0E-16){
+    if (std::abs(det)>1.0E-16){
       double dd = 1/det;
       gprimd[0] = t1 * dd;
       gprimd[3] = t2 * dd;

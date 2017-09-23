@@ -40,6 +40,8 @@
 #include <fftw3.h>
 #endif
 
+using std::abs;
+
 //
 HistDataMD::HistDataMD() : HistData(),
   _ekin(),
@@ -510,7 +512,7 @@ std::list<std::vector<double>> HistDataMD::getPDOS(unsigned tbegin, unsigned ten
     std::copy(vacf->begin(),vacf->end(),&fft_in[u*n]);
   }
 
-#ifdef HAVE_FFTW3_THREADS
+#if defined(HAVE_OMP) && defined(HAVE_FFTW3_THREADS)
   fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
 

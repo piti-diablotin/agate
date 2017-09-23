@@ -756,7 +756,7 @@ void CanvasPos::drawSpins(unsigned batom) {
       const float nprod = sqrt(spiny*spiny+spinx*spinx);
       const float angle = ( (spinz<0.) ? 180.f+180.f/3.14f*asin(nprod*inv_nn) : -180.f/3.14f*asin(nprod*inv_nn) );
       const float scale=0.5f*length/nn;
-      const float tol = ( (abs(spinx)+abs(spiny)) > 0.001f ? 0.0f : 1.0f );
+      const float tol = ( (std::fabs(spinx)+std::fabs(spiny)) > 0.001f ? 0.0f : 1.0f );
 
       glTranslatef(x-spinx*scale,y-spiny*scale,z-spinz*scale);
       glRotatef(angle,spiny+tol,-spinx+tol,0.0f); // Keep the +1e-7 to avoid a rotation around (0,0,0)
@@ -1454,7 +1454,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     }
     _gplot->custom(tmp.str());
     if ( save == Graph::GraphSave::DATA ) { 
-      eigparser->dump(filename+".dat",EigParser::PRTKPT||EigParser::PRTIKPT);
+      eigparser->dump(filename+".dat",EigParser::PRTKPT|EigParser::PRTIKPT);
       save = Graph::GraphSave::NONE;
     }
   }

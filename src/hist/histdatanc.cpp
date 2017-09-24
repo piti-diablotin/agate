@@ -70,6 +70,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
 #ifndef HAVE_NETCDF
   throw EXCEPTION("NetCDF support is not available.\nConsider compiling the code with NetCDF support to read "+filename,ERRDIV);
 #else
+  using std::max;
 
   double dtion = 100.0;
   bool has_znucl, has_typat, has_spinat, has_dtion = false;
@@ -446,7 +447,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
         bool has_entropy = true;
         if ( nc_open(_filename.c_str(), NC_NOWRITE, &local_ncid)) 
           throw EXCEPTION(std::string("File ")+_filename+" could not be correctly opened",ERRDIV);
-        const auto chunksize = std::max((size_t)1,10*100000/(sizeof(double)*_natom*_xyz));
+        const auto chunksize = max((size_t)1,10*100000/(sizeof(double)*_natom*_xyz));
         size_t nloop = _ntime/chunksize+1;
         for ( size_t itime = 0,  iloop = 0 ; iloop < nloop ; ++iloop, itime+=chunksize ) {
 #ifdef     HAVE_CPPTHREAD
@@ -675,10 +676,11 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
     auto put_var = [](int ncid, const char* name, std::string &unit, std::string &mnemo, nc_type type, int ndims, const int* dimids, const size_t *countp, const void* data) {
       int varid;
       int rval;
-      size_t startp[ndims];
+      size_t startp[4];
       startp[0] = 0;
       startp[1] = 0;
       startp[2] = 0;
+	  startp[3] = 0;
       if ( (rval = nc_redef(ncid) ) )
         throw EXCEPTION(std::string("Error entering define mode for variable")+std::string(name)+std::string(" with error ")+std::string(nc_strerror(rval)),ERRABT);
       if ( (rval = nc_def_var(ncid,name,type,ndims,dimids,&varid) ) )

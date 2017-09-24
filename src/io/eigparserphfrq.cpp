@@ -44,7 +44,6 @@ void EigParserPHFRQ::readFromFile(const std::string& filename) {
 
   unsigned nband = -1;
   std::string tmp;
-  const geometry::vec3d kpt({{0.0,0.0,0.0}});
   double value=0.0;
 
   std::ifstream phfrq(filename.c_str(), std::ios::in);
@@ -71,7 +70,7 @@ void EigParserPHFRQ::readFromFile(const std::string& filename) {
     if ( nband != values.size() )
       throw EXCEPTION("Bad number of band",ERRABT);
     _eigens.push_back(std::move(values));
-    _kpts.push_back(kpt);
+    _kpts.push_back({{ 0.0,0.0,0.0 }});
   }
   phfrq.close();
   _filename = filename;

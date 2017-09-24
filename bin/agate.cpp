@@ -200,9 +200,6 @@ int main(int argc, char** argv) {
   std::ofstream fstdlog;
   std::ofstream fstderr;
 
-#ifdef _WIN32
-  _set_output_format(_TWO_DIGIT_EXPONENT);
-#endif
 
 #ifdef HAVE_FFTW3_THREADS
   fftw_init_threads();

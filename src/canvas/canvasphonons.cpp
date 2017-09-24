@@ -422,7 +422,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     config.x.resize(trajectory->ntimeAvail());
     Exception etmp;
 #pragma omp parallel for schedule(static), default(shared)
-    for ( unsigned itime = 0 ; itime < trajectory->ntimeAvail() ; ++itime ) {
+    for ( int itime = 0 ; itime < (int)trajectory->ntimeAvail() ; ++itime ) {
       config.x[itime]=itime;
       Supercell supercell(*trajectory,itime);
       supercell.setReference(superfirst);
@@ -500,7 +500,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     config.x.resize(trajectory->ntimeAvail());
     Exception etmp;
 #pragma omp parallel for schedule(static), default(shared), ordered
-    for ( unsigned itime = 0 ; itime < trajectory->ntimeAvail() ; ++itime ) {
+    for ( int itime = 0 ; itime < (int)trajectory->ntimeAvail() ; ++itime ) {
       config.x[itime]=itime;
       Supercell supercell(*trajectory,itime);
       supercell.setReference(superfirst);

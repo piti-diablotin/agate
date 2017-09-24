@@ -49,28 +49,29 @@
 #    define PACKAGE_NAME "AbiOut"
 #  endif
 #  ifndef PACKAGE_STRING
-#    define PACKAGE_STRING "AbiOut 0.0.5"
+#    define PACKAGE_STRING "AbiOut 0.0.7"
 #  endif
 #  ifndef PACKAGE_VERSION
-#    define PACKAGE_VERSION "0.0.5"
+#    define PACKAGE_VERSION "0.0.7"
 #  endif
 //#  define HAVE_CURL
-//#  define HAVE_EIGEN
-//#  define HAVE_NETCDF
+#  define HAVE_EIGEN
+#  define HAVE_NETCDF
 #  define HAVE_GL
-#  define HAVE_GLEXT
-#  define HAVE_GLU
-//#  define HAVE_GLFW3
-//#  define HAVE_GLFW3_DROP
-//#  define HAVE_LIBPNG
-//#  define HAVE_LIBJPEG
-//#  define HAVE_LIBXML2
-//#  define HAVE_CPPTHREAD
+//#  define HAVE_GLEXT
+//#  define HAVE_GLU
+#  define HAVE_GLFW3
+#  define HAVE_GLFW3_DROP
+#  define HAVE_LIBPNG
+#  define HAVE_LIBJPEG
+#  define HAVE_LIBXML2
+#  define HAVE_CPPTHREAD
 #  define HAVE_OMP
 //#  define HAVE_SPGLIB
 //#define HAVE_FREETYPE
 #  define _CRT_SECURE_NO_WARNINGS
 #  include <Windows.h>
+//#include <glad/glad.h>
 typedef long ssize_t;
 #define GL_UNSIGNED_INT_8_8_8_8 0x8035
 #define GL_MULTISAMPLE 0x809D

@@ -458,9 +458,9 @@ std::list<std::vector<double>> HistDataMD::getVACF(unsigned tbegin, unsigned ten
 
   std::vector<std::vector<double>> vacf_tmp(ntau,std::vector<double>(_znucl.size()+1,0.));
 #pragma omp parallel for
-  for ( unsigned itau = 0 ; itau < ntau ; ++itau ) {
+  for ( int itau = 0 ; itau < (int) ntau ; ++itau ) {
     auto &vacftau = vacf_tmp[itau];
-    const double shift = itau*3*_natom;
+    const unsigned shift = itau*3*_natom;
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
       for ( unsigned c = 0 ; c < 3 ; ++c ) {
         vacftau[0] += fullvacf[shift+iatom*3+c];

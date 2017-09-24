@@ -101,7 +101,7 @@ void Multibinit::readFromFile(const std::string& filename) {
 
         //Get number of type
         iatom = 0;
-        double amu [_natom];
+        std::vector<double> amu(_natom);
         for(i=0; i<int(_natom); i++){
           amu[i] = 0 ;
         }

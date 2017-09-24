@@ -140,10 +140,10 @@ Supercell::~Supercell() {
 //
 void Supercell::makeDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned imode, double amplitude, double phase) {
   using namespace geometry;
-  unsigned natom = db.natom();
+  unsigned natom = (unsigned) db.natom();
   if ( natom*static_cast<unsigned>(_dim[0]*_dim[1]*_dim[2]) != _natom )
     throw EXCEPTION("Hmm supercell and DispDB are incoherent",ERRDIV);
-  if ( _cellCoord.size() == 0 or _baseAtom.size() == 0 )
+  if (  _cellCoord.size() == 0  || _baseAtom.size() == 0 )
     throw EXCEPTION("Hmm supercell is not built ahead of a reference structure",ERRDIV);
   unsigned q = db.getQpt(qpt);
   auto mymode = db.getMode(q,imode);
@@ -208,7 +208,7 @@ void Supercell::findReference(const Dtset& dtset) {
   // Now find reference atom in the reference supercell
   // This might be very slow but is the easiest and should always work
 #pragma omp parallel for schedule(static)
-  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) { // For each supercell atom
+  for ( int iatom = 0 ; iatom < (int)_natom ; ++iatom ) { // For each supercell atom
     vec3d pos = _xcart[iatom];
     unsigned guess[3] = {0};
     // Reduce search area
@@ -406,7 +406,7 @@ std::vector<std::complex<double>> Supercell::filterDisp(const geometry::vec3d& q
   if ( qpt[1] < 0. )
     selecty = ny + selecty;
   if ( qpt[2] < 0. )
-    selectz *= -1.;
+    selectz *= -1;
 
 
   this->fft(disp);

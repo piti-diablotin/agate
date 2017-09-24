@@ -133,8 +133,11 @@ HistData::HistData(const HistData& hist) :
   }
 #endif
   _ntime = hist._ntime;
+#ifdef HAVE_CPPTHREAD
   _ntimeAvail.store(hist._ntimeAvail.load());
-
+#else
+  _ntimeAvail = hist._ntimeAvail;
+#endif
   _xcart = hist._xcart;
   _xred = hist._xred;
   _fcart = hist._fcart;
@@ -181,8 +184,11 @@ HistData::HistData(HistData&& hist) :
   }
 #endif
   _ntime = hist._ntime;
+#ifdef HAVE_CPPTHREAD
   _ntimeAvail.store(hist._ntimeAvail.load());
-
+#else
+  _ntimeAvail = hist._ntimeAvail;
+#endif
   _xcart = std::move(hist._xcart);
   _xred = std::move(hist._xred);
   _fcart = std::move(hist._fcart);
@@ -230,7 +236,11 @@ HistData& HistData::operator=(const HistData& hist) {
   }
 #endif
   _ntime = hist._ntime;
+#ifdef HAVE_CPPTHREAD
   _ntimeAvail.store(hist._ntimeAvail.load());
+#else
+  _ntimeAvail = hist._ntimeAvail;
+#endif
   _xcart = hist._xcart;
   _xred = hist._xred;
   _fcart = hist._fcart;
@@ -270,7 +280,11 @@ HistData& HistData::operator=(HistData&& hist) {
   }
 #endif
   _ntime = hist._ntime;
+#ifdef HAVE_CPPTHREAD
   _ntimeAvail.store(hist._ntimeAvail.load());
+#else
+  _ntimeAvail = hist._ntimeAvail;
+#endif
   _xcart = std::move(hist._xcart);
   _xred = std::move(hist._xred);
   _fcart = std::move(hist._fcart);
@@ -763,11 +777,13 @@ std::pair<std::vector<double>,std::vector<double>> HistData::getPDF(unsigned znu
       vxred[iatom*3+1] = xred[iatom][1];
       vxred[iatom*3+2] = xred[iatom][2];
     }
-#ifndef __INTEL_COMPILER
+#if !defined( __INTEL_COMPILER) && !defined(_WIN32)
 #pragma omp parallel for schedule(dynamic) collapse(2), default(shared), firstprivate(Rmax2)
+#else
+#pragma omp parallel for schedule(dynamic), firstprivate(Rmax2)
 #endif
-    for ( unsigned atom1 = 0 ; atom1 < typ1.size() ; ++atom1 ) {
-      for ( unsigned atom2 = 0 ; atom2 < typ2.size() ; ++atom2 ) {
+    for ( int atom1 = 0 ; atom1 < (int)typ1.size() ; ++atom1 ) {
+      for ( int atom2 = 0 ; atom2 < (int)typ2.size() ; ++atom2 ) {
         const unsigned iatom1 = typ1[atom1];
         const unsigned iatom2 = typ2[atom2];
         if ( iatom1 == iatom2 ) continue;
@@ -821,8 +837,8 @@ std::list<std::vector<double>> HistData::getMSD(unsigned tbegin,unsigned tend) c
   ntypat[0] = _natom;
   
   // Make time
-  const unsigned ntime = (tend-tbegin);
-  unsigned ntau = ntime/2;
+  const int ntime = (tend-tbegin);
+  int ntau = ntime/2;
   if ( ntime == 1 ) throw EXCEPTION("Need more than 1 time step",ERRDIV);
 
   // Remove periodicity
@@ -832,12 +848,16 @@ std::list<std::vector<double>> HistData::getMSD(unsigned tbegin,unsigned tend) c
   std::copy(_rprimd.begin(),_rprimd.begin()+9,&chkrprimd[0]);
   if ( geometry::det(chkrprimd) > 1e-6 ) {
     std::copy(_xred.begin()+(tbegin*3*_natom),_xred.begin()+(tend*3*_natom),fullxred.begin());
-    for ( unsigned itime = 1 ; itime < ntime ; ++itime ) {
+    for ( int itime = 1 ; itime < ntime ; ++itime ) {
       for ( unsigned coord = 0 ; coord < 9 ; ++coord )
         rprimd_av[coord] += _rprimd[itime*9+coord];
     }
+#ifndef _WIN32
 #pragma omp parallel for collapse(3)
-    for ( unsigned itime = 1 ; itime < ntime ; ++itime ) {
+#else
+#pragma omp parallel for
+#endif
+    for ( int itime = 1 ; itime < ntime ; ++itime ) {
       for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
           const double diff = fullxred[(itime*_natom+iatom)*3+coord]-fullxred[((itime-1)*_natom+iatom)*3+coord] + 0.5;
@@ -866,7 +886,7 @@ std::list<std::vector<double>> HistData::getMSD(unsigned tbegin,unsigned tend) c
 
   //Convert to cartesian
 #pragma omp parallel for firstprivate(rprimd_av)
-  for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
+  for ( int itime = 0 ; itime < ntime ; ++itime ) {
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
       const double a = fullxred[(itime*_natom+iatom)*3+0];
       const double b = fullxred[(itime*_natom+iatom)*3+1];
@@ -881,13 +901,13 @@ std::list<std::vector<double>> HistData::getMSD(unsigned tbegin,unsigned tend) c
     }
   }
 
-  for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
+  for ( int itime = 0 ; itime < ntime ; ++itime ) {
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
       S1[iatom] += 2*r2[itime*_natom+iatom];
     }
   }
 
-  for ( unsigned itime = 1 ; itime < ntau ; ++itime ) {
+  for ( int itime = 1 ; itime < ntau ; ++itime ) {
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
       const double q = S1[(itime-1)*_natom+iatom]-r2[(itime-1)*_natom+iatom]-r2[(ntime-itime)*_natom+iatom];
       S1[itime*_natom+iatom]=q;
@@ -899,7 +919,7 @@ std::list<std::vector<double>> HistData::getMSD(unsigned tbegin,unsigned tend) c
     throw EXCEPTION("Hmm something is wrong in computing MSD", ERRDIV);
 
 #pragma omp for
-  for ( unsigned itime = 0 ; itime < ntau ; ++itime ) {
+  for ( int itime = 0 ; itime < ntau ; ++itime ) {
     const double scaling = 1./(ntime-itime);
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
       double s2 = 0;
@@ -915,7 +935,7 @@ std::list<std::vector<double>> HistData::getMSD(unsigned tbegin,unsigned tend) c
     const double natom = ntypat[ityp] ;
     auto lmsd = msd.begin();
     std::advance(lmsd,ityp);
-    for ( unsigned itime = 0 ; itime < ntau ; ++itime ) {
+    for ( int itime = 0 ; itime < ntau ; ++itime ) {
       //#pragma omp atomic
       lmsd->at(itime) += (msd_tmp[itime][ityp]/(natom));
     }
@@ -1153,7 +1173,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       p->second.resize(tend-tbegin);
     }
 #pragma omp parallel for private(p)
-    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+    for ( int iatom = 0 ; iatom < (int)_natom ; ++iatom ) {
       p = xy.begin();
       std::advance(p,iatom);
       for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
@@ -1180,7 +1200,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     std::clog << std::endl << " -- Distance --" << std::endl;
     std::vector<double> distance(ntime);
 #pragma omp parallel for schedule(static)
-    for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
+    for ( int itime = tbegin ; itime < (int)tend ; ++itime ) {
       distance[itime-tbegin] = this->getDistance(iatom1,iatom2,itime);
     }
     y.push_back(std::move(distance));
@@ -1195,7 +1215,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     std::vector<double> volume(ntime);
 
 #pragma omp parallel for schedule(static)
-    for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
+    for ( int itime = tbegin ; itime < (int)tend ; ++itime ) {
       geometry::mat3d rprimd;
       std::copy(&_rprimd[itime*3*3],&_rprimd[itime*3*3+9],rprimd.begin());
       volume[itime-tbegin] = geometry::det(rprimd);
@@ -1214,7 +1234,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     std::vector<double> acell3(ntime);
 
 #pragma omp parallel for schedule(static)
-    for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
+    for ( int itime = tbegin ; itime < (int)tend ; ++itime ) {
       const double *rp = &_rprimd[itime*3*3];
       acell1[itime-tbegin] = std::sqrt(rp[0]*rp[0]+rp[3]*rp[3]+rp[6]*rp[6]);
       acell2[itime-tbegin] = std::sqrt(rp[1]*rp[1]+rp[4]*rp[4]+rp[7]*rp[7]);
@@ -1243,7 +1263,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       std::vector<double> gamma(ntime);
 
 #pragma omp parallel for schedule(static)
-      for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
+      for ( int itime = tbegin ; itime < (int)tend ; ++itime ) {
         geometry::mat3d rprim;
         std::copy(&_rprimd[itime*3*3],&_rprimd[itime*3*3+9],&rprim[0]);
         geometry::vec3d angles = geometry::angle(rprim);
@@ -1268,7 +1288,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
         + std::string("-") + utils::to_string(iatom3);
       std::vector<double> angle(ntime);
 #pragma omp parallel for schedule(static)
-      for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
+      for ( int itime = tbegin ; itime < (int)tend ; ++itime ) {
         angle[itime-tbegin] = this->getAngle(iatom1,iatom2,iatom3,itime);
       }
       y.push_back(std::move(angle));
@@ -1289,7 +1309,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     std::vector<double> s6(ntime);
     x.resize(_ntime);
 #pragma omp parallel for schedule(static)
-    for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
+    for ( int itime = tbegin ; itime < (int)tend ; ++itime ) {
       s1[itime-tbegin] = _stress[itime*6+0]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
       s2[itime-tbegin] = _stress[itime*6+1]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
       s3[itime-tbegin] = _stress[itime*6+2]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
@@ -1485,7 +1505,7 @@ void HistData::periodicBoundaries(bool toPeriodic) {
   if ( toPeriodic ) {
     // Impose periodicity
 #pragma omp for schedule(static)
-    for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
+    for ( int itime = 0 ; itime < (int)_ntime ; ++itime ) {
       double * xredT = &_xred[itime*_natom*3];
       for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
@@ -1498,7 +1518,7 @@ void HistData::periodicBoundaries(bool toPeriodic) {
   else {
     // Remove periodicity
 #pragma omp for schedule(static)
-    for ( unsigned itime = 1 ; itime < _ntime ; ++itime ) {
+    for ( int itime = 1 ; itime < (int)_ntime ; ++itime ) {
       for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
           const double diff = _xred[(itime*_natom+iatom)*3+coord]-_xred[((itime-1)*_natom+iatom)*3+coord] + 0.5;
@@ -1508,7 +1528,7 @@ void HistData::periodicBoundaries(bool toPeriodic) {
     }
   }
 #pragma omp for schedule(static)
-  for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
+  for ( int itime = 0 ; itime < (int)_ntime ; ++itime ) {
     for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
       _xcart[itime*3*_natom+iatom*3  ] = _rprimd[itime*9+0]*_xred[itime*3*_natom+iatom*3] + _rprimd[itime*9+1]*_xred[itime*3*_natom+iatom*3+1] + _rprimd[itime*9+2]*_xred[itime*3*_natom+iatom*3+2];
       _xcart[itime*3*_natom+iatom*3+1] = _rprimd[itime*9+3]*_xred[itime*3*_natom+iatom*3] + _rprimd[itime*9+4]*_xred[itime*3*_natom+iatom*3+1] + _rprimd[itime*9+5]*_xred[itime*3*_natom+iatom*3+2];
@@ -1538,7 +1558,7 @@ void HistData::centroid() {
   std::vector<double> spinat(_ntime*_natom*3,0);
 
 #pragma omp for schedule(static)
-  for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
+  for ( int itime = 0 ; itime < (int)_ntime ; ++itime ) {
     for ( unsigned img = 0 ; img < _nimage ; ++img ) {
       for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
@@ -1572,7 +1592,7 @@ std::list<std::vector<double>> HistData::getGyration(unsigned tbegin,unsigned te
     ++ntypat[typat-1];
 
 #pragma omp for schedule(static)
-  for ( unsigned t = tbegin ; t < tend ; ++t ) {
+  for ( int t = tbegin ; t < (int)tend ; ++t ) {
     //Compute centroid
     std::vector<double> rc(natomImg*_xyz,0);
     const double *xcart = &_xcart[t*_natom*_xyz];
@@ -1655,8 +1675,12 @@ std::list<std::vector<double>> HistData::getPACF(unsigned tbegin, unsigned tend)
       for ( unsigned coord = 0 ; coord < 9 ; ++coord )
         rprimd_av[coord] += _rprimd[itime*9+coord];
     }
+#ifndef _WIN32
 #pragma omp parallel for collapse(3)
-    for ( unsigned itime = 1 ; itime < ntime ; ++itime ) {
+#else
+#pragma omp parallel for
+#endif
+	for ( int itime = 1 ; itime < (int)ntime ; ++itime ) {
       for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
           const double diff = fullxred[(itime*_natom+iatom)*3+coord]-fullxred[((itime-1)*_natom+iatom)*3+coord] + 0.5;
@@ -1676,8 +1700,12 @@ std::list<std::vector<double>> HistData::getPACF(unsigned tbegin, unsigned tend)
 
 
   std::vector<double> average(3*_natom,0); // time == tbegin
+#ifndef _WIN32
 #pragma omp parallel for collapse(2)
-  for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
+#else
+#pragma omp parallel for
+#endif
+  for ( int itime = 0 ; itime < (int)ntime ; ++itime ) {
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
       const double a = fullxred[(itime*_natom+iatom)*3+0];
       const double b = fullxred[(itime*_natom+iatom)*3+1];
@@ -1694,7 +1722,7 @@ std::list<std::vector<double>> HistData::getPACF(unsigned tbegin, unsigned tend)
   {
     std::vector<double> averageLoc(3*_natom,0); // time == tbegin
 #pragma omp for
-    for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
+    for ( int itime = 0 ; itime < (int)ntime ; ++itime ) {
       for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
         averageLoc[iatom*3+0] += fullxred[(itime*_natom+iatom)*3+0]*inv_ntime;
         averageLoc[iatom*3+1] += fullxred[(itime*_natom+iatom)*3+1]*inv_ntime;
@@ -1709,7 +1737,7 @@ std::list<std::vector<double>> HistData::getPACF(unsigned tbegin, unsigned tend)
   }
 
 #pragma omp parallel for
-  for ( unsigned time = 0 ; time < ntime ; ++time ) {
+  for ( int time = 0 ; time < (int)ntime ; ++time ) {
     for ( unsigned val = 0 ; val < 3*_natom ; ++val ) {
       fullxred[time*3*_natom+val] -= average[val];
     }
@@ -1738,9 +1766,9 @@ std::list<std::vector<double>> HistData::getPACF(unsigned tbegin, unsigned tend)
 
   std::vector<std::vector<double>> pacf_tmp(ntau,std::vector<double>(_znucl.size()+1,0.));
 #pragma omp parallel for
-  for ( unsigned itau = 0 ; itau < ntau ; ++itau ) {
+  for ( int itau = 0 ; itau < (int)ntau ; ++itau ) {
     auto &pacftau = pacf_tmp[itau];
-    const double shift = itau*3*_natom;
+    const int shift = itau*3*_natom;
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
       for ( unsigned c = 0 ; c < 3 ; ++c ) {
         pacftau[0] += fullpacf[shift+iatom*3+c];
@@ -1763,6 +1791,7 @@ std::list<std::vector<double>> HistData::getPACF(unsigned tbegin, unsigned tend)
 
 //
 void HistData::decorrelate(unsigned tbegin, unsigned tend, unsigned ntime, double T, double mu, unsigned step) {
+  using std::min;
   try {
     HistData::checkTimes(tbegin,tend);
   }
@@ -1873,7 +1902,7 @@ void HistData::decorrelate(unsigned tbegin, unsigned tend, unsigned ntime, doubl
       setHist(hist,toRemove,toAdd);
       E = computeE(hist);
       const double rand = unifor(generator);
-      const double proba = std::min(1.,std::exp(-(E-E0)/Tl));
+      const double proba = min(1.,std::exp(-(E-E0)/Tl));
       if ( proba > rand ) {
         E0 = E;
         constant = 0;

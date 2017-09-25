@@ -1139,97 +1139,6 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       throw e;
     }
   }
-  else if ( token == "tdep" ) {
-    if ( _histdata == nullptr ) 
-      throw EXCEPTION("No data loaded",ERRDIV);
-    
-    std::string line;
-    std::getline(stream,line);
-    stream.clear();
-    ConfigParser parser;
-    parser.setContent(line);
-
-    Tdep tdep;
-
-    HistDataMD *histmd;
-    bool has_unitcell = false;
-    if ( ( histmd = dynamic_cast<HistDataMD*>(_histdata.get()) ) ) {
-      try {
-        tdep.supercell(histmd);
-        has_unitcell = true;
-      }
-      catch ( Exception &e ) {
-        std::cerr << e.fullWhat() << std::endl;
-      }
-    }
-    else
-      throw EXCEPTION("Not a valid Hist file",ERRDIV);
-
-    try {
-      ( parser.getToken<bool>("debug") ) ? tdep.mode(Tdep::Mode::Debug) : tdep.mode(Tdep::Mode::Normal);
-    }
-    catch (...) {
-      tdep.mode(Tdep::Mode::Normal);
-    }
-
-    try {
-      std::string unitcell = parser.getToken<std::string>("unitcell");
-      auto uc = HistData::getHist(unitcell,true);
-      tdep.unitcell(uc,0);
-      delete uc;
-    }
-    catch ( Exception &e ) {
-      if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
-        e.ADD("Error with the unitcell definition",ERRABT);
-        throw e;
-      }
-      else if ( !has_unitcell && e.getReturnValue() == ConfigParser::ERFOUND ) {
-        e.add("Set the unitcell with the keyword unitcell FILENAME");
-        throw e;
-      }
-    }
-    tdep.tbegin(_tbegin);
-    tdep.tend(_tend);
-
-    /*
-    try {
-      auto multi = parser.getToken<double>("multiplicity",9);
-      geometry::mat3d m;
-      m[0] = multi[0];
-      m[3] = multi[1];
-      m[6] = multi[2];
-      m[1] = multi[3];
-      m[4] = multi[4];
-      m[5] = multi[5];
-      m[2] = multi[6];
-      m[7] = multi[7];
-      m[8] = multi[8];
-      tdep.multiplicity(m);
-    }
-    catch (Exception &e) {
-      if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
-        e.ADD("multiplicity could not be correctly read",ERRABT);
-        throw e;
-      }
-    }
-    */
-    tdep.tdep();
-    auto save = _info;
-    HistDataDtset *uc = new HistDataDtset(tdep.unitcell());
-    this->setHist(*uc);
-    _info = save;
-    std::stringstream info("band phonon-bands.yaml");
-    try {
-      if ( _gplot == nullptr ) 
-        _gplot.reset(new Gnuplot);
-      this->plot(_tbegin, _tend,info,Graph::GraphSave::NONE);
-    }
-    catch ( Exception &e ) {
-      e.ADD("Unable to plot with gnuplot.\nInstead, writing data.", ERRWAR);
-      std::cerr << e.fullWhat() << std::endl;
-      _gplot.reset(nullptr);
-    }
-  }
   else if ( token == "w" || token == "write" ) {
     if ( _histdata == nullptr ) 
       throw EXCEPTION("No data loaded",ERRDIV);
@@ -1456,6 +1365,81 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     if ( save == Graph::GraphSave::DATA ) { 
       eigparser->dump(filename+".dat",EigParser::PRTKPT||EigParser::PRTIKPT);
       save = Graph::GraphSave::NONE;
+    }
+  }
+  else if ( function == "tdep" ) {
+    if ( _histdata == nullptr ) 
+      throw EXCEPTION("No data loaded",ERRDIV);
+    
+    std::string line;
+    std::getline(stream,line);
+    stream.clear();
+    ConfigParser parser;
+    parser.setContent(line);
+
+    std::clog << std::endl << " -- TDEP --" << std::endl;
+
+    Tdep tdep;
+
+    HistDataMD *histmd;
+    bool has_unitcell = false;
+    if ( ( histmd = dynamic_cast<HistDataMD*>(_histdata.get()) ) ) {
+      try {
+        tdep.supercell(histmd);
+        has_unitcell = true;
+      }
+      catch ( Exception &e ) {
+        std::cerr << e.fullWhat() << std::endl;
+      }
+    }
+    else
+      throw EXCEPTION("Not a valid Hist file",ERRDIV);
+
+    try {
+      ( parser.getToken<bool>("debug") ) ? tdep.mode(Tdep::Mode::Debug) : tdep.mode(Tdep::Mode::Normal);
+    }
+    catch (...) {
+      tdep.mode(Tdep::Mode::Normal);
+    }
+
+    try {
+      std::string unitcell = parser.getToken<std::string>("unitcell");
+      auto uc = HistData::getHist(unitcell,true);
+      tdep.unitcell(uc,0);
+      delete uc;
+    }
+    catch ( Exception &e ) {
+      if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+        e.ADD("Error with the unitcell definition",ERRABT);
+        throw e;
+      }
+      else if ( !has_unitcell && e.getReturnValue() == ConfigParser::ERFOUND ) {
+        e.add("Set the unitcell with the keyword unitcell FILENAME");
+        throw e;
+      }
+    }
+    tdep.tbegin(_tbegin);
+    tdep.tend(_tend);
+
+    std::clog << std::endl << "Running TDEP, this can take some time." << std::endl;
+    tdep.tdep();
+    std::clog << std::endl << "OK." << std::endl;
+
+    auto save = _info;
+    HistDataDtset *uc = new HistDataDtset(tdep.unitcell());
+    this->setHist(*uc);
+    _info = save;
+    std::stringstream info("band phonon-bands.yaml "+line);
+    try {
+      if ( _gplot == nullptr ) 
+        _gplot.reset(new Gnuplot);
+      this->plot(_tbegin, _tend,info,Graph::GraphSave::NONE);
+      return;
+    }
+    catch ( Exception &e ) {
+      e.ADD("Unable to plot with gnuplot.\nInstead, writing data.", ERRWAR);
+      std::cerr << e.fullWhat() << std::endl;
+      _gplot.reset(nullptr);
     }
   }
 

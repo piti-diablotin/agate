@@ -1113,7 +1113,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     unsigned coordy = yaxis-'x';
     auto &pos = _xcart;
 
-    filename = "Posisions" + xaxis;
+    filename = std::string("Posisions") + xaxis;
     filename += yaxis;
     xlabel = "Positions X[Bohr]";
     ylabel = "Positions Y[Bohr]";
@@ -1415,7 +1415,7 @@ std::vector<double> HistData::acf(std::vector<double>::const_iterator begin, std
     fft_in[u] = 0;
   }
 
-#ifdef HAVE_FFTW3_THREADS
+#if defined(HAVE_OMP) && defined(HAVE_FFTW3_THREADS)
   fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
 

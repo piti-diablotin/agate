@@ -195,3 +195,59 @@ EigParser* EigParser::getEigParser(const std::string& file){
   throw eloc;
   return nullptr;
 }
+
+//
+//
+std::string EigParser::dump(unsigned options) const {
+  std::ostringstream str;
+  unsigned nkpt = _kpts.size();
+  unsigned nspin = ( _hasSpin ? 2 : 1 );
+  const unsigned w=16;
+
+  if ( _hasSpin ) {
+    nkpt /= 2;
+    if ( nkpt*2 != _kpts.size() )
+      throw EXCEPTION("Non-consistent data : number of bands different for spin-up and spin-down",ERRABT);
+  }
+
+
+  //Impose right alignment with 5 digit precision as floating point numbers.
+  str.setf(std::ios::right,std::ios::adjustfield);
+  str.setf(std::ios::fixed,std::ios::floatfield);
+  str.precision(8);
+  //Write header
+
+  str << "#";
+  if ( options & PRTIKPT )
+    str << std::setw(w) << "ikpt";
+  if ( options & PRTKPT ) {
+    str << std::setw(w) << "kx";
+    str << std::setw(w) << "ky";
+    str << std::setw(w) << "kz";
+  }
+  str << std::setw(w) << "length";
+  for ( unsigned ispin = 0 ; ispin < nspin ; ++ispin ) {
+    std::string prefix = ( _hasSpin ? ( ispin == 0 ? "band-up " : "band-down " ) : "band " );
+    for ( unsigned i = 1; i <= _nband ; ++i ) 
+      str << std::setw(w) << prefix+utils::to_string(i);
+  }
+  str << std::endl;
+
+  for ( unsigned ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
+    str << " ";
+    if ( options & PRTIKPT )
+      str << std::setw(w) << ikpt+1;
+    if ( options & PRTKPT ) {
+      str << std::setw(w) << _kpts[ikpt][0];
+      str << std::setw(w) << _kpts[ikpt][1];
+      str << std::setw(w) << _kpts[ikpt][2];
+    }
+    str << std::setw(w) << _lengths[ikpt];
+    for ( unsigned ispin = 0 ; ispin < nspin ; ++ispin ) {
+      for ( unsigned i = 0; i < _nband ; ++i ) 
+        str << std::setw(w) << _eigens[ikpt+ispin*nkpt][i];
+    }
+    str << std::endl;
+  }
+  return str.str();
+}

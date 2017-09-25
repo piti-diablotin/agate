@@ -62,6 +62,8 @@
 #include "canvas/canvasrot.hpp"
 #include "canvas/canvasphonons.hpp"
 
+using std::abs;
+
 std::queue<unsigned int> Window::_inputChar; ///< Store all character dropped by the glfw callback function.
 
 Window::Window(pCanvas &canvas, const int width, const int height) :

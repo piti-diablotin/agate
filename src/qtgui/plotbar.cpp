@@ -50,7 +50,8 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   _vacf(nullptr),
   _pdos(nullptr),
   _msd(nullptr),
-  _pacf(nullptr)
+  _pacf(nullptr),
+  _tdep(nullptr)
 {
   _plotBar = new QToolBar(this);
   //_plotBar->setFixedHeight(40);
@@ -85,6 +86,7 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   _pdos = new QAction("PDOS",_plotBar); _vacf->setToolTip("Phonon Density of States");
   _msd = new QAction("MSD",_plotBar); _vacf->setToolTip("Mean Square Displacements");
   _pacf = new QAction("PACF",_plotBar); _vacf->setToolTip("Position autocorrelation function");
+  _tdep = new QAction("TDEP",_plotBar); _vacf->setToolTip("Phonons");
 
   _plotBar->addAction(_acell);
   _plotBar->addAction(_angle);
@@ -104,6 +106,7 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   _plotBar->addAction(_entropy);
   _plotBar->addAction(_vacf);
   _plotBar->addAction(_pdos);
+  _plotBar->addAction(_tdep);
 
   connect(_choice,SIGNAL(currentIndexChanged(int)),this,SLOT(changeAction(int)));
   connect(_temperature,SIGNAL(triggered()),this,SLOT(plotTemperature()));
@@ -123,6 +126,7 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   connect(_pdos,SIGNAL(triggered()),this,SLOT(plotPdos()));
   connect(_msd,SIGNAL(triggered()),this,SLOT(plotMsd()));
   connect(_pacf,SIGNAL(triggered()),this,SLOT(plotPacf()));
+  connect(_tdep,SIGNAL(triggered()),this,SLOT(plotTdep()));
 
   QWidget *hSpacer = new QWidget(this);
   hSpacer->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
@@ -162,6 +166,7 @@ void PlotBar::refreshButtons(GLWidget *glwidget) {
     _entropy->setEnabled(thermo);
     _vacf->setEnabled(thermo);
     _pdos->setEnabled(thermo);
+    _tdep->setEnabled(thermo);
   }
   else {
     this->hide();
@@ -259,6 +264,10 @@ void PlotBar::plotMsd() {
 
 void PlotBar::plotPacf() {
   emit(sentCommand(_action+" pacf"));
+}
+
+void PlotBar::plotTdep() {
+  emit(sentCommand(_action+" tdep"));
 }
 
 void PlotBar::changeAction(int index) {

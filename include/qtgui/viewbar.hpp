@@ -85,6 +85,7 @@ class ViewBar : public QWidget {
     QAction *_fg;
     QAction *_refresh;
     QAction *_dump;
+    QAction *_dumphist;
     QAction *_dumpxyz;
     QAction *_writeDtset;
     QAction *_writePoscar;
@@ -128,6 +129,7 @@ class ViewBar : public QWidget {
     void writeCif();
     void dump();
     void dumpxyz();
+    void dumphist();
     void changePath(QString path);
 
   signals :

@@ -419,6 +419,7 @@ void Canvas::help(std::ostream &out) {
   out << setw(40) << ":dump filename" << setw(59) << "Dump the full history in the original format (_HIST,XYZ,...) if available." << endl;
   out << setw(40) << ":dumpxyz filename" << setw(59) << "Dump the full history in the xyz format." << endl;
   out << setw(40) << ":dumphist filename" << setw(59) << "Dump the full history in the _HIST format." << endl;
+  out << setw(40) << ":periodic (0|1)" << setw(59) << "Move all the atoms inside the celle (1) or make a continuous trajectory (0)" << endl;
   out << setw(40) << ":(plot|print|data) FUNCTION" << setw(59) << "Extract information from the MD simulation." << endl;
   out << setw(40) << "" << setw(59) << "\"plot\" display a gnuplot (if available) graph." << endl;
   out << setw(40) << "" << setw(59) << "\"print\" display a gnuplot (if available) graph and save it into a ps file." << endl;
@@ -430,8 +431,8 @@ void Canvas::help(std::ostream &out) {
   out << setw(45) << "" << setw(59) << "V: Volume" << endl;
   out << setw(45) << "" << setw(59) << "acell: Lattice parameters" << endl;
   out << setw(45) << "" << setw(59) << "angle: Lattice angles" << endl;
-  out << setw(45) << "" << setw(59) << "angle id1 id2 id3: angle between atoms id1 id2 and id3" << endl;
-  out << setw(45) << "" << setw(59) << "gyro: The gyroscopic tensor for each type of atom" << endl;
+  out << setw(45) << "" << setw(59) << "angle id1 id2 id3: angle between atoms id1 id2 and id3." << endl;
+  out << setw(45) << "" << setw(59) << "gyration: The gyration tensor for each type of atom (if PIMD)." << endl;
   out << setw(45) << "" << setw(59) << "distance id1 id2: distance between atoms id1 and id2" << endl;
   out << setw(45) << "" << setw(59) << "stress: Stress tensor" << endl;
   out << setw(45) << "" << setw(59) << "ekin: Kinetic energy" << endl;

@@ -89,6 +89,7 @@ class PlotBar : public QWidget {
     QAction *_pdos;
     QAction *_msd;
     QAction *_pacf;
+    QAction *_tdep;
 
   public :
 
@@ -124,6 +125,7 @@ class PlotBar : public QWidget {
     void plotPdos();
     void plotMsd();
     void plotPacf();
+    void plotTdep();
 
     void changeAction(int);
 

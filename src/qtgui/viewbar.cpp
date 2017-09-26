@@ -46,6 +46,7 @@ ViewBar::ViewBar(QWidget *parent) : QWidget(parent),
   _fg(nullptr),
   _refresh(nullptr),
   _dump(nullptr),
+  _dumphist(nullptr),
   _dumpxyz(nullptr),
   _writeDtset(nullptr),
   _writePoscar(nullptr),
@@ -75,7 +76,9 @@ ViewBar::ViewBar(QWidget *parent) : QWidget(parent),
   _refresh= new QAction(QIcon(":/refresh.png"),QString("Refresh"),_viewBar);
   QMenu *_dumpMenu = new QMenu(this);
   _dump = new QAction(QIcon(":/dump.png"),QString("Create new history file in the current format(_HIST/xyz)"),_viewBar);
+  _dumphist = new QAction(QIcon(":/dump.png"),QString("Export to _HIST file format"),_viewBar);
   _dumpxyz = new QAction(QIcon(":/dump.png"),QString("Export to xyz file format"),_viewBar);
+  _dumpMenu->addAction(_dumphist);
   _dumpMenu->addAction(_dumpxyz);
   _dump->setMenu(_dumpMenu);
 
@@ -156,6 +159,7 @@ ViewBar::ViewBar(QWidget *parent) : QWidget(parent),
   connect(_writePoscar,SIGNAL(triggered()),this,SLOT(writePoscar()));
   connect(_writeCif,SIGNAL(triggered()),this,SLOT(writeCif()));
   connect(_dump,SIGNAL(triggered()),this,SLOT(dump()));
+  connect(_dumphist,SIGNAL(triggered()),this,SLOT(dumphist()));
   connect(_dumpxyz,SIGNAL(triggered()),this,SLOT(dumpxyz()));
 }
 
@@ -313,6 +317,16 @@ void ViewBar::dump() {
   auto name = QFileDialog::getSaveFileName(this, "Save File",_currentPath);
   if ( !name.isEmpty() ) {
     emit(sentCommand(":dump "+name.toStdString()));
+    int pos = name.lastIndexOf(QRegExp("[/\\\\]"));
+    _currentPath = name.left(pos+1);
+    emit(changedPath(_currentPath));
+  }
+}
+
+void ViewBar::dumphist() {
+  auto name = QFileDialog::getSaveFileName(this, "Save File",_currentPath);
+  if ( !name.isEmpty() ) {
+    emit(sentCommand(":dumphist "+name.toStdString()));
     int pos = name.lastIndexOf(QRegExp("[/\\\\]"));
     _currentPath = name.left(pos+1);
     emit(changedPath(_currentPath));

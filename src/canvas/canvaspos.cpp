@@ -1493,5 +1493,5 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(border|name|znucl|id)" << endl;
   out << setw(40) << ":spin COMPONENTS" << setw(59) << "Specify what component of the spin to draw (x,y,z,xy,yz,xz,xyz)" << endl;
   out << setw(40) << ":spg or :spacegroup [tol]" << setw(59) << "Get the space group number and name. Tol is the tolerance for the symmetry finder." << endl;
-  out << setw(40) << ":w or :write (dtset|poscar|cif) filename" << setw(59) << "Write the current structure in the desired format into filename file." << endl;
-}
+  out << setw(40) << ":w or :write (dtset|poscar|cif) filename [primitive]" << setw(59) << "Write the current structure in the desired format into filename file." << endl;
+  out << setw(40) << "" << setw(59) << "Add the keyword primitive to save a primitive cell of the given current structure. << endl;

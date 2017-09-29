@@ -154,6 +154,7 @@ void Supercell::makeDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned
     const double qR_theta = 2.*phys::pi*dot(qpt,R)+phase;
     vec3d Re = {{ mymode[iatomUC*3].real(),mymode[iatomUC*3+1].real(),mymode[iatomUC*3+2].real() }};
     vec3d Im = {{ mymode[iatomUC*3].imag(),mymode[iatomUC*3+1].imag(),mymode[iatomUC*3+2].imag() }};
+    //std::cerr << iatom << " " << mymode[iatomUC*3] << " " << mymode[iatomUC*3+1] << " " << mymode[iatomUC*3+2] << std::endl;
     _xcart[iatom] += (Re*std::cos(qR_theta)-Im*std::sin(qR_theta))*amplitude;
   }
   _xred = geometry::changeBasis(_rprim, _xcart);

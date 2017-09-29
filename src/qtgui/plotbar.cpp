@@ -158,9 +158,11 @@ void PlotBar::makeConnexions(GLWidget *glwidget) {
 void PlotBar::refreshButtons(GLWidget *glwidget) {
   auto hist = glwidget->getCanvas()->histdata();
   //this->setEnabled(hist!=nullptr);
+  int natomImg = 0;
   if ( hist != nullptr ) {
     this->show();
     _natom = hist->natom();
+    natomImg = _natom / hist->nimage();
     bool thermo = hist->hasThermo();
     _temperature->setEnabled(thermo);
     _pression->setEnabled(thermo);
@@ -176,9 +178,10 @@ void PlotBar::refreshButtons(GLWidget *glwidget) {
   else {
     this->hide();
     _natom = 0;
+    natomImg = 0;
   }
-  _angleAtoms->setEnabled((_natom > 2));
-  _distance->setEnabled((_natom > 1));
+  _angleAtoms->setEnabled((natomImg > 2));
+  _distance->setEnabled((natomImg > 1));
 }
 
 void PlotBar::plotTemperature() {

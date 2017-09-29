@@ -54,6 +54,7 @@ void HistDataDtset::readFromFile(const std::string& filename) {
     dtset = new Dtset;
     ConfigParser parser(filename);
     unsigned nimage = 0;
+    unsigned imgmov = 0;
     try {
       parser.parse();
       try {
@@ -62,6 +63,15 @@ void HistDataDtset::readFromFile(const std::string& filename) {
       catch ( Exception &e ) {
         nimage = 1;
         (void)e;
+      }
+      if ( nimage > 1 ) {
+        try {
+          imgmov = parser.getToken<unsigned>("imgmov");
+        }
+        catch ( Exception &e ) {
+          imgmov = 13;
+          (void)e;
+        }
       }
       dtset->readConfig(parser);
     }
@@ -96,8 +106,25 @@ void HistDataDtset::readFromFile(const std::string& filename) {
 
     this->buildFromDtset(*dtset);
     delete dtset;
-    _nimage = nimage;
     if ( nimage > 1 ) {
+      bool imageIsTime = true;
+      switch ( imgmov ) {
+        //string
+        case 2:
+          // NEB
+        case 5:
+          imageIsTime = true;
+          std::clog << "Reading String/NEB last time step only" << std::endl;
+          break;
+          //PIMD  Langevin
+        case 9:
+          //PIMD  Nose Hoover
+        case 13:
+          _nimage = nimage;
+          imageIsTime = false;
+          std::clog << "Reading PIMD" << std::endl;
+          break;
+      }
       std::clog << "Building images";
       for ( unsigned img = 2 ; img <= nimage ; ++ img ) {
         Dtset dtsetimg;
@@ -119,6 +146,20 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         _etotal[img-1] = etot;
       }
       std::clog << std::endl;
+      if ( !imageIsTime ) {
+        _ntime = 1;
+        _typat.resize(_natom*nimage);
+        for ( unsigned img = 1 ; img < nimage ; ++img ) {
+          std::copy(&_typat[0],&_typat[_natom],&_typat[_natom*img]);
+        }
+        _natom *= nimage;
+        _acell.resize(3);
+        _rprimd.resize(9);
+        _etotal.resize(1);
+        _time.resize(1);
+        _stress.resize(6);
+        _fcart.resize(0);
+      }
     }
 
   }

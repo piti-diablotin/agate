@@ -1543,8 +1543,6 @@ void HistData::centroid() {
 
   std::vector<double> xcart (_ntime*_natom*3,0);
   std::vector<double> xred  (_ntime*_natom*3,0);
-  std::vector<double> fcart (_ntime*_natom*3,0);
-  std::vector<double> spinat(_ntime*_natom*3,0);
 
 #pragma omp for schedule(static)
   for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
@@ -1555,16 +1553,46 @@ void HistData::centroid() {
           const unsigned myimg = itime*_natom*_nimage*3+_natom*img*3+iatom*3+coord;
           xcart [center] += _xcart [myimg]*inv_nimage;
           xred  [center] += _xred  [myimg]*inv_nimage;
-          fcart [center] += _fcart [myimg]*inv_nimage;
-          spinat[center] += _spinat[myimg]*inv_nimage;
         }
       }
     }
   } 
   _xcart = std::move(xcart);
   _xred  = std::move(xred );
-  _fcart = std::move(fcart);
-  _spinat= std::move(spinat);
+
+  if ( _fcart.size() == _ntime*3*_natom*_nimage ) {
+    std::vector<double> fcart (_ntime*_natom*3,0);
+#pragma omp for schedule(static)
+    for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
+      for ( unsigned img = 0 ; img < _nimage ; ++img ) {
+        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+          for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+            const unsigned center = itime*_natom*3+iatom*3+coord;
+            const unsigned myimg = itime*_natom*_nimage*3+_natom*img*3+iatom*3+coord;
+            fcart [center] += _fcart [myimg]*inv_nimage;
+          }
+        }
+      }
+    } 
+    _fcart = std::move(fcart);
+  }
+
+  if ( _spinat.size() == _ntime*3*_natom*_nimage ) {
+    std::vector<double> spinat(_ntime*_natom*3,0);
+#pragma omp for schedule(static)
+    for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
+      for ( unsigned img = 0 ; img < _nimage ; ++img ) {
+        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+          for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+            const unsigned center = itime*_natom*3+iatom*3+coord;
+            const unsigned myimg = itime*_natom*_nimage*3+_natom*img*3+iatom*3+coord;
+            spinat[center] += _spinat[myimg]*inv_nimage;
+          }
+        }
+      }
+    } 
+    _spinat= std::move(spinat);
+  }
   _nimage = 1;
 }
 

@@ -377,17 +377,22 @@ void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
 
   // Bonds
   if ( _hasHatom ) {
-    for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
-      //if ( _znucl[_typat[iatom]] == 1 ) continue;
-      geometry::vec3d pos={{ xcart[3*iatom], xcart[3*iatom+1], xcart[3*iatom+2] }};
-      //std::vector< std::pair<int ,double> > hlist;
-      for ( int hatom = iatom ; hatom < _natom ; ++hatom ) {
-        if ( _znucl[_typat[hatom]] != 1 ) continue;
-        geometry::vec3d hpos={{ xcart[3*hatom]-pos[0], xcart[3*hatom+1]-pos[1], xcart[3*hatom+2]-pos[2] }};
-        //hlist.push_back(std::make_pair( hatom, geometry::norm(hpos) ) );
-        double norm = geometry::norm(hpos);
-        if ( norm < _hbond && norm > 1.0)
-          Hbonds.push_back(std::make_pair(iatom,hatom));
+    int nimage = (int) _histdata->nimage();
+    for ( int img = 0 ; img < nimage ; ++img ) {
+      int first = img*_natom/nimage;
+      int last = (img+1)*_natom/nimage;
+      for ( int iatom = first ; iatom < last ; ++iatom ) {
+        //if ( _znucl[_typat[iatom]] == 1 ) continue;
+        geometry::vec3d pos={{ xcart[3*iatom], xcart[3*iatom+1], xcart[3*iatom+2] }};
+        //std::vector< std::pair<int ,double> > hlist;
+        for ( int hatom = iatom ; hatom < last ; ++hatom ) {
+          if ( _znucl[_typat[hatom]] != 1 ) continue;
+          geometry::vec3d hpos={{ xcart[3*hatom]-pos[0], xcart[3*hatom+1]-pos[1], xcart[3*hatom+2]-pos[2] }};
+          //hlist.push_back(std::make_pair( hatom, geometry::norm(hpos) ) );
+          double norm = geometry::norm(hpos);
+          if ( norm < _hbond && norm > 1.0)
+            Hbonds.push_back(std::make_pair(iatom,hatom));
+        }
       }
     }
   }

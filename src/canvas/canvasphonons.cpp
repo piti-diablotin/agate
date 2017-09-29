@@ -57,8 +57,6 @@ CanvasPhonons::CanvasPhonons(const CanvasPos &canvas) : CanvasPos(canvas.opengl(
   _ntime(50),
   _originalFile()
 {
-  std::clog << "canvas" << canvas.histdata() << std::endl;
-  std::clog << "me" << _histdata.get() << std::endl;
   if ( canvas.histdata() != nullptr && canvas.histdata()->ntimeAvail() > 0 ) {
     _histdata.reset(nullptr);
     this->clear();

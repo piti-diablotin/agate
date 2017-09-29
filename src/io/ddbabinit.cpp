@@ -154,6 +154,14 @@ bool DdbAbinit::readBlock(std::ifstream& idd) {
   if ( block.size() != nelts ) 
     throw EXCEPTION("Not enought derivates to construct block",ERRDIV);
 
+  if ( qx*qx+qy*qy+qz*qz < 1e-7 ) {
+    std::clog << "Reading Gamma point. Setting imaginary part to 0." << std::endl;
+    for ( unsigned ielt = 0 ; ielt < nelts && !idd.eof() ; ++ielt ) {
+      block[ielt].second.imag(0.e0);
+    }
+  }
+
+
   _blocks.insert(std::make_pair(
           geometry::vec3d({{ qx, qy, qz }}),
           block));

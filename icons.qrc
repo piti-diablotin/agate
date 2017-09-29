@@ -35,5 +35,6 @@
 <file alias="write.png">icons/write.png</file>
 <file alias="ruler.png">icons/ruler.png</file>
 <file alias="compass.png">icons/compass.png</file>
+<file alias="centroid.png">icons/centroid.png</file>
 </qresource>
 </RCC>

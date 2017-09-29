@@ -39,7 +39,8 @@ TabCanvasPos::TabCanvasPos(QWidget *parent) :QWidget(parent),
   _buttonPeriodic(nullptr),
   _displayed(),
   _angle(nullptr),
-  _distance(nullptr)
+  _distance(nullptr),
+  _centroid(nullptr)
 {
 
   _posBar = new QToolBar(this);
@@ -73,11 +74,20 @@ TabCanvasPos::TabCanvasPos(QWidget *parent) :QWidget(parent),
   _posBar->addAction(_distance);
   _posBar->addAction(_angle);
 
+  QFrame *spacer2 = new QFrame(_posBar);
+  spacer2->setFrameShape(QFrame::VLine);
+  spacer2->setFrameShadow(QFrame::Sunken);
+  _posBar->addWidget(spacer2);
+
+  _centroid= new QAction(QIcon(":/centroid.png"),QString("Compute the centroid"),_posBar);
+  _posBar->addAction(_centroid);
+
   connect(_display,SIGNAL(currentIndexChanged(int)),this,SLOT(changeDisplay(int)));
   connect(_buttonBorder,SIGNAL(stateChanged(int)),this,SLOT(displayBorder(int)));
   connect(_buttonPeriodic,SIGNAL(stateChanged(int)),this,SLOT(periodic(int)));
   connect(_angle,SIGNAL(triggered()),this,SLOT(angle()));
   connect(_distance,SIGNAL(triggered()),this,SLOT(distance()));
+  connect(_centroid,SIGNAL(triggered()),this,SLOT(centroid()));
 
   QWidget *hSpacer = new QWidget(this);
   hSpacer->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
@@ -131,6 +141,7 @@ void TabCanvasPos::refreshButtons(GLWidget *glwidget) {
       _display->setCurrentIndex(opt);
       connect(_display,SIGNAL(currentIndexChanged(int)),this,SLOT(changeDisplay(int)));
     }
+    _centroid->setEnabled(local->histdata()->nimage()>1);
     _natom = local->histdata()->natom();
   }
   else {
@@ -175,6 +186,11 @@ void TabCanvasPos::periodic(int state) {
   ( state == Qt::Unchecked ) 
     ? emit(sentCommand(":periodic 0"))
     : emit(sentCommand(":periodic 1"));
+}
+
+//
+void TabCanvasPos::centroid() {
+  emit(sentCommand(":centroid"));
 }
 
 //

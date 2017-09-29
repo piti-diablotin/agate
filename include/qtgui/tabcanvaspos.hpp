@@ -79,6 +79,7 @@ class TabCanvasPos : public QWidget {
     std::string _displayed;
     QAction   *_angle;
     QAction   *_distance;
+    QAction   *_centroid;
 
   public :
 
@@ -101,6 +102,7 @@ class TabCanvasPos : public QWidget {
     void periodic(int);
 
     void changeDisplay(int);
+    void centroid();
 
     void angle(void);
     void distance(void);

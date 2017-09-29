@@ -90,6 +90,7 @@ class PlotBar : public QWidget {
     QAction *_msd;
     QAction *_pacf;
     QAction *_tdep;
+    QAction *_gyration;
 
   public :
 
@@ -126,6 +127,7 @@ class PlotBar : public QWidget {
     void plotMsd();
     void plotPacf();
     void plotTdep();
+    void plotGyration();
 
     void changeAction(int);
 

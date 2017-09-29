@@ -76,6 +76,7 @@ HistData::HistData() :
   _xyz(0),
   _ntime(0),
   _nimage(1),
+  _isPeriodic(false),
   _ntimeAvail(0),
   _xcart(),
   _xred(),
@@ -104,6 +105,7 @@ HistData::HistData(const HistData& hist) :
   _xyz(hist._xyz),
   _ntime(hist._ntime),
   _nimage(hist._nimage),
+  _isPeriodic(false),
   _ntimeAvail(hist._ntime),
   _xcart(),
   _xred(),
@@ -152,6 +154,7 @@ HistData::HistData(HistData&& hist) :
   _xyz(hist._xyz),
   _ntime(hist._ntime),
   _nimage(hist._nimage),
+  _isPeriodic(hist._isPeriodic),
   _ntimeAvail(hist._ntime),
   _xcart(),
   _xred(),
@@ -231,6 +234,7 @@ HistData& HistData::operator=(const HistData& hist) {
 #endif
   _ntime = hist._ntime;
   _ntimeAvail.store(hist._ntimeAvail.load());
+  _isPeriodic = hist._isPeriodic;
   _xcart = hist._xcart;
   _xred = hist._xred;
   _fcart = hist._fcart;
@@ -271,6 +275,7 @@ HistData& HistData::operator=(HistData&& hist) {
 #endif
   _ntime = hist._ntime;
   _ntimeAvail.store(hist._ntimeAvail.load());
+  _isPeriodic = hist._isPeriodic;
   _xcart = std::move(hist._xcart);
   _xred = std::move(hist._xred);
   _fcart = std::move(hist._fcart);
@@ -1472,9 +1477,10 @@ std::vector<double> HistData::acf(std::vector<double>::const_iterator begin, std
 void HistData::periodicBoundaries(bool toPeriodic) {
 #ifdef HAVE_CPPTHREAD
   if ( _thread.joinable() ) {
-    std::clog << "Making sure full file is loaded..." << std::endl;
+    std::clog << "Making sure full file is loaded...";
     std::clog.flush();
     _thread.join();
+    std::clog << "ok" << std::endl;
   }
 #endif
   geometry::mat3d chkrprimd;
@@ -1494,6 +1500,7 @@ void HistData::periodicBoundaries(bool toPeriodic) {
         }
       }
     }
+    _isPeriodic = true;
   }
   else {
     // Remove periodicity
@@ -1506,6 +1513,7 @@ void HistData::periodicBoundaries(bool toPeriodic) {
         }
       }
     }
+    _isPeriodic = false;
   }
 #pragma omp for schedule(static)
   for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
@@ -1523,9 +1531,10 @@ void HistData::centroid() {
     throw EXCEPTION("There is no image in this file",ERRCOM);
 #ifdef HAVE_CPPTHREAD
   if ( _thread.joinable() ) {
-    std::clog << "Making sure full file is loaded..." << std::endl;
+    std::clog << "Making sure full file is loaded...";
     std::clog.flush();
     _thread.join();
+    std::clog << "ok" << std::endl;
   }
 #endif
   double inv_nimage = 1./_nimage;

@@ -323,27 +323,6 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     out << "Dumping to file " << ext << " finished.";
     throw EXCEPTION(out.str(), ERRCOM);
   }
-  else if ( token == "periodic" ) {
-    if ( _histdata == nullptr ) 
-      throw EXCEPTION("Load a file first !",ERRDIV);
-    bool toPeriodic;
-    stream >> toPeriodic;
-    if ( !stream.fail() ) {
-      _histdata->periodicBoundaries(toPeriodic);
-    }
-    else
-      throw EXCEPTION("Could not read line", ERRDIV);
-  }
-  else if ( token == "thermo" || token == "thermodynamics" ) {
-    try{
-      if ( _histdata == nullptr ) 
-        throw EXCEPTION("No data loaded",ERRDIV);
-      _histdata->printThermo(_tbegin, _tend);
-    }
-    catch ( Exception &e ) {
-      throw e;
-    }
-  }
   else if ( token == "tbegin" || token == "time_begin" ) {
     int save = _tbegin;
     try{
@@ -419,7 +398,6 @@ void Canvas::help(std::ostream &out) {
   out << setw(40) << ":dump filename" << setw(59) << "Dump the full history in the original format (_HIST,XYZ,...) if available." << endl;
   out << setw(40) << ":dumpxyz filename" << setw(59) << "Dump the full history in the xyz format." << endl;
   out << setw(40) << ":dumphist filename" << setw(59) << "Dump the full history in the _HIST format." << endl;
-  out << setw(40) << ":periodic (0|1)" << setw(59) << "Move all the atoms inside the celle (1) or make a continuous trajectory (0)" << endl;
   out << setw(40) << ":(plot|print|data) FUNCTION" << setw(59) << "Extract information from the MD simulation." << endl;
   out << setw(40) << "" << setw(59) << "\"plot\" display a gnuplot (if available) graph." << endl;
   out << setw(40) << "" << setw(59) << "\"print\" display a gnuplot (if available) graph and save it into a ps file." << endl;
@@ -447,5 +425,4 @@ void Canvas::help(std::ostream &out) {
   out << setw(40) << ":r or : repeat number" << setw(59) << "Number of times the animation is display (-1 or 0 for infinite, -2 palindrome)." << endl;
   out << setw(40) << ":tbegin or :time_begin" << setw(59) << "Set the initial time step to use." << endl;
   out << setw(40) << ":tend or :time_end" << setw(59) << "Set the last time step to use (-1 means until the last available time)." << endl;
-  out << setw(40) << ":thermo or thermodynamics" << setw(59) << "Print total energy, volume, temperature, pressure averages (Only available for _HIST files)." << endl;
 }

@@ -1080,6 +1080,27 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     }
     else throw EXCEPTION("Usage is :move iatom X Y Z",ERRDIV);
   }
+  else if ( token == "periodic" ) {
+    if ( _histdata == nullptr ) 
+      throw EXCEPTION("Load a file first !",ERRDIV);
+    bool toPeriodic;
+    stream >> toPeriodic;
+    if ( !stream.fail() ) {
+      _histdata->periodicBoundaries(toPeriodic);
+    }
+    else
+      throw EXCEPTION("Could not read line", ERRDIV);
+  }
+  else if ( token == "thermo" || token == "thermodynamics" ) {
+    try{
+      if ( _histdata == nullptr ) 
+        throw EXCEPTION("No data loaded",ERRDIV);
+      _histdata->printThermo(_tbegin, _tend);
+    }
+    catch ( Exception &e ) {
+      throw e;
+    }
+  }
   else if ( token == "spin" ) {
     _drawSpins[0] = false;
     _drawSpins[1] = false;
@@ -1488,10 +1509,13 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":hide WHAT" << setw(59) << "Hide WHAT=(border|name|znucl|id)" << endl;
   out << setw(40) << ":mv or :move iatom X Y Z" << setw(59) << "Move the atom iatom at the new REDUCED coordinate (X,Y,Z)" << endl;
   out << setw(40) << ":octa_z or :octahedra_z Z A" << setw(59) << "To draw an octahedron around the atoms Z (atomic numbers or name) A=(0|1) to draw the atoms at the tops." << endl;
+  out << setw(40) << ":periodic (0|1)" << setw(59) << "Move all the atoms inside the celle (1) or make a continuous trajectory (0)" << endl;
   out << setw(40) << ":rad or :radius S R" << setw(59) << "Set the radius of atom S (atomic number or name) to R bohr." << endl;
   out << setw(40) << ":s or :speed factor" << setw(59) << "Velocity scaling factor to change the animation speed." << endl;
   out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(border|name|znucl|id)" << endl;
   out << setw(40) << ":spin COMPONENTS" << setw(59) << "Specify what component of the spin to draw (x,y,z,xy,yz,xz,xyz)" << endl;
   out << setw(40) << ":spg or :spacegroup [tol]" << setw(59) << "Get the space group number and name. Tol is the tolerance for the symmetry finder." << endl;
+  out << setw(40) << ":thermo or thermodynamics" << setw(59) << "Print total energy, volume, temperature, pressure averages (Only available for _HIST files)." << endl;
   out << setw(40) << ":w or :write (dtset|poscar|cif) filename [primitive]" << setw(59) << "Write the current structure in the desired format into filename file." << endl;
-  out << setw(40) << "" << setw(59) << "Add the keyword primitive to save a primitive cell of the given current structure. << endl;
+  out << setw(40) << "" << setw(59) << "Add the keyword primitive to save a primitive cell of the given current structure." << endl;
+}

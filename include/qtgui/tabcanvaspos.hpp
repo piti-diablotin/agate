@@ -75,6 +75,7 @@ class TabCanvasPos : public QWidget {
     QToolBar  *_posBar;
     QComboBox *_display;
     QCheckBox *_buttonBorder;
+    QCheckBox *_buttonPeriodic;
     std::string _displayed;
     QAction   *_angle;
     QAction   *_distance;
@@ -97,6 +98,7 @@ class TabCanvasPos : public QWidget {
     void refreshButtons(GLWidget *glwidget);
 
     void displayBorder(int);
+    void periodic(int);
 
     void changeDisplay(int);
 

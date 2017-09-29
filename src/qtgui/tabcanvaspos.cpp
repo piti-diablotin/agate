@@ -36,6 +36,7 @@ TabCanvasPos::TabCanvasPos(QWidget *parent) :QWidget(parent),
   _posBar(nullptr),
   _display(nullptr),
   _buttonBorder(nullptr),
+  _buttonPeriodic(nullptr),
   _displayed(),
   _angle(nullptr),
   _distance(nullptr)
@@ -52,11 +53,15 @@ TabCanvasPos::TabCanvasPos(QWidget *parent) :QWidget(parent),
   _buttonBorder = new QCheckBox("Boundaries");
   _buttonBorder->setChecked(true);
 
+  _buttonPeriodic = new QCheckBox("Periodic");
+  _buttonPeriodic->setChecked(true);
+
   QLabel *label = new QLabel("Display:",this);
 
   _posBar->addWidget(label);
   _posBar->addWidget(_display);
   _posBar->addWidget(_buttonBorder);
+  _posBar->addWidget(_buttonPeriodic);
 
   QFrame *spacer1 = new QFrame(_posBar);
   spacer1->setFrameShape(QFrame::VLine);
@@ -70,6 +75,7 @@ TabCanvasPos::TabCanvasPos(QWidget *parent) :QWidget(parent),
 
   connect(_display,SIGNAL(currentIndexChanged(int)),this,SLOT(changeDisplay(int)));
   connect(_buttonBorder,SIGNAL(stateChanged(int)),this,SLOT(displayBorder(int)));
+  connect(_buttonPeriodic,SIGNAL(stateChanged(int)),this,SLOT(periodic(int)));
   connect(_angle,SIGNAL(triggered()),this,SLOT(angle()));
   connect(_distance,SIGNAL(triggered()),this,SLOT(distance()));
 
@@ -109,6 +115,12 @@ void TabCanvasPos::refreshButtons(GLWidget *glwidget) {
       _buttonBorder->disconnect(this);
       _buttonBorder->setChecked(shouldBeChecked);
       connect(_buttonBorder,SIGNAL(stateChanged(int)),this,SLOT(displayBorder(int)));
+    }
+    shouldBeChecked = local->histdata()->isPeriodic();
+    if ( shouldBeChecked != _buttonPeriodic->isChecked() ) {
+      _buttonPeriodic->disconnect(this);
+      _buttonPeriodic->setChecked(shouldBeChecked);
+      connect(_buttonPeriodic,SIGNAL(stateChanged(int)),this,SLOT(periodic(int)));
     }
     int opt = 0;
     if ( display & CanvasPos::DISP_ID ) opt = 1;
@@ -156,6 +168,13 @@ void TabCanvasPos::displayBorder(int state) {
   ( state == Qt::Unchecked ) 
     ? emit(sentCommand(":hide border"))
     : emit(sentCommand(":show border"));
+}
+
+//
+void TabCanvasPos::periodic(int state) {
+  ( state == Qt::Unchecked ) 
+    ? emit(sentCommand(":periodic 0"))
+    : emit(sentCommand(":periodic 1"));
 }
 
 //

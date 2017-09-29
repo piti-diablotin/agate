@@ -421,6 +421,7 @@ void VaspXML::readFromFile(const std::string& filename) {
     xmlXPathFreeContext(cptr);
     xmlFreeDoc(doc);
     _filename = filename;
+    _isPeriodic = false;
   }
   catch(Exception &e) {
     xmlCleanupParser();

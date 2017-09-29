@@ -51,7 +51,8 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   _pdos(nullptr),
   _msd(nullptr),
   _pacf(nullptr),
-  _tdep(nullptr)
+  _tdep(nullptr),
+  _gyration(nullptr)
 {
   _plotBar = new QToolBar(this);
   //_plotBar->setFixedHeight(40);
@@ -87,6 +88,7 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   _msd = new QAction("MSD",_plotBar); _vacf->setToolTip("Mean Square Displacements");
   _pacf = new QAction("PACF",_plotBar); _vacf->setToolTip("Position autocorrelation function");
   _tdep = new QAction("TDEP",_plotBar); _vacf->setToolTip("Phonons");
+  _gyration = new QAction("Gyration",_plotBar); _vacf->setToolTip("Gyration tensor");
 
   _plotBar->addAction(_acell);
   _plotBar->addAction(_angle);
@@ -94,6 +96,7 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   _plotBar->addAction(_angleAtoms);
   _plotBar->addAction(_distance);
   _plotBar->addAction(_positions);
+  _plotBar->addAction(_gyration);
   _plotBar->addAction(_pdf);
   _plotBar->addAction(_msd);
   _plotBar->addAction(_pacf);
@@ -122,6 +125,7 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   connect(_etotal,SIGNAL(triggered()),this,SLOT(plotEtotal()));
   connect(_entropy,SIGNAL(triggered()),this,SLOT(plotEntropy()));
   connect(_positions,SIGNAL(triggered()),this,SLOT(plotPositions()));
+  connect(_gyration,SIGNAL(triggered()),this,SLOT(plotGyration()));
   connect(_vacf,SIGNAL(triggered()),this,SLOT(plotVacf()));
   connect(_pdos,SIGNAL(triggered()),this,SLOT(plotPdos()));
   connect(_msd,SIGNAL(triggered()),this,SLOT(plotMsd()));
@@ -167,6 +171,7 @@ void PlotBar::refreshButtons(GLWidget *glwidget) {
     _vacf->setEnabled(thermo);
     _pdos->setEnabled(thermo);
     _tdep->setEnabled(thermo);
+    _gyration->setEnabled( hist->nimage() > 1 );
   }
   else {
     this->hide();
@@ -268,6 +273,10 @@ void PlotBar::plotPacf() {
 
 void PlotBar::plotTdep() {
   emit(sentCommand(_action+" tdep"));
+}
+
+void PlotBar::plotGyration() {
+  emit(sentCommand(_action+" gyration"));
 }
 
 void PlotBar::changeAction(int index) {

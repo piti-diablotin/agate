@@ -64,6 +64,7 @@ class HistData {
     unsigned _xyz;      ///< Number of dimension in space.
     unsigned _ntime;    ///< Number of time step.
     unsigned _nimage;
+    bool     _isPeriodic; ///< Are the position all inside the cell or not
 
 #ifdef HAVE_CPPTHREAD
     std::atomic<unsigned> _ntimeAvail;    ///< Number of time step.
@@ -275,6 +276,12 @@ class HistData {
     const std::vector<int> typat() const;
 
     /**
+     * Get the number of images.
+     * @return number of images.
+     */
+    int nimage() const {return _nimage;}
+
+    /**
      * Get the name of the hist file we are actually using
      * @return the path to the filename.
      */
@@ -423,6 +430,8 @@ class HistData {
     virtual bool hasThermo() const { return false; }
 
     virtual bool hasEtotal() const { return false; }
+
+    virtual bool isPeriodic() const { return _isPeriodic; }
 
     /**
      * Try to build a HistData which integral of PACF is as small as possible

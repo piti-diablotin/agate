@@ -335,6 +335,15 @@ void PhononMode::computeEigen(double *freq, complex *mode ) {
     }
   }
 
+  // Force all coeff smaller than 1e-7 to be 0 (mimic anaddb)
+  for ( unsigned imode = 0 ; imode < 3*_natom ; ++imode ) {
+    for ( unsigned iatom = 0 ; iatom < 3*_natom ; ++iatom ) {
+      using std::abs;
+      auto tmp = _eigenDisp(imode,iatom);
+      _eigenDisp(imode,iatom) = complex((abs(tmp.real()) > 1e-7 ? tmp.real() : 0), (abs(tmp.imag()) > 1e-7 ? tmp.imag() : 0));
+    }
+  }
+
   if ( freq != nullptr ) {
     //copy frequencies
     Eigen::Map<Eigen::VectorXd> mfreq(freq,3*_natom);

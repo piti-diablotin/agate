@@ -61,7 +61,7 @@ Here is a small list of quantities that you can extract with **agate** from an M
   ```
   sudo apt-get install debhelper autotools-dev automake autoconf m4 libjpeg8-dev libpng3-dev libnetcdf-dev libnetcdfc++4 libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig libglu1-mesa-dev wget unzip cmake xorg-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev
   ```
-  On Ubuntu >= 16.04 (15.10 not maintained anymore)
+On Ubuntu >= 16.04 (15.10 not maintained anymore)
   ```
   debhelper (>= 8.0.0), autotools-dev, automake, autoconf, m4, libjpeg8-dev, libpng-dev, libnetcdf-dev, libnetcdf-c++4-dev, libcurl3-dev, libfreetype6-dev, libglfw3-dev, libeigen3-dev, fontconfig, libglu1-mesa-dev, ttf-ubuntu-font-family, libxml2-dev, gnuplot-qt, libyaml-cpp-dev, libboost-dev, qtbase5-dev, qt5-qmake, qt5-default, libqt5opengl5-dev, libfftw3-dev
   ```
@@ -79,14 +79,14 @@ Here is a small list of quantities that you can extract with **agate** from an M
   sudo make install
   ```
   That's it.
-  
+
 ## Windows and MacOS
   You will find in the Win_x86 and OSX directories a ```.exe``` for windows and a ```.dmg```  for MacOS that will install everything needed
-  ***WARNING:*** Thoses 2 versions are 2 years old and completely outdated !!! Use at your own risk. (WIP for new versions)
-  
-  
-  
-  
-  
-  
-  
+***WARNING:*** Thoses 2 versions are 2 years old and completely outdated !!! Use at your own risk. (WIP for new versions)
+
+
+
+
+
+
+

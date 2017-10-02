@@ -6,7 +6,6 @@ then
     Makefile.in \
     aclocal.m4 \
     autom4te.cache/ \
-    build/ \
     configure \
     config.log \
     config.h \
@@ -231,7 +230,7 @@ EOF
 
   # Generate Makefile.am ./
   
-  echo "SUBDIRS = \\" > Makefile.am
+  echo "SUBDIRS = @AM_SPGLIB@ \\" > Makefile.am
   for lib in $(find include -type d | sed '1d')
   do
     echo "  ${lib} \\" >> Makefile.am

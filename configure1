@@ -66,6 +66,7 @@ echo "==========================================================================
 # Tools
 AC_PROG_GREP
 AC_PROG_SED
+AC_PROG_LN_S
 
 # To build libraries
 AC_PROG_RANLIB
@@ -956,38 +957,51 @@ AC_CHECK_LIB([symspg],[spg_get_international],[spglib_check_lib=yes;LIBS="$LIBS 
 have_spglib_usable="no"
 if test x"$spglib_check_h" == x"yes" && test x"$spglib_check_lib" == x"yes"
 then
-  have_spglib_usable="yes"
-  AC_DEFINE([HAVE_SPGLIB],[1],[Define to 1 if spglib is usable.])
   AC_CHECK_LIB([symspg],[spg_get_major_version],[AC_DEFINE([HAVE_SPGLIB_VERSION],[1],[Define to 1 if spglib has version fonctions.])])
 else
-  #AC_PATH_PROG([TAR],[tar],"none")
-  #LIBS=$OLD_LIBS;
-  #CPPFLAGS=$OLD_CPPFLAGS;
-  #LDFLAGS=$OLD_LDFLAGS;
-  #if test x"$TAR" != x"none";
-  #then
-  #  $TAR xfz $(dirname $0)/spglib-1.8.2.2.tar.gz
-  #  ac_configure_args_old="$ac_configure_args"
-  #  ac_configure_args="--disable-shared"
-  #  AC_CONFIG_SUBDIRS(spglib-1.8.2.2)
-  #  ac_configure_args="$ac_configure_args_old"
-  #  CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I${PWD}/spglib-1.8.2.2/src"
-  #  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L${PWD}/spglib-1.8.2.2/src/.lib/"
-  #  LIBS="$LIBS -lsymspg"
-  #  SPGLIB="$PWD/spglib-1.8.2.2"
-  #  AC_SUBST(SPGLIB)
-  #fi
-
-  if test  x"$resultspglib" == x"yes" ; 
+  AC_PATH_PROG([TAR],[tar],"none")
+  if test x"$TAR" != x"none";
   then
-    AC_MSG_NOTICE([ The install prefix --with-spglib for the SPG library was set.]);
-    AC_MSG_ERROR([ --> Maybe wrong ???]);
+    $TAR xfz ${srcdir}/spglib-1.9.9.tar.gz -C ${srcdir}
+    $LN_S . ${srcdir}/spglib-1.9.9/src/spglib
+    AC_CONFIG_SUBDIRS([spglib-1.9.9])
+#CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I${top_srcdir}/spglib-1.9.9/src"
+#LDFLAGS="$AM_LDFLAGS $LDFLAGS -L./spglib-1.9.9/src/.lib/"
+#LIBS="$LIBS -lsymspg"
+    AM_SPGLIB="spglib-1.9.9"
   else
-    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
-    AC_MSG_NOTICE([ --> You might want to use '--with-spglib=ABSOLUTE_PATH' ?!?]);
+    if test  x"$resultspglib" == x"yes" ; 
+    then
+      AC_MSG_NOTICE([ The install prefix --with-spglib for the SPG library was set.]);
+      AC_MSG_ERROR([ --> Maybe wrong ???]);
+    else
+      AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+      AC_MSG_NOTICE([ --> You might want to use '--with-spglib=ABSOLUTE_PATH' ?!?]);
+    fi
   fi
+  AC_DEFINE([HAVE_SPGLIB_VERSION],[1],[Define to 1 if spglib has version fonctions.])
 fi
+have_spglib_usable="yes"
+AC_DEFINE([HAVE_SPGLIB],[1],[Define to 1 if spglib is usable.])
+## handle check results
+#have_spglib_usable="no"
+#if test x"$spglib_check_h" == x"yeis" && test x"$spglib_check_lib" == x"yes"
+#then
+#  have_spglib_usable="yes"
+#  AC_DEFINE([HAVE_SPGLIB],[1],[Define to 1 if spglib is usable.])
+#  AC_CHECK_LIB([symspg],[spg_get_major_version],[AC_DEFINE([HAVE_SPGLIB_VERSION],[1],[Define to 1 if spglib has version fonctions.])])
+#else
+#  if test  x"$resultspglib" == x"yes" ; 
+#  then
+#    AC_MSG_NOTICE([ The install prefix --with-spglib for the SPG library was set.]);
+#    AC_MSG_ERROR([ --> Maybe wrong ???]);
+#  else
+#    AC_MSG_NOTICE([ No non-standard install prefix was set.]);
+#    AC_MSG_NOTICE([ --> You might want to use '--with-spglib=ABSOLUTE_PATH' ?!?]);
+#  fi
+#fi
 
+AC_SUBST([AM_SPGLIB])
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_LDFLAGS])
 
@@ -1674,6 +1688,14 @@ echo
 echo "================================================================================"
 echo "===  Creating Makefiles                                                         " 
 echo "================================================================================"
+if test x"$AM_SPGLIB" != x"" 
+then
+  AM_CPPFLAGS="$AM_CPPFLAGS -I\$(top_srcdir)/spglib-1.9.9/src"
+  AC_SUBST(AM_CPPFLAGS)
+  AM_LDFLAGS="$AM_LDFLAGS -L\$(top_builddir)/spglib-1.9.9/src/.libs/"
+  AC_SUBST(AM_LDFLAGS)
+  LIBS="$LIBS -lsymspg"
+fi
 
 AC_DEFINE_UNQUOTED(COMPILE_CPPFLAGS,"$CPPFLAGS",[Flags used for preprocessor compilation])
 AC_DEFINE_UNQUOTED(COMPILE_CXXFLAGS,"$CXXFLAGS",[Flags used for c++ compilation])

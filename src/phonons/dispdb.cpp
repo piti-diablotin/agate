@@ -31,6 +31,7 @@
 #include <algorithm>
 #include "phonons/dispdb.hpp"
 #include "base/exception.hpp"
+#include "base/geometry.hpp"
 #include "io/configparser.hpp"
 #include "base/utils.hpp"
 #include "io/ddb.hpp"
@@ -257,7 +258,14 @@ void DispDB::computeFromDDB(Ddb &ddb) {
   _nmode = 3*_natom;
   _modes.resize(_nqpt*_nmode*3*_natom); // nqpt * nmode * 1vector per atom
   _energies.resize(_nqpt*_nmode);
-
+  PhononMode BEC;
+  BEC.lin_res(_qpts[0], ddb);
+  // little print loop for _qpts (Marcus) 
+  /*
+  for (int i = 0 ; i < _qpts.size(); i++) {
+	std::cout<<"_qpts in dispdb";
+  	geometry::print( _qpts[i], std::cout);
+} */
   if ( _nqpt > 0 ) {
     PhononMode modes(natom);
     try { 

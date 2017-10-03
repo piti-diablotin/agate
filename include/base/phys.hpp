@@ -25,11 +25,14 @@
 
 #ifndef PHYS_HPP
 #define PHYS_HPP
+#include <cmath>
 
 namespace phys {
 
   /** Length */
   const double b2A = 0.52917720859;              ///< 1 bohr in angstrom
+  const double A2b = 1/b2A; 			 ///< 1 angstrom in bohr
+  const double A2m = 10e-10;			 ///< 1 angstrom in m 
 
   /** Time */
   const double Hz = 6.62606957e-34;              ///< 1 Hertz in J
@@ -49,7 +52,12 @@ namespace phys {
   const double pi = 3.1415926535897932384626433832795; ///< pi ...
 
   /** Mass */
+  const double amu = 1.660538921e-27;                        ///< u in Kg 
   const double amu_emass = 1.660538921e-27/9.10938215e-31;   ///< Atomic mass unit 
+  const double emass =   9.10938215e-31;                     ///< emass in Kg 
+
+  /** Dielectric Constant */
+  const double Eps_0 = 0.0055263494;
 
   /** Conversion **/
   const double Ha2THz = 6.579683920e+03;         ///< 1 Ha in THz;
@@ -59,6 +67,10 @@ namespace phys {
   const double Hz2eV = Hz / eV;                  ///< 1 Hz in eV
   const double  m2eV = Hz * c / eV;              ///<  1 m in eV
   const double atu2fs = hbar/Ha*1e15;            ///< 1 atomic unit of time 2 fs
+
+  /** Factor needed in linear response calc **/ 
+  
+  const double fac = (eV/(A2m*A2m*amu*4*pi*pi*1e024));
 
 
 }

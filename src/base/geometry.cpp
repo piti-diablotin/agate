@@ -104,7 +104,21 @@ namespace geometry {
     return inverse;
 
   }
-
+  //
+  mat3d sc_mult(const mat3d& mat, double a) {
+  mat3d sc_mult;
+    sc_mult[0] = mat[0] * a; 
+    sc_mult[1] = mat[1] * a;
+    sc_mult[2] = mat[2] * a;
+    sc_mult[3] = mat[3] * a;
+    sc_mult[4] = mat[4] * a;
+    sc_mult[5] = mat[5] * a;
+    sc_mult[6] = mat[6] * a;
+    sc_mult[7] = mat[7] * a;
+    sc_mult[8] = mat[8] * a;
+    sc_mult[9] = mat[9] * a;		
+    return sc_mult;
+  }
 
   //
   std::vector<vec3d> changeBasis(const mat3d& basis, const std::vector<vec3d>& vecs) {

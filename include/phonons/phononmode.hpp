@@ -62,9 +62,13 @@ class PhononMode {
     Eigen::MatrixXcd    _eigenDisp;   ///< Eigen displacement \f$\gamma(g)/\sqrt(M_\kappa\f$
     Eigen::VectorXd     _frequencies; ///< frequencies \f$\omega\f$, negative if imaginary.
     Eigen::Matrix3d     _gprim;       ///< Vector of reciprocal space
+    Eigen::Matrix3d     _rprim;      		 	///< Vector of reciprocal space
     Eigen::Matrix<complex,Eigen::Dynamic,3> _asr; ///< Acoustic Sum Rule Correction (lines=3*natom)
+    std::vector<geometry::mat3d> _zeff; 		///< Vector containing Born-Effective Charge Tensor of each atom 
+    std::vector<unsigned>        _zion;         		///< Ionic charge necessary for unit conversion of BEC  
+    std::vector<unsigned>        _znucl;         		///< Nucleic Charge 	
 #endif
-    std::vector<double> _mass;        ///< Masses of each atom
+    std::vector<double> _mass;        			///< Masses of each atom
 
     /**
      * Initialize the dynamical matrix with the IFC from DDD
@@ -123,6 +127,18 @@ class PhononMode {
      * @param ddb The full DDB
      */
     void computeAllEigen(const Ddb& ddb, double *freq = nullptr, complex *modes = nullptr);
+
+    /**
+     * Get Born Effective Charges from ddb 
+     */ 
+    const std::vector<geometry::mat3d> getzeff(const geometry::vec3d& qpt, const Ddb& ddb1, const std::vector<Ddb::d2der>& ddb2);
+
+    /**
+     * Calculate linear response from ddb  
+     */	
+
+    void lin_res(const geometry::vec3d& _qpt, const Ddb& ddb); 	
+
 };
 
 #endif  // PHONONMODE_HPP

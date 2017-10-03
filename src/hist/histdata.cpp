@@ -841,8 +841,8 @@ std::list<std::vector<double>> HistData::getMSD(unsigned tbegin,unsigned tend) c
       for ( unsigned coord = 0 ; coord < 9 ; ++coord )
         rprimd_av[coord] += _rprimd[itime*9+coord];
     }
-#pragma omp parallel for collapse(3)
     for ( unsigned itime = 1 ; itime < ntime ; ++itime ) {
+#pragma omp for schedule(static)
       for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
           const double diff = fullxred[(itime*_natom+iatom)*3+coord]-fullxred[((itime-1)*_natom+iatom)*3+coord] + 0.5;
@@ -1490,9 +1490,9 @@ void HistData::periodicBoundaries(bool toPeriodic) {
 
   if ( toPeriodic ) {
     // Impose periodicity
-#pragma omp for schedule(static)
     for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
       double * xredT = &_xred[itime*_natom*3];
+#pragma omp for schedule(static)
       for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
           while ( xredT[iatom*3+coord] >= 1.0 ) xredT[iatom*3+coord] -= 1.0;
@@ -1504,8 +1504,8 @@ void HistData::periodicBoundaries(bool toPeriodic) {
   }
   else {
     // Remove periodicity
-#pragma omp for schedule(static)
     for ( unsigned itime = 1 ; itime < _ntime ; ++itime ) {
+#pragma omp for schedule(static)
       for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
           const double diff = _xred[(itime*_natom+iatom)*3+coord]-_xred[((itime-1)*_natom+iatom)*3+coord] + 0.5;

@@ -89,8 +89,8 @@ void Graph::plot(const Config &conf, Graph* gplot) {
       }
     case PRINT :
       {
-        gplot->save(conf.filename+".eps");
-        gplot->dump(conf.filename+".gnuplot");
+        gplot->save(conf.filename);
+        gplot->dump(conf.filename+".plot");
         break;
       }
     case DATA :

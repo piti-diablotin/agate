@@ -158,7 +158,8 @@ void Gnuplot::plot(std::list<std::pair<std::vector<double>,std::vector<double>>>
 //
 void Gnuplot::save(std::string filename) {
   std::stringstream com;
-  this->dump(com,filename);
+  std::string name = filename+".eps";
+  this->dump(com,name);
 
   if ( _gp.get() != nullptr ) {
     fprintf(_gp.get(),"%s\n",com.str().c_str());

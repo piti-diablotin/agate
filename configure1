@@ -1372,6 +1372,14 @@ then
     AC_MSG_RESULT([$qmake_version_check])
     if test x"$qmake_version_check" = x"5"
     then
+      AS_UNSET([at_cv_env_QT_DEFINES])
+      AS_UNSET([at_cv_env_QT_CFLAGS])
+      AS_UNSET([at_cv_env_QT_CXXFLAGS])
+      AS_UNSET([at_cv_env_QT_INCPATH])
+      AS_UNSET([at_cv_env_QT_CPPFLAGS])
+      AS_UNSET([at_cv_env_QT_LFLAGS])
+      AS_UNSET([at_cv_env_QT_LDFLAGS])
+      AS_UNSET([at_cv_env_QT_LIBS])
       AT_WITH_QT([+opengl +widgets +printsupport])
     fi
   fi

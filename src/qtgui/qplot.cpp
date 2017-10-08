@@ -31,8 +31,14 @@ const QColor QPlot::qcolor[] = { Qt::black, Qt::red, Qt::green, Qt::blue, Qt::ma
 
 //
 QPlot::QPlot(QWidget *parent) : QDialog(parent), Graph(),
-  _plot(new QCustomPlot(this))
+  _plot(new QCustomPlot(this)),
+  _titleElement(new QCPTextElement(_plot, QString::fromStdString(_title), QFont("Helvetica", 12, QFont::Bold)))
 {
+  _plot->resize(640,480);
+  this->setWindowTitle(QString::fromStdString("Agate Plot"));
+  _plot->setAutoAddPlottableToLegend(false);
+  _plot->plotLayout()->insertRow(0);
+  _plot->plotLayout()->addElement(0, 0, _titleElement);
   connect(_plot->xAxis, SIGNAL(rangeChanged(QCPRange)), _plot->xAxis2, SLOT(setRange(QCPRange)));
   connect(_plot->yAxis, SIGNAL(rangeChanged(QCPRange)), _plot->yAxis2, SLOT(setRange(QCPRange)));
 }
@@ -43,16 +49,26 @@ QPlot::~QPlot() {
 }
 
 void QPlot::plot(std::vector<double> x, std::list<std::vector<double>> y, std::list<std::string> labels, std::vector<short> colors){
+  this->clean();
+  this->show();
   auto label = labels.begin();
   auto yp = y.begin();
+  int autocolor = 0;
   for ( unsigned p = 0 ; p < y.size() ; ++p) {
     _plot->addGraph();
     auto graph = _plot->graph(p);
-    if ( p < colors.size() )
-      graph->setPen(QPen(Qt::black));
-      //graph->setPen(QPen(qcolor[colors[p] < 8 ? colors[p] : 0]));
-    if ( label != labels.end() ) {
+    if ( p < colors.size() ) {
+      graph->setPen(QPen(qcolor[colors[p] < 8 ? colors[p] : autocolor++]));
+    }
+    else {
+      graph->setPen(QPen(qcolor[autocolor++]));
+    }
+    if ( autocolor >= 8 ) autocolor = 0;
+
+
+    if ( p < labels.size() && !label->empty() ) {
       graph->setName(QString::fromStdString(*label));
+      graph->addToLegend();
       ++label;
     }
     graph->setData(QVector<double>::fromStdVector(x),QVector<double>::fromStdVector(*yp));
@@ -65,25 +81,67 @@ void QPlot::plot(std::vector<double> x, std::list<std::vector<double>> y, std::l
   _plot->yAxis2->setTickLabels(false);
   _plot->xAxis->setLabel(QString::fromStdString(_xlabel));
   _plot->yAxis->setLabel(QString::fromStdString(_ylabel));
-  _plot->legend->setVisible(true);
+  _plot->legend->setVisible(labels.size() > 0);
+  _titleElement->setText(QString::fromStdString(_title));
+  _plot->replot();
 }
 
-void QPlot::plot(std::list< std::pair< std::vector<double>,std::vector<double> > > xy, std::list<std::string> labels, std::vector<short> colors){;}
+void QPlot::plot(std::list< std::pair< std::vector<double>,std::vector<double> > > xy, std::list<std::string> labels, std::vector<short> colors) {
+  this->clean();
+  this->show();
+  auto label = labels.begin();
+  auto xyp = xy.begin();
+  int autocolor = 0;
+  for ( unsigned p = 0 ; p < xy.size() ; ++p) {
+    _plot->addGraph();
+    auto graph = _plot->graph(p);
+    if ( p < colors.size() ) {
+      graph->setPen(QPen(qcolor[colors[p] < 8 ? colors[p] : autocolor++]));
+    }
+    else {
+      graph->setPen(QPen(qcolor[autocolor++]));
+    }
+    if ( autocolor >= 8 ) autocolor = 0;
+
+    if ( p < labels.size() && !label->empty() ) {
+      graph->setName(QString::fromStdString(*label));
+      graph->addToLegend();
+      ++label;
+    }
+    graph->setData(QVector<double>::fromStdVector(xyp->first),QVector<double>::fromStdVector(xyp->second));
+    ++xyp;
+  }
+  _plot->rescaleAxes(true);
+  _plot->xAxis2->setVisible(true);
+  _plot->xAxis2->setTickLabels(false);
+  _plot->yAxis2->setVisible(true);
+  _plot->yAxis2->setTickLabels(false);
+  _plot->xAxis->setLabel(QString::fromStdString(_xlabel));
+  _plot->yAxis->setLabel(QString::fromStdString(_ylabel));
+  _plot->legend->setVisible(labels.size()>0);
+  _titleElement->setText(QString::fromStdString(_title));
+  _plot->replot();
+}
 
 void QPlot::save(std::string filename){
-  _plot->savePdf(QString::fromStdString(filename),0,0,QCP::epNoCosmetic);
+  _plot->savePdf(QString::fromStdString(filename+".pdf"),0,0,QCP::epNoCosmetic);
 }
 
 void QPlot::clean(){
   _plot->clearGraphs();
 }
 
-void QPlot::custom(const std::string &customlines){;}
-
-void QPlot::dump(std::ostream& out, std::string& plotname) const {
-  throw EXCEPTION("Nothing can be dumped for QPlot",ERRCOM);
+void QPlot::custom(const std::string &customlines){
+ (void) customlines;
 }
 
-void QPlot::setTitle() {
-  this->setWindowTitle(QString::fromStdString(_title));
+void QPlot::dump(std::ostream& out, std::string& plotname) const {
+  (void) out;
+  (void) plotname;
+}
+
+void QPlot::resizeEvent(QResizeEvent * event) {
+  QDialog::resizeEvent(event);
+  _plot->resize(event->size());
+  _plot->replot();
 }

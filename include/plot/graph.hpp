@@ -131,19 +131,19 @@ class Graph {
      * Setter
      * @param lab The new value 
      */
-    void setXLabel(std::string lab) { _xlabel = lab; };
+    virtual void setXLabel(std::string lab) { _xlabel = lab; };
 
     /**
      * Setter
      * @param lab The new value 
      */
-    void setYLabel(std::string lab) { _ylabel = lab; };
+    virtual void setYLabel(std::string lab) { _ylabel = lab; };
 
     /**
      * Setter
      * @param lab The new value 
      */
-    void setTitle(std::string lab) { _title = lab; };
+    virtual void setTitle(std::string lab) { _title = lab; };
 
     /**
      * Add custom command depending on frontend

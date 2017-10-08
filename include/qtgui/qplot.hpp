@@ -58,12 +58,11 @@ class QPlot : public QDialog, public Graph {
 
   private :
     QCustomPlot *_plot;
+    QCPTextElement *_titleElement;
 
   protected :
     //static const QColor qcolor[] = {{ Qt::black, Qt::red, Qt::green, Qt::blue, Qt::magenta, Qt::cyan, Qt::darkRed, Qt::darkGreen, Qt::darkYellow }};
     static const QColor qcolor[];
-
-    void setTitle();
 
   public :
 
@@ -83,31 +82,31 @@ class QPlot : public QDialog, public Graph {
      * @param y A vector with several y quantites to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(std::vector<double> x, std::list<std::vector<double>> y, std::list<std::string> labels, std::vector<short> colors) = 0;
+    virtual void plot(std::vector<double> x, std::list<std::vector<double>> y, std::list<std::string> labels, std::vector<short> colors);
 
     /** 
      * Plot several quantities on the screen
      * @param xy A list of (x,y) pairs to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(std::list< std::pair< std::vector<double>,std::vector<double> > > xy, std::list<std::string> labels, std::vector<short> colors) = 0;
+    virtual void plot(std::list< std::pair< std::vector<double>,std::vector<double> > > xy, std::list<std::string> labels, std::vector<short> colors);
 
     /**
      * Save the graph
      * @param filename Save to filename
      * */
-    virtual void save(std::string filename) = 0;
+    virtual void save(std::string filename);
 
     /**
      * Clean everything
      */
-    virtual void clean() = 0;
+    virtual void clean();
 
     /**
      * Add custom command depending on frontend
      * @param customlines The custom commands to add
      */
-    virtual void custom(const std::string &customlines) = 0;
+    virtual void custom(const std::string &customlines);
 
     /**
      * Print out the commande to plot
@@ -115,8 +114,9 @@ class QPlot : public QDialog, public Graph {
      * @param plotname is the filename for the file that would be created when the graph is created
      * Not the script file that would be executed to creat the graph
      */
-    virtual void dump(std::ostream& out, std::string& plotname) const = 0;
+    virtual void dump(std::ostream& out, std::string& plotname) const;
 
+    virtual void resizeEvent(QResizeEvent * event);
 
 };
 

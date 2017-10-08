@@ -27,6 +27,7 @@
 #include "qtgui/plotbar.hpp"
 #include "qtgui/atomselector.hpp"
 #include "qtgui/planselector.hpp"
+#include "qtgui/qplot.hpp"
 
 //
 PlotBar::PlotBar(QWidget *parent) : QWidget(parent),

@@ -397,6 +397,13 @@ class Canvas {
     const std::string& info() { return _info; }
 
     /**
+     * Set the tool to plot graphs
+     * By default it will use gnuplot
+     * @param plot a Graph pointer 
+     */
+    void setGraph(Graph *plot) { _gplot.reset(plot); }
+
+    /**
      * Display help message with all command that are use in this class
      * @param out the stream to write the help message
      */

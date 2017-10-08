@@ -1365,6 +1365,16 @@ AT_WITH_QT([+opengl +widgets])
 if test x"$QT_VERSION_MAJOR" != x""
 then
   have_qt_usable="yes"
+  if test x"$QT_VERSION_MAJOR" = x"45"
+  then 
+    AC_MSG_CHECKING([for Qt version])
+    qmake_version_check=$($QMAKE --version | $SED "1d" | $GREP " 5." >&AS_MESSAGE_LOG_FD 2>&1 && echo "5" || echo "4")
+    AC_MSG_RESULT([$qmake_version_check])
+    if test x"$qmake_version_check" = x"5"
+    then
+      AT_WITH_QT([+opengl +widgets +printsupport])
+    fi
+  fi
 fi
 AM_CONDITIONAL([HAVE_QT],[test x"$have_qt_usable" = x"yes"])
 

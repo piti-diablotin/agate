@@ -675,7 +675,8 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
     auto put_var = [](int ncid, const char* name, std::string &unit, std::string &mnemo, nc_type type, int ndims, const int* dimids, const size_t *countp, const void* data) {
       int varid;
       int rval;
-      size_t startp[ndims] = {0};
+      size_t startp[ndims];
+      for ( int i = 0 ; i < ndims ; ++i ) startp[i] = 0;
       if ( (rval = nc_redef(ncid) ) )
         throw EXCEPTION(std::string("Error entering define mode for variable")+std::string(name)+std::string(" with error ")+std::string(nc_strerror(rval)),ERRABT);
       if ( (rval = nc_def_var(ncid,name,type,ndims,dimids,&varid) ) )

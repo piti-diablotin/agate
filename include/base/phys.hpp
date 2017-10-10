@@ -32,7 +32,7 @@ namespace phys {
   /** Length */
   const double b2A = 0.52917720859;              ///< 1 bohr in angstrom
   const double A2b = 1/b2A; 			 ///< 1 angstrom in bohr
-  const double A2m = 10e-10;			 ///< 1 angstrom in m 
+  const double A2m = 1e-10;			 ///< 1 angstrom in m 
 
   /** Time */
   const double Hz = 6.62606957e-34;              ///< 1 Hertz in J

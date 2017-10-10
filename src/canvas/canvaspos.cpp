@@ -873,6 +873,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       std::cerr << e.fullWhat() << std::endl;
       _gplot.reset(nullptr);
     }
+    _gplot->setWinTitle(_info);
 
     size_t pos = stream.tellg();
     try {
@@ -1247,6 +1248,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
 
   // band
   if ( function == "band" ) {
+    _gplot->setWinTitle("Band Structure");
     filename = "bandStruct";
     doSumUp = false;
     title = "Band Structure";

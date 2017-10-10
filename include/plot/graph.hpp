@@ -54,6 +54,7 @@ class Graph {
     std::string _xlabel; ///< Label for x axis
     std::string _ylabel; ///< Label for y axis
     std::string _title;  ///< Title for the graph
+    std::string _winTitle; ///< Title of the window if supported.
 
 
   public :
@@ -144,6 +145,12 @@ class Graph {
      * @param lab The new value 
      */
     virtual void setTitle(std::string lab) { _title = lab; };
+
+    /**
+     * Setter
+     * @param title the new window title
+     */
+    virtual void setWinTitle(std::string title) { _winTitle = title; };
 
     /**
      * Add custom command depending on frontend

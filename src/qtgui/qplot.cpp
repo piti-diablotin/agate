@@ -30,15 +30,20 @@
 const QColor QPlot::qcolor[] = { Qt::black, Qt::red, Qt::green, Qt::blue, Qt::magenta, Qt::cyan, Qt::darkRed, Qt::darkGreen, Qt::darkYellow };
 
 //
-QPlot::QPlot(QWidget *parent) : QDialog(parent), Graph(),
+QPlot::QPlot(QWidget *parent) : QMainWindow(parent), Graph(),
   _plot(new QCustomPlot(this)),
   _titleElement(new QCPTextElement(_plot, QString::fromStdString(_title), QFont("Helvetica", 12, QFont::Bold)))
 {
-  _plot->resize(640,480);
+  this->resize(640,480);
+  //_plot->resize(640,480);
+  this->setCentralWidget(_plot);
+  this->createStatusBar();
   this->setWindowTitle(QString::fromStdString("Agate Plot"));
   _plot->setAutoAddPlottableToLegend(false);
   _plot->plotLayout()->insertRow(0);
   _plot->plotLayout()->addElement(0, 0, _titleElement);
+  _plot->setOpenGl(false);
+  _plot->setInteractions(QCP::Interaction::iRangeDrag|QCP::Interaction::iRangeZoom);
   connect(_plot->xAxis, SIGNAL(rangeChanged(QCPRange)), _plot->xAxis2, SLOT(setRange(QCPRange)));
   connect(_plot->yAxis, SIGNAL(rangeChanged(QCPRange)), _plot->yAxis2, SLOT(setRange(QCPRange)));
 }
@@ -93,22 +98,21 @@ void QPlot::plot(std::list< std::pair< std::vector<double>,std::vector<double> >
   auto xyp = xy.begin();
   int autocolor = 0;
   for ( unsigned p = 0 ; p < xy.size() ; ++p) {
-    _plot->addGraph();
-    auto graph = _plot->graph(p);
+    QCPCurve *newCurve = new QCPCurve(_plot->xAxis, _plot->yAxis);
     if ( p < colors.size() ) {
-      graph->setPen(QPen(qcolor[colors[p] < 8 ? colors[p] : autocolor++]));
+      newCurve->setPen(QPen(qcolor[colors[p] < 8 ? colors[p] : autocolor++]));
     }
     else {
-      graph->setPen(QPen(qcolor[autocolor++]));
+      newCurve->setPen(QPen(qcolor[autocolor++]));
     }
     if ( autocolor >= 8 ) autocolor = 0;
 
     if ( p < labels.size() && !label->empty() ) {
-      graph->setName(QString::fromStdString(*label));
-      graph->addToLegend();
+      newCurve->setName(QString::fromStdString(*label));
+      newCurve->addToLegend();
       ++label;
     }
-    graph->setData(QVector<double>::fromStdVector(xyp->first),QVector<double>::fromStdVector(xyp->second));
+    newCurve->setData(QVector<double>::fromStdVector(xyp->first),QVector<double>::fromStdVector(xyp->second));
     ++xyp;
   }
   _plot->rescaleAxes(true);
@@ -128,7 +132,8 @@ void QPlot::save(std::string filename){
 }
 
 void QPlot::clean(){
-  _plot->clearGraphs();
+  //_plot->clearGraphs();
+  _plot->clearPlottables();
 }
 
 void QPlot::custom(const std::string &customlines){
@@ -141,7 +146,24 @@ void QPlot::dump(std::ostream& out, std::string& plotname) const {
 }
 
 void QPlot::resizeEvent(QResizeEvent * event) {
-  QDialog::resizeEvent(event);
-  _plot->resize(event->size());
+  QMainWindow::resizeEvent(event);
+  //_plot->resize(event->size());
   _plot->replot();
+}
+
+void QPlot::setWinTitle(std::string title) { 
+  _winTitle = title+" - QAgate";
+  this->setWindowTitle(QString::fromStdString(_winTitle));
+}
+
+void QPlot::createStatusBar() {
+  this->statusBar()->showMessage("");
+  connect(_plot,SIGNAL(mouseMove(QMouseEvent*)),this,SLOT(updateStatusBar(QMouseEvent*)));
+}
+
+void QPlot::updateStatusBar(QMouseEvent *event) {
+  double x = _plot->xAxis->pixelToCoord(event->pos().x());
+  double y = _plot->yAxis->pixelToCoord(event->pos().y());
+  QString info = "x=" + QString::number(x) + " y=" + QString::number(y);
+  this->statusBar()->showMessage(info);
 }

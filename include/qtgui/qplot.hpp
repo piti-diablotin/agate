@@ -47,13 +47,14 @@
 #  endif
 #include <QDialog>
 #include <QColor>
+#include <QStatusBar>
 #include "plot/graph.hpp"
 #include "qtgui/qcustomplot.h"
 
 /** 
  *
  */
-class QPlot : public QDialog, public Graph {
+class QPlot : public QMainWindow, public Graph {
   Q_OBJECT
 
   private :
@@ -103,6 +104,12 @@ class QPlot : public QDialog, public Graph {
     virtual void clean();
 
     /**
+     * Setter
+     * @param title the new window title
+     */
+    virtual void setWinTitle(std::string title);
+
+    /**
      * Add custom command depending on frontend
      * @param customlines The custom commands to add
      */
@@ -117,6 +124,11 @@ class QPlot : public QDialog, public Graph {
     virtual void dump(std::ostream& out, std::string& plotname) const;
 
     virtual void resizeEvent(QResizeEvent * event);
+
+    virtual void createStatusBar();
+
+    public slots :
+      virtual void updateStatusBar(QMouseEvent *event);
 
 };
 

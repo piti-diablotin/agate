@@ -54,6 +54,12 @@ class Gnuplot : public Graph {
 
   protected :
 
+    /**
+     * Add thing to gnuplot like ranges, and tics
+     *
+     */
+    void addCustom();
+
   public :
 
     /**
@@ -88,11 +94,6 @@ class Gnuplot : public Graph {
     virtual void save(std::string filename);
 
     /**
-     * Clean everything
-     */
-    virtual void clean() {;}
-
-    /**
      * Print out the commande to plot
      * @param out ostream for output
      * @param plotname is the filename for the file that would be created when the graph is created
@@ -100,11 +101,6 @@ class Gnuplot : public Graph {
      */
     virtual void dump(std::ostream& out, std::string& plotname) const;
 
-    /**
-     * Creat a file with the current command for plotting.
-     * @param filename The name of the file to be written which contains the commands to plot the graph.
-     */
-    virtual void custom(const std::string &customlines);
 };
 
 #endif  // GNUPLOT_HPP

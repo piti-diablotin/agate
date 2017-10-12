@@ -1367,32 +1367,33 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     double min = minval-(maxval-minval)*0.1;
     double max = maxval+(maxval-minval)*0.1;
     std::stringstream tmp;
-    tmp << "set xrange [0:" << eigparser->getLength() << "]" << std::endl;
-    tmp << "set yrange [" << min << ":" << max << "]" << std::endl;
-    tmp << "set arrow from 0,0 to " << eigparser->getLength() << ",0 nohead" << std::endl;
-    //tmp << "set ytics add (\"E_F\" 0)" << std::endl;
-    tmp << "set xtics -1,1000,1000" << std::endl;
-    unsigned kptsize = kptlabels.size();
-    if ( ndiv.size() > 0 &&  (ndiv.size() == kptsize-1 || kptsize == 0 ) ) {
-      if ( kptsize > 0 )
-        tmp << "set xtics add (\"" << kptlabels[0] << "\" 0)" << std::endl;
-      unsigned acc = 0;
-      for ( unsigned i = 0 ; i < ndiv.size()-1 ; ++i ) {
-        acc += ndiv[i];
-        if ( acc >= x.size() )
-          throw EXCEPTION("Something is wrong in you ndiv argument",ERRDIV);
-        if ( kptsize > 0 )
-          tmp << "set xtics add (\"" <<  kptlabels[i+1] << "\" " << x[acc] << ")" << std::endl;
-        tmp << "set arrow from " << x[acc] << "," << min << " to " << x[acc] << "," << max << " nohead " << std::endl;
+    if ( _gplot != nullptr ) {
+      _gplot->setXRange(0,eigparser->getLength());
+      _gplot->setYRange(min,max);
+      _gplot->addArrow(0,0,eigparser->getLength(),0,false);
+      unsigned kptsize = kptlabels.size();
+      if ( ndiv.size() > 0 &&  (ndiv.size() == kptsize-1 || kptsize == 0 ) ) {
+        if ( kptsize > 0 ) {
+          _gplot->addXTic(kptlabels[0],0);
+        }
+        unsigned acc = 0;
+        for ( unsigned i = 0 ; i < ndiv.size()-1 ; ++i ) {
+          acc += ndiv[i];
+          if ( acc >= x.size() )
+            throw EXCEPTION("Something is wrong in you ndiv argument",ERRDIV);
+          if ( kptsize > 0 ) {
+            _gplot->addXTic(kptlabels[i+1],x[acc]);
+          }
+          _gplot->addArrow(x[acc],min,x[acc],max,false);
+        }
+        if ( kptsize > 0 ) {
+          _gplot->addXTic(*kptlabels.rbegin(),eigparser->getLength());
+        }
       }
-      if ( kptsize > 0 )
-        tmp << "set xtics add (\"" << *kptlabels.rbegin() << "\"" << eigparser->getLength() << ")" << std::endl;
+      else if ( ndiv.size() > 0 &&  ndiv.size() != kptlabels.size()-1 ) {
+        throw EXCEPTION("Number of ndiv not compatible with number of labels",ERRDIV);
+      }
     }
-    else if ( ndiv.size() > 0 &&  ndiv.size() != kptlabels.size()-1 ) {
-      throw EXCEPTION("Number of ndiv not compatible with number of labels",ERRDIV);
-    }
-    if ( _gplot != nullptr )
-      _gplot->custom(tmp.str());
     if ( save == Graph::GraphSave::DATA ) { 
       eigparser->dump(filename+".dat",EigParser::PRTKPT|EigParser::PRTIKPT);
       save = Graph::GraphSave::NONE;
@@ -1479,6 +1480,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
   }
   config.save = save;
   Graph::plot(config,_gplot.get());
+  _gplot->clearCustom();
 }
 
 void CanvasPos::buildBorders(unsigned itime) {

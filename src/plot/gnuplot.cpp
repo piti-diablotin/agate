@@ -98,6 +98,7 @@ void Gnuplot::plot(std::vector<double> x, std::list<std::vector<double>> y, std:
   }
 
   total << _header.str();
+  this->addCustom();
   total << _custom.str();
   total << "set xlabel '" << _xlabel << "'" << std::endl;
   total << "set ylabel '" << _ylabel << "'" << std::endl;
@@ -143,6 +144,7 @@ void Gnuplot::plot(std::list<std::pair<std::vector<double>,std::vector<double>>>
   }
 
   total << _header.str();
+  this->addCustom();
   total << _custom.str();
   total << "set xlabel '" << _xlabel << "'" << std::endl;
   total << "set ylabel '" << _ylabel << "'" << std::endl;
@@ -168,11 +170,6 @@ void Gnuplot::save(std::string filename) {
 }
 
 //
-void Gnuplot::custom(const std::string &customlines) {
-  _custom.str(customlines);
-}
-
-//
 void Gnuplot::dump(std::ostream& out, std::string& plotname) const {
   out << _header.str() << std::endl;
   out << "set terminal push" << std::endl;
@@ -185,4 +182,35 @@ void Gnuplot::dump(std::ostream& out, std::string& plotname) const {
   out << _buffer.str() << std::endl;
   out << "set terminal pop" << std::endl;
 
+}
+
+void Gnuplot::addCustom() {
+  _custom.str("");
+  _custom.clear();
+  if ( _xrange.set )
+    _custom << "set xrange[" << _xrange.min << ":" << _xrange.max << "]" << std::endl;
+
+  if ( _yrange.set )
+    _custom << "set yrange[" << _yrange.min << ":" << _yrange.max << "]" << std::endl;
+
+  if ( _xtics.size() > 0 ) {
+    if ( _xrange.set )
+      _custom << "set xtics " << _xrange.min-1 << "," << _xrange.max+1 << "," << _xrange.max+1 << std::endl;
+    for( auto t : _xtics ) {
+      _custom << "set xtics add (\"" << t.label << "\" " << t.position << ")" << std::endl;
+    }
+  }
+  if ( _ytics.size() > 0 ) {
+    if ( _yrange.set )
+      _custom << "set ytics " << _yrange.min-1 << "," << _yrange.max+1 << "," << _yrange.max+1 << std::endl;
+    for( auto t : _ytics ) {
+      _custom << "set ytics add (\"" << t.label << "\"" << t.position << ")" << std::endl;
+    }
+  }
+
+  if ( _arrows.size() > 0 ) {
+    for( auto a : _arrows ) {
+      _custom << "set arrow from " << a.x1 << "," << a.y1 << " to " << a.x2 << "," << a.y2 << (a.head? " head" : " nohead") << std::endl;
+    }
+  }
 }

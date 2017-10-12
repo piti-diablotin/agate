@@ -30,8 +30,18 @@
 #include <iomanip>
 
 //
-Graph::Graph() : _xlabel(), _ylabel(), _title() {
-  ;
+Graph::Graph() : _xlabel(),
+  _ylabel(), 
+  _title(), 
+  _winTitle(), 
+  _xtics(), 
+  _ytics(),
+  _arrows(),
+  _xrange(),
+  _yrange()
+{
+  _xrange.set = false;
+  _yrange.set = false;
 }
 
 //
@@ -118,4 +128,48 @@ void Graph::plot(const Config &conf, Graph* gplot) {
     default:
       throw EXCEPTION("This is not possible",ERRABT);
   }
+}
+
+void Graph::setXRange(double min, double max) {
+  _xrange.min = min;
+  _xrange.max = max;
+  _xrange.set = true;
+}
+
+void Graph::setYRange(double min, double max) {
+  _yrange.min = min;
+  _yrange.max = max;
+  _yrange.set = true;
+}
+
+void Graph::addXTic(std::string name, double pos){
+  tic newTic;
+  newTic.position = pos;
+  newTic.label = name;
+  _xtics.push_back(newTic);
+}
+
+void Graph::addYTic(std::string name, double pos){
+  tic newTic;
+  newTic.position = pos;
+  newTic.label = name;
+  _ytics.push_back(newTic);
+}
+
+void Graph::addArrow(double x1, double y1, double x2, double y2, bool head) {
+  arrow arr;
+  arr.x1 = x1;
+  arr.y1 = y1;
+  arr.x2 = x2;
+  arr.y2 = y2;
+  arr.head = head;
+  _arrows.push_back(arr);
+}
+
+void Graph::clearCustom() {
+  _xrange.set = false;
+  _yrange.set = false;
+  _xtics.clear();
+  _ytics.clear();
+  _arrows.clear();
 }

@@ -32,7 +32,9 @@ const QColor QPlot::qcolor[] = { Qt::black, Qt::red, Qt::green, Qt::blue, Qt::ma
 //
 QPlot::QPlot(QWidget *parent) : QMainWindow(parent), Graph(),
   _plot(new QCustomPlot(this)),
-  _titleElement(new QCPTextElement(_plot, QString::fromStdString(_title), QFont("Helvetica", 12, QFont::Bold)))
+  _titleElement(new QCPTextElement(_plot, QString::fromStdString(_title), QFont("Helvetica", 12, QFont::Bold))),
+  _save(nullptr),
+  _autozoom(nullptr)
 {
   this->resize(640,480);
   //_plot->resize(640,480);
@@ -44,8 +46,31 @@ QPlot::QPlot(QWidget *parent) : QMainWindow(parent), Graph(),
   _plot->plotLayout()->addElement(0, 0, _titleElement);
   _plot->setOpenGl(false);
   _plot->setInteractions(QCP::Interaction::iRangeDrag|QCP::Interaction::iRangeZoom);
+  //_plot->setRangeZoomAxis(_plot->xAxis,_plot->yAxis);
   connect(_plot->xAxis, SIGNAL(rangeChanged(QCPRange)), _plot->xAxis2, SLOT(setRange(QCPRange)));
   connect(_plot->yAxis, SIGNAL(rangeChanged(QCPRange)), _plot->yAxis2, SLOT(setRange(QCPRange)));
+  connect(_plot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePressed(QMouseEvent*)));
+
+  _plot->selectionRect()->setPen(QPen(QColor(50,50,50,200),2,Qt::SolidLine));
+  _plot->selectionRect()->setBrush(QBrush(QColor(125,125,125,50)));
+  this->setFocusPolicy(Qt::StrongFocus);
+
+  QToolBar *toolBar = this->addToolBar("Agate Plot");
+  toolBar->setMovable(false);
+  toolBar->setFloatable(false);
+
+  _save = new QAction(QIcon(":/write.png"),QString("Export to PDF"),toolBar);
+  _save->setShortcut(QKeySequence::Save);
+  _save->setStatusTip("Export plot to PDF");
+
+  _autozoom = new QAction(QIcon(":/autozoom.png"),QString("Auto zoom"),toolBar);
+  _autozoom->setShortcut(QKeySequence("u"));
+  _autozoom->setStatusTip("Auto zoom");
+
+  toolBar->addAction(_save);
+  toolBar->addAction(_autozoom);
+  connect(_save,SIGNAL(triggered()),this,SLOT(save()));
+  connect(_autozoom,SIGNAL(triggered()),this,SLOT(autozoom()));
 }
 
 //
@@ -166,4 +191,27 @@ void QPlot::updateStatusBar(QMouseEvent *event) {
   double y = _plot->yAxis->pixelToCoord(event->pos().y());
   QString info = "x=" + QString::number(x) + " y=" + QString::number(y);
   this->statusBar()->showMessage(info);
+}
+
+void QPlot::mousePressed(QMouseEvent *event) {
+  if ( event->button() == Qt::MouseButton::RightButton ) {
+    _plot->setSelectionRectMode(QCP::SelectionRectMode::srmZoom);
+  }
+  else if ( event->button() == Qt::MouseButton::LeftButton ) {
+    _plot->setSelectionRectMode(QCP::SelectionRectMode::srmNone);
+  }
+}
+
+void QPlot::autozoom(){
+  _plot->rescaleAxes(true);
+  _plot->replot();
+}
+
+void QPlot::save(){
+  auto name = QFileDialog::getSaveFileName(this, "Save File", "", "PDF (*.pdf)");
+  if ( !name.isEmpty() ) {
+    if ( !name.endsWith(".pdf",Qt::CaseInsensitive) )
+      name.append(".pdf");
+    _plot->savePdf(name,0,0,QCP::epNoCosmetic);
+  }
 }

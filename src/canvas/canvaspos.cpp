@@ -867,13 +867,14 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     try {
       if ( _gplot == nullptr ) 
         _gplot.reset(new Gnuplot);
+
+      _gplot->setWinTitle(_info);
     }
     catch ( Exception &e ) {
       e.ADD("Unable to plot with gnuplot.\nInstead, writing data.", ERRWAR);
       std::cerr << e.fullWhat() << std::endl;
       _gplot.reset(nullptr);
     }
-    _gplot->setWinTitle(_info);
 
     size_t pos = stream.tellg();
     try {
@@ -1248,7 +1249,8 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
 
   // band
   if ( function == "band" ) {
-    _gplot->setWinTitle("Band Structure");
+    if ( _gplot != nullptr )
+      _gplot->setWinTitle("Band Structure");
     filename = "bandStruct";
     doSumUp = false;
     title = "Band Structure";
@@ -1389,7 +1391,8 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     else if ( ndiv.size() > 0 &&  ndiv.size() != kptlabels.size()-1 ) {
       throw EXCEPTION("Number of ndiv not compatible with number of labels",ERRDIV);
     }
-    _gplot->custom(tmp.str());
+    if ( _gplot != nullptr )
+      _gplot->custom(tmp.str());
     if ( save == Graph::GraphSave::DATA ) { 
       eigparser->dump(filename+".dat",EigParser::PRTKPT|EigParser::PRTIKPT);
       save = Graph::GraphSave::NONE;

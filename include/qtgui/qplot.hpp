@@ -60,6 +60,8 @@ class QPlot : public QMainWindow, public Graph {
   private :
     QCustomPlot *_plot;
     QCPTextElement *_titleElement;
+    QAction *_save;
+    QAction *_autozoom;
 
   protected :
     //static const QColor qcolor[] = {{ Qt::black, Qt::red, Qt::green, Qt::blue, Qt::magenta, Qt::cyan, Qt::darkRed, Qt::darkGreen, Qt::darkYellow }};
@@ -127,8 +129,12 @@ class QPlot : public QMainWindow, public Graph {
 
     virtual void createStatusBar();
 
+
     public slots :
       virtual void updateStatusBar(QMouseEvent *event);
+      virtual void mousePressed(QMouseEvent *event);
+      virtual void autozoom();
+      virtual void save();
 
 };
 

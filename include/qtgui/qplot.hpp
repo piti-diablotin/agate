@@ -135,6 +135,8 @@ class QPlot : public QMainWindow, public Graph {
 
     virtual void createStatusBar();
 
+    virtual void keyPressEvent(QKeyEvent *event);
+
 
     public slots :
       virtual void updateStatusBar(QMouseEvent *event);

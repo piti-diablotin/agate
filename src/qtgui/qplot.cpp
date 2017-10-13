@@ -262,6 +262,11 @@ void QPlot::addCustom() {
   }
 }
 
+void QPlot::keyPressEvent(QKeyEvent *event) {
+  if ( event->key() == Qt::Key_Escape )
+    this->close();
+}
+
 QString QPlot::translateToUnicode(QString input) {
   const std::map<QString,QChar> translator = {
     std::pair<QString,QChar>("Alpha"  , QChar(0x91,0x03)),

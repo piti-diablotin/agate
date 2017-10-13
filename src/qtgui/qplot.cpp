@@ -100,7 +100,7 @@ void QPlot::plot(const std::vector<double> &x, const std::list<std::vector<doubl
 
     if ( p < labels.size() ) {
       if ( !label->empty() ) {
-        graph->setName(QString::fromStdString(*label));
+        graph->setName(translateToUnicode(QString::fromStdString(*label)));
         graph->addToLegend();
         addedLabel = true;
       }
@@ -114,8 +114,8 @@ void QPlot::plot(const std::vector<double> &x, const std::list<std::vector<doubl
   _plot->xAxis2->setTickLabels(false);
   _plot->yAxis2->setVisible(true);
   _plot->yAxis2->setTickLabels(false);
-  _plot->xAxis->setLabel(QString::fromStdString(_xlabel));
-  _plot->yAxis->setLabel(QString::fromStdString(_ylabel));
+  _plot->xAxis->setLabel(translateToUnicode(QString::fromStdString(_xlabel)));
+  _plot->yAxis->setLabel(translateToUnicode(QString::fromStdString(_ylabel)));
   _plot->legend->setVisible(addedLabel);
   _titleElement->setText(QString::fromStdString(_title));
   this->addCustom();
@@ -141,7 +141,7 @@ void QPlot::plot(const std::list< std::pair< std::vector<double>,std::vector<dou
 
     if ( p < labels.size() ) {
       if ( !label->empty() ) {
-        newCurve->setName(QString::fromStdString(*label));
+        newCurve->setName(translateToUnicode(QString::fromStdString(*label)));
         newCurve->addToLegend();
         addedLabel = true;
       }
@@ -155,8 +155,8 @@ void QPlot::plot(const std::list< std::pair< std::vector<double>,std::vector<dou
   _plot->xAxis2->setTickLabels(false);
   _plot->yAxis2->setVisible(true);
   _plot->yAxis2->setTickLabels(false);
-  _plot->xAxis->setLabel(QString::fromStdString(_xlabel));
-  _plot->yAxis->setLabel(QString::fromStdString(_ylabel));
+  _plot->xAxis->setLabel(translateToUnicode(QString::fromStdString(_xlabel)));
+  _plot->yAxis->setLabel(translateToUnicode(QString::fromStdString(_ylabel)));
   _plot->legend->setVisible(addedLabel);
   _titleElement->setText(QString::fromStdString(_title));
   this->addCustom();
@@ -238,15 +238,17 @@ void QPlot::addCustom() {
   if ( _xtics.size() > 0 ) {
     QSharedPointer<QCPAxisTickerText> xtickers(new QCPAxisTickerText);
     _plot->xAxis->setTicker(xtickers);
-    for ( auto t : _xtics )
-      xtickers->addTick(t.position,QString::fromStdString(t.label));
+    for ( auto t : _xtics ) {
+      xtickers->addTick(t.position,translateToUnicode(QString::fromStdString(t.label)));
+    }
   }
 
   if ( _ytics.size() > 0 ) {
     QSharedPointer<QCPAxisTickerText> ytickers(new QCPAxisTickerText);
     _plot->yAxis->setTicker(ytickers);
-    for ( auto t : _ytics )
-      ytickers->addTick(t.position,QString::fromStdString(t.label));
+    for ( auto t : _ytics ) {
+      ytickers->addTick(t.position,translateToUnicode(QString::fromStdString(t.label)));
+    }
   }
 
   if ( _arrows.size() > 0 ) {
@@ -258,4 +260,63 @@ void QPlot::addCustom() {
       arrow->setHead(a.head ? QCPLineEnding::esSpikeArrow : QCPLineEnding::esNone );
     }
   }
+}
+
+QString QPlot::translateToUnicode(QString input) {
+  const std::map<QString,QChar> translator = {
+    std::pair<QString,QChar>("Alpha"  , QChar(0x91,0x03)),
+    std::pair<QString,QChar>("Beta"   , QChar(0x92,0x03)),
+    std::pair<QString,QChar>("Gamma"  , QChar(0x93,0x03)),
+    std::pair<QString,QChar>("Delta"  , QChar(0x94,0x03)),
+    std::pair<QString,QChar>("Epsilon", QChar(0x95,0x03)),
+    std::pair<QString,QChar>("Zeta"   , QChar(0x96,0x03)),
+    std::pair<QString,QChar>("Eta"    , QChar(0x97,0x03)),
+    std::pair<QString,QChar>("Theta"  , QChar(0x98,0x03)),
+    std::pair<QString,QChar>("Iota"   , QChar(0x99,0x03)),
+    std::pair<QString,QChar>("Kappa"  , QChar(0x9A,0x03)),
+    std::pair<QString,QChar>("Lambda" , QChar(0x9B,0x03)),
+    std::pair<QString,QChar>("Mu"     , QChar(0x9C,0x03)),
+    std::pair<QString,QChar>("Nu"     , QChar(0x9D,0x03)),
+    std::pair<QString,QChar>("Xi"     , QChar(0x9E,0x03)),
+    std::pair<QString,QChar>("Omicron", QChar(0x9F,0x03)),
+    std::pair<QString,QChar>("Pi"     , QChar(0xA0,0x03)),
+    std::pair<QString,QChar>("Rho"    , QChar(0xA1,0x03)),
+    std::pair<QString,QChar>("Sigma"  , QChar(0xA3,0x03)),
+    std::pair<QString,QChar>("Tau"    , QChar(0xA4,0x03)),
+    std::pair<QString,QChar>("Upsilon", QChar(0xA5,0x03)),
+    std::pair<QString,QChar>("Phi"    , QChar(0xA6,0x03)),
+    std::pair<QString,QChar>("Khi"    , QChar(0xA7,0x03)),
+    std::pair<QString,QChar>("Psi"    , QChar(0xA8,0x03)),
+    std::pair<QString,QChar>("Omega"  , QChar(0xA9,0x03)),
+    std::pair<QString,QChar>("alpha"  , QChar(0xB1,0x03)),
+    std::pair<QString,QChar>("beta"   , QChar(0xB2,0x03)),
+    std::pair<QString,QChar>("gamma"  , QChar(0xB3,0x03)),
+    std::pair<QString,QChar>("delta"  , QChar(0xB4,0x03)),
+    std::pair<QString,QChar>("epsilon", QChar(0xB5,0x03)),
+    std::pair<QString,QChar>("zeta"   , QChar(0xB6,0x03)),
+    std::pair<QString,QChar>("eta"    , QChar(0xB7,0x03)),
+    std::pair<QString,QChar>("theta"  , QChar(0xB8,0x03)),
+    std::pair<QString,QChar>("iota"   , QChar(0xB9,0x03)),
+    std::pair<QString,QChar>("kappa"  , QChar(0xBA,0x03)),
+    std::pair<QString,QChar>("lambda" , QChar(0xBB,0x03)),
+    std::pair<QString,QChar>("mu"     , QChar(0xBC,0x03)),
+    std::pair<QString,QChar>("nu"     , QChar(0xBD,0x03)),
+    std::pair<QString,QChar>("xi"     , QChar(0xBE,0x03)),
+    std::pair<QString,QChar>("omicron", QChar(0xBF,0x03)),
+    std::pair<QString,QChar>("pi"     , QChar(0xC0,0x03)),
+    std::pair<QString,QChar>("rho"    , QChar(0xC1,0x03)),
+    std::pair<QString,QChar>("sigma"  , QChar(0xC3,0x03)),
+    std::pair<QString,QChar>("tau"    , QChar(0xC4,0x03)),
+    std::pair<QString,QChar>("upsilon", QChar(0xC5,0x03)),
+    std::pair<QString,QChar>("phi"    , QChar(0xC6,0x03)),
+    std::pair<QString,QChar>("khi"    , QChar(0xC7,0x03)),
+    std::pair<QString,QChar>("psi"    , QChar(0xC8,0x03)),
+    std::pair<QString,QChar>("omega"  , QChar(0xC9,0x03)),
+  };
+
+  QString output = input;
+  for ( auto& word : translator ) {
+    output.replace(QRegExp(word.first),word.second);
+  }
+  return output;
 }

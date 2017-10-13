@@ -74,6 +74,11 @@ class QPlot : public QMainWindow, public Graph {
      */
     void addCustom();
 
+    /**
+     * Translate greek letters into unicode
+     */
+    static QString translateToUnicode(QString);
+
   public :
 
     /**

@@ -1308,12 +1308,12 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     y.push_back(std::move(s4));
     y.push_back(std::move(s5));
     y.push_back(std::move(s6));
-    labels.push_back("s1");
-    labels.push_back("s2");
-    labels.push_back("s3");
-    labels.push_back("s4");
-    labels.push_back("s5");
-    labels.push_back("s6");
+    labels.push_back("sigma 1");
+    labels.push_back("sigma 2");
+    labels.push_back("sigma 3");
+    labels.push_back("sigma 4");
+    labels.push_back("sigma 5");
+    labels.push_back("sigma 6");
   }
 
 

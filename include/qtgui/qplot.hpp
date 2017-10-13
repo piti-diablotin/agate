@@ -62,10 +62,17 @@ class QPlot : public QMainWindow, public Graph {
     QCPTextElement *_titleElement;
     QAction *_save;
     QAction *_autozoom;
+    QVector<QCPItemLine*> _arrowsItems;
 
   protected :
     //static const QColor qcolor[] = {{ Qt::black, Qt::red, Qt::green, Qt::blue, Qt::magenta, Qt::cyan, Qt::darkRed, Qt::darkGreen, Qt::darkYellow }};
     static const QColor qcolor[];
+
+    /**
+     * Add thing to gnuplot like ranges, and tics
+     *
+     */
+    void addCustom();
 
   public :
 
@@ -85,14 +92,14 @@ class QPlot : public QMainWindow, public Graph {
      * @param y A vector with several y quantites to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(std::vector<double> x, std::list<std::vector<double>> y, std::list<std::string> labels, std::vector<short> colors);
+    virtual void plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<short> &colors);
 
     /** 
      * Plot several quantities on the screen
      * @param xy A list of (x,y) pairs to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(std::list< std::pair< std::vector<double>,std::vector<double> > > xy, std::list<std::string> labels, std::vector<short> colors);
+    virtual void plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<short> &colors);
 
     /**
      * Save the graph
@@ -110,12 +117,6 @@ class QPlot : public QMainWindow, public Graph {
      * @param title the new window title
      */
     virtual void setWinTitle(std::string title);
-
-    /**
-     * Add custom command depending on frontend
-     * @param customlines The custom commands to add
-     */
-    virtual void custom(const std::string &customlines);
 
     /**
      * Print out the commande to plot

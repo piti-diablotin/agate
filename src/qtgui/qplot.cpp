@@ -34,7 +34,8 @@ QPlot::QPlot(QWidget *parent) : QMainWindow(parent), Graph(),
   _plot(new QCustomPlot(this)),
   _titleElement(new QCPTextElement(_plot, QString::fromStdString(_title), QFont("Helvetica", 12, QFont::Bold))),
   _save(nullptr),
-  _autozoom(nullptr)
+  _autozoom(nullptr),
+  _arrowsItems()
 {
   this->resize(640,480);
   //_plot->resize(640,480);
@@ -78,12 +79,13 @@ QPlot::~QPlot() {
   ;
 }
 
-void QPlot::plot(std::vector<double> x, std::list<std::vector<double>> y, std::list<std::string> labels, std::vector<short> colors){
+void QPlot::plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<short> &colors){
   this->clean();
   this->show();
   auto label = labels.begin();
   auto yp = y.begin();
-  int autocolor = 0;
+  int autocolor = 1;
+  bool addedLabel = false;
   for ( unsigned p = 0 ; p < y.size() ; ++p) {
     _plot->addGraph();
     auto graph = _plot->graph(p);
@@ -96,9 +98,12 @@ void QPlot::plot(std::vector<double> x, std::list<std::vector<double>> y, std::l
     if ( autocolor >= 8 ) autocolor = 0;
 
 
-    if ( p < labels.size() && !label->empty() ) {
-      graph->setName(QString::fromStdString(*label));
-      graph->addToLegend();
+    if ( p < labels.size() ) {
+      if ( !label->empty() ) {
+        graph->setName(QString::fromStdString(*label));
+        graph->addToLegend();
+        addedLabel = true;
+      }
       ++label;
     }
     graph->setData(QVector<double>::fromStdVector(x),QVector<double>::fromStdVector(*yp));
@@ -111,17 +116,19 @@ void QPlot::plot(std::vector<double> x, std::list<std::vector<double>> y, std::l
   _plot->yAxis2->setTickLabels(false);
   _plot->xAxis->setLabel(QString::fromStdString(_xlabel));
   _plot->yAxis->setLabel(QString::fromStdString(_ylabel));
-  _plot->legend->setVisible(labels.size() > 0);
+  _plot->legend->setVisible(addedLabel);
   _titleElement->setText(QString::fromStdString(_title));
+  this->addCustom();
   _plot->replot();
 }
 
-void QPlot::plot(std::list< std::pair< std::vector<double>,std::vector<double> > > xy, std::list<std::string> labels, std::vector<short> colors) {
+void QPlot::plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<short> &colors) {
   this->clean();
   this->show();
   auto label = labels.begin();
   auto xyp = xy.begin();
-  int autocolor = 0;
+  int autocolor = 1;
+  bool addedLabel = false;
   for ( unsigned p = 0 ; p < xy.size() ; ++p) {
     QCPCurve *newCurve = new QCPCurve(_plot->xAxis, _plot->yAxis);
     if ( p < colors.size() ) {
@@ -132,9 +139,12 @@ void QPlot::plot(std::list< std::pair< std::vector<double>,std::vector<double> >
     }
     if ( autocolor >= 8 ) autocolor = 0;
 
-    if ( p < labels.size() && !label->empty() ) {
-      newCurve->setName(QString::fromStdString(*label));
-      newCurve->addToLegend();
+    if ( p < labels.size() ) {
+      if ( !label->empty() ) {
+        newCurve->setName(QString::fromStdString(*label));
+        newCurve->addToLegend();
+        addedLabel = true;
+      }
       ++label;
     }
     newCurve->setData(QVector<double>::fromStdVector(xyp->first),QVector<double>::fromStdVector(xyp->second));
@@ -147,8 +157,9 @@ void QPlot::plot(std::list< std::pair< std::vector<double>,std::vector<double> >
   _plot->yAxis2->setTickLabels(false);
   _plot->xAxis->setLabel(QString::fromStdString(_xlabel));
   _plot->yAxis->setLabel(QString::fromStdString(_ylabel));
-  _plot->legend->setVisible(labels.size()>0);
+  _plot->legend->setVisible(addedLabel);
   _titleElement->setText(QString::fromStdString(_title));
+  this->addCustom();
   _plot->replot();
 }
 
@@ -157,12 +168,13 @@ void QPlot::save(std::string filename){
 }
 
 void QPlot::clean(){
-  //_plot->clearGraphs();
   _plot->clearPlottables();
-}
-
-void QPlot::custom(const std::string &customlines){
- (void) customlines;
+  for ( auto a : _arrowsItems ) {
+    _plot->removeItem(a);
+  }
+  _arrowsItems.clear();
+  _plot->xAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
+  _plot->yAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
 }
 
 void QPlot::dump(std::ostream& out, std::string& plotname) const {
@@ -213,5 +225,37 @@ void QPlot::save(){
     if ( !name.endsWith(".pdf",Qt::CaseInsensitive) )
       name.append(".pdf");
     _plot->savePdf(name,0,0,QCP::epNoCosmetic);
+  }
+}
+
+void QPlot::addCustom() {
+  if ( _xrange.set )
+    _plot->xAxis->setRange(_xrange.min,_xrange.max);
+
+  if ( _yrange.set )
+    _plot->yAxis->setRange(_yrange.min,_yrange.max);
+
+  if ( _xtics.size() > 0 ) {
+    QSharedPointer<QCPAxisTickerText> xtickers(new QCPAxisTickerText);
+    _plot->xAxis->setTicker(xtickers);
+    for ( auto t : _xtics )
+      xtickers->addTick(t.position,QString::fromStdString(t.label));
+  }
+
+  if ( _ytics.size() > 0 ) {
+    QSharedPointer<QCPAxisTickerText> ytickers(new QCPAxisTickerText);
+    _plot->yAxis->setTicker(ytickers);
+    for ( auto t : _ytics )
+      ytickers->addTick(t.position,QString::fromStdString(t.label));
+  }
+
+  if ( _arrows.size() > 0 ) {
+    for ( auto a : _arrows ) {
+      QCPItemLine *arrow = new QCPItemLine(_plot);
+      _arrowsItems.push_back(arrow);
+      arrow->start->setCoords(a.x1,a.y1);
+      arrow->end->setCoords(a.x2,a.y2);
+      arrow->setHead(a.head ? QCPLineEnding::esSpikeArrow : QCPLineEnding::esNone );
+    }
   }
 }

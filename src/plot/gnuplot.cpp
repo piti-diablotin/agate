@@ -65,7 +65,7 @@ Gnuplot::~Gnuplot() {
 }
 
 //
-void Gnuplot::plot(std::vector<double> x, std::list<std::vector<double>> y, std::list<std::string> labels, std::vector<short> colors) {
+void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<short> &colors) {
   using namespace std;
   std::stringstream total;
   _buffer.clear();
@@ -111,7 +111,7 @@ void Gnuplot::plot(std::vector<double> x, std::list<std::vector<double>> y, std:
   }
 }
 
-void Gnuplot::plot(std::list<std::pair<std::vector<double>,std::vector<double>>> xy, std::list<std::string> labels, std::vector<short> colors) {
+void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<double>>> &xy, const std::list<std::string> &labels, const std::vector<short> &colors) {
   using namespace std;
   std::stringstream total;
   _buffer.clear();

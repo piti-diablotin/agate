@@ -57,6 +57,7 @@ class Graph {
     typedef struct tic {
       double position;   ///< Position of the new tick
       std::string label; ///< Label of the new tick
+      tic() : position(0), label() {;}
     } tic;
 
     /**
@@ -139,14 +140,14 @@ class Graph {
      * @param y A vector with several y quantites to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(std::vector<double> x, std::list<std::vector<double>> y, std::list<std::string> labels, std::vector<short> colors) = 0;
+    virtual void plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<short> &colors) = 0;
 
     /** 
      * Plot several quantities on the screen
      * @param xy A list of (x,y) pairs to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(std::list< std::pair< std::vector<double>,std::vector<double> > > xy, std::list<std::string> labels, std::vector<short> colors) = 0;
+    virtual void plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<short> &colors) = 0;
 
     /**
      * Save the graph

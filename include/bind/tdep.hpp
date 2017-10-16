@@ -60,6 +60,7 @@ class Tdep {
     std::unique_ptr<HistDataMD> _supercell; ///< Trajectory to use to compute the phonons. Only real MD can be used;
     unsigned                    _tbegin;    ///< First time to use
     unsigned                    _tend;      ///< Last time to use (excluded)
+    unsigned                    _step;      ///< Step to use to advance in the Hist file
     double                      _rcut;      ///< Radius cutoff for computing shell inside tdep
     std::array<double,9>        _multiplicity; ///< Holds the multiplicity of the supercell with respect to unitcell
 
@@ -89,6 +90,8 @@ class Tdep {
     void tbegin(unsigned t);
     
     void tend(unsigned t);
+
+    void step(unsigned istep);
 
     void rcut(double r);
 

@@ -1246,6 +1246,11 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
   std::string &title = config.title;
   bool &doSumUp = config.doSumUp;
 
+  std::string line;
+  std::getline(stream,line);
+  stream.clear();
+  ConfigParser parser;
+  parser.setContent(line);
 
   // band
   if ( function == "band" ) {
@@ -1260,11 +1265,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     stream >> bandfile;
     if ( stream.fail() )
       throw EXCEPTION("You need to specify a filename",ERRDIV);
-    std::string line;
-    std::getline(stream,line);
-    stream.clear();
-    ConfigParser parser;
-    parser.setContent(line);
+
     EigParser* eigparser;
     try {
       eigparser = EigParser::getEigParser(bandfile);
@@ -1402,12 +1403,6 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
   else if ( function == "tdep" ) {
     if ( _histdata == nullptr ) 
       throw EXCEPTION("No data loaded",ERRDIV);
-    
-    std::string line;
-    std::getline(stream,line);
-    stream.clear();
-    ConfigParser parser;
-    parser.setContent(line);
 
     std::clog << std::endl << " -- TDEP --" << std::endl;
 
@@ -1432,6 +1427,18 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     }
     catch (...) {
       tdep.mode(Tdep::Mode::Normal);
+    }
+
+    try {
+      tdep.step(parser.getToken<unsigned>("step"));
+    }
+    catch (...) {
+    }
+
+    try {
+      tdep.rcut(parser.getToken<double>("rcut"));
+    }
+    catch (...) {
     }
 
     try {

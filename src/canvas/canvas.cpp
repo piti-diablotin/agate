@@ -429,9 +429,9 @@ void Canvas::help(std::ostream &out) {
   out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
   out << setw(40) << ":a or :append filename" << setw(59) << "Append filename to the current trajectory." << endl;
   out << setw(40) << ":o or :open filename" << setw(59) << "Open the file filename and dispay it." << endl;
-  out << setw(40) << ":dump filename" << setw(59) << "Dump the full history in the original format (_HIST,XYZ,...) if available." << endl;
-  out << setw(40) << ":dumpxyz filename" << setw(59) << "Dump the full history in the xyz format." << endl;
-  out << setw(40) << ":dumphist filename" << setw(59) << "Dump the full history in the _HIST format." << endl;
+  out << setw(40) << ":dump filename step STEP" << setw(59) << "Dump the full history in the original format (_HIST,XYZ,...) if available every STEP step." << endl;
+  out << setw(40) << ":dumpxyz filename step STEP" << setw(59) << "Dump the full history in the xyz format every STEP step." << endl;
+  out << setw(40) << ":dumphist filename step STEP" << setw(59) << "Dump the full history in the _HIST format every STEP step." << endl;
   out << setw(40) << ":(plot|print|data) FUNCTION" << setw(59) << "Extract information from the MD simulation." << endl;
   out << setw(40) << "" << setw(59) << "\"plot\" display a gnuplot (if available) graph." << endl;
   out << setw(40) << "" << setw(59) << "\"print\" display a gnuplot (if available) graph and save it into a ps file." << endl;

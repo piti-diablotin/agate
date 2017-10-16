@@ -185,7 +185,7 @@ void HistDataXYZ::readFromFile(const std::string& filename) {
 
 
 //
-void HistDataXYZ::dump(const std::string& filename, unsigned tbegin, unsigned tend) const {
+void HistDataXYZ::dump(const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) const {
   std::ofstream file;
   using namespace std;
   try {
@@ -197,7 +197,7 @@ void HistDataXYZ::dump(const std::string& filename, unsigned tbegin, unsigned te
     file.precision(14);
     file.setf(std::ios::right,std::ios::adjustfield);
     file.setf(std::ios::scientific,std::ios::floatfield);
-    for ( unsigned itime = tbegin ; itime < tend ; ++itime ) { 
+    for ( unsigned itime = tbegin ; itime < tend ; itime+=step ) { 
       file << _natom << endl;
       file << itime << "/" << tend << " created by " << PACKAGE_STRING << " without any warranty" <<endl;
 
@@ -218,7 +218,7 @@ void HistDataXYZ::dump(const std::string& filename, unsigned tbegin, unsigned te
 }
 
 //
-void HistDataXYZ::dump(const HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend) {
+void HistDataXYZ::dump(const HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
   std::ofstream file;
   using namespace std;
   try {
@@ -234,7 +234,7 @@ void HistDataXYZ::dump(const HistData &hist, const std::string& filename, unsign
     file.precision(14);
     file.setf(std::ios::right,std::ios::adjustfield);
     file.setf(std::ios::scientific,std::ios::floatfield);
-    for ( unsigned itime = tbegin ; itime < tend ; ++itime ) { 
+    for ( unsigned itime = tbegin ; itime < tend ; itime+=step ) { 
       file << natom << endl;
       file << itime << "/" << tend << " created by " << PACKAGE_STRING << " without any warranty" <<endl;
 

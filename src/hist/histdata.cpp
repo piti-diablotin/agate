@@ -1334,11 +1334,12 @@ void HistData::checkTimes(unsigned tbegin, unsigned tend) const {
   else if ( tend > _ntimeAvail ) throw EXCEPTION("tend cannot be greater that the number of available time steps", ERRABT);
 }
 
-void HistData::dump(const std::string& filename, unsigned tbegin, unsigned tend) const {
+void HistData::dump(const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) const {
   throw EXCEPTION("Dumping not available for this format",ERRDIV);
   (void) filename;
   (void) tbegin;
   (void) tend;
+  (void) step;
 }
 
 HistData* HistData::average(unsigned tbegin, unsigned tend) {

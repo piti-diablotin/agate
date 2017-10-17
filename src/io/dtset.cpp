@@ -102,7 +102,7 @@ Dtset::Dtset(const HistData &hist, const unsigned itime) :
   _rprim[7] = rprimd[7];
   _rprim[8] = rprimd[8];
 
-  _gprim = geometry::invert(_rprim);
+  _gprim = geometry::invertTranspose(_rprim);
 
   for ( unsigned iatom = 0; iatom < _natom; ++iatom ) {
     _xred.push_back({{xred[iatom*3], xred[iatom*3+1], xred[iatom*3+2]}});
@@ -312,7 +312,7 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
       throw EXCEPTION("rprim is not direct.\nChange order",ERRABT);
     ++step;
 
-    _gprim = geometry::invert(_rprim);
+    _gprim = geometry::invertTranspose(_rprim);
 
     token = "xcart"+suffix;
     try { 
@@ -758,7 +758,7 @@ void Dtset::reBuildStructure(const double tolerance, const bool prtcif) {
     _rprim[geometry::mat3dind(2,3)] *= _acell[1]; // vec2.z
     _rprim[geometry::mat3dind(3,3)] *= _acell[2]; // vec3.z
 
-    _gprim = geometry::invert(_rprim);
+    _gprim = geometry::invertTranspose(_rprim);
     _xcart = geometry::changeBasis(_gprim, _xred);
   }
   catch (Exception& e) {
@@ -829,7 +829,7 @@ void Dtset::standardizeCell(const bool primitive, const double tolerance) {
 #ifdef HAVE_SHRINK_TO_FIT
     _typat.shrink_to_fit();
 #endif
-    _gprim = geometry::invert(_rprim);
+    _gprim = geometry::invertTranspose(_rprim);
     _xcart = geometry::changeBasis(_gprim, _xred);
   }
 #ifdef HAVE_SHRINK_TO_FIT

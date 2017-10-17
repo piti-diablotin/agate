@@ -105,14 +105,46 @@ namespace geometry {
 
   }
 
+  //
+  mat3d invertTranspose(const mat3d& mat) {
+    mat3d inverse;
+    double inv_det = 1e0 / det(mat);
+    inverse[0] = inv_det * ( mat[4]*mat[8]-mat[7]*mat[5] );
+    inverse[3] = inv_det * ( mat[2]*mat[7]-mat[1]*mat[8] );
+    inverse[6] = inv_det * ( mat[1]*mat[5]-mat[4]*mat[2] );
+    inverse[1] = inv_det * ( mat[6]*mat[5]-mat[3]*mat[8] );
+    inverse[4] = inv_det * ( mat[0]*mat[8]-mat[6]*mat[2] );
+    inverse[7] = inv_det * ( mat[2]*mat[3]-mat[0]*mat[5] );
+    inverse[2] = inv_det * ( mat[3]*mat[7]-mat[6]*mat[4] );
+    inverse[5] = inv_det * ( mat[1]*mat[6]-mat[0]*mat[7] );
+    inverse[8] = inv_det * ( mat[0]*mat[4]-mat[3]*mat[1] );
+    return inverse;
+
+  }
+
+  
+  //
+  mat3d invertTranspose(const double mat[9]) {
+    mat3d inverse;
+    double inv_det = 1e0 / det(mat);
+    inverse[0] = inv_det * ( mat[4]*mat[8]-mat[7]*mat[5] );
+    inverse[3] = inv_det * ( mat[2]*mat[7]-mat[1]*mat[8] );
+    inverse[6] = inv_det * ( mat[1]*mat[5]-mat[4]*mat[2] );
+    inverse[1] = inv_det * ( mat[6]*mat[5]-mat[3]*mat[8] );
+    inverse[4] = inv_det * ( mat[0]*mat[8]-mat[6]*mat[2] );
+    inverse[7] = inv_det * ( mat[2]*mat[3]-mat[0]*mat[5] );
+    inverse[2] = inv_det * ( mat[3]*mat[7]-mat[6]*mat[4] );
+    inverse[5] = inv_det * ( mat[1]*mat[6]-mat[0]*mat[7] );
+    inverse[8] = inv_det * ( mat[0]*mat[4]-mat[3]*mat[1] );
+    return inverse;
+
+  }
+
 
   //
   std::vector<vec3d> changeBasis(const mat3d& basis, const std::vector<vec3d>& vecs) {
     std::vector<vec3d> newcoords(vecs.size());
-#ifdef HAVE_SHRINK_TO_FIT
-    newcoords.shrink_to_fit();
-#endif
-    mat3d invBasis = invert(basis);
+    mat3d invBasis = invertTranspose(basis);
     for( unsigned ivec=0 ; ivec < vecs.size() ; ++ivec ) {
       newcoords[ivec] = {{
         invBasis[0]*vecs[ivec][0] + invBasis[1]*vecs[ivec][1] + invBasis[2]*vecs[ivec][2] ,

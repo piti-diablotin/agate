@@ -123,6 +123,22 @@ namespace geometry {
 
 
   /**
+   * Invert a mat3d matrix and transpose the inverse.
+   * @param mat The matrix to inverse.
+   * @return the inverse of the matrix.
+   */
+  mat3d invertTranspose(const mat3d& mat);
+
+
+  /**
+   * Invert a mat3d matrix and transpose the inverse.
+   * @param mat The matrix to inverse.
+   * @return the inverse of the matrix.
+   */
+  mat3d invertTranspose(const double mat[9]);
+
+
+  /**
    * Change some 3D vectors from basis.
    * @param base destination basis in the current basis.
    * @param vecs All the vectors to change.

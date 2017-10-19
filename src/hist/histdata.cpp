@@ -703,7 +703,7 @@ std::pair<std::vector<double>,std::vector<double>> HistData::getPDF(unsigned znu
   }
 
   // Check Rmax compared to dR
-  if ( Rmax < dR )
+  if ( Rmax <= dR )
     throw EXCEPTION("The maximal distance must be greater or equal to the shell thickness",ERRABT);
 
 
@@ -1019,6 +1019,8 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       rmax = (*std::max_element(&_rprimd[0], &_rprimd[9]))*0.5;
       dr = rmax/1000.;
     }
+    if ( rmax < 1e-2 || dr < 1e-10 )
+      throw EXCEPTION("Rmax or dr is too small. This is either a bad input you set or a histdata without rprimd definition",ERRDIV);
     std::clog << std::endl << " -- Pair Distribution Function --" << std::endl;
     std::clog << " Rmax = " << rmax << "[Bohr]\tdR = " << dr << "[Bohr]" << std::endl << std::endl;;
 

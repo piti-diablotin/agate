@@ -48,6 +48,10 @@
 #include <QDialog>
 #include <QColor>
 #include <QStatusBar>
+#include <QMainWindow>
+#include <QAction>
+#include <QVector>
+#include <QToolBar>
 #include "plot/graph.hpp"
 #include "qtgui/qcustomplot.h"
 

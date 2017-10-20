@@ -777,13 +777,13 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
     dimids[1]=natomid;
     dimids[2]=xyzid;
     countp[0]=ntime;
-    countp[1]=_natom;
-    countp[2]=_xyz;
     if ( step == 1 ) step = ntime;
     else countp[0]=1;
     size_t tstart = -1;
     for ( unsigned iitime = tbegin ; iitime < tend ; iitime += step ) {
       ++tstart;
+      countp[1]=_natom;
+      countp[2]=_xyz;
       //xcart(time,natom,xyz)
       units = "bohr";
       mnemo = "vectors (X) of atom positions in CARTesian coordinates" ;

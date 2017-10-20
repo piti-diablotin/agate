@@ -1247,8 +1247,10 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
   bool &doSumUp = config.doSumUp;
 
   std::string line;
+  size_t pos = stream.tellg();
   std::getline(stream,line);
   stream.clear();
+  stream.seekg(pos);
   ConfigParser parser;
   parser.setContent(line);
 

@@ -299,6 +299,20 @@ namespace geometry {
    * @param translation The translation vector
    */
   void getSymmetry(const std::string& operations, mat3d& rotation, vec3d& translation);
+
+  /**
+   * Trye to find out the bigest sphere contains in the rprim cell
+   * @param rprim 3 lattice vectors
+   * @return the ratdius of the sphere
+   */
+  double getWignerSeitzRadius(const mat3d &rprimd);
+
+  /**
+   * Trye to find out the bigest sphere contains in the rprim cell
+   * @param rprim 3 lattice vectors
+   * @return the ratdius of the sphere
+   */
+  double getWignerSeitzRadius(const double rprimd[9]);
 }
 #endif // GEOMETRY_HPP
 

@@ -30,6 +30,7 @@
 #include <iomanip>
 #include <locale>
 #include <cctype>
+#include <algorithm>
 #include "base/utils.hpp"
 #include "base/exception.hpp"
 #include "base/phys.hpp"
@@ -245,4 +246,43 @@ namespace geometry {
       ++vec;
     }
   }
+
+  double getWignerSeitzRadius(const mat3d &rprimd) {
+    const vec3d a = {{ rprimd [0], rprimd[3], rprimd[6] }};
+    const vec3d b = {{ rprimd [1], rprimd[4], rprimd[7] }};
+    const vec3d c = {{ rprimd [2], rprimd[5], rprimd[8] }};
+    const vec3d ab = a+b;
+    const vec3d ac = a+c;
+    const vec3d bc = b+c;
+    const vec3d abc = ab+c;
+    std::vector<double> length(7);
+    length[0] = 0.5*norm(a);
+    length[1] = 0.5*norm(b);
+    length[2] = 0.5*norm(c);
+    length[3] = 0.5*norm(ab);
+    length[4] = 0.5*norm(ac);
+    length[5] = 0.5*norm(bc);
+    length[6] = 0.5*norm(abc);
+    return *std::min_element(length.begin(),length.end());
+  }
+
+  double getWignerSeitzRadius(const double rprimd[9]) {
+    const vec3d a = {{ rprimd [0], rprimd[3], rprimd[6] }};
+    const vec3d b = {{ rprimd [1], rprimd[4], rprimd[7] }};
+    const vec3d c = {{ rprimd [2], rprimd[5], rprimd[8] }};
+    const vec3d ab = a+b;
+    const vec3d ac = a+c;
+    const vec3d bc = b+c;
+    const vec3d abc = ab+c;
+    std::vector<double> length(7);
+    length[0] = 0.5*norm(a);
+    length[1] = 0.5*norm(b);
+    length[2] = 0.5*norm(c);
+    length[3] = 0.5*norm(ab);
+    length[4] = 0.5*norm(ac);
+    length[5] = 0.5*norm(bc);
+    length[6] = 0.5*norm(abc);
+    return *std::min_element(length.begin(),length.end());
+  }
 }
+

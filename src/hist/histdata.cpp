@@ -1016,7 +1016,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     }
     else {
       stream.clear();
-      rmax = (*std::max_element(&_rprimd[0], &_rprimd[9]))*0.5;
+      rmax = geometry::getWignerSeitzRadius(&_rprimd[0]);
       dr = rmax/1000.;
     }
     if ( rmax < 1e-2 || dr < 1e-10 )

@@ -45,7 +45,7 @@ QPlot::QPlot(QWidget *parent) : QMainWindow(parent), Graph(),
   _plot->setAutoAddPlottableToLegend(false);
   _plot->plotLayout()->insertRow(0);
   _plot->plotLayout()->addElement(0, 0, _titleElement);
-  _plot->setOpenGl(false);
+  //_plot->setOpenGl(false);
   _plot->setInteractions(QCP::Interaction::iRangeDrag|QCP::Interaction::iRangeZoom);
   //_plot->setRangeZoomAxis(_plot->xAxis,_plot->yAxis);
   connect(_plot->xAxis, SIGNAL(rangeChanged(QCPRange)), _plot->xAxis2, SLOT(setRange(QCPRange)));

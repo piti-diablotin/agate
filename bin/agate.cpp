@@ -194,6 +194,7 @@ int main(int argc, char** argv) {
   parser.setOption("version",'v',"Print the version number");
   parser.setOption("help",'h',"Print this message");
   parser.setOption("verbosity",'V',"2","0 : nothing\n1 : write to file\n2 : write to screen");
+  parser.setOption("wait",'w',"Wait for loading the files set on the command line");
 
   std::streambuf* bufstderr = std::cerr.rdbuf();
   std::streambuf* bufstdlog = std::clog.rdbuf();
@@ -302,24 +303,29 @@ int main(int argc, char** argv) {
 
 
 
-    crystal.reset(new CanvasPos(!parser.getOption<bool>("term")));
-    {
-      try {
-        initInput(argc-1, (const char**) argv+1);
-      }
-      catch ( Exception &e ) {
-        std::clog << e.fullWhat() << std::endl;
-        crystal.reset(new CanvasPos(!parser.getOption<bool>("term")));
-      }
-      try{
-        if ( parser.isSetOption("font") )
-          ptrwin->setFont(parser.getOption<std::string>("font"));
-      }
-      catch (Exception& e) {
-        if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
-          e.ADD("Something bad happened",ERRDIV);
-          throw e;
-        }
+    bool term = parser.getOption<bool>("term");
+    bool wait = parser.getOption<bool>("wait");
+    crystal.reset(new CanvasPos(!term));
+    if ( wait ) {
+      std::istringstream stream("1");
+      crystal->alter("wait",stream);
+    }
+
+    try {
+      initInput(argc-1, (const char**) argv+1);
+    }
+    catch ( Exception &e ) {
+      std::clog << e.fullWhat() << std::endl;
+      crystal.reset(new CanvasPos(!term));
+    }
+    try{
+      if ( parser.isSetOption("font") )
+        ptrwin->setFont(parser.getOption<std::string>("font"));
+    }
+    catch (Exception& e) {
+      if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+        e.ADD("Something bad happened",ERRDIV);
+        throw e;
       }
     }
 

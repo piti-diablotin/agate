@@ -412,7 +412,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
       _wait = opt;
       if ( ! (_opengl || _wait) ) {
         _wait = true;
-        throw EXCEPTION("In no X mode, always wait for loading file", ERRCOM);
+        throw EXCEPTION("In terminal mode, always wait for loading file", ERRCOM);
       }
     }
     else 

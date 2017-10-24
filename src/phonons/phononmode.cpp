@@ -159,7 +159,7 @@ const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qp
 	if ( !(idir1 < 3 && idir2 < 3 && ipert1 == _natom+1 && ipert2 < _natom) ) continue;
     		_zeff[ipert2][geometry::mat3dind( idir1+1, idir2+1)] = elt.second.real();
 	}  	
-	/*Change unit - add zion on diagonal axis of BEC-Tensor*/
+	/*Change unit/add zion on diagonal axis of BEC-Tensor*/
 	for ( unsigned ipert2 = 0 ; ipert2 < _natom ; ++ipert2 ) {
 		for ( unsigned idir1 = 1 ; idir1 <= 3 ; ++idir1 ) {
 			for ( unsigned idir2 = 1 ; idir2 <= 3; ++idir2 ) {
@@ -190,11 +190,8 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 		}	
 		if (_zeff[i][geometry::mat3dind( 3,1 )] == 0 ){ 
 			  _zeff[i][geometry::mat3dind( 1, 3)] = 0; 
-		}
-     		/*std::cout<< i+1 << ".atom";
-     		geometry::print( _zeff[i],  std::cout);
-     		std::cout<<'\n'<< _zeff[i][geometry::mat3dind( 1, 1)] << '\n';*/
-	} //Print _zeff[i][geometry::mat3dind( x,y)]  atom i, Axes x,y
+		}     		
+	} 
 
 	geometry::mat3d rprim = ddb.rprim(); 			/// get rprim
  	 _rprim << rprim[0], rprim[1],rprim[2],
@@ -203,12 +200,8 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 	double cell_V; 						/// get unit cell volume (bohr^3)
 	cell_V = geometry::det(rprim);
 	cell_V = cell_V*phys::b2A*phys::b2A*phys::b2A;
-        std::cout<<"cell_V(bohr): "<<cell_V<<std::endl;  
-	/*for (int i = 0; i < _zeff.size(); i++) {	
-          std::cout<< i+1 << ".atom"<<std::endl;
-          geometry::print( _zeff[i],  std::cout);
-	}*/
-	
+        std::cout<<"cell_V(bohr): "<<cell_V<<std::endl; 
+ 	
 	/*Following lines: get Eigenfrequencies and Modes at Gamma */
 	PhononMode gamma(_natom);
 	gamma.computeASR(ddb);
@@ -216,37 +209,17 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 	std::vector<double> freq_gamma(3*_natom);
 	std::vector<complex> disp_gamma(3*_natom*3*_natom);
 	gamma.computeEigen(&freq_gamma[0],&disp_gamma[0]);
-	for (unsigned m = 0; m < freq_gamma.size(); ++m){	/// Transform mode energies from Ha in THz
-                std::cout<<"freq_gamma["<<m<<"](Ha):"<<freq_gamma[m]<<std::endl; 
-		freq_gamma[m] = phys::Ha2THz * freq_gamma[m];
-		/*std::cout<<"freq_gamma["<<m<<"](Thz):"<<freq_gamma[m]<<std::endl; */
+	for (unsigned m = 0; m < freq_gamma.size(); ++m){	/// Transform mode energies from Ha in THz                
+		freq_gamma[m] = phys::Ha2THz * freq_gamma[m];		
 	}
-
 
         /*---Normalization Test---*/
         for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
             _mass[iatom] = mendeleev::mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]; // type starts at 1
-            std::cout<<"_mass[iatom]: "<<_mass[iatom]<<std::endl;
-        }
-	/*for ( unsigned i = 0 ; i < _natom; ++i ) { 	
-		std::cout<<"mode 8 Atom "<<i<<"x: "<<disp_gamma[8*3*_natom+3*i]<<std::endl; 
-		std::cout<<"mode 8 Atom "<<i<<"y: "<<disp_gamma[8*3*_natom+3*i+1]<<std::endl;
-		std::cout<<"mode 8 Atom "<<i<<"z: "<<disp_gamma[8*3*_natom+3*i+2]<<std::endl;  
-        }*/
-	for ( unsigned i = 0 ; i < _natom; ++i ) { 	
-		std::cout<<"mode 6 Atom "<<i+1<<"real: "<<disp_gamma[5*3*_natom+3*i].real()<<"; "<<disp_gamma[5*3*_natom+3*i+1].real()<<"; "<<disp_gamma[5*3*_natom+3*i+2].real()<<std::endl; 
-		std::cout<<"mode 6 Atom "<<i+1<<"imag: "<<disp_gamma[5*3*_natom+i].imag()<<"; "<<disp_gamma[5*3*_natom+3*i+1].imag()<<"; "<<disp_gamma[5*3*_natom+3*i+2].imag()<<std::endl;
-        }
-	for ( unsigned i = 0; i < disp_gamma.size(); ++i ) { 
-            /*std::cout<<"disp_gamma["<<i<<"]"<<disp_gamma[i]<<std::endl;*/
+        }	
+	for ( unsigned i = 0; i < disp_gamma.size(); ++i ) {             
             disp_gamma[i] = disp_gamma[i].real()*pow(phys::amu_emass,0.5);
         }
-
-	/*for ( unsigned i = 0 ; i < _natom; ++i ) { 	
-		std::cout<<"mode 8 Atom "<<i+1<<"real: "<<disp_gamma[8*3*_natom+3*i].real()<<"; "<<disp_gamma[8*3*_natom+3*i+1].real()<<"; "<<disp_gamma[8*3*_natom+3*i+2].real()<<std::endl; 
-		std::cout<<"mode 8 Atom "<<i+1<<"imag: "<<disp_gamma[8*3*_natom+3*i].imag()<<"; "<<disp_gamma[8*3*_natom+3*i+1].imag()<<"; "<<disp_gamma[8*3*_natom+3*i+2].imag()<<std::endl;;  
-        }*/	
-
         double amp_m;
         for (unsigned m = 0; m < freq_gamma.size(); ++m){
             amp_m = 0; 
@@ -277,10 +250,7 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 			}		
 		} 
 	}
-	/*Output of Polarization*/
-	for ( unsigned i = 0; i< pol.size(); ++i) {
-		std::cout<<"pol["<<i<<"]: "<<pol[i]<<std::endl;
-	}
+	
 	/*Calculation of dielectric tensor*/
 	geometry::mat3d diel; 
 	for (unsigned m = 3; m < freq_gamma.size(); ++m) { 
@@ -295,9 +265,7 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 		diel[geometry::mat3dind( 3, 1)] = diel[geometry::mat3dind( 3, 1)] + pol[m*3+2]*pol[m*3]/(freq_gamma[m]*freq_gamma[m]);
 		diel[geometry::mat3dind( 3, 2)] = diel[geometry::mat3dind( 3, 2)] + pol[m*3+2]*pol[m*3+1]/(freq_gamma[m]*freq_gamma[m]);
 		diel[geometry::mat3dind( 3, 3)] = diel[geometry::mat3dind( 3, 3)] + pol[m*3+2]*pol[m*3+2]/(freq_gamma[m]*freq_gamma[m]);	
-	}
-        std::cout<<"phys::fac :"<<phys::fac<<std::endl;
-        geometry::print(diel,  std::cout);
+	} 
         diel = geometry::sc_mult(diel, phys::fac/(phys::Eps_0 * cell_V));
 	geometry::print(diel,  std::cout);
 }

@@ -38,6 +38,7 @@
 #include "hist/multibinit.hpp"
 #include "hist/histdataxyz.hpp"
 #include "plot/gnuplot.hpp"
+#include "io/configparser.hpp"
 #ifdef HAVE_SPGLIB
 #  ifdef __cplusplus
 extern "C" {
@@ -982,6 +983,15 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   }
 
   stream >> function;
+
+  std::string line;
+  size_t pos = stream.tellg();
+  std::getline(stream,line);
+  stream.clear();
+  stream.seekg(pos);
+  ConfigParser parser;
+  parser.setContent(line);
+
   unsigned ntime = tend-tbegin;
   std::vector<double> &x = config.x;
   std::list<std::vector<double>> &y = config.y;
@@ -994,9 +1004,27 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   std::string &title = config.title;
   //bool &doSumUp = config.doSumUp;
 
-  xlabel = "Time [fs]";
-  x.resize(ntime);
-  for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=_time[i]*phys::atu2fs;
+  try {
+    std::string tunit = parser.getToken<std::string>("tunit");
+    if ( tunit == "fs" ) {
+      xlabel = "Time [fs]";
+      x.resize(ntime);
+      for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=_time[i]*phys::atu2fs;
+    }
+    else if ( tunit == "step" ) {
+      xlabel = "Time [step]";
+      x.resize(ntime);
+      for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
+    }
+    else {
+      throw EXCEPTION("Unknow time unit, allowed values fs and step",ERRDIV);
+    }
+  }
+  catch (Exception &e) {
+    xlabel = "Time [step]";
+    x.resize(ntime);
+    for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
+  }
 
   //RDF
   if ( function == "g(r)" ) {
@@ -1326,6 +1354,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   config.save = save;
   Graph::plot(config,gplot);
   gplot->clearCustom();
+  stream.clear();
 }
 
 void HistData::checkTimes(unsigned tbegin, unsigned tend) const {

@@ -436,6 +436,7 @@ void Canvas::help(std::ostream &out) {
   out << setw(40) << "" << setw(59) << "\"plot\" display a gnuplot (if available) graph." << endl;
   out << setw(40) << "" << setw(59) << "\"print\" display a gnuplot (if available) graph and save it into a ps file." << endl;
   out << setw(40) << "" << setw(59) << "\"data\" display a gnuplot (if available) graph and save the plotted data into an ascii file." << endl;
+  out << setw(40) << "" << setw(59) << "For functions versus time, the token \"tunit\" can be used with \"fs\" or \"step\" to change time scale." << endl;
   out << setw(40) << "" << setw(59) << "FUNCTION can be :" << endl;
   out << setw(45) << "" << setw(59) << "T: Temperature" << endl;
   out << setw(45) << "" << setw(59) << "P: Pressure" << endl;

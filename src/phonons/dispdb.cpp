@@ -278,7 +278,7 @@ void DispDB::computeFromDDB(Ddb &ddb) {
     modes.computeAllEigen(ddb,&_energies[0],&_modes[0]);
   }
   else {
-    Exception e = EXCEPTION("There is not qpt in this DDB",ERRWAR);
+    Exception e = EXCEPTION("There is no qpt in this DDB",ERRWAR);
     std::clog << e.fullWhat() << std::endl;
   }
 }

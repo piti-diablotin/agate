@@ -101,7 +101,7 @@ void DdbPhonopy::readFromFile(const std::string& filename) {
       _gprim[i+3] = vec[1]*phys::b2A;
       _gprim[i+6] = vec[2]*phys::b2A;
     }
-    _rprim = invert(_gprim);
+    _rprim = invertTranspose(_gprim);
 
     auto qpoints = fulldoc["phonon"];
     std::clog << "Will read " << qpoints.size() << " qpoints" << std::endl;

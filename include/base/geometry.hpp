@@ -123,6 +123,22 @@ namespace geometry {
 
 
   /**
+   * Invert a mat3d matrix and transpose the inverse.
+   * @param mat The matrix to inverse.
+   * @return the inverse of the matrix.
+   */
+  mat3d invertTranspose(const mat3d& mat);
+
+
+  /**
+   * Invert a mat3d matrix and transpose the inverse.
+   * @param mat The matrix to inverse.
+   * @return the inverse of the matrix.
+   */
+  mat3d invertTranspose(const double mat[9]);
+
+
+  /**
    * Change some 3D vectors from basis.
    * @param base destination basis in the current basis.
    * @param vecs All the vectors to change.
@@ -290,6 +306,20 @@ namespace geometry {
    * @param translation The translation vector
    */
   void getSymmetry(const std::string& operations, mat3d& rotation, vec3d& translation);
+
+  /**
+   * Trye to find out the bigest sphere contains in the rprim cell
+   * @param rprim 3 lattice vectors
+   * @return the ratdius of the sphere
+   */
+  double getWignerSeitzRadius(const mat3d &rprimd);
+
+  /**
+   * Trye to find out the bigest sphere contains in the rprim cell
+   * @param rprim 3 lattice vectors
+   * @return the ratdius of the sphere
+   */
+  double getWignerSeitzRadius(const double rprimd[9]);
 }
 #endif // GEOMETRY_HPP
 

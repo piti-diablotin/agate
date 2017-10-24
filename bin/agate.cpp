@@ -118,7 +118,7 @@ void initInput(int argc, const char** argv) {
   }
   catch (Exception& e) {
     e.ADD("Updating canvas failed",ERRDIV);
-    std::clog << e.fullWhat() << std::endl;
+    throw e;
   }
 }
 
@@ -304,7 +304,13 @@ int main(int argc, char** argv) {
 
     crystal.reset(new CanvasPos(!parser.getOption<bool>("term")));
     {
-      initInput(argc-1, (const char**) argv+1);
+      try {
+        initInput(argc-1, (const char**) argv+1);
+      }
+      catch ( Exception &e ) {
+        std::clog << e.fullWhat() << std::endl;
+        crystal.reset(new CanvasPos(!parser.getOption<bool>("term")));
+      }
       try{
         if ( parser.isSetOption("font") )
           ptrwin->setFont(parser.getOption<std::string>("font"));

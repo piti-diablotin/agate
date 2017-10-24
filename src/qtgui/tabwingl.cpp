@@ -26,6 +26,7 @@
 
 #include "qtgui/tabwingl.hpp"
 #include "canvas/canvaspos.hpp"
+#include "qtgui/qplot.hpp"
 
 //
 TabWinGl::TabWinGl(QWidget *parent) : QTabWidget(parent),
@@ -72,6 +73,7 @@ QWidget* TabWinGl::newTab() {
   pCanvas *canvas = new pCanvas(nullptr);
   _glwidgets.push_back(new GLWidget(*canvas,640,479,60,tab));
   canvas->reset(new CanvasPos(true)); 
+  canvas->get()->setGraph(new QPlot(this));
   _glwidgets.back()->setTitle("New Tab");
   gridLayout->addWidget(_glwidgets.back(), 0, 0, 1, 1);
   return tab;

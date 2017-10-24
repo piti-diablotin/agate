@@ -215,7 +215,7 @@ class HistDataMD : public HistData {
      * @param tbegin first time to start with
      * @param tend Last time (not included) in the dumping
      */
-    virtual void dump(const std::string& filename, unsigned tbegin, unsigned tend) const = 0;
+    virtual void dump(const std::string& filename, unsigned tbegin, unsigned tend, unsigned step = 1) const = 0;
 
     virtual bool hasThermo() const { return true; }
 

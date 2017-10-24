@@ -121,6 +121,11 @@ void ConfigParser::setContent(const std::string& content) _NOEXCEPT {
   _contentOrig = content;
   _caseSensitive = false;
   _isParsed = true;
+
+  size_t pos_useless;
+  while ( (pos_useless = _content.find_first_of("=;")) != std::string::npos )
+    _content.replace(pos_useless,1," ");
+  utils::tolower(_content);
 }
 
 template<>

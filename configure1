@@ -1,10 +1,10 @@
 # Basic information
 PACKAGE = AbiOut
-VERSION = 0.0.7
+VERSION = 0.0.8
 MAIL = jordan.bieder@cea.fr
 
 # Initial information about the package
-AC_INIT([AbiOut],[0.0.7],[jordan.bieder@cea.fr])
+AC_INIT([AbiOut],[0.0.8],[jordan.bieder@cea.fr])
 
 # Check source directory
 AC_CONFIG_SRCDIR([bin/agate.cpp])
@@ -1365,6 +1365,26 @@ AT_WITH_QT([+opengl +widgets])
 if test x"$QT_VERSION_MAJOR" != x""
 then
   have_qt_usable="yes"
+  if test x"$QT_VERSION_MAJOR" = x"45"
+  then 
+    AC_MSG_CHECKING([for Qt version])
+    qmake_version_check=$($QMAKE --version | $SED "1d" | $GREP " 5." >&AS_MESSAGE_LOG_FD 2>&1 && echo "5" || echo "4")
+    AC_MSG_RESULT([$qmake_version_check])
+    if test x"$qmake_version_check" = x"5"
+    then
+      AS_UNSET([at_cv_env_QT_DEFINES])
+      AS_UNSET([at_cv_env_QT_CFLAGS])
+      AS_UNSET([at_cv_env_QT_CXXFLAGS])
+      AS_UNSET([at_cv_env_QT_INCPATH])
+      AS_UNSET([at_cv_env_QT_CPPFLAGS])
+      AS_UNSET([at_cv_env_QT_LFLAGS])
+      AS_UNSET([at_cv_env_QT_LDFLAGS])
+      AS_UNSET([at_cv_env_QT_LIBS])
+      AT_WITH_QT([+opengl +widgets +printsupport])
+      #QT_DEFINES="$QT_DEFINES -DQCUSTOMPLOT_USE_OPENGL"
+      AC_SUBST([QT_DEFINE])
+    fi
+  fi
 fi
 AM_CONDITIONAL([HAVE_QT],[test x"$have_qt_usable" = x"yes"])
 

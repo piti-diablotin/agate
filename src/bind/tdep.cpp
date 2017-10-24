@@ -46,6 +46,7 @@ Tdep::Tdep() :
   _supercell(),
   _tbegin(0),
   _tend(-1),
+  _step(1),
   _rcut(-1),
   _multiplicity()
 {
@@ -152,6 +153,10 @@ void Tdep::tend(unsigned t) {
   _tend = t;
 }
 
+void Tdep::step(unsigned istep) {
+  _step = istep;
+}
+
 void Tdep::rcut(double r) {
   _rcut = r;
 }
@@ -177,19 +182,17 @@ void Tdep::tdep() {
     throw EXCEPTION("tend is too large",ERRDIV);
 
   auto rprimd = _supercell->getRprimd(0);
-  double a2 = rprimd[0]*rprimd[0]+rprimd[3]*rprimd[3]+rprimd[6]*rprimd[6];
-  double b2 = rprimd[1]*rprimd[1]+rprimd[4]*rprimd[4]+rprimd[7]*rprimd[7];
-  double c2 = rprimd[2]*rprimd[2]+rprimd[5]*rprimd[5]+rprimd[8]*rprimd[8];
-  double small = std::min(std::min(a2,b2),c2);
+  double small = geometry::getWignerSeitzRadius(rprimd);
 
   if ( _rcut >= 0 &&  _rcut*_rcut < small ) {
-    std::ostringstream mess("Rcut seems to be larger than a safe value which is ");
-    mess << std::sqrt(small) << " bohr.\nPlease make a check.";
+    std::ostringstream mess;
+    mess << "Rcut seems to be larger than a safe value which is ";
+    mess << small << " bohr.\nPlease make a check.";
     Exception e = EXCEPTION(mess.str(),ERRWAR);
     std::clog << e.fullWhat() << std::endl;
   }
   else if ( _rcut < 0. )
-    _rcut = std::sqrt(small)/2.;
+    _rcut = small;
 
   unsigned natomUc = _unitcell.natom();
   //unsigned natomSc = _supercell->natom();
@@ -308,7 +311,7 @@ void Tdep::tdep() {
 
   input << std::setw(16) << "# Computation details" << std::endl;
   input << std::setw(16) << "nstep_max";
-  input << std::setw(10) << _tend-_tbegin << std::endl; // _tend will be included
+  input << std::setw(10) << (_tend-_tbegin)/_step + ((_tend-_tbegin)%_step != 0 ? 1 : 0 ) << std::endl; // _tend will be included
 
   input << std::setw(16) << "nstep_min";
   input << std::setw(10) << 1 << std::endl; // Add 1 since it starts at 1
@@ -321,7 +324,7 @@ void Tdep::tdep() {
   input << std::setw(16) << "TheEnd" << std::endl;
 
   input.close();
-  HistDataNC::dump(*_supercell.get(),"HIST.nc",_tbegin,_tend);
+  HistDataNC::dump(*_supercell.get(),"HIST.nc",_tbegin,_tend,_step);
 
   int err = system("tdep");
   if ( err != 0 || errno != 0) 

@@ -1,11 +1,11 @@
 /**
- * @file include/gnuplot.hpp
+ * @file include/./qplot.hpp
  *
  * @brief 
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
- * @copyright Copyright 2014 Jordan Bieder
+ * @copyright Copyright 2017 Jordan Bieder
  *
  * This file is part of AbiOut.
  *
@@ -24,8 +24,8 @@
  */
 
 
-#ifndef GNUPLOT_HPP
-#define GNUPLOT_HPP
+#ifndef QPLOT_HPP
+#define QPLOT_HPP
 
 #ifdef _WIN32
 #include "base/win32.hpp"
@@ -36,23 +36,41 @@
 #undef HAVE_CONFIG_H
 #endif
 
+#  ifdef __GNUC__
+#    if __GNUC__ >= 4
+#      if __GNUC_MINOR__ >= 6
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Weffc++"
+#      endif
+#    endif
+#    pragma GCC system_header
+#  endif
+#include <QDialog>
+#include <QColor>
+#include <QStatusBar>
+#include <QMainWindow>
+#include <QAction>
+#include <QVector>
+#include <QToolBar>
 #include "plot/graph.hpp"
-#include <cstdio>
-#include <sstream>
-#include <memory>
+#include "qtgui/qcustomplot.h"
 
 /** 
  *
  */
-class Gnuplot : public Graph {
+class QPlot : public QMainWindow, public Graph {
+  Q_OBJECT
 
   private :
-    std::unique_ptr<FILE> _gp;  ///< Descriptor to communicate with gnuplot
-    std::stringstream _header; ///< Header to send to gnuplot before sending data
-    std::stringstream _buffer; ///< All the string to send to gnuplot
-    std::stringstream _custom;
+    QCustomPlot *_plot;
+    QCPTextElement *_titleElement;
+    QAction *_save;
+    QAction *_autozoom;
+    QVector<QCPItemLine*> _arrowsItems;
 
   protected :
+    //static const QColor qcolor[] = {{ Qt::black, Qt::red, Qt::green, Qt::blue, Qt::magenta, Qt::cyan, Qt::darkRed, Qt::darkGreen, Qt::darkYellow }};
+    static const QColor qcolor[];
 
     /**
      * Add thing to gnuplot like ranges, and tics
@@ -60,17 +78,22 @@ class Gnuplot : public Graph {
      */
     void addCustom();
 
+    /**
+     * Translate greek letters into unicode
+     */
+    static QString translateToUnicode(QString);
+
   public :
 
     /**
      * Constructor.
      */
-    Gnuplot();
+    QPlot(QWidget *parent);
 
     /**
      * Destructor.
      */
-    virtual ~Gnuplot();
+    virtual ~QPlot();
 
     /** 
      * Plot several quantities on the screen
@@ -85,13 +108,24 @@ class Gnuplot : public Graph {
      * @param xy A list of (x,y) pairs to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(const std::list<std::pair<std::vector<double>,std::vector<double>>> &xy, const std::list<std::string> &labels, const std::vector<short> &colors);
+    virtual void plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<short> &colors);
 
     /**
      * Save the graph
      * @param filename Save to filename
      * */
     virtual void save(std::string filename);
+
+    /**
+     * Clean everything
+     */
+    virtual void clean();
+
+    /**
+     * Setter
+     * @param title the new window title
+     */
+    virtual void setWinTitle(std::string title);
 
     /**
      * Print out the commande to plot
@@ -101,6 +135,19 @@ class Gnuplot : public Graph {
      */
     virtual void dump(std::ostream& out, std::string& plotname) const;
 
+    virtual void resizeEvent(QResizeEvent * event);
+
+    virtual void createStatusBar();
+
+    virtual void keyPressEvent(QKeyEvent *event);
+
+
+    public slots :
+      virtual void updateStatusBar(QMouseEvent *event);
+      virtual void mousePressed(QMouseEvent *event);
+      virtual void autozoom();
+      virtual void save();
+
 };
 
-#endif  // GNUPLOT_HPP
+#endif  // QPLOT_HPP

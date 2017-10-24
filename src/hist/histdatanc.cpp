@@ -663,7 +663,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
 }
 
 //
-void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned tend) const {
+void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) const {
   unsigned ntime = tend-tbegin;
   try {
     HistData::checkTimes(tbegin,tend);
@@ -672,25 +672,30 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
     int dimids[3]; // Maximal number of dimension for variables.
     int rval;
 
-    auto put_var = [](int ncid, const char* name, std::string &unit, std::string &mnemo, nc_type type, int ndims, const int* dimids, const size_t *countp, const void* data) {
+    auto put_var = [](int ncid, const char* name, std::string &unit, std::string &mnemo, nc_type type, int ndims, const int* dimids, const size_t *countp, const size_t tstart, const void* data) {
       int varid;
       int rval;
       size_t startp[ndims];
-      startp[0] = 0;
-      startp[1] = 0;
-      startp[2] = 0;
-      if ( (rval = nc_redef(ncid) ) )
-        throw EXCEPTION(std::string("Error entering define mode for variable")+std::string(name)+std::string(" with error ")+std::string(nc_strerror(rval)),ERRABT);
-      if ( (rval = nc_def_var(ncid,name,type,ndims,dimids,&varid) ) )
-        throw EXCEPTION(std::string(std::string("Error creating variable ")+std::string(name)+std::string(" with error "))+std::string(nc_strerror(rval)),ERRABT);
-      if ( unit != "" || mnemo != "" ) {
-        if ( (rval = nc_put_att_text(ncid, varid, "unit", unit.size(), unit.c_str()) ) )
-          throw EXCEPTION(std::string(std::string("Error creating attribut unit for variable ")+std::string(name)+std::string(" with error "))+std::string(nc_strerror(rval)),ERRABT);
-        if ( (rval = nc_put_att_text(ncid, varid, "mnemonics", mnemo.size(), mnemo.c_str()) ) )
-          throw EXCEPTION(std::string(std::string("Error creating attribut mnemonics for variable ")+std::string(name)+std::string(" with error "))+std::string(nc_strerror(rval)),ERRABT);
+      for ( int i = 0 ; i < ndims ; ++i ) startp[i] = 0;
+      startp[0] = tstart;
+      if ( tstart == 0 ) {
+        if ( (rval = nc_redef(ncid) ) )
+          throw EXCEPTION(std::string("Error entering define mode for variable")+std::string(name)+std::string(" with error ")+std::string(nc_strerror(rval)),ERRABT);
+        if ( (rval = nc_def_var(ncid,name,type,ndims,dimids,&varid) ) )
+          throw EXCEPTION(std::string(std::string("Error creating variable ")+std::string(name)+std::string(" with error "))+std::string(nc_strerror(rval)),ERRABT);
+        if ( unit != "" || mnemo != "" ) {
+          if ( (rval = nc_put_att_text(ncid, varid, "unit", unit.size(), unit.c_str()) ) )
+            throw EXCEPTION(std::string(std::string("Error creating attribut unit for variable ")+std::string(name)+std::string(" with error "))+std::string(nc_strerror(rval)),ERRABT);
+          if ( (rval = nc_put_att_text(ncid, varid, "mnemonics", mnemo.size(), mnemo.c_str()) ) )
+            throw EXCEPTION(std::string(std::string("Error creating attribut mnemonics for variable ")+std::string(name)+std::string(" with error "))+std::string(nc_strerror(rval)),ERRABT);
+        }
+        if ( (rval = nc_enddef(ncid) ) )
+          throw EXCEPTION(std::string("Error ending define mode with error ")+std::string(nc_strerror(rval)),ERRABT);
       }
-      if ( (rval = nc_enddef(ncid) ) )
-        throw EXCEPTION(std::string("Error ending define mode with error ")+std::string(nc_strerror(rval)),ERRABT);
+      else {
+        if ( (rval = nc_inq_varid(ncid,name,&varid)) )
+          throw EXCEPTION("Unable to get variable id for"+std::string(name),ERRABT);
+      }
       if ( (rval = nc_put_vara(ncid,varid,startp,countp,data) ) )
         throw EXCEPTION(std::string("Error putting variable ")+std::string(name)+std::string(" with error ")+std::string(nc_strerror(rval)),ERRABT);
     };
@@ -725,29 +730,28 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
     countp[0]=_natom;
     units = "dimensionless";
     mnemo = "types of atoms";
-    put_var(ncid,"typat",units,mnemo,NC_INT,1,dimids,countp,&_typat[0]);
+    put_var(ncid,"typat",units,mnemo,NC_INT,1,dimids,countp,0,&_typat[0]);
 
     //znucl(npsp)
-    double *znucl = nullptr;
-    znucl = new double[_znucl.size()];
+    double *znucl = new double[_znucl.size()];
     for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
       znucl[z] = (double) _znucl[z];
     dimids[0]=npspid;
     countp[0]=_znucl.size();
     units = "atomic units";
     mnemo = "atomic charges";
-    put_var(ncid,"znucl",units,mnemo,NC_DOUBLE,1,dimids,countp,znucl);
+    put_var(ncid,"znucl",units,mnemo,NC_DOUBLE,1,dimids,countp,0,znucl);
+    delete[] znucl;
 
     //amu(ntypat)
-    double *amu = nullptr;
-    amu = new double[_znucl.size()];
+    double *amu = new double[_znucl.size()];
     for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
       amu[z] = mendeleev::mass[_znucl[z]];
     dimids[0]=ntypatid;
     countp[0]=_znucl.size();
     units = "atomic units";
     mnemo = "atomic masses";
-    put_var(ncid,"amu",units,mnemo,NC_DOUBLE,1,dimids,countp,amu);
+    put_var(ncid,"amu",units,mnemo,NC_DOUBLE,1,dimids,countp,0,amu);
     delete[] amu;
 
     //dtion
@@ -773,116 +777,122 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
     dimids[1]=natomid;
     dimids[2]=xyzid;
     countp[0]=ntime;
-    countp[1]=_natom;
-    countp[2]=_xyz;
-    //xcart(time,natom,xyz)
-    units = "bohr";
-    mnemo = "vectors (X) of atom positions in CARTesian coordinates" ;
-    put_var(ncid,"xcart",units,mnemo,NC_DOUBLE,3,dimids,countp,&_xcart[tbegin*_natom*_xyz]);
+    if ( step == 1 ) step = ntime;
+    else countp[0]=1;
+    size_t tstart = -1;
+    for ( unsigned iitime = tbegin ; iitime < tend ; iitime += step ) {
+      ++tstart;
+      countp[1]=_natom;
+      countp[2]=_xyz;
+      //xcart(time,natom,xyz)
+      units = "bohr";
+      mnemo = "vectors (X) of atom positions in CARTesian coordinates" ;
+      put_var(ncid,"xcart",units,mnemo,NC_DOUBLE,3,dimids,countp,tstart,&_xcart[iitime*_natom*_xyz]);
 
-    //xred(time,natom,xyz)
-    units = "dimensionless" ;
-    mnemo = "vectors (X) of atom positions in REDuced coordinates" ;
-    put_var(ncid,"xred",units,mnemo,NC_DOUBLE,3,dimids,countp,&_xred[tbegin*_natom*_xyz]);
+      //xred(time,natom,xyz)
+      units = "dimensionless" ;
+      mnemo = "vectors (X) of atom positions in REDuced coordinates" ;
+      put_var(ncid,"xred",units,mnemo,NC_DOUBLE,3,dimids,countp,tstart,&_xred[iitime*_natom*_xyz]);
 
-    //fcart(time,natom,xyz)
-    units = "Ha/bohr" ;
-    mnemo = "atom Forces in CARTesian coordinates" ;
-    if ( _fcart.size() < 3*_ntime*_natom){
-      auto f = _fcart;
-      f.resize(3*_ntime*_natom);
-      put_var(ncid,"fcart",units,mnemo,NC_DOUBLE,3,dimids,countp,&f[tbegin*_natom*_xyz]);
+      //fcart(time,natom,xyz)
+      units = "Ha/bohr" ;
+      mnemo = "atom Forces in CARTesian coordinates" ;
+      if ( _fcart.size() < 3*_ntime*_natom){
+        auto f = _fcart;
+        f.resize(3*_ntime*_natom);
+        put_var(ncid,"fcart",units,mnemo,NC_DOUBLE,3,dimids,countp,tstart,&f[iitime*_natom*_xyz]);
+      }
+      else
+        put_var(ncid,"fcart",units,mnemo,NC_DOUBLE,3,dimids,countp,tstart,&_fcart[iitime*_natom*_xyz]);
+
+      //fred(time,natom,xyz)
+      units = "dimensionless" ;
+      mnemo = "atom Forces in REDuced coordinates" ;
+      if ( _fcart.size() < 3*_ntime*_natom){
+        auto f = _fcart;
+        f.resize(3*_ntime*_natom);
+        put_var(ncid,"fred",units,mnemo,NC_DOUBLE,3,dimids,countp,tstart,&f[iitime*_natom*_xyz]);
+      }
+      else
+        put_var(ncid,"fred",units,mnemo,NC_DOUBLE,3,dimids,countp,tstart,&_fcart[iitime*_natom*_xyz]);
+
+      //vel(time,natom,xyz)
+      units = "bohr*Ha/hbar" ;
+      mnemo = "VELocity" ;
+      put_var(ncid,"vel",units,mnemo,NC_DOUBLE,3,dimids,countp,tstart,&_velocities[iitime*_natom*_xyz]);
+
+      //acell(time,xyz)
+      units = "bohr" ;
+      mnemo = "CELL lattice vector scaling" ;
+      dimids[1]=xyzid;
+      countp[1]=_xyz;
+      put_var(ncid,"acell",units,mnemo,NC_DOUBLE,2,dimids,countp,tstart,&_acell[iitime*_xyz]);
+
+      //rprimd(time,xyz,xyz)
+      double *rprimd = new double[countp[0]*_xyz*_xyz];
+      for ( unsigned itime = 0 ; itime < countp[0] ; ++itime ) {
+        // Transpose rprimd for [[v1x v1y v1z][v2x v2y v2z] [v3x v3y v3z]] to [[v1x v2x v3x] [v1y v2y v3y] [v1z v2z v3z]]
+        rprimd[itime*9+0] = _rprimd[(iitime+itime)*9+0];
+        rprimd[itime*9+1] = _rprimd[(iitime+itime)*9+3];
+        rprimd[itime*9+2] = _rprimd[(iitime+itime)*9+6];
+        rprimd[itime*9+3] = _rprimd[(iitime+itime)*9+1];
+        rprimd[itime*9+4] = _rprimd[(iitime+itime)*9+4];
+        rprimd[itime*9+5] = _rprimd[(iitime+itime)*9+7];
+        rprimd[itime*9+6] = _rprimd[(iitime+itime)*9+2];
+        rprimd[itime*9+7] = _rprimd[(iitime+itime)*9+5];
+        rprimd[itime*9+8] = _rprimd[(iitime+itime)*9+8];
+      }
+      units = "bohr" ;
+      mnemo = "Real space PRIMitive translations, Dimensional" ;
+      put_var(ncid,"rprimd",units,mnemo,NC_DOUBLE,3,dimids,countp,tstart,rprimd);
+
+      for ( unsigned itime = 0 ; itime < countp[0] ; ++itime ) {
+        rprimd[itime*9+0] = 0;
+        rprimd[itime*9+1] = 0;
+        rprimd[itime*9+2] = 0;
+        rprimd[itime*9+3] = 0;
+        rprimd[itime*9+4] = 0;
+        rprimd[itime*9+5] = 0;
+        rprimd[itime*9+6] = 0;
+        rprimd[itime*9+7] = 0;
+        rprimd[itime*9+8] = 0;
+      }
+      units = "bohr*Ha/hbar" ;
+      mnemo = "VELocities of cell" ;
+      put_var(ncid,"vel_cell",units,mnemo,NC_DOUBLE,3,dimids,countp,tstart,rprimd);
+      delete[] rprimd;
+
+      //etotal(time)
+      units = "Ha" ;
+      mnemo = "TOTAL Energy" ;
+      put_var(ncid,"etotal",units,mnemo,NC_DOUBLE,1,dimids,countp,tstart,&_etotal[iitime]);
+
+      //ekin(time)
+      units = "Ha" ;
+      mnemo = "Energy KINetic ionic" ;
+      put_var(ncid,"ekin",units,mnemo,NC_DOUBLE,1,dimids,countp,tstart,&_ekin[iitime]);
+
+      //entropy(time)
+      units =  "";
+      mnemo = "Entropy" ;
+      put_var(ncid,"entropy",units,mnemo,NC_DOUBLE,1,dimids,countp,tstart,&_entropy[iitime]);
+
+      //mdtime(time)
+      units = "hbar/Ha" ;
+      mnemo = "Molecular Dynamics TIME" ;
+      {
+        auto tmp_time = _time;
+        for ( auto& t : tmp_time ) t /= dtion;
+        put_var(ncid,"mdtime",units,mnemo,NC_DOUBLE,1,dimids,countp,tstart,&tmp_time[iitime]);
+      }
+
+      //strten(time,six)
+      dimids[1]=sixid;
+      countp[1]=6;
+      units = "Ha/bohr^3" ;
+      mnemo = "STRess tensor" ;
+      put_var(ncid,"strten",units,mnemo,NC_DOUBLE,2,dimids,countp,tstart,&_stress[iitime*6]);
     }
-    else
-      put_var(ncid,"fcart",units,mnemo,NC_DOUBLE,3,dimids,countp,&_fcart[tbegin*_natom*_xyz]);
-
-    //fred(time,natom,xyz)
-    units = "dimensionless" ;
-    mnemo = "atom Forces in REDuced coordinates" ;
-    if ( _fcart.size() < 3*_ntime*_natom){
-      auto f = _fcart;
-      f.resize(3*_ntime*_natom);
-      put_var(ncid,"fred",units,mnemo,NC_DOUBLE,3,dimids,countp,&f[tbegin*_natom*_xyz]);
-    }
-    else
-      put_var(ncid,"fred",units,mnemo,NC_DOUBLE,3,dimids,countp,&_fcart[tbegin*_natom*_xyz]);
-
-    //vel(time,natom,xyz)
-    units = "bohr*Ha/hbar" ;
-    mnemo = "VELocity" ;
-    put_var(ncid,"vel",units,mnemo,NC_DOUBLE,3,dimids,countp,&_velocities[tbegin*_natom*_xyz]);
-
-    //acell(time,xyz)
-    units = "bohr" ;
-    mnemo = "CELL lattice vector scaling" ;
-    dimids[1]=xyzid;
-    countp[1]=_xyz;
-    put_var(ncid,"acell",units,mnemo,NC_DOUBLE,2,dimids,countp,&_acell[tbegin*_xyz]);
-
-    //rprimd(time,xyz,xyz)
-    double *rprimd;
-    rprimd = new double[ntime*_xyz*_xyz];
-    for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
-      // Transpose rprimd for [[v1x v1y v1z][v2x v2y v2z] [v3x v3y v3z]] to [[v1x v2x v3x] [v1y v2y v3y] [v1z v2z v3z]]
-      rprimd[itime*9+0] = _rprimd[(tbegin+itime)*9+0];
-      rprimd[itime*9+1] = _rprimd[(tbegin+itime)*9+3];
-      rprimd[itime*9+2] = _rprimd[(tbegin+itime)*9+6];
-      rprimd[itime*9+3] = _rprimd[(tbegin+itime)*9+1];
-      rprimd[itime*9+4] = _rprimd[(tbegin+itime)*9+4];
-      rprimd[itime*9+5] = _rprimd[(tbegin+itime)*9+7];
-      rprimd[itime*9+6] = _rprimd[(tbegin+itime)*9+2];
-      rprimd[itime*9+7] = _rprimd[(tbegin+itime)*9+5];
-      rprimd[itime*9+8] = _rprimd[(tbegin+itime)*9+8];
-    }
-    units = "bohr" ;
-    mnemo = "Real space PRIMitive translations, Dimensional" ;
-    put_var(ncid,"rprimd",units,mnemo,NC_DOUBLE,3,dimids,countp,rprimd);
-
-    for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
-      rprimd[itime*9+0] = 0;
-      rprimd[itime*9+1] = 0;
-      rprimd[itime*9+2] = 0;
-      rprimd[itime*9+3] = 0;
-      rprimd[itime*9+4] = 0;
-      rprimd[itime*9+5] = 0;
-      rprimd[itime*9+6] = 0;
-      rprimd[itime*9+7] = 0;
-      rprimd[itime*9+8] = 0;
-    }
-    units = "bohr*Ha/hbar" ;
-    mnemo = "VELocities of cell" ;
-    put_var(ncid,"vel_cell",units,mnemo,NC_DOUBLE,3,dimids,countp,rprimd);
-
-    //etotal(time)
-    units = "Ha" ;
-    mnemo = "TOTAL Energy" ;
-    put_var(ncid,"etotal",units,mnemo,NC_DOUBLE,1,dimids,countp,&_etotal[tbegin]);
-
-    //ekin(time)
-    units = "Ha" ;
-    mnemo = "Energy KINetic ionic" ;
-    put_var(ncid,"ekin",units,mnemo,NC_DOUBLE,1,dimids,countp,&_ekin[tbegin]);
-
-    //entropy(time)
-    units =  "";
-    mnemo = "Entropy" ;
-    put_var(ncid,"entropy",units,mnemo,NC_DOUBLE,1,dimids,countp,&_entropy[tbegin]);
-
-    //mdtime(time)
-    units = "hbar/Ha" ;
-    mnemo = "Molecular Dynamics TIME" ;
-    {
-      auto tmp_time = _time;
-      for ( auto& t : tmp_time ) t /= dtion;
-      put_var(ncid,"mdtime",units,mnemo,NC_DOUBLE,1,dimids,countp,&tmp_time[tbegin]);
-    }
-
-    //strten(time,six)
-    dimids[1]=sixid;
-    countp[1]=6;
-    units = "Ha/bohr^3" ;
-    mnemo = "STRess tensor" ;
-    put_var(ncid,"strten",units,mnemo,NC_DOUBLE,2,dimids,countp,&_stress[tbegin*6]);
 
     // Close file
     if ( (rval = nc_close(ncid) ) )
@@ -899,14 +909,14 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
   }
 }
 
-void HistDataNC::dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend) {
+void HistDataNC::dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
   HistDataMD *histmd;
   if ( ( histmd = dynamic_cast<HistDataMD*>(&hist) ) ) {
-    reinterpret_cast<HistDataNC*>(histmd)->dump(filename,tbegin,tend);
+    reinterpret_cast<HistDataNC*>(histmd)->dump(filename,tbegin,tend,step);
   }
   else {
     HistDataNC histTmp(std::move(hist));
-    histTmp.dump(filename,tbegin,tend);
+    histTmp.dump(filename,tbegin,tend,step);
     hist = std::move(histTmp);
   }
 }

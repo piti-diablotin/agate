@@ -89,6 +89,8 @@ am__v_RCC_1 =
 	$(MOC) $(QT_CPPFLAGS) $(EXTRA_CPPFLAGS) $< -o $@
 %.moc.cpp: $(top_srcdir)/include/qtgui/%.hpp
 	$(AM_V_MOC)$(MOCCOMPILE) -DHAVE_QT $(EXTRA_CPPFLAGS) $< -o $@
+%.moc.cpp: $(top_srcdir)/include/qtgui/%.h
+	$(AM_V_MOC)$(MOCCOMPILE) -DHAVE_QT $(EXTRA_CPPFLAGS) $< -o $@
 
 # --- #
 # UIC #

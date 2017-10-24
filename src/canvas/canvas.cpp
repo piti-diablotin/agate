@@ -247,6 +247,8 @@ void Canvas::translateZ(TransDir trans) {
 
 //
 void Canvas::alter(std::string token, std::istringstream &stream) {
+  ConfigParser parser;
+  parser.setContent(stream.str());
   if ( token == "o" || token == "open" || token == "e" || token == "edit" ) {
     std::string ext;
     stream >> ext;
@@ -276,7 +278,21 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     std::ostringstream out;
     try {
       stream >> ext;
-      _histdata->dump(ext,_tbegin,_tend);
+      int step = 1;
+      try {
+        step = parser.getToken<int>("step");
+      }
+      catch ( Exception & e ) {
+        if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+          throw e;
+        }
+      }
+      if ( _histdata.get() != nullptr ) {
+        _histdata->dump(ext,_tbegin,_tend,step);
+      }
+      else {
+        throw EXCEPTION("Nothing to dump", ERRCOM);
+      }
     }
     catch ( Exception &e ) {
       e.ADD("Unable to dump history "+ext,ERRDIV);
@@ -290,8 +306,17 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     std::ostringstream out;
     try {
       stream >> ext;
+      int step = 1;
+      try {
+        step = parser.getToken<int>("step");
+      }
+      catch ( Exception & e ) {
+        if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+          throw e;
+        }
+      }
       if ( _histdata.get() != nullptr ) {
-        HistDataXYZ::dump(*(_histdata.get()),ext,_tbegin,_tend);
+        HistDataXYZ::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
       }
       else {
         throw EXCEPTION("Nothing to dump", ERRCOM);
@@ -309,8 +334,17 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     std::ostringstream out;
     try {
       stream >> ext;
+      int step = 1;
+      try {
+        step = parser.getToken<int>("step");
+      }
+      catch ( Exception & e ) {
+        if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+          throw e;
+        }
+      }
       if ( _histdata.get() != nullptr ) {
-        HistDataNC::dump(*(_histdata.get()),ext,_tbegin,_tend);
+        HistDataNC::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
       }
       else {
         throw EXCEPTION("Nothing to dump", ERRCOM);
@@ -395,9 +429,9 @@ void Canvas::help(std::ostream &out) {
   out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
   out << setw(40) << ":a or :append filename" << setw(59) << "Append filename to the current trajectory." << endl;
   out << setw(40) << ":o or :open filename" << setw(59) << "Open the file filename and dispay it." << endl;
-  out << setw(40) << ":dump filename" << setw(59) << "Dump the full history in the original format (_HIST,XYZ,...) if available." << endl;
-  out << setw(40) << ":dumpxyz filename" << setw(59) << "Dump the full history in the xyz format." << endl;
-  out << setw(40) << ":dumphist filename" << setw(59) << "Dump the full history in the _HIST format." << endl;
+  out << setw(40) << ":dump filename step STEP" << setw(59) << "Dump the full history in the original format (_HIST,XYZ,...) if available every STEP step." << endl;
+  out << setw(40) << ":dumpxyz filename step STEP" << setw(59) << "Dump the full history in the xyz format every STEP step." << endl;
+  out << setw(40) << ":dumphist filename step STEP" << setw(59) << "Dump the full history in the _HIST format every STEP step." << endl;
   out << setw(40) << ":(plot|print|data) FUNCTION" << setw(59) << "Extract information from the MD simulation." << endl;
   out << setw(40) << "" << setw(59) << "\"plot\" display a gnuplot (if available) graph." << endl;
   out << setw(40) << "" << setw(59) << "\"print\" display a gnuplot (if available) graph and save it into a ps file." << endl;

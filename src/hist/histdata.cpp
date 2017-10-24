@@ -703,7 +703,7 @@ std::pair<std::vector<double>,std::vector<double>> HistData::getPDF(unsigned znu
   }
 
   // Check Rmax compared to dR
-  if ( Rmax < dR )
+  if ( Rmax <= dR )
     throw EXCEPTION("The maximal distance must be greater or equal to the shell thickness",ERRABT);
 
 
@@ -841,8 +841,8 @@ std::list<std::vector<double>> HistData::getMSD(unsigned tbegin,unsigned tend) c
       for ( unsigned coord = 0 ; coord < 9 ; ++coord )
         rprimd_av[coord] += _rprimd[itime*9+coord];
     }
-#pragma omp parallel for collapse(3)
     for ( unsigned itime = 1 ; itime < ntime ; ++itime ) {
+#pragma omp for schedule(static)
       for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
           const double diff = fullxred[(itime*_natom+iatom)*3+coord]-fullxred[((itime-1)*_natom+iatom)*3+coord] + 0.5;
@@ -1016,9 +1016,11 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     }
     else {
       stream.clear();
-      rmax = (*std::max_element(&_rprimd[0], &_rprimd[9]))*0.5;
+      rmax = geometry::getWignerSeitzRadius(&_rprimd[0]);
       dr = rmax/1000.;
     }
+    if ( rmax < 1e-2 || dr < 1e-10 )
+      throw EXCEPTION("Rmax or dr is too small. This is either a bad input you set or a histdata without rprimd definition",ERRDIV);
     std::clog << std::endl << " -- Pair Distribution Function --" << std::endl;
     std::clog << " Rmax = " << rmax << "[Bohr]\tdR = " << dr << "[Bohr]" << std::endl << std::endl;;
 
@@ -1308,12 +1310,12 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     y.push_back(std::move(s4));
     y.push_back(std::move(s5));
     y.push_back(std::move(s6));
-    labels.push_back("s1");
-    labels.push_back("s2");
-    labels.push_back("s3");
-    labels.push_back("s4");
-    labels.push_back("s5");
-    labels.push_back("s6");
+    labels.push_back("sigma 1");
+    labels.push_back("sigma 2");
+    labels.push_back("sigma 3");
+    labels.push_back("sigma 4");
+    labels.push_back("sigma 5");
+    labels.push_back("sigma 6");
   }
 
 
@@ -1323,6 +1325,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 
   config.save = save;
   Graph::plot(config,gplot);
+  gplot->clearCustom();
 }
 
 void HistData::checkTimes(unsigned tbegin, unsigned tend) const {
@@ -1333,11 +1336,12 @@ void HistData::checkTimes(unsigned tbegin, unsigned tend) const {
   else if ( tend > _ntimeAvail ) throw EXCEPTION("tend cannot be greater that the number of available time steps", ERRABT);
 }
 
-void HistData::dump(const std::string& filename, unsigned tbegin, unsigned tend) const {
+void HistData::dump(const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) const {
   throw EXCEPTION("Dumping not available for this format",ERRDIV);
   (void) filename;
   (void) tbegin;
   (void) tend;
+  (void) step;
 }
 
 HistData* HistData::average(unsigned tbegin, unsigned tend) {
@@ -1490,9 +1494,9 @@ void HistData::periodicBoundaries(bool toPeriodic) {
 
   if ( toPeriodic ) {
     // Impose periodicity
-#pragma omp for schedule(static)
     for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
       double * xredT = &_xred[itime*_natom*3];
+#pragma omp for schedule(static)
       for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
           while ( xredT[iatom*3+coord] >= 1.0 ) xredT[iatom*3+coord] -= 1.0;
@@ -1504,8 +1508,8 @@ void HistData::periodicBoundaries(bool toPeriodic) {
   }
   else {
     // Remove periodicity
-#pragma omp for schedule(static)
     for ( unsigned itime = 1 ; itime < _ntime ; ++itime ) {
+#pragma omp for schedule(static)
       for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
           const double diff = _xred[(itime*_natom+iatom)*3+coord]-_xred[((itime-1)*_natom+iatom)*3+coord] + 0.5;

@@ -93,7 +93,7 @@ Supercell::Supercell(const Dtset& dtset, const unsigned nx, const unsigned ny, c
   _rprim[6] *= Rx;
   _rprim[7] *= Ry;
   _rprim[8] *= Rz;
-  _gprim = geometry::invert(_rprim);
+  _gprim = geometry::invertTranspose(_rprim);
   bool hasSpin = (!dtset.spinat().empty());
 
   //Build _xcart

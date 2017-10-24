@@ -288,7 +288,7 @@ void Poscar::readFromFile(const std::string& filename) {
 #ifdef HAVE_SHRINK_TO_FIT
       _xred.shrink_to_fit();
 #endif
-      geometry::mat3d rprim_1 = geometry::invert(_rprim);
+      geometry::mat3d rprim_1 = geometry::invertTranspose(_rprim);
       _xcart = geometry::changeBasis(rprim_1,_xred);
     }
     else if ( std::toupper(sstr.str().at(0),loc) == 'C' || std::toupper(sstr.str().at(0),loc) == 'K' ) {

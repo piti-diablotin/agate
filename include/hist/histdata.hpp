@@ -391,7 +391,7 @@ class HistData {
      * @param tbegin first time to start with
      * @param tend Last time (not included) in the dumping
      */
-    virtual void dump(const std::string& filename, unsigned tbegin, unsigned tend) const;
+    virtual void dump(const std::string& filename, unsigned tbegin, unsigned tend, unsigned step = 1) const;
 
     /**
      * Compute the average of all quantities and build an HistDataDtset with it

@@ -51,10 +51,43 @@ class Graph {
 
   protected :
 
+    /**
+     * Structure to store ticks which are a position on one axe and a label
+     */
+    typedef struct tic {
+      double position;   ///< Position of the new tick
+      std::string label; ///< Label of the new tick
+      tic() : position(0), label() {;}
+    } tic;
+
+    /**
+     * Structure to store an arrow descriptor
+     */
+    typedef struct arrow {
+      double x1; ///< Point 1 x position
+      double y1; ///< Point 1 y position
+      double x2; ///< Point 2 x position
+      double y2; ///< Point 2 y position
+      bool head; ///< True if the arrow has a head 
+    } arrow;
+
+    typedef struct range {
+      double min;
+      double max;
+      bool set;
+    } range;
+
+
     std::string _xlabel; ///< Label for x axis
     std::string _ylabel; ///< Label for y axis
     std::string _title;  ///< Title for the graph
-
+    std::string _winTitle; ///< Title of the window if supported.
+    std::vector<tic>  _xtics; ///< New ticks to display on the x axis
+    std::vector<tic>  _ytics; ///< New ticks to display on the y axis
+    std::vector<arrow> _arrows; ///< Arrow to display on the graph
+    range _xrange;
+    range _yrange;
+    
 
   public :
 
@@ -107,14 +140,14 @@ class Graph {
      * @param y A vector with several y quantites to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(std::vector<double> x, std::list<std::vector<double>> y, std::list<std::string> labels, std::vector<short> colors) = 0;
+    virtual void plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<short> &colors) = 0;
 
     /** 
      * Plot several quantities on the screen
      * @param xy A list of (x,y) pairs to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(std::list< std::pair< std::vector<double>,std::vector<double> > > xy, std::list<std::string> labels, std::vector<short> colors) = 0;
+    virtual void plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<short> &colors) = 0;
 
     /**
      * Save the graph
@@ -125,31 +158,71 @@ class Graph {
     /**
      * Clean everything
      */
-    virtual void clean() = 0;
+    virtual void clean() {;}
 
     /**
      * Setter
      * @param lab The new value 
      */
-    void setXLabel(std::string lab) { _xlabel = lab; };
+    virtual void setXLabel(std::string lab) { _xlabel = lab; };
 
     /**
      * Setter
      * @param lab The new value 
      */
-    void setYLabel(std::string lab) { _ylabel = lab; };
+    virtual void setYLabel(std::string lab) { _ylabel = lab; };
 
     /**
      * Setter
      * @param lab The new value 
      */
-    void setTitle(std::string lab) { _title = lab; };
+    virtual void setTitle(std::string lab) { _title = lab; };
 
     /**
-     * Add custom command depending on frontend
-     * @param customlines The custom commands to add
+     * Setter
+     * @param title the new window title
      */
-    virtual void custom(const std::string &customlines) = 0;
+    virtual void setWinTitle(std::string title) { _winTitle = title; };
+
+    /**
+     * Set the range of y axis
+     * @param min minimal value
+     * @param max maximal value
+     */
+    virtual void setXRange(double min, double max);
+
+    /**
+     * Set the range of y axis
+     * @param min minimal value
+     * @param max maximal value
+     */
+    virtual void setYRange(double min, double max);
+
+    /**
+     * add xticks
+     * @param name The xtick label to use
+     * @param pos the position on the x axis
+     */
+    virtual void addXTic(std::string name, double pos);
+
+    /**
+     * add yticks
+     * @param name The xtick label to use
+     * @param pos the position on the y axis
+     */
+    virtual void addYTic(std::string name, double pos);
+
+    /**
+     * add an arrow with or without head from first point to second one
+     * @param x1 xposition of the starting point
+     * @param y1 yposition of the starting point
+     * @param x2 xposition of the head point
+     * @param y2 yposition of the head point
+     * @param head True if the arrow head is displayed
+     */
+    virtual void addArrow(double x1, double y1, double x2, double y2, bool head = false);
+
+    void clearCustom();
 
     /**
      * Print out the commande to plot

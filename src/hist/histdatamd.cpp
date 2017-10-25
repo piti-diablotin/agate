@@ -427,7 +427,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       else if ( function == "pdos" ){
         filename = "PDOS";
         ylabel = "PDOS [arbitrary units]";
-        xlabel = "Frequency [THz]";
+        xlabel = "Frequency [meV]";
         title = "PDOS";
         std::clog << std::endl << " -- PDOS --" << std::endl;
 
@@ -436,7 +436,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         const double dtion = phys::atu2fs*1e-3*( _time.size() > 1 ? _time[1]-_time[0] : 100);
         x.resize(y.front().size());
         for ( unsigned itime = 0 ; itime < y.front().size() ; ++itime )
-          x[itime] = itime/(dtion*y.front().size()*2); // *2 because there is an oversampling from ntime to 2*ntime for acf ?
+          x[itime] = phys::THz2Ha * phys::Ha2eV *1e3 * itime/(dtion*y.front().size()*2); // *2 because there is an oversampling from ntime to 2*ntime for acf ?
 
         for ( unsigned typ = 0 ; typ < y.size() ; ++typ ) {
           if ( typ == 0 )

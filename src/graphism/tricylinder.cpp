@@ -191,6 +191,22 @@ void TriCylinder::draw(const _float radius, const _float height) {
 #endif
 }
 
+void TriCylinder::draw(const double start[3], const double end[3], const _float radius) {
+  const float n0 = end[0]-start[0];
+  const float n1 = end[1]-start[1];
+  const float n2 = end[2]-start[2];
+  const float nn = sqrt(n0*n0+n1*n1+n2*n2);
+  const float inv_nn = 1.f/nn;
+  const float nprod = sqrt(n1*n1+n0*n0);
+  const float angle = ( (n2<0) ? 180.f+180.f/3.14f*asin(nprod*inv_nn) : -180.f/3.14f*asin(nprod*inv_nn) );
+  glPushMatrix();
+  glTranslatef(start[0],start[1],start[2]);
+  glRotatef(angle,n1,-n0,0.0f);
+
+  this->draw(radius,nn);
+  glPopMatrix();
+}
+
 //
 void TriCylinder::pop() {
   if ( !_opengl ) return;

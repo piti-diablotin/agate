@@ -26,6 +26,7 @@
 
 #include "qtgui/qplot.hpp"
 #include "base/exception.hpp"
+#include <QFileDialog>
 
 const QColor QPlot::qcolor[] = { Qt::black, Qt::red, Qt::green, Qt::blue, Qt::magenta, Qt::cyan, Qt::darkRed, Qt::darkGreen, Qt::darkYellow };
 

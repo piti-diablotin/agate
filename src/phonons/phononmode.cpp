@@ -182,6 +182,12 @@ const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qp
 /*Calculate Linear Repsonse of Phonons to a static dielectric field from DFPT*/
 void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 	/*---- Get necessary Data ---*/
+	
+	double E_Amp;
+	std::vector<double> E_vec(3);
+        E_vec = {1,0,0}; 
+	E_Amp = 10000; 
+	
 	_natom = ddb.natom();  					/// get natom 
 	_zeff = getzeff(_qpt, ddb, ddb.getDdb(_qpt)); 		/// get BEC-Tensors
 	for (int i = 0; i < _zeff.size(); i++) {
@@ -212,32 +218,14 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 	for (unsigned m = 0; m < freq_gamma.size(); ++m){	/// Transform mode energies from Ha in THz                
 		freq_gamma[m] = phys::Ha2THz * freq_gamma[m];		
 	}
-
-        /*---Normalization Test---*/
         for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
             _mass[iatom] = mendeleev::mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]; // type starts at 1
         }	
 	for ( unsigned i = 0; i < disp_gamma.size(); ++i ) {             
             disp_gamma[i] = disp_gamma[i].real()*pow(phys::amu_emass,0.5);
         }
-        double amp_m;
-        for (unsigned m = 0; m < freq_gamma.size(); ++m){
-            amp_m = 0; 
-            for (unsigned i = 0; i < _natom; ++i) {
-               amp_m = amp_m +  _mass[i]*(disp_gamma[(m*3*_natom)+3*i].real() * disp_gamma[(m*3*_natom)+3*i].real() + disp_gamma[(m*3*_natom)+3*i+1].real() * disp_gamma[(m*3*_natom)+ 3*i + 1].real() + disp_gamma[(m*3*_natom)+3*i+2].real() * disp_gamma[(m*3*_natom)+3*i+2].real());                
-            }
-            if ( std::abs(1 - sqrt(amp_m)) > 0.001 ) {
-                 std::cout<<"normalization test of mode "<< m <<" with Eigenvalue "<<freq_gamma[m]<<" Thz failed"<<std::endl;
-                 std::cout<<"Amplitude of mode "<< m<<": "<<pow(amp_m,0.5)<<std::endl;
-                 std::cout<<"std::abs(1 - pow(amp_m,0.5)): "<< std::abs(1 -sqrt(amp_m))<<std::endl;
-            }
-            else {
-              std::cout<<"normalization test for mode "<< m <<" with Eigenvalue "<< freq_gamma[m]<<" THz passed"<<std::endl;
-              std::cout<<"Amplitude of mode "<< m<<": "<<pow(amp_m,0.5)<<std::endl;
-              std::cout<<"std::abs(1 - pow(amp_m,0.5)): "<< std::abs(1 - sqrt(amp_m))<<std::endl;
-            }
-        }
-	/* Calculate vibronic dielectric constant */ 
+
+	/* Calculate diplacement under electric filed */ 
 	/* 1. Calculate polarity of each mode and store*/
 	/*** organization pol[i] = p(olarity)_m(ode)_(direction)x, p_m_y, p_m_z, p_m+1_x...*/	 
 	std::vector<double> pol(3*freq_gamma.size());
@@ -250,8 +238,31 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 			}		
 		} 
 	}
+	/*2. Calculate Displacements Matrix under Electric Field */ 
+	/*** Size of Matrix tau = 9*iatom ***/ 
+	/*** Organisatzion tau = d(isp)_(atom)i_(direc)_x_E(field)x, d_i_y_Ex, d_i_z_Ex, d_i_x_Ey... ***/ 
+	std::vector<double> tau(9*_natom);
+	for (unsigned m = 0	; m < freq_gamma.size(); ++m) { 
+		for (unsigned i = 0; i < _natom; ++i) {
+			for ( unsigned E_al = 0; E_al < 3; ++E_al) {			 
+			tau[9*i+3*E_al+0] = tau[9*i+3*E_al+0] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 0].real()/(1e05*freq_gamma[m]*freq_gamma[m]);
+			tau[9*i+3*E_al+1] = tau[9*i+3*E_al+1] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 1].real()/(1e05*freq_gamma[m]*freq_gamma[m]);
+			tau[9*i+3*E_al+2] = tau[9*i+3*E_al+2] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 2].real()/(1e05*freq_gamma[m]*freq_gamma[m]);				
+			}
+		}
+	}
+
+	/*3. Calculate Real Space displacement in Angstrom  */ 
+	/*			E_field * tau 		    */
+	std::vector<double> disp_E(3*_natom);
 	
-	/*Calculation of dielectric tensor*/
+	for (unsigned i = 0 ; i < _natom; ++i){ 
+		disp_E[3*i + 0] = E_Amp*E_vec[0]*tau[9*i + 0] + E_Amp*E_vec[1]*tau[9*i + 3] + E_Amp*E_vec[2]*tau[9*i + 6];  
+		disp_E[3*i + 1] = E_Amp*E_vec[0]*tau[9*i + 1] + E_Amp*E_vec[1]*tau[9*i + 4] + E_Amp*E_vec[2]*tau[9*i + 7];
+		disp_E[3*i + 2] = E_Amp*E_vec[0]*tau[9*i + 2] + E_Amp*E_vec[1]*tau[9*i + 6] + E_Amp*E_vec[2]*tau[9*i + 8];  
+	}
+	
+	/* Calculate vibronic dielectric constant */ 
 	geometry::mat3d diel; 
 	for (unsigned m = 3; m < freq_gamma.size(); ++m) { 
 		diel[geometry::mat3dind( 1, 1)] = diel[geometry::mat3dind( 1, 1)] + pol[m*3]*pol[m*3]/(freq_gamma[m]*freq_gamma[m]);
@@ -271,7 +282,6 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 }
 
  
-
 //
 void PhononMode::computeForceCst(const std::vector<Ddb::d2der>& ddb) {
   if ( _natom == 0 )

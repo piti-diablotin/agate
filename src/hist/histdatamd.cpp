@@ -30,6 +30,7 @@
 #include "base/phys.hpp"
 #include "base/mendeleev.hpp"
 #include "base/geometry.hpp"
+#include "io/configparser.hpp"
 #include <algorithm>
 #include <iomanip>
 #include <fstream>
@@ -315,6 +316,15 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       stream.clear();
       stream.seekg(pos);
       stream >> function;
+
+      std::string line;
+      size_t pos = stream.tellg();
+      std::getline(stream,line);
+      stream.clear();
+      stream.seekg(pos);
+      ConfigParser parser;
+      parser.setContent(line);
+
       unsigned ntime = tend-tbegin;
       std::vector<double> &x = config.x;
       std::list<std::vector<double>> &y = config.y;
@@ -324,9 +334,27 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       std::string &ylabel = config.ylabel;
       std::string &title = config.title;
 
-      xlabel = "Time [fs]";
-      x.resize(ntime);
-      for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=_time[i]*phys::atu2fs;
+      try {
+        std::string tunit = parser.getToken<std::string>("tunit");
+        if ( tunit == "fs" ) {
+          xlabel = "Time [fs]";
+          x.resize(ntime);
+          for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=_time[i]*phys::atu2fs;
+        }
+        else if ( tunit == "step" ) {
+          xlabel = "Time [step]";
+          x.resize(ntime);
+          for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
+        }
+        else {
+          throw EXCEPTION("Unknow time unit, allowed values fs and step",ERRDIV);
+        }
+      }
+      catch (Exception &e) {
+        xlabel = "Time [step]";
+        x.resize(ntime);
+        for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
+      }
 
       // TEMPERATURE
       if ( function == "T" ) {
@@ -399,7 +427,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       else if ( function == "pdos" ){
         filename = "PDOS";
         ylabel = "PDOS [arbitrary units]";
-        xlabel = "Frequency [THz]";
+        xlabel = "Frequency [meV]";
         title = "PDOS";
         std::clog << std::endl << " -- PDOS --" << std::endl;
 
@@ -408,7 +436,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         const double dtion = phys::atu2fs*1e-3*( _time.size() > 1 ? _time[1]-_time[0] : 100);
         x.resize(y.front().size());
         for ( unsigned itime = 0 ; itime < y.front().size() ; ++itime )
-          x[itime] = itime/(dtion*y.front().size()*2); // *2 because there is an oversampling from ntime to 2*ntime for acf ?
+          x[itime] = phys::THz2Ha * phys::Ha2eV *1e3 * itime/(dtion*y.front().size()*2); // *2 because there is an oversampling from ntime to 2*ntime for acf ?
 
         for ( unsigned typ = 0 ; typ < y.size() ; ++typ ) {
           if ( typ == 0 )
@@ -425,6 +453,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       config.doSumUp = true;
       config.save = save;
       Graph::plot(config,gplot);
+      stream.clear();
     }
     else {
       e.ADD("Bad things happen sometimes",ERRDIV);

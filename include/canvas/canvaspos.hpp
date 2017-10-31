@@ -71,17 +71,17 @@ class CanvasPos : public Canvas {
     std::vector<int>              _typat;      ///< Type of each atom to render 
     std::vector<int>              _znucl;      ///< atomic number of each type of atom.
     std::vector<indVec3d>         _onBorders;  ///< atom id and shift to apply w/r to xcart to get the new atom (from the original one)
-    std::vector<GLfloat>          _xcartBorders; ///< xcart coordiates for atoms on border
+    std::vector<double>           _xcartBorders; ///< xcart coordiates for atoms on border
     int                           _octahedra_z;///< Type of atom to draw octahedra
     std::vector<std::unique_ptr<Octahedra>>   _octahedra;  ///< List of octahedra to draw (should be a generic unique_ptr<polygon*> to be able to draw something else.
     bool                          _hasTranslations; ///< True if rprimd is available for translations.
 
   private :
 
-    bool                          _hasHatom;   ///< Is there any H atom to draw (for Hbond finding)
-    double                        _hbond;      ///< Length to draw H bond.
+    double                        _bond;       ///< Length to draw H bond.
+    double                        _bondRadius; ///< Radius of the cylinder for bonds.
     TriSphere                     _sphere;     ///< Sphere to draw atoms
-    TriCylinder                   _cylinder;   ///< Cylinder to draw Hbonds.
+    TriCylinder                   _cylinder;   ///< Cylinder to draw bonds.
     TriArrow                      _arrow;      ///< Arrow to draw spins or displacement.
     float                         _up[3];      ///< Color spin up
     float                         _down[3];    ///< Color spin down
@@ -109,10 +109,10 @@ class CanvasPos : public Canvas {
     void drawCell();
 
     /**
-     * Draw the Hbond
-     * @param Hbonds A vector contains the bonded atoms
+     * Draw the bond
+     * @param bonds A vector contains the bonded atoms
      */
-    void drawHbonds(std::vector< std::pair<int,int> > &Hbonds);
+    void drawBonds(std::vector< std::pair<int,int> > &bonds);
 
     /**
      * Draw the Spin arrows if spins are available
@@ -147,12 +147,20 @@ class CanvasPos : public Canvas {
      */
     virtual void buildBorders(unsigned itime);
 
+    /**
+     * Look for all bondings.
+     * @result A vector of pair giving the atoms to bond.
+     * If the atom id is larger than _natom then it means it is on the border.
+     */
+    virtual std::vector<std::pair<int,int>> buildBonds();
+
   public :
 
     static const unsigned                DISP_ZNUCL = 1 << 0; ///< Parameter to construct _display : Here display the atomic numbers
     static const unsigned                DISP_ID    = 1 << 1; ///< Parameter to construct _display : Here display the atomic id (wrt input file)
     static const unsigned                DISP_NAME  = 1 << 2; ///< Parameter to construct _display : Here display the atomic name (wrt input file)
     static const unsigned                DISP_BORDER= 1 << 3; ///< Parameter to construct _display : Here display the atomic name (wrt input file)
+    static const unsigned                DISP_BOND  = 1 << 4; ///< Parameter to construct _display : Here display the atomic name (wrt input file)
 
     /**
      * Constructor.

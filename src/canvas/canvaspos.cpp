@@ -64,8 +64,8 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _octahedra_z(-1),
   _octahedra(),
   _hasTranslations(false),
-  _hasHatom(false),
-  _hbond(2.20), 
+  _bond(2.00), 
+  _bondRadius(0.15), 
   _sphere(_opengl),
   _cylinder(_opengl),
   _arrow(_opengl),
@@ -103,8 +103,8 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _octahedra_z(canvas._octahedra_z),
   _octahedra(std::move(canvas._octahedra)),
   _hasTranslations(canvas._hasTranslations),
-  _hasHatom(canvas._hasHatom),
-  _hbond(canvas._hbond), 
+  _bond(canvas._bond), 
+  _bondRadius(canvas._bondRadius), 
   _sphere(std::move(canvas._sphere)),
   _cylinder(std::move(canvas._cylinder)),
   _arrow(std::move(canvas._arrow)),
@@ -153,7 +153,6 @@ void CanvasPos::clear() {
   _ntypat = 0;
   _octahedra_z = -1;
   _hasTranslations = false;
-  _hasHatom = false;
   _typat.clear();
   _znucl.clear();
   _onBorders.clear();
@@ -176,8 +175,6 @@ void CanvasPos::setHist(HistData& hist) {
     _znucl = hist.znucl();
     _ntypat = _znucl.size();
     _znucl.insert(_znucl.begin(),0);
-    for ( auto z : _znucl )
-      if ( z == 1 ) _hasHatom = true;
     _typat = hist.typat();
     if ( _ntime == _tend ) _tend = -1;
     _tbegin = 0;
@@ -370,31 +367,12 @@ void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
   glPushMatrix();
   CanvasPos::drawCell();
 
-  /* Find Hbond here */
-  std::vector< std::pair<int ,int> > Hbonds; // iatom/distance
-
   this->buildBorders(_itime);
 
-  // Bonds
-  if ( _hasHatom ) {
-    int nimage = (int) _histdata->nimage();
-    for ( int img = 0 ; img < nimage ; ++img ) {
-      int first = img*_natom/nimage;
-      int last = (img+1)*_natom/nimage;
-      for ( int iatom = first ; iatom < last ; ++iatom ) {
-        //if ( _znucl[_typat[iatom]] == 1 ) continue;
-        geometry::vec3d pos={{ xcart[3*iatom], xcart[3*iatom+1], xcart[3*iatom+2] }};
-        //std::vector< std::pair<int ,double> > hlist;
-        for ( int hatom = iatom ; hatom < last ; ++hatom ) {
-          if ( _znucl[_typat[hatom]] != 1 ) continue;
-          geometry::vec3d hpos={{ xcart[3*hatom]-pos[0], xcart[3*hatom+1]-pos[1], xcart[3*hatom+2]-pos[2] }};
-          //hlist.push_back(std::make_pair( hatom, geometry::norm(hpos) ) );
-          double norm = geometry::norm(hpos);
-          if ( norm < _hbond && norm > 1.0)
-            Hbonds.push_back(std::make_pair(iatom,hatom));
-        }
-      }
-    }
+  /* Find bond here */
+  std::vector< std::pair<int ,int> > bonds; // iatom/distance
+  if ( _display & DISP_BOND ) {
+    bonds = this->buildBonds();
   }
 
 
@@ -437,7 +415,7 @@ void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
         }
         _sphere.pop();
         this->drawSpins();
-        this->drawHbonds(Hbonds);
+        this->drawBonds(bonds);
         _sphere.push();
         // Erase color 
         CanvasPos::drawAtom(-1,0.f,0.f,0.f);
@@ -715,34 +693,36 @@ float CanvasPos::typicalDim(float reset) {
   else return _maxDim;
 }
 
-void CanvasPos::drawHbonds(std::vector< std::pair<int,int> >& Hbonds) {
+void CanvasPos::drawBonds(std::vector< std::pair<int,int> >& bonds) {
 #ifdef HAVE_GL
-  if ( !Hbonds.empty() ) {
+  if ( !bonds.empty() ) {
     using namespace geometry;
-    glColor3f(1.0f,1.0f,1.0f);
     _cylinder.push();
     const double *xcart = _histdata->getXcart(_itime);
-    for ( auto hb = Hbonds.begin() ; hb != Hbonds.end() ; ++hb ){
-      const unsigned at1 = 3*hb->first;
-      const unsigned at2 = 3*hb->second;
-      const float n0 = xcart[at2  ]-xcart[at1  ];
-      const float n1 = xcart[at2+1]-xcart[at1+1];
-      const float n2 = xcart[at2+2]-xcart[at1+2];
-      const float nn = sqrt(n0*n0+n1*n1+n2*n2);
-      const float inv_nn = 1.f/nn;
-      const float nprod = sqrt(n1*n1+n0*n0);
-      const float angle = ( (n2<0) ? 180.f+180.f/3.14f*asin(nprod*inv_nn) : -180.f/3.14f*asin(nprod*inv_nn) );
-      glPushMatrix();
-      glTranslatef(xcart[at1],xcart[at1+1],xcart[at1+2]);
-      glRotatef(angle,n1,-n0,0.0f);
-
-      _cylinder.draw((float)mendeleev::radius[1]/2.,nn);
-      glPopMatrix();
+    for ( auto hb = bonds.begin() ; hb != bonds.end() ; ++hb ){
+      const int i1 = hb->first;
+      const int i2 = hb->second;
+      const unsigned t1 = _typat[i1];
+      const unsigned t2 = _typat[i2];
+      const double r1 = mendeleev::radius[_znucl[t1]];
+      const double r2 = mendeleev::radius[_znucl[t2]];
+      const float *c1 = mendeleev::color[_znucl[t1]];
+      const float *c2 = mendeleev::color[_znucl[t2]];
+      const double prop = 1./(r1+r2);
+      const double *xcart1 = ( i1 < _natom ) ? &xcart[3*i1] : &_xcartBorders[3*(i1-_natom)];
+      const double *xcart2 = ( i2 < _natom ) ? &xcart[3*i2] : &_xcartBorders[3*(i2-_natom)];
+      double middle[3];
+      for ( unsigned i = 0 ; i < 3 ; ++i )
+        middle[i] = r2*prop*xcart1[i]+r1*prop*xcart2[i];
+      glColor3f(c1[0],c1[1],c1[2]);
+      _cylinder.draw(xcart1,middle,_bondRadius);
+      glColor3f(c2[0],c2[1],c2[2]);
+      _cylinder.draw(middle,xcart2,_bondRadius);
     }
     _cylinder.pop();
   }
 #else 
-  (void) Hbonds;
+  (void) bonds;
 #endif
 }
 
@@ -997,6 +977,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display = (_display&~(DISP_NAME  | DISP_ID))|DISP_ZNUCL;
       else if ( what == "id" )
         _display = (_display&~(DISP_ZNUCL | DISP_NAME))|DISP_ID;
+      else if ( what == "bond" )
+        _display |= DISP_BOND;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }
@@ -1013,6 +995,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display &= ~DISP_ZNUCL;
       else if ( what == "id" )
         _display &= ~DISP_ID;
+      else if ( what == "bond" )
+        _display &= ~DISP_BOND;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }
@@ -1031,10 +1015,10 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       }
     }
   }
-  else if ( token == "hbond" ) {
+  else if ( token == "bond" ) {
     double h;
     stream >> h;
-    if ( !stream.fail() ) _hbond = ( h < 1e-1 ) ? -1.0 : h;
+    if ( !stream.fail() ) _bond = ( h < 1e-1 ) ? -1.0 : 1+h;
   }
   else if ( token == "rad" || token == "radius" ){
     double *tomodify = nullptr;
@@ -1048,8 +1032,13 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       std::string name;
       stream >> name;
       if ( !stream.fail() ) {
-        z = mendeleev::znucl(name);
-        tomodify = &mendeleev::radius[z];
+        if ( name == "bond" ) {
+          tomodify = &_bondRadius;
+        }
+        else {
+          z = mendeleev::znucl(name);
+          tomodify = &mendeleev::radius[z];
+        }
       }
       else throw EXCEPTION("No radius to define for "+name,ERRDIV);
     }
@@ -1511,6 +1500,69 @@ void CanvasPos::buildBorders(unsigned itime) {
 }
 
 
+std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
+  std::vector< std::pair<int ,int> > bonds; // iatom/distance
+  const double b2 = _bond*_bond;
+  const double *xcart = _histdata->getXcart(_itime);
+  int nimage = (int) _histdata->nimage();
+  for ( int img = 0 ; img < nimage ; ++img ) {
+    int first = img*_natom/nimage;
+    int last = (img+1)*_natom/nimage;
+    // Inside
+    for ( int iatom = first ; iatom < last ; ++iatom ) {
+      const unsigned typ1 = _typat[iatom];
+      const double rad1 = mendeleev::radius[_znucl[typ1]];
+      geometry::vec3d pos={{ xcart[3*iatom], xcart[3*iatom+1], xcart[3*iatom+2] }};
+      for ( int hatom = iatom+1 ; hatom < last ; ++hatom ) {
+        unsigned typ2 = _typat[hatom];
+        const double blength = rad1 + mendeleev::radius[_znucl[typ2]];
+        geometry::vec3d hpos={{ xcart[3*hatom]-pos[0], xcart[3*hatom+1]-pos[1], xcart[3*hatom+2]-pos[2] }};
+        double norm2 = geometry::dot(hpos,hpos);
+        if ( norm2 < (blength*blength)*b2 )
+          bonds.push_back(std::make_pair(iatom,hatom));
+      }
+      // Inside - Border
+      if (_display & DISP_BORDER ) {
+        for ( unsigned batom = 0 ; batom <  _onBorders.size() ; ++batom ) {
+          int atomref = _onBorders[batom].first;
+          if ( atomref >= first && atomref < last ) {
+            unsigned typ2 = _typat[atomref];
+            const double blength = rad1 + mendeleev::radius[_znucl[typ2]];
+            geometry::vec3d hpos={{ _xcartBorders[3*batom]-pos[0], _xcartBorders[3*batom+1]-pos[1], _xcartBorders[3*batom+2]-pos[2] }};
+            double norm2 = geometry::dot(hpos,hpos);
+            if ( norm2 < (blength*blength)*b2 )
+              bonds.push_back(std::make_pair(iatom,_natom+batom));
+          }
+        }
+      }
+    }
+    // Border
+    if (_display & DISP_BORDER) {
+      for ( unsigned batom1 = 0 ; batom1 <  _onBorders.size() ; ++batom1 ) {
+        int atomref1 = _onBorders[batom1].first;
+        if ( atomref1 >= first && atomref1 < last ) {
+          const unsigned typ1 = _typat[atomref1];
+          const double rad1 = mendeleev::radius[_znucl[typ1]];
+          geometry::vec3d pos={{ _xcartBorders[3*batom1], _xcartBorders[3*batom1+1], _xcartBorders[3*batom1+2] }};
+          // Border - Border
+          for ( unsigned batom2 = 0 ; batom2 <  _onBorders.size() ; ++batom2 ) {
+            int atomref2 = _onBorders[batom2].first;
+            if ( atomref2 >= first && atomref2 < last ) {
+              int typ2 = _typat[atomref2];
+              const double blength = rad1 + mendeleev::radius[_znucl[typ2]];
+              geometry::vec3d hpos={{ _xcartBorders[3*batom2]-pos[0], _xcartBorders[3*batom2+1]-pos[1], _xcartBorders[3*batom2+2]-pos[2] }};
+              double norm2 = geometry::dot(hpos,hpos);
+              if ( norm2 < (blength*blength)*b2 )
+                bonds.push_back(std::make_pair(_natom+batom1,_natom+batom2));
+            }
+          }
+        }
+      }
+    }
+  }
+  return bonds;
+}
+
 
 //
 void CanvasPos::help(std::ostream &out) {
@@ -1526,7 +1578,7 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << " " << setw(59) << "In rotations mode (:mode rotations) S=(plus|minus)." << endl;
   out << setw(40) << ":div or :division number" << setw(59) << "Number of division to draw spheres (>1)." << endl;
   out << setw(40) << ":dist or :distance id1 id2" << setw(59) << "Compute the distance between atom id1 and atom id2." << endl;
-  out << setw(40) << ":hbond length " << setw(59) << "Draw a H bond if hydrogen is less far than length to an atom." << endl;
+  out << setw(40) << ":bond factor " << setw(59) << "Factor to find the bonded atoms." << endl;
   out << setw(40) << ":hide WHAT" << setw(59) << "Hide WHAT=(border|name|znucl|id)" << endl;
   out << setw(40) << ":mv or :move iatom X Y Z" << setw(59) << "Move the atom iatom at the new REDUCED coordinate (X,Y,Z)" << endl;
   out << setw(40) << ":octa_z or :octahedra_z Z A" << setw(59) << "To draw an octahedron around the atoms Z (atomic numbers or name) A=(0|1) to draw the atoms at the tops." << endl;

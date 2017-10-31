@@ -103,6 +103,14 @@ class TriCylinder : public TriObj {
     void draw(const _float radius, const _float height);
 
     /**
+     * Draw a cylinder or compute it and store it
+     * @param begin first point of the axe of the cylinder
+     * @param end   last point of the axe of the cylinder
+     * @param radius The radius of the cylinder base placed at (0,0,0)
+     */
+    void draw(const double start[3], const double end[3], const _float radius);
+
+    /**
      * Pop method to do something if needed
      * It flush data if some are not drawn and release VBO if used
      */

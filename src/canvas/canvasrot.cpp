@@ -31,7 +31,8 @@
 //
 CanvasRot::CanvasRot(bool drawing) : CanvasPos(drawing),
   _octacolor(),
-  _cube(_opengl)
+  _cube(_opengl),
+  _orientations()
 {
   _octacolor[0] = 1.f;
   _octacolor[1] = 0.f;
@@ -45,7 +46,8 @@ CanvasRot::CanvasRot(bool drawing) : CanvasPos(drawing),
 //
 CanvasRot::CanvasRot(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _octacolor(),
-  _cube(_opengl)
+  _cube(_opengl),
+  _orientations()
 {
   _octacolor[0] = 1.f;
   _octacolor[1] = 0.f;
@@ -54,15 +56,24 @@ CanvasRot::CanvasRot(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _octacolor[4] = 0.f;
   _octacolor[5] = 1.f;
 
+  const double *rprimd = _histdata->getRprimd(0);
+  const double *xcart = _histdata->getXcart(0);
+  Octahedra::u3f angles;
+
   if ( !_octahedra.empty() && typeid(_octahedra[0].get()) != typeid(OctaAngles*) ) {
     std::vector<std::unique_ptr<Octahedra>>   octabuild;
     for ( auto &octa : _octahedra ) {
       Octahedra *octaptr = octa.release();
       OctaAngles *tmpocta = new OctaAngles(std::move(*reinterpret_cast<OctaAngles*>(octaptr)));
+      tmpocta->buildCart(rprimd,xcart,angles);
       delete octaptr;
       octabuild.push_back(std::unique_ptr<Octahedra>(tmpocta));
     }
     _octahedra = std::move(octabuild);
+  }
+  _orientations.resize(_octahedra.size());
+  for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
+    _orientations[i] = angles[i].second;
   }
 
 }
@@ -116,10 +127,14 @@ void CanvasRot::refresh(const geometry::vec3d &cam, TextRender &render){
 
         for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
           int iatom = _octahedra[i]->center();
+          if ( iatom >= _natom && !(_display & CanvasPos::DISP_BORDER ) ) continue;
           glPushMatrix();
           ( iatom < _natom ) 
             ? glTranslatef(xcart[3*iatom],xcart[3*iatom+1],xcart[3*iatom+2])
             : glTranslatef(_xcartBorders[3*(iatom-_natom)],_xcartBorders[3*(iatom-_natom)+1],_xcartBorders[3*(iatom-_natom)+2]);
+          glRotatef(_orientations[i][0],1.,0.,0.);
+          glRotatef(_orientations[i][1],0.,1.,0.);
+          glRotatef(_orientations[i][2],0.,0.,1.);
           glScalef(width,width,width);
           _cube.draw(&_octacolor[0],&_octacolor[3],angles[i].second[0]*factor,angles[i].second[1]*factor,angles[i].second[2]*factor);
           glPopMatrix();
@@ -152,11 +167,18 @@ void CanvasRot::updateOctahedra(int z) {
     std::copy(&_xcartBorders[0],&_xcartBorders[_onBorders.size()*3],&xcartTotal[_natom*3]);
 
     try {
-      for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom )
+      Octahedra::u3f angles;
+      for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom ){
         if ( _znucl[_typat[iatom]] == _octahedra_z ) {
           OctaAngles *tmpocta = new OctaAngles(iatom,_natom,xred,&xcartTotal[0],rprimd,_opengl); //Construct octahedra based on xcart at time 0
+          tmpocta->buildCart(rprimd,histXcart,angles);
           _octahedra.push_back(std::unique_ptr<Octahedra>(tmpocta));
         }
+      }
+      _orientations.resize(_octahedra.size());
+      for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
+        _orientations[i] = angles[i].second;
+      }
     }
     catch (Exception &e) {
       e.ADD("Abording construction of octahedra",ERRDIV);
@@ -213,9 +235,6 @@ void CanvasRot::my_alter(std::string token, std::istringstream &stream) {
         file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " gamma";
       }
       file << std::endl;
-      double alpha = 0.;
-      double beta = 0.;
-      double gamma = 0.;
       // Write data
       file.precision(14);
       file.setf(std::ios::scientific,std::ios::floatfield);
@@ -223,8 +242,8 @@ void CanvasRot::my_alter(std::string token, std::istringstream &stream) {
 #pragma omp for ordered, schedule(static)
       for ( int itime = _tbegin ; itime < _tend ; ++itime ) {
         Octahedra::u3f angles;
-        const double *rprimd = _histdata->getRprimd(_itime);
-        const double *xcart = _histdata->getXcart(_itime);
+        const double *rprimd = _histdata->getRprimd(itime);
+        const double *xcart = _histdata->getXcart(itime);
         for( auto& octa : _octahedra )
           octa->build(rprimd,xcart,angles);
 
@@ -235,9 +254,6 @@ void CanvasRot::my_alter(std::string token, std::istringstream &stream) {
           file << std::setw(22) << angles[i].second[0];
           file << std::setw(22) << angles[i].second[1];
           file << std::setw(22) << angles[i].second[2];
-          alpha += angles[i].second[0];
-          beta += angles[i].second[1];
-          gamma += angles[i].second[2];
         }
         file << std::endl;
         }

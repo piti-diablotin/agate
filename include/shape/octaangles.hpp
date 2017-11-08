@@ -91,6 +91,14 @@ class OctaAngles : public Octahedra {
     virtual void build(const double *rprim, const double *xcart, u3f &new_atoms) ;
 
     /**
+     * Compute the angle with resepect to cartesian axis if set to true
+     * @param rprim The primitive vectors used for translation.
+     * @param xcart The full set of coordinates of all atoms.
+     * @param new_atoms A set of the center atom id and 3 floats giving the angles around x,y and z
+     */
+    virtual void buildCart(const double *rprim, const double *xcart, u3f &new_atoms) ;
+
+    /**
      * Access the value of the rotation around x
      * @return the rotation angle around the x cartesian axis in degree
      */

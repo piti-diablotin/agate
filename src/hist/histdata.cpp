@@ -1353,7 +1353,8 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 
   config.save = save;
   Graph::plot(config,gplot);
-  gplot->clearCustom();
+  if ( gplot != nullptr )
+    gplot->clearCustom();
   stream.clear();
 }
 

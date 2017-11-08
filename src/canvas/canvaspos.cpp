@@ -64,6 +64,7 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _octahedra_z(-1),
   _octahedra(),
   _hasTranslations(false),
+  _display(DISP_BORDER),
   _bond(2.00), 
   _bondRadius(0.15), 
   _sphere(_opengl),
@@ -74,7 +75,6 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _octacolor(),
   _octaDrawAtoms(true),
   _drawSpins(),
-  _display(DISP_BORDER),
   _maxDim(1.1)
 {
   _up[0] = 1.0;
@@ -103,6 +103,7 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _octahedra_z(canvas._octahedra_z),
   _octahedra(std::move(canvas._octahedra)),
   _hasTranslations(canvas._hasTranslations),
+  _display(DISP_BORDER),
   _bond(canvas._bond), 
   _bondRadius(canvas._bondRadius), 
   _sphere(std::move(canvas._sphere)),
@@ -113,7 +114,6 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _octacolor(),
   _octaDrawAtoms(canvas._octaDrawAtoms),
   _drawSpins(),
-  _display(DISP_BORDER),
   _maxDim(canvas._maxDim)
 {
   _up[0] = canvas._up[0];
@@ -1083,6 +1083,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     stream >> toPeriodic;
     if ( !stream.fail() ) {
       _histdata->periodicBoundaries(toPeriodic);
+      this->updateOctahedra(_octahedra_z);
     }
     else
       throw EXCEPTION("Could not read line", ERRDIV);
@@ -1478,7 +1479,8 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
   }
   config.save = save;
   Graph::plot(config,_gplot.get());
-  _gplot->clearCustom();
+  if ( _gplot != nullptr )
+    _gplot->clearCustom();
 }
 
 void CanvasPos::buildBorders(unsigned itime) {

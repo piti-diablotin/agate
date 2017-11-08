@@ -51,6 +51,7 @@ class CanvasRot : public CanvasPos {
 
     float                   _octacolor[6]; ///< Store the two colors for plotting the cubes representing the rotations.
     TriCube                 _cube;         ///< A cube to visualize the rotations.
+    std::vector<std::array<float,3>> _orientations; ///< Orientation of the octahedra with respect to cartesian axis.
 
   protected :
 

@@ -98,7 +98,7 @@ class TriObj {
      * It copies everything and creat new vbos if needed.
      * @param obj The object to copy for the construction
      */
-    TriObj(const TriObj& obj) = delete;
+    TriObj(const TriObj& obj);
 
     /**
      * Move constructor

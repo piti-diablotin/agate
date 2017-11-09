@@ -131,14 +131,10 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _drawSpins[2] = canvas._drawSpins[2];
   
   if ( !_octahedra.empty() ) {
-    std::vector<std::unique_ptr<Octahedra>>   octabuild;
-    for ( auto &octa : _octahedra ) {
-      Octahedra *octaptr = octa.release();
-      Octahedra *tmpocta = new Octahedra(std::move(*reinterpret_cast<Octahedra*>(octaptr)));
-      delete octaptr;
-      octabuild.push_back(std::unique_ptr<Octahedra>(tmpocta));
+    for ( int i = 0 ; i < _octahedra.size() ; ++i ) {
+      Octahedra *tmpocta = new Octahedra(std::move(*dynamic_cast<Octahedra*>(_octahedra[i].get())));
+      _octahedra[i].reset(tmpocta);
     }
-    _octahedra = std::move(octabuild);
   }
 
 }

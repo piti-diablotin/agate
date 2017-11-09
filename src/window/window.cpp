@@ -59,7 +59,7 @@
 #endif
 
 #include "canvas/canvaspos.hpp"
-#include "canvas/canvasrot.hpp"
+#include "canvas/canvaslocal.hpp"
 #include "canvas/canvasphonons.hpp"
 
 using std::abs;
@@ -648,8 +648,8 @@ bool Window::userInput(std::stringstream& info) {
           else if ( token == "m" || token == "mode" ) {
             std::string cmode;
             cin >> cmode;
-            if ( cmode == "rot" || cmode == "rotations" ) {
-              _canvas.reset(new CanvasRot(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
+            if ( cmode == "loc" || cmode == "local" ) {
+              _canvas.reset(new CanvasLocal(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
             }
             else if ( cmode == "pos" || cmode == "positions" ) {
               _canvas.reset(new CanvasPos(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
@@ -895,7 +895,7 @@ void Window::help(){
   cout << setw(40) << ":img_qlt or :image_quality X" << setw(59) << "Set the quality to export image (between 1 and 100)." << endl;
   cout << setw(40) << ":img_suf or :image_suffix (convert|animate)" << setw(59) << "Choose the suffix to be append to the image file name. convert to be used with the \"convert\" tool and \"animate\" to be used with the latex animate package." << endl;
   cout << setw(40) << ":load filename" << setw(59) << "Load a file with commands inside." << endl;
-  cout << setw(40) << ":m or :mode ((rot|rotations)|(pos|positions)|(ph|phonons))" << setw(59) << "Choose what kind of propertie to visualize:" << endl;
+  cout << setw(40) << ":m or :mode ((loc|local)|(pos|positions)|(ph|phonons))" << setw(59) << "Choose what kind of propertie to visualize:" << endl;
   cout << setw(40) << "" << setw(59) << "pos or positions to visualize atomic positions." << endl;
   cout << setw(40) << "" << setw(59) << "rot or rotations to visualize rotations of octahedra. Need to define the z for octahedra (:octa_z)" << endl;
   cout << setw(40) << "" << setw(59) << "ph or phonons to visualize phonons in a reference structure." << endl;
@@ -912,5 +912,5 @@ void Window::help(){
   Canvas::help(cout);
   CanvasPos::help(cout);
   CanvasPhonons::help(cout);
-  CanvasRot::help(cout);
+  CanvasLocal::help(cout);
 }

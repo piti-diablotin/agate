@@ -89,7 +89,7 @@ class Octahedra : public TriObj {
      * Copy
      * @param octa The octahedra to copy
      */
-    Octahedra(const Octahedra& octa) = delete;
+    Octahedra(const Octahedra& octa);
 
     /**
      * Move

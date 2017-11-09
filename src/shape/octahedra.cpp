@@ -245,9 +245,11 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
   _basis[0] = _xcart[_atom3]-_xcart[_atom1];
   _basis[1] = _xcart[_atom4]-_xcart[_atom2];
   _basis[2] = _xcart[_top2]-_xcart[_top1];
+  /*
   _basis[0] = _basis[0]*(1./norm(_basis[0]));
   _basis[1] = _basis[1]*(1./norm(_basis[1]));
   _basis[2] = _basis[2]*(1./norm(_basis[2]));
+  */
 
   for ( unsigned a = 0 ; a < 6 ; ++a ) 
     if ( _shifts[a*3] != 0 || _shifts[a*3+1] != 0 || _shifts[a*3+2] != 0 ) 
@@ -273,6 +275,54 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
   _lines[12] = 2;
   _lines[13] = 12;
   _lines[14] = 5;
+#if defined(HAVE_GL) && defined(HAVE_GLEXT)
+  if ( _build && _mode == VBO && _opengl) {
+    glGenBuffers(1,&_vboLine);
+    glBindBuffer(GL_ARRAY_BUFFER,_vbos[0]);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(_float)*8*3*3,nullptr,GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_vbos[1]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(_uint)*8*3,(void*)&_unitIndex[0],GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_vboLine);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(_uint)*15,(void*)&_lines[0],GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER,0); // Release VBO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+  }
+
+#endif
+}
+
+Octahedra::Octahedra(const Octahedra& octa) : TriObj(octa),
+  _build(octa._build),
+  _vboLine(octa._vboLine),
+  _lines(),
+  _drawAtoms(octa._drawAtoms),
+  _center(octa._center),
+  _positions(octa._positions),
+  _shifts(octa._shifts),
+  _basis(octa._basis)
+{
+  _lines[ 0] = 1;
+  _lines[ 1] = 2;
+  _lines[ 2] = 5;
+  _lines[ 3] = 8;
+  _lines[ 4] = 1;
+  _lines[ 5] = 0;
+  _lines[ 6] = 4;
+  _lines[ 7] = 5;
+  _lines[ 8] = 0;
+  _lines[ 9] = 8;
+  _lines[10] = 12;
+  _lines[11] = 1;
+  _lines[12] = 2;
+  _lines[13] = 12;
+  _lines[14] = 5;
+  _unitIndex = new _uint[24];
+  _unitVertex = new _float[72];
+  for ( _uint i = 0 ; i < 8*3 ; ++ i )
+    _unitIndex[i] = i;
 #if defined(HAVE_GL) && defined(HAVE_GLEXT)
   if ( _build && _mode == VBO && _opengl) {
     glGenBuffers(1,&_vboLine);

@@ -24,14 +24,17 @@
  */
 
 
-#include "canvas/canvasrot.hpp"
+#include "canvas/canvaslocal.hpp"
 #include "base/mendeleev.hpp"
+#include "shape/octaangles.hpp"
+#include "shape/octalengths.hpp"
 #include <iomanip>
 
 //
-CanvasRot::CanvasRot(bool drawing) : CanvasPos(drawing),
+CanvasLocal::CanvasLocal(bool drawing) : CanvasPos(drawing),
   _octacolor(),
   _cube(_opengl),
+  _view(ANGLES),
   _orientations()
 {
   _octacolor[0] = 1.f;
@@ -44,9 +47,10 @@ CanvasRot::CanvasRot(bool drawing) : CanvasPos(drawing),
 }
 
 //
-CanvasRot::CanvasRot(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
+CanvasLocal::CanvasLocal(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _octacolor(),
   _cube(_opengl),
+  _view(ANGLES),
   _orientations()
 {
   _octacolor[0] = 1.f;
@@ -61,15 +65,24 @@ CanvasRot::CanvasRot(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   Octahedra::u3f angles;
 
   if ( !_octahedra.empty() && typeid(_octahedra[0].get()) != typeid(OctaAngles*) ) {
-    std::vector<std::unique_ptr<Octahedra>>   octabuild;
-    for ( auto &octa : _octahedra ) {
-      Octahedra *octaptr = octa.release();
-      OctaAngles *tmpocta = new OctaAngles(std::move(*reinterpret_cast<OctaAngles*>(octaptr)));
-      tmpocta->buildCart(rprimd,xcart,angles);
-      delete octaptr;
-      octabuild.push_back(std::unique_ptr<Octahedra>(tmpocta));
+    switch ( _view ) {
+      case ANGLES :
+        for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
+          OctaAngles *tmpocta = new OctaAngles(std::move(*_octahedra[i].get()));
+          tmpocta->buildCart(rprimd,xcart,angles);
+          _octahedra[i].reset(tmpocta);
+        }
+        break;
+      case LENGTHS :
+        for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
+          OctaAngles *tmpocta = new OctaAngles(std::move(*_octahedra[i].get()));
+          tmpocta->buildCart(rprimd,xcart,angles);
+          OctaLengths *pushocta = new OctaLengths(std::move(*tmpocta));
+          delete tmpocta;
+          _octahedra[i].reset(pushocta);
+        }
+        break;
     }
-    _octahedra = std::move(octabuild);
   }
   _orientations.resize(_octahedra.size());
   for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
@@ -79,12 +92,12 @@ CanvasRot::CanvasRot(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
 }
 
 //
-CanvasRot::~CanvasRot() {
+CanvasLocal::~CanvasLocal() {
   ;
 }
 
 //
-void CanvasRot::refresh(const geometry::vec3d &cam, TextRender &render){
+void CanvasLocal::refresh(const geometry::vec3d &cam, TextRender &render){
   (void)(cam);
   (void) render;
   const int totalnatom = _natom+_onBorders.size();
@@ -99,9 +112,7 @@ void CanvasRot::refresh(const geometry::vec3d &cam, TextRender &render){
   const GLfloat fz[] = {(GLfloat)rprimd[2], (GLfloat)rprimd[5], (GLfloat)rprimd[8]};
   const float width = (float)mendeleev::radius[_octahedra_z];
 
-  const float factor = 1.f/15.f;
-
-  CanvasPos::drawCell();
+  const float factor = ( _view == ANGLES ? 1.f/15.f : 1.f/0.10f ); CanvasPos::drawCell(); 
 
   this->buildBorders(_itime);
 
@@ -123,6 +134,26 @@ void CanvasRot::refresh(const geometry::vec3d &cam, TextRender &render){
         if (  k == 0 && j == 0 && i == 0 ){
           for( auto& octa : _octahedra )
             octa->build(rprimd,xcart,angles);
+
+          if ( _view == LENGTHS ) {
+            double a = 0;
+            double b = 0;
+            double c = 0;
+            for ( auto& angle : angles ) {
+              a += angle.second[0];
+              b += angle.second[1];
+              c += angle.second[2];
+            }
+            a /= angles.size();
+            b /= angles.size();
+            c /= angles.size();
+            for ( auto& angle : angles ) {
+              angle.second[0] -= a;
+              angle.second[1] -= b;
+              angle.second[2] -= c;
+            }
+            
+          }
         }
 
         for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
@@ -132,9 +163,9 @@ void CanvasRot::refresh(const geometry::vec3d &cam, TextRender &render){
           ( iatom < _natom ) 
             ? glTranslatef(xcart[3*iatom],xcart[3*iatom+1],xcart[3*iatom+2])
             : glTranslatef(_xcartBorders[3*(iatom-_natom)],_xcartBorders[3*(iatom-_natom)+1],_xcartBorders[3*(iatom-_natom)+2]);
-          glRotatef(_orientations[i][0],1.,0.,0.);
-          glRotatef(_orientations[i][1],0.,1.,0.);
-          glRotatef(_orientations[i][2],0.,0.,1.);
+          glRotatef(-_orientations[i][0],1.,0.,0.);
+          glRotatef(-_orientations[i][1],0.,1.,0.);
+          glRotatef(-_orientations[i][2],0.,0.,1.);
           glScalef(width,width,width);
           _cube.draw(&_octacolor[0],&_octacolor[3],angles[i].second[0]*factor,angles[i].second[1]*factor,angles[i].second[2]*factor);
           glPopMatrix();
@@ -153,7 +184,7 @@ void CanvasRot::refresh(const geometry::vec3d &cam, TextRender &render){
 
 
 //
-void CanvasRot::updateOctahedra(int z) {
+void CanvasLocal::updateOctahedra(int z) {
   if ( z > 0 && (_natom+_onBorders.size()) > 6 && _hasTranslations) {
     _octahedra_z = z;
     _octahedra.clear();
@@ -168,13 +199,28 @@ void CanvasRot::updateOctahedra(int z) {
 
     try {
       Octahedra::u3f angles;
-      for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom ){
-        if ( _znucl[_typat[iatom]] == _octahedra_z ) {
-          OctaAngles *tmpocta = new OctaAngles(iatom,_natom,xred,&xcartTotal[0],rprimd,_opengl); //Construct octahedra based on xcart at time 0
-          tmpocta->buildCart(rprimd,histXcart,angles);
-          _octahedra.push_back(std::unique_ptr<Octahedra>(tmpocta));
-        }
+      switch ( _view ) {
+        case ANGLES :
+          for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom ){
+            if ( _znucl[_typat[iatom]] == _octahedra_z ) {
+              OctaAngles *tmpocta = new OctaAngles(iatom,_natom,xred,&xcartTotal[0],rprimd,_opengl); //Construct octahedra based on xcart at time 0
+              tmpocta->buildCart(rprimd,histXcart,angles);
+              _octahedra.push_back(std::unique_ptr<Octahedra>(tmpocta));
+            }
+          }
+          break;
+        case LENGTHS :
+          for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom ){
+            if ( _znucl[_typat[iatom]] == _octahedra_z ) {
+              OctaAngles *tmpocta = new OctaAngles(iatom,_natom,xred,&xcartTotal[0],rprimd,_opengl); //Construct octahedra based on xcart at time 0
+              tmpocta->buildCart(rprimd,histXcart,angles);
+              OctaLengths *pushocta = new OctaLengths(std::move(*tmpocta));
+              _octahedra.push_back(std::unique_ptr<Octahedra>(pushocta));
+            }
+          }
+          break;
       }
+
       _orientations.resize(_octahedra.size());
       for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
         _orientations[i] = angles[i].second;
@@ -195,7 +241,7 @@ void CanvasRot::updateOctahedra(int z) {
 }
 
 //
-void CanvasRot::my_alter(std::string token, std::istringstream &stream) {
+void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
   if ( token == "c" || token == "color" ){
     unsigned c[3];
     float *tomodify = nullptr;
@@ -244,8 +290,10 @@ void CanvasRot::my_alter(std::string token, std::istringstream &stream) {
         Octahedra::u3f angles;
         const double *rprimd = _histdata->getRprimd(itime);
         const double *xcart = _histdata->getXcart(itime);
-        for( auto& octa : _octahedra )
-          octa->build(rprimd,xcart,angles);
+        for( auto& octa : _octahedra ){
+          OctaAngles oa(*dynamic_cast<Octahedra*>(octa.get()));
+          oa.build(rprimd,xcart,angles);
+        }
 
 #pragma omp ordered
         {
@@ -268,17 +316,116 @@ void CanvasRot::my_alter(std::string token, std::istringstream &stream) {
     out << "Dumping to file " << ext << " finished.";
     throw EXCEPTION(out.str(), ERRCOM);
   }
+  else if ( token == "length" ) {
+    std::string ext;
+    try {
+      stream >> ext;
+      std::ofstream file(ext,std::ios::out);
+      if ( !file )
+        throw EXCEPTION("Unable to open file "+ext,ERRABT);
+      // Write header
+      file << "# " << std::setw(20) << "Time step";
+      for ( unsigned i = 0 ; i < _octahedra.size() ; ++ i ) {
+        file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " a";
+        file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " b";
+        file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " c";
+      }
+      file << std::endl;
+      // Write data
+      file.precision(14);
+      file.setf(std::ios::scientific,std::ios::floatfield);
+      file.setf(std::ios::right,std::ios::adjustfield);
+#pragma omp for ordered, schedule(static)
+      for ( int itime = _tbegin ; itime < _tend ; ++itime ) {
+        Octahedra::u3f angles;
+        const double *rprimd = _histdata->getRprimd(itime);
+        const double *xcart = _histdata->getXcart(itime);
+        for( auto& octa : _octahedra ){
+          OctaLengths oa(*dynamic_cast<Octahedra*>(octa.get()));
+          oa.build(rprimd,xcart,angles);
+        }
+        double a = 0;
+        double b = 0;
+        double c = 0;
+        for ( auto& angle : angles ) {
+          a += angle.second[0];
+          b += angle.second[1];
+          c += angle.second[2];
+        }
+        a /= angles.size();
+        b /= angles.size();
+        c /= angles.size();
+        for ( auto& angle : angles ) {
+          angle.second[0] -= a;
+          angle.second[1] -= b;
+          angle.second[2] -= c;
+        }
+
+#pragma omp ordered
+        {
+        file << std::setw(22) << itime;
+        for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
+          file << std::setw(22) << angles[i].second[0];
+          file << std::setw(22) << angles[i].second[1];
+          file << std::setw(22) << angles[i].second[2];
+        }
+        file << std::endl;
+        }
+      }
+      file.close();
+    }
+    catch ( Exception &e ) {
+      e.ADD("Unable to dump data "+ext,ERRDIV);
+      throw e;
+    }
+    std::ostringstream out;
+    out << "Dumping to file " << ext << " finished.";
+    throw EXCEPTION(out.str(), ERRCOM);
+  }
+  else if ( token == "local" || token == "loc" ) {
+    std::string value;
+    stream >> value;
+    if ( stream.fail() )
+      throw EXCEPTION("You need to specify rotations or lengths",ERRDIV);
+    if ( value == "rot" || value == "rotations" ) 
+      _view = ANGLES;
+    else if ( value == "lengths" ) 
+      _view = LENGTHS;
+    else 
+      throw EXCEPTION("Bad value. rotattions or lengths are allowed", ERRDIV);
+    this->convertOctahedra();
+  }
   else 
     CanvasPos::my_alter(token, stream);
 }
 
+void CanvasLocal::convertOctahedra() {
+  if ( _octahedra.empty() ) return;
+  switch ( _view ) {
+    case ANGLES :
+      for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
+        OctaAngles *tmpocta = new OctaAngles(std::move(*_octahedra[i].get()));
+        _octahedra[i].reset(tmpocta);
+      }
+      break;
+    case LENGTHS :
+      for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
+        OctaLengths *tmpocta = new OctaLengths(std::move(*_octahedra[i].get()));
+        _octahedra[i].reset(tmpocta);
+      }
+      break;
+  }
+}
+
 //
-void CanvasRot::help(std::ostream &out) {
+void CanvasLocal::help(std::ostream &out) {
   using std::endl;
   using std::setw;
-  out << endl << "-- Here are the commands related to rotations mode --" << endl;
-  out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
+  out << endl << "-- Here are the commands related to local mode --" << endl;
+  out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
   out << setw(40) << ":c or :color (plus|minus)" << setw(59) << "Set the color in RGB for plus or minus rotations." << endl;
+  out << setw(40) << ":length filename" << setw(59) << "Dump for each octaheadra the a b and c lengths in filename." << endl;
   out << setw(40) << ":rot filename" << setw(59) << "Dump for each octaheadra the alpha, beta and gamma angles in filename." << endl;
+  out << setw(49) << ":loc or :local (rotatations|lengths)" << setw(59) << "Select which proppertie of the octahedra is displayed" << endl;
   out << "Commands from positions mode are also available." << endl;
 }

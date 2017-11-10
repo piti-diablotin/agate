@@ -113,10 +113,9 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
 
   _optionf["x0"] = 0.f;
   _optionf["y0"] = 0.f;
-  _optionf["camphi"] = 90.f;
+  _optionf["camphi"] = 0.f;
   _optionf["camtheta"] = 0.f;
-  _optionf["camtheta"] *= pi/180.f;
-  _optionf["camphi"] *= pi/180.f;
+  _optionf["campsi"] = pi;
   _optionf["speed"] = 1.f;
   _optionf["aspect"] = 1.f;
   //_optionf["distance"] = 1.1f*_canvas->typicalDim();
@@ -345,22 +344,25 @@ void Window::loopStep() {
 #endif
 
 
-    const float& camphi = _optionf["camphi"];
+    const float& campsi   = _optionf["campsi"];
     const float& camtheta = _optionf["camtheta"];
+    const float& camphi   = _optionf["camphi"];
     const float totalfactor = ( (aspect > 1.f || paral_proj) ? 1.f : 1.f/aspect ) 
       * factor_proj * distance * ( paral_proj ? 4.f : zoom); // 4 is for the spot light
-    const float sinphi = sin(camphi);
-    const float cosphi = cos(camphi);
-    const float sintheta = sin(camtheta);
-    const float costheta = cos(camtheta);
-    const float camx = totalfactor*sinphi*costheta;
-    const float camy = totalfactor*sinphi*sintheta;
-    const float camz = totalfactor*cosphi;
+    geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
+    
+    const float camx = totalfactor*euler[0];
+    const float camy = totalfactor*euler[3];
+    const float camz = totalfactor*euler[6];
+
+    const float vertx = euler[2];
+    const float verty = euler[5];
+    const float vertz = euler[8];
 
 #ifdef HAVE_GLU
     gluLookAt( camx, camy, camz,    // Eye-position
         0.0f, 0.0f, 0.0f,   // View-point
-        -abs(cosphi)*costheta,-abs(cosphi)*sintheta,sinphi);
+        vertx,verty,vertz);
 #endif
 
 
@@ -429,8 +431,9 @@ bool Window::userInput(std::stringstream& info) {
 #ifdef HAVE_GL
   bool& msaa = _optionb["msaa"];
 #endif
-  float& camphi = _optionf["camphi"];
+  float& campsi = _optionf["campsi"];
   float& camtheta = _optionf["camtheta"];
+  float& camphi = _optionf["camphi"];
   //static std::string string_static;
   float x = 0;
   float y = 0;
@@ -483,9 +486,9 @@ bool Window::userInput(std::stringstream& info) {
                          break;
                        }
 #endif
-            case 'x' : {camtheta = 0; camphi = pi*0.5f;_mode = mode_static;break;}
-            case 'y' : {camtheta = pi*0.5; camphi = pi*0.5;_mode = mode_static;break;}
-            case 'z' : {camtheta = -pi*0.5; camphi = 0.;_mode = mode_static;break;}
+            case 'x' : {campsi = pi     ; camtheta =  0     ; camphi = 0.     ;_mode = mode_static;break;}
+            case 'y' : {campsi = -pi*0.5; camtheta =  0     ; camphi = 0.     ;_mode = mode_static;break;}
+            case 'z' : {campsi = -pi    ; camtheta = pi*0.5 ; camphi = -pi*0.5;_mode = mode_static;break;}
             case '+' : {_mode = mode_add;break;}
             case '-' : {_mode = mode_remove;break;}
             case '*' : {_optionf["speed"] *= 2.0f;break;}
@@ -617,6 +620,11 @@ bool Window::userInput(std::stringstream& info) {
               _inputChar.push('\n');
               this->setParameters(filename);
             }
+          }
+          else if ( token == "psi") {
+            float angle;
+            cin >> angle;
+            if ( !cin.fail() ) campsi = angle*pi/180.f;
           }
           else if ( token == "theta") {
             float angle;
@@ -757,10 +765,20 @@ bool Window::userInput(std::stringstream& info) {
         this->getMousePosition(x0,y0);
       }
       this->getMousePosition(x,y);
-      camphi += (y0-y)/(float)_height*pi;
-      camphi += ( camphi > pi ? -twopi : ( camphi < -pi ? twopi : 0.f ) );
-      camtheta += (x0-x)/(float)_width*twopi * ( camphi >= 0.f ? 1.f : -1.f );
-      camtheta += ( camtheta > pi ? -twopi : ( camtheta < -pi ? twopi : 0.f ) );
+      using namespace geometry;
+      //std::cerr << "start" << std::endl;
+      mat3d euler = matEuler(campsi,camtheta,camphi);
+      vec3d axe1({{euler[2],euler[5],euler[8]}});
+      vec3d axe2({{euler[1],euler[4],euler[7]}});
+      double angle1 = (x0-x)/(float)_width*twopi;
+      double angle2 = (y0-y)/(float)_height*twopi;
+      auto mat1 = matRotation(angle1,axe1);
+      auto mat2 = matRotation(angle2,axe2);
+      auto total = (mat1*mat2)*euler;
+      auto newangles = anglesEuler(total);
+      campsi   = newangles[0];
+      camtheta = newangles[1];
+      camphi   = newangles[2];
       x0 = x; y0 = y;
     }
     else if (_modeMouse == mode_mouse ) _modeMouse = mode_static;
@@ -784,8 +802,11 @@ bool Window::userInput(std::stringstream& info) {
     action |= true;
   }
 
-  if ( view_angle ) info << "theta=" << (int)(camtheta>pi ? (camtheta/pi-2)*180.f : camtheta/pi*180.f)
-    << ", phi=" << (int)(camphi/pi*180.f) << " ";
+  if ( view_angle ) 
+    info
+      << "psi=" << (int)(campsi/pi*180.f) 
+      << ", theta=" << (int)(camtheta/pi*180.f)
+      << ", phi=" << (int)(camphi/pi*180.f) << " ";
   if ( view_angle && view_time ) info << "| ";
   if ( view_time ) info << "Time step: " << _canvas->itime() << "/" << _canvas->ntime()-1 << " ";
   if ( _exit ) _optioni["shouldExit"] = 1;
@@ -801,8 +822,9 @@ void Window::drawAxis() {
   glLoadIdentity();
   const bool paral_proj = _optionb["paral_proj"];
   const float aspect = _optionf["aspect"];
-  const float camphi = _optionf["camphi"];
+  const float campsi   = _optionf["campsi"];
   const float camtheta = _optionf["camtheta"];
+  const float camphi   = _optionf["camphi"];
   if ( paral_proj )  {
     (( _height > _width ) ?
      glOrtho(-10,10,-10/aspect,10/aspect,-100.f,100.f) :
@@ -823,17 +845,21 @@ void Window::drawAxis() {
   const float factor_proj = paral_proj ? 1.f : 2.f;
   const float totalfactor = ( (paral_proj) ? 1.f : 1.f/aspect ) 
     * factor_proj * ( paral_proj ? 4.f : 10 ); // 4 is for the spot light
-  const float sinphi = sin(camphi);
-  const float cosphi = cos(camphi);
-  const float sintheta = sin(camtheta);
-  const float costheta = cos(camtheta);
-  const float camx = totalfactor*sinphi*costheta;
-  const float camy = totalfactor*sinphi*sintheta;
-  const float camz = totalfactor*cosphi;
+
+  geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
+
+  const float camx = totalfactor*euler[0];
+  const float camy = totalfactor*euler[3];
+  const float camz = totalfactor*euler[6];
+
+  const float vertx = euler[2];
+  const float verty = euler[5];
+  const float vertz = euler[8];
+
 #ifdef HAVE_GLU
   gluLookAt( camx, camy, camz,    // Eye-position
       0.0f, 0.0f, 0.0f,   // View-point
-      -abs(cosphi)*costheta,-abs(cosphi)*sintheta,sinphi);
+      vertx,verty,vertz);
 #endif
 
   _arrow->push();

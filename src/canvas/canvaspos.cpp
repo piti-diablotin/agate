@@ -131,7 +131,7 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _drawSpins[2] = canvas._drawSpins[2];
   
   if ( !_octahedra.empty() ) {
-    for ( int i = 0 ; i < _octahedra.size() ; ++i ) {
+    for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
       Octahedra *tmpocta = new Octahedra(std::move(*dynamic_cast<Octahedra*>(_octahedra[i].get())));
       _octahedra[i].reset(tmpocta);
     }

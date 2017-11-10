@@ -313,6 +313,55 @@ namespace geometry {
    * @return the ratdius of the sphere
    */
   double getWignerSeitzRadius(const double rprimd[9]);
+
+  /**
+   * Compute the rotation matrix of a rotation of angle angle around the axis axe
+   * @param angle the angle of the rotation
+   * @param axe the axe of the rotation
+   */
+  inline mat3d matRotation(double angle, const vec3d &axe) {
+    const double renorm = 1./norm(axe);
+    const double x = axe[0]*renorm;
+    const double y = axe[1]*renorm;
+    const double z = axe[2]*renorm;
+    const double c = std::cos(angle);
+    const double s = std::sin(angle);
+    const double dc = 1.-c;
+    return mat3d({{
+       x*x*dc+c  , x*y*dc-z*s, x*z*dc+y*s,
+       x*y*dc+z*s, y*y*dc+c  , y*z*dc-x*s,
+       x*z*dc-y*s, z*y*dc+x*s, z*z*dc+c
+    }});
+  }
+
+  inline mat3d matEuler(double psi, double theta, double phi) {
+    const double ca = std::cos(psi);
+    const double cb = std::cos(theta);
+    const double cc = std::cos(phi);
+    const double sa = std::sin(psi);
+    const double sb = std::sin(theta);
+    const double sc = std::sin(phi);
+    return mat3d( {{
+        ca*cc-sa*cb*sc,  -ca*sc-sa*cb*cc,  sa*sb,
+        sa*cc+ca*cb*sc,  -sa*sc+ca*cb*cc, -ca*sb,
+        sb*sc         ,  sb*cc          ,  cb
+        }});
+  }
+
+  inline vec3d anglesEuler(mat3d euler) {
+    const double b = std::acos(euler[8]);
+    double a;
+    double c;
+    if ( std::abs(euler[8]) > 1e-5 ) {
+      a = std::atan2(euler[2]/euler[8],-euler[5]/euler[8]);
+      c = std::atan2(euler[6]/euler[8],euler[7]/euler[8]);
+    }
+    else {
+      a = std::atan2(euler[0],euler[3]);
+      c = std::atan2(euler[1],euler[0]);
+    }
+    return vec3d({{ a,b,c }});
+  }
 }
 #endif // GEOMETRY_HPP
 

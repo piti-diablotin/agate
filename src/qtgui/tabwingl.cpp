@@ -71,7 +71,7 @@ QWidget* TabWinGl::newTab() {
   gridLayout->setContentsMargins(0,0,0,0);
 
   pCanvas *canvas = new pCanvas(nullptr);
-  _glwidgets.push_back(new GLWidget(*canvas,640,479,60,tab));
+  _glwidgets.push_back(new GLWidget(*canvas,1280,961,60,tab));
   canvas->reset(new CanvasPos(true)); 
   canvas->get()->setGraph(new QPlot(this));
   _glwidgets.back()->setTitle("New Tab");

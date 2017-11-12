@@ -192,6 +192,8 @@ int main(int argc, char** argv) {
   parser.setOption("font",'f',"","Font to use for displaying information on the screen.");
   parser.setOption("term",'t',"Start in terminal mode");
   parser.setOption("version",'v',"Print the version number");
+  parser.setOption("width",'W',"1280","Width of the window");
+  parser.setOption("height",'H',"960","Height of the window");
   parser.setOption("help",'h',"Print this message");
   parser.setOption("verbosity",'V',"2","0 : nothing\n1 : write to file\n2 : write to screen");
   parser.setOption("wait",'w',"Wait for loading the files set on the command line");
@@ -258,27 +260,29 @@ int main(int argc, char** argv) {
       config = parser.getOption<std::string>("config");
     }
 
+    unsigned width  = parser.getOption<unsigned>("width");
+    unsigned height = parser.getOption<unsigned>("height");
     if ( !parser.getOption<bool>("term") ) {
 #ifdef HAVE_GL
 #ifdef HAVE_GLFW3
       WinGlfw3::init();
-      ptrwin = new WinGlfw3(crystal,640,480);
+      ptrwin = new WinGlfw3(crystal,width,height);
 #ifdef HAVE_GLFW3_DROP
       reinterpret_cast<WinGlfw3*>(ptrwin)->setDropCallback(DropCallback);
 #endif
 #elif defined(HAVE_GLFW2)
       WinGlfw2::init();
-      ptrwin = new WinGlfw2(crystal,640,480);
+      ptrwin = new WinGlfw2(crystal,width,height);
 #else
       Winfake::init();
-      ptrwin = new Winfake(crystal,640,480);
+      ptrwin = new Winfake(crystal,width,height);
 #endif
 #else
       std::clog << "Using no window mode" << std::endl;
       if ( config.empty() )
         throw EXCEPTION("Currently you need to creat a config file to use the no window mode",ERRDIV);
       Winfake::init();
-      ptrwin = new Winfake(crystal,640,480);
+      ptrwin = new Winfake(crystal,width,height);
 #endif
     }
     else {
@@ -286,7 +290,7 @@ int main(int argc, char** argv) {
       //if ( config.empty() )
       //  throw EXCEPTION("Currently you need to creat a config file to use the no window mode",ERRDIV);
       Winfake::init();
-      ptrwin = new Winfake(crystal,640,480);
+      ptrwin = new Winfake(crystal,width,height);
     }
 
 

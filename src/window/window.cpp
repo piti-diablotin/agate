@@ -495,7 +495,7 @@ bool Window::userInput(std::stringstream& info) {
             case '/' : {_optionf["speed"] /= (_optionf["speed"] <= 0.001 ? 1.f : 2.0f);break;}
             case 'a' : { 
                          if ( !_render._isOk && !view_angle )
-                           std::clog << 
+                           std::clog 
                              << "psi=" << (int)(campsi/pi*180.f) 
                              << ", theta=" << (int)(camtheta/pi*180.f)
                              << ", phi=" << (int)(camphi/pi*180.f) << std::endl;

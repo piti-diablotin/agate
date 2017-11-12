@@ -56,6 +56,15 @@ class Window {
   private :
     enum ImageSuffix { convert, animate };
 
+    /**
+     * Make the correct transformation to set the camera view
+     * @param zoom is the total factor for camera vector
+     * @param tx is the target point x coordinate
+     * @param ty is the target point y coordinate
+     * @param tz is the target point z coordinate
+     */
+    void lookAt(double zoom, double tx, double ty, double tz);
+
 
   protected :
 

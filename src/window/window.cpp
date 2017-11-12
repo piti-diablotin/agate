@@ -102,7 +102,6 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _canvas(canvas),
   _arrow(nullptr)
 {
-  const float pi = (float) phys::pi;
 
   _background[0] = 0.f;
   _background[1] = 0.f;
@@ -344,29 +343,16 @@ void Window::loopStep() {
 #endif
 
 
-    const float& campsi   = _optionf["campsi"];
-    const float& camtheta = _optionf["camtheta"];
-    const float& camphi   = _optionf["camphi"];
     const float totalfactor = ( (aspect > 1.f || paral_proj) ? 1.f : 1.f/aspect ) 
       * factor_proj * distance * ( paral_proj ? 4.f : zoom); // 4 is for the spot light
-    geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
     
-    const float camx = totalfactor*euler[0];
-    const float camy = totalfactor*euler[3];
-    const float camz = totalfactor*euler[6];
+    const float campsi   = _optionf["campsi"];
+    const float camtheta = _optionf["camtheta"];
+    const float camphi   = _optionf["camphi"];
+    geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
+    this->lookAt(totalfactor,0,0,0);
 
-    const float vertx = euler[2];
-    const float verty = euler[5];
-    const float vertz = euler[8];
-
-#ifdef HAVE_GLU
-    gluLookAt( camx, camy, camz,    // Eye-position
-        0.0f, 0.0f, 0.0f,   // View-point
-        vertx,verty,vertz);
-#endif
-
-
-    _canvas->refresh({{camx,camy,camz}},_render);
+    _canvas->refresh({{euler[0],euler[3],euler[6]}},_render);
     if ( _canvas->ntime() >= 1 && _optionb["axis"] ) this->drawAxis();
 
     if ( _optionb["takeSnapshot"] || (_movie && !_canvas->isPaused()) ) this->snapshot();
@@ -824,9 +810,6 @@ void Window::drawAxis() {
   glLoadIdentity();
   const bool paral_proj = _optionb["paral_proj"];
   const float aspect = _optionf["aspect"];
-  const float campsi   = _optionf["campsi"];
-  const float camtheta = _optionf["camtheta"];
-  const float camphi   = _optionf["camphi"];
   if ( paral_proj )  {
     (( _height > _width ) ?
      glOrtho(-10,10,-10/aspect,10/aspect,-100.f,100.f) :
@@ -848,21 +831,7 @@ void Window::drawAxis() {
   const float totalfactor = ( (paral_proj) ? 1.f : 1.f/aspect ) 
     * factor_proj * ( paral_proj ? 4.f : 10 ); // 4 is for the spot light
 
-  geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
-
-  const float camx = totalfactor*euler[0];
-  const float camy = totalfactor*euler[3];
-  const float camz = totalfactor*euler[6];
-
-  const float vertx = euler[2];
-  const float verty = euler[5];
-  const float vertz = euler[8];
-
-#ifdef HAVE_GLU
-  gluLookAt( camx, camy, camz,    // Eye-position
-      0.0f, 0.0f, 0.0f,   // View-point
-      vertx,verty,vertz);
-#endif
+  this->lookAt(totalfactor,0,0,0);
 
   _arrow->push();
   glColor3f(0.f,0.f,1.f);
@@ -885,6 +854,72 @@ void Window::drawAxis() {
   _render.render("x");
   //glDrawPixels(buffer.cols(), buffer.rows(), GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buffer.getPtr());
   /* End draw cartesian axis */
+#endif
+}
+
+void Window::lookAt(double zoom, double tx, double ty, double tz) {
+  using namespace geometry;
+    const float& campsi   = _optionf["campsi"];
+    const float& camtheta = _optionf["camtheta"];
+    const float& camphi   = _optionf["camphi"];
+
+    geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
+    const float camx = zoom*euler[0];
+    const float camy = zoom*euler[3];
+    const float camz = zoom*euler[6];
+
+    const float vertx = euler[2];
+    const float verty = euler[5];
+    const float vertz = euler[8];
+
+    /*
+    vec3d f({{tx-euler[0],ty-euler[1],tz-euler[2]}});
+    f = f*(1./norm(f));
+
+    vec3d s({{
+         f[1]*vertz-f[2]*verty,
+        -f[0]*vertz+f[2]*vertx,
+         f[0]*verty-f[1]*vertx
+        }});
+    s = s*(1./norm(s));
+
+    vec3d u({{
+         s[1]*f[2]-s[2]*f[1],
+        -s[0]*f[2]+s[2]*f[0],
+         s[0]*f[1]-s[1]*f[0]
+        }});
+    u = u*(1./norm(u));
+    
+
+    float M[16];
+    M[0] =  s[0];
+    M[4] =  s[1];
+    M[8] =  s[2];
+    M[12] = 0;
+
+    M[1] =  u[0];
+    M[5] =  u[1];
+    M[9] =  u[2];
+    M[13] = 0;
+
+    M[2] = -f[0];
+    M[6] = -f[1];
+    M[10] = -f[2];
+    M[14] = 0;
+
+    M[3] = 0;
+    M[7] = 0;
+    M[11] = 0;
+    M[15] = 1;
+
+    glMultMatrixf(M);
+    glTranslated(-camx, -camy, -camz);
+        */
+
+#ifdef HAVE_GLU
+    gluLookAt( camx, camy, camz,    // Eye-position
+        tx,ty,tz,   // View-point
+        vertx,verty,vertz);
 #endif
 }
 

@@ -113,9 +113,9 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
 
   _optionf["x0"] = 0.f;
   _optionf["y0"] = 0.f;
-  _optionf["camphi"] = 0.f;
+  _optionf["campsi"] = 0.f;
   _optionf["camtheta"] = 0.f;
-  _optionf["campsi"] = pi;
+  _optionf["camphi"] = 0.f;
   _optionf["speed"] = 1.f;
   _optionf["aspect"] = 1.f;
   //_optionf["distance"] = 1.1f*_canvas->typicalDim();
@@ -486,16 +486,18 @@ bool Window::userInput(std::stringstream& info) {
                          break;
                        }
 #endif
-            case 'x' : {campsi = pi     ; camtheta =  0     ; camphi = 0.     ;_mode = mode_static;break;}
-            case 'y' : {campsi = -pi*0.5; camtheta =  0     ; camphi = 0.     ;_mode = mode_static;break;}
-            case 'z' : {campsi = -pi    ; camtheta = pi*0.5 ; camphi = -pi*0.5;_mode = mode_static;break;}
+            case 'x' : {campsi = 0      ; camtheta =  0     ; camphi = 0.    ;_mode = mode_static;break;}
+            case 'y' : {campsi = 0      ; camtheta =  0     ; camphi = pi*0.5;_mode = mode_static;break;}
+            case 'z' : {campsi = 0      ; camtheta = pi*0.5 ; camphi = pi    ;_mode = mode_static;break;}
             case '+' : {_mode = mode_add;break;}
             case '-' : {_mode = mode_remove;break;}
             case '*' : {_optionf["speed"] *= 2.0f;break;}
             case '/' : {_optionf["speed"] /= (_optionf["speed"] <= 0.001 ? 1.f : 2.0f);break;}
             case 'a' : { 
                          if ( !_render._isOk && !view_angle )
-                           std::clog << "theta=" << (int)(camtheta>pi ? (camtheta/pi-2)*180.f : camtheta/pi*180.f)
+                           std::clog << 
+                             << "psi=" << (int)(campsi/pi*180.f) 
+                             << ", theta=" << (int)(camtheta/pi*180.f)
                              << ", phi=" << (int)(camphi/pi*180.f) << std::endl;
                          view_angle = !view_angle;
                          break;
@@ -770,8 +772,8 @@ bool Window::userInput(std::stringstream& info) {
       mat3d euler = matEuler(campsi,camtheta,camphi);
       vec3d axe1({{euler[2],euler[5],euler[8]}});
       vec3d axe2({{euler[1],euler[4],euler[7]}});
-      double angle1 = (x0-x)/(float)_width*twopi;
-      double angle2 = (y0-y)/(float)_height*twopi;
+      double angle1 = (x0-x)/_width*twopi;
+      double angle2 = (y0-y)/_height*twopi;
       auto mat1 = matRotation(angle1,axe1);
       auto mat2 = matRotation(angle2,axe2);
       auto total = (mat1*mat2)*euler;

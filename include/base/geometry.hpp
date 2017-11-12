@@ -334,33 +334,51 @@ namespace geometry {
     }});
   }
 
+  /*
+   * Compute the rotation matrix of 3 euler angles
+   * The angles are in radian
+   * @param psi The angle around x
+   * @param thtea The angle around y
+   * @param phi The angle around z
+   * @return The full rotation matrix which corresponds to the multiplication of
+   * the rotation matrix around x then y then z
+   */
   inline mat3d matEuler(double psi, double theta, double phi) {
-    const double ca = std::cos(psi);
-    const double cb = std::cos(theta);
-    const double cc = std::cos(phi);
-    const double sa = std::sin(psi);
-    const double sb = std::sin(theta);
-    const double sc = std::sin(phi);
+    const double a = std::cos(psi);
+    const double b = std::sin(psi);
+    const double c = std::cos(theta);
+    const double d = std::sin(theta);
+    const double e = std::cos(phi);
+    const double f = std::sin(phi);
+    const double ad = a*d;
+    const double bd = b*d;
     return mat3d( {{
-        ca*cc-sa*cb*sc,  -ca*sc-sa*cb*cc,  sa*sb,
-        sa*cc+ca*cb*sc,  -sa*sc+ca*cb*cc, -ca*sb,
-        sb*sc         ,  sb*cc          ,  cb
+        c*e, -c*f, d,
+        bd*e+a*f, -bd*f+a*e, -b*c,
+        -ad*e+b*f, ad*f+b*e, a*c
         }});
   }
 
+  /**
+   * From a rotation matrix, compute the three angles around x y and z according to the definition of the
+   * euler matrix in matEuler function.
+   * @param euler the rotation matrix
+   * @return angles in radian around x y and z
+   */
   inline vec3d anglesEuler(mat3d euler) {
-    const double b = std::acos(euler[8]);
-    double a;
-    double c;
-    if ( std::abs(euler[8]) > 1e-5 ) {
-      a = std::atan2(euler[2]/euler[8],-euler[5]/euler[8]);
-      c = std::atan2(euler[6]/euler[8],euler[7]/euler[8]);
+    const double theta = std::asin(euler[2]);
+    const double c = std::cos(theta);
+    double psi = 0;
+    double phi = 0;
+    if ( std::abs(c) > 1e-4 ){
+      psi = std::atan2(-euler[5]/c,euler[8]/c);
+      phi = std::atan2(-euler[1]/c,euler[0]/c);
     }
     else {
-      a = std::atan2(euler[0],euler[3]);
-      c = std::atan2(euler[1],euler[0]);
+      psi = 0;
+      phi = std::atan2(euler[3],euler[4]);
     }
-    return vec3d({{ a,b,c }});
+    return vec3d({{ psi,theta,phi }});
   }
 }
 #endif // GEOMETRY_HPP

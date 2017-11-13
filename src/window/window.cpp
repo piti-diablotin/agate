@@ -33,6 +33,7 @@
 #include <string>
 #include <cmath>
 #include <fstream>
+#  include <GLFW/glfw3.h>
 
 #if defined(HAVE_UNISTD_H) && (!defined(WIN32) && !defined(_WIN32)) /* freetype force the definition of HAVE_UNISTD_H */
 #include <unistd.h>
@@ -90,6 +91,11 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _keyEscape(0),
   _keyArrowUp(0),
   _keyArrowDown(0),
+  _keyArrowLeft(0),
+  _keyArrowRight(0),
+  _keyX(0),
+  _keyY(0),
+  _keyZ(0),
   _mode(mode_static),
   _modeMouse(mode_static),
   _command(),
@@ -463,7 +469,7 @@ bool Window::userInput(std::stringstream& info) {
           }
           _mode = mode_static;
         }
-        else if ( _mode == mode_static ) {
+        else if ( _mode == mode_static && _modeMouse != mode_mouse ) {
           switch ( ic ) {
 #ifdef HAVE_GL
             case 'A' : {
@@ -764,12 +770,20 @@ bool Window::userInput(std::stringstream& info) {
       auto mat2 = matRotation(angle2,axe2);
       auto total = (mat1*mat2)*euler;
       auto newangles = anglesEuler(total);
-      campsi   = newangles[0];
-      camtheta = newangles[1];
-      camphi   = newangles[2];
+      if ( !this->getCharPress(_keyX) )
+        campsi   = newangles[0];
+      if ( !this->getCharPress(_keyY) )
+        camtheta = newangles[1];
+      if ( !this->getCharPress(_keyZ) )
+        camphi   = newangles[2];
       x0 = x; y0 = y;
     }
-    else if (_modeMouse == mode_mouse ) _modeMouse = mode_static;
+    else if (_modeMouse == mode_mouse ) {
+      _modeMouse = mode_static;
+      this->getChar(_keyX);
+      this->getChar(_keyY);
+      this->getChar(_keyZ);
+    }
   }
   catch (Exception &eerror) {
     std::cerr << eerror.fullWhat() << std::endl;

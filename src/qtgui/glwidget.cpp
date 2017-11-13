@@ -58,6 +58,11 @@ GLWidget::GLWidget(pCanvas &canvas, const int width, const int height, int fps, 
   _keyEscape = 6;
   _keyArrowUp = 7;
   _keyArrowDown = 8;
+  _keyArrowLeft = 9;
+  _keyArrowRight = 10;
+  _keyX = 11;
+  _keyY = 12;
+  _keyZ = 13;
   this->setAcceptDrops(true);
   this->setCursor(QCursor(Qt::OpenHandCursor));
   this->makeCurrent();
@@ -100,9 +105,65 @@ void GLWidget::keyPressEvent(QKeyEvent *keyEvent) {
     case Qt::Key_Down:
       _inputKeys[_keyArrowDown] = true;
       break;
+    case Qt::Key_Left:
+      _inputKeys[_keyArrowLeft] = true;
+      break;
+    case Qt::Key_Right:
+      _inputKeys[_keyArrowRight] = true;
+      break;
+    case Qt::Key_X:
+      _inputKeys[_keyX] = true;
+      _inputChar.push((unsigned char)str.data()[0].unicode());
+      break;
+    case Qt::Key_Y:
+      _inputKeys[_keyY] = true;
+      _inputChar.push((unsigned char)str.data()[0].unicode());
+      break;
+    case Qt::Key_Z:
+      _inputKeys[_keyZ] = true;
+      _inputChar.push((unsigned char)str.data()[0].unicode());
+      break;
     default :
       for ( int c = 0 ; c < str.size() ; ++c )
         _inputChar.push((unsigned char)str.data()[c].unicode());
+      break;
+  }
+}
+
+void GLWidget::keyReleaseEvent(QKeyEvent *keyEvent) {
+  QString str = keyEvent->text();
+  switch(keyEvent->key()) {
+    case Qt::Key_Escape:
+      _inputKeys[_keyEscape] = false;
+      break;
+    case Qt::Key_Return:
+      _inputKeys[_keyEnter] = false;
+      break;
+    case Qt::Key_Enter:
+      _inputKeys[_keyKPEnter] = false;
+      break;
+    case Qt::Key_Backspace:
+      _inputKeys[_keyBackspace] = false;
+      break;
+    case Qt::Key_Up:
+      _inputKeys[_keyArrowUp] = false;
+      break;
+    case Qt::Key_Down:
+      _inputKeys[_keyArrowDown] = false;
+      break;
+    case Qt::Key_Left:
+      _inputKeys[_keyArrowLeft] = false;
+      break;
+    case Qt::Key_Right:
+      _inputKeys[_keyArrowRight] = false;
+    case Qt::Key_X:
+      _inputKeys[_keyX] = false;
+      break;
+    case Qt::Key_Y:
+      _inputKeys[_keyZ] = false;
+      break;
+    case Qt::Key_Z:
+      _inputKeys[_keyZ] = false;
       break;
   }
 }
@@ -284,7 +345,7 @@ void GLWidget::getMousePosition(float &x, float &y) {
 bool GLWidget::getCharPress(unsigned key) {
   if ( key >= _maxKeys ) return false;
   bool pressed = _inputKeys[key];
-  _inputKeys[key] = false;
+  //_inputKeys[key] = false;
   return pressed;
 }
 

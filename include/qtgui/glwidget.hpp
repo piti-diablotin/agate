@@ -64,7 +64,7 @@ class GLWidget : public QGLWidget, public Window {
   Q_OBJECT
 
   private :
-    static const size_t _maxKeys = 9;
+    static const size_t _maxKeys = 14;
     std::array<bool,_maxKeys> _inputKeys;
     bool _updateFromTimer;
     double _wheelDelta;
@@ -114,6 +114,7 @@ class GLWidget : public QGLWidget, public Window {
     virtual void resizeGL(int width, int height);
     virtual void paintGL();
     virtual void keyPressEvent( QKeyEvent *keyEvent );
+    virtual void keyReleaseEvent( QKeyEvent *keyEvent );
     virtual void mousePressEvent( QMouseEvent *mouseEvent );
     virtual void mouseReleaseEvent( QMouseEvent *mouseEvent );
     virtual void wheelEvent( QWheelEvent *mouseEvent );

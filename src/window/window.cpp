@@ -121,6 +121,9 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _optionf["campsi"] = 0.f;
   _optionf["camtheta"] = 0.f;
   _optionf["camphi"] = 0.f;
+  _optionf["targetx"] = 0.f;
+  _optionf["targety"] = 0.f;
+  _optionf["targetz"] = 0.f;
   _optionf["speed"] = 1.f;
   _optionf["aspect"] = 1.f;
   //_optionf["distance"] = 1.1f*_canvas->typicalDim();
@@ -356,7 +359,10 @@ void Window::loopStep() {
     const float camtheta = _optionf["camtheta"];
     const float camphi   = _optionf["camphi"];
     geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
+    //this->lookAt(totalfactor,_optionf["targetx"],_optionf["targety"],_optionf["targetz"]);
     this->lookAt(totalfactor,0,0,0);
+    glTranslatef(totalfactor*_optionf["targetx"],totalfactor*_optionf["targety"],totalfactor*_optionf["targetz"]);
+
 
     _canvas->refresh({{euler[0],euler[3],euler[6]}},_render);
     if ( _canvas->ntime() >= 1 && _optionb["axis"] ) this->drawAxis();
@@ -776,6 +782,24 @@ bool Window::userInput(std::stringstream& info) {
         camtheta = newangles[1];
       if ( !this->getCharPress(_keyZ) )
         camphi   = newangles[2];
+      x0 = x; y0 = y;
+    }
+    else if ( this->getMousePress(_mouseButtonRight) ) {
+      action = true;
+      if ( _modeMouse != mode_mouse ){
+        _modeMouse = mode_mouse;
+        this->getMousePosition(x0,y0);
+      }
+      this->getMousePosition(x,y);
+      using namespace geometry;
+      mat3d euler = matEuler(campsi,camtheta,camphi);
+
+      double shiftX = (x-x0)/_width;
+      double shiftY = (y0-y)/_height;
+      _optionf["targetx"] += shiftX * euler[1] + shiftY * euler[2];
+      _optionf["targety"] += shiftX * euler[4] + shiftY * euler[5];
+      _optionf["targetz"] += shiftX * euler[7] + shiftY * euler[8];
+
       x0 = x; y0 = y;
     }
     else if (_modeMouse == mode_mouse ) {

@@ -121,9 +121,8 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _optionf["campsi"] = 0.f;
   _optionf["camtheta"] = 0.f;
   _optionf["camphi"] = 0.f;
-  _optionf["targetx"] = 0.f;
-  _optionf["targety"] = 0.f;
-  _optionf["targetz"] = 0.f;
+  _optionf["shiftOriginX"] = 0.f;
+  _optionf["shiftOriginY"] = 0.f;
   _optionf["speed"] = 1.f;
   _optionf["aspect"] = 1.f;
   //_optionf["distance"] = 1.1f*_canvas->typicalDim();
@@ -359,9 +358,8 @@ void Window::loopStep() {
     const float camtheta = _optionf["camtheta"];
     const float camphi   = _optionf["camphi"];
     geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
-    //this->lookAt(totalfactor,_optionf["targetx"],_optionf["targety"],_optionf["targetz"]);
+    glTranslatef(totalfactor*_optionf["shiftOriginX"],totalfactor*_optionf["shiftOriginY"],0.);
     this->lookAt(totalfactor,0,0,0);
-    glTranslatef(totalfactor*_optionf["targetx"],totalfactor*_optionf["targety"],totalfactor*_optionf["targetz"]);
 
 
     _canvas->refresh({{euler[0],euler[3],euler[6]}},_render);
@@ -792,13 +790,11 @@ bool Window::userInput(std::stringstream& info) {
       }
       this->getMousePosition(x,y);
       using namespace geometry;
-      mat3d euler = matEuler(campsi,camtheta,camphi);
 
-      double shiftX = (x-x0)/_width;
-      double shiftY = (y0-y)/_height;
-      _optionf["targetx"] += shiftX * euler[1] + shiftY * euler[2];
-      _optionf["targety"] += shiftX * euler[4] + shiftY * euler[5];
-      _optionf["targetz"] += shiftX * euler[7] + shiftY * euler[8];
+      const double shiftX = (x-x0)/_width;
+      const double shiftY = (y0-y)/_height;
+      _optionf["shiftOriginX"] += shiftX;
+      _optionf["shiftOriginY"] += shiftY;
 
       x0 = x; y0 = y;
     }
@@ -895,35 +891,38 @@ void Window::drawAxis() {
 #endif
 }
 
-void Window::lookAt(double zoom, double tx, double ty, double tz) {
+void Window::lookAt(double zoom, double centerX, double centerY, double centerZ) {
   using namespace geometry;
     const float& campsi   = _optionf["campsi"];
     const float& camtheta = _optionf["camtheta"];
     const float& camphi   = _optionf["camphi"];
 
     geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
-    const float camx = zoom*euler[0];
-    const float camy = zoom*euler[3];
-    const float camz = zoom*euler[6];
+    const float eyeX = zoom*euler[0];
+    const float eyeY = zoom*euler[3];
+    const float eyeZ = zoom*euler[6];
 
-    const float vertx = euler[2];
-    const float verty = euler[5];
-    const float vertz = euler[8];
+    const float upX = euler[2];
+    const float upY = euler[5];
+    const float upZ = euler[8];
 
-    /*
-    vec3d f({{tx-euler[0],ty-euler[1],tz-euler[2]}});
+    vec3d f({{
+        centerX-eyeX,
+        centerY-eyeY,
+        centerZ-eyeZ
+        }});
     f = f*(1./norm(f));
 
     vec3d s({{
-         f[1]*vertz-f[2]*verty,
-        -f[0]*vertz+f[2]*vertx,
-         f[0]*verty-f[1]*vertx
+         f[1]*upZ-f[2]*upY,
+         f[2]*upX-f[0]*upZ,
+         f[0]*upY-f[1]*upX
         }});
     s = s*(1./norm(s));
 
     vec3d u({{
          s[1]*f[2]-s[2]*f[1],
-        -s[0]*f[2]+s[2]*f[0],
+         s[2]*f[0]-s[0]*f[2],
          s[0]*f[1]-s[1]*f[0]
         }});
     u = u*(1./norm(u));
@@ -951,14 +950,8 @@ void Window::lookAt(double zoom, double tx, double ty, double tz) {
     M[15] = 1;
 
     glMultMatrixf(M);
-    glTranslated(-camx, -camy, -camz);
-        */
+    glTranslated(-eyeX, -eyeY, -eyeZ);
 
-#ifdef HAVE_GLU
-    gluLookAt( camx, camy, camz,    // Eye-position
-        tx,ty,tz,   // View-point
-        vertx,verty,vertz);
-#endif
 }
 
 void Window::help(){

@@ -276,7 +276,7 @@ namespace geometry {
     return mat3d({{
         mat1[0]*mat2[0]+mat1[1]*mat2[3]+mat1[2]*mat2[6], mat1[0]*mat2[1]+mat1[1]*mat2[4]+mat1[2]*mat2[7], mat1[0]*mat2[2]+mat1[1]*mat2[5]+mat1[2]*mat2[8],
         mat1[3]*mat2[0]+mat1[4]*mat2[3]+mat1[5]*mat2[6], mat1[3]*mat2[1]+mat1[4]*mat2[4]+mat1[5]*mat2[7], mat1[3]*mat2[2]+mat1[4]*mat2[5]+mat1[5]*mat2[8],
-        mat1[6]*mat2[0]+mat1[6]*mat2[3]+mat1[8]*mat2[6], mat1[6]*mat2[1]+mat1[6]*mat2[4]+mat1[8]*mat2[7], mat1[6]*mat2[2]+mat1[6]*mat2[5]+mat1[8]*mat2[8],
+        mat1[6]*mat2[0]+mat1[7]*mat2[3]+mat1[8]*mat2[6], mat1[6]*mat2[1]+mat1[7]*mat2[4]+mat1[8]*mat2[7], mat1[6]*mat2[2]+mat1[7]*mat2[5]+mat1[8]*mat2[8],
         }});
   }
 
@@ -320,6 +320,73 @@ namespace geometry {
    * @return the ratdius of the sphere
    */
   double getWignerSeitzRadius(const double rprimd[9]);
+
+  /**
+   * Compute the rotation matrix of a rotation of angle angle around the axis axe
+   * @param angle the angle of the rotation
+   * @param axe the axe of the rotation
+   */
+  inline mat3d matRotation(double angle, const vec3d &axe) {
+    const double renorm = 1./norm(axe);
+    const double x = axe[0]*renorm;
+    const double y = axe[1]*renorm;
+    const double z = axe[2]*renorm;
+    const double c = std::cos(angle);
+    const double s = std::sin(angle);
+    const double dc = 1.-c;
+    return mat3d({{
+       x*x*dc+c  , x*y*dc-z*s, x*z*dc+y*s,
+       x*y*dc+z*s, y*y*dc+c  , y*z*dc-x*s,
+       x*z*dc-y*s, z*y*dc+x*s, z*z*dc+c
+    }});
+  }
+
+  /*
+   * Compute the rotation matrix of 3 euler angles
+   * The angles are in radian
+   * @param psi The angle around x
+   * @param thtea The angle around y
+   * @param phi The angle around z
+   * @return The full rotation matrix which corresponds to the multiplication of
+   * the rotation matrix around x then y then z
+   */
+  inline mat3d matEuler(double psi, double theta, double phi) {
+    const double a = std::cos(psi);
+    const double b = std::sin(psi);
+    const double c = std::cos(theta);
+    const double d = std::sin(theta);
+    const double e = std::cos(phi);
+    const double f = std::sin(phi);
+    const double ad = a*d;
+    const double bd = b*d;
+    return mat3d( {{
+        c*e, -c*f, d,
+        bd*e+a*f, -bd*f+a*e, -b*c,
+        -ad*e+b*f, ad*f+b*e, a*c
+        }});
+  }
+
+  /**
+   * From a rotation matrix, compute the three angles around x y and z according to the definition of the
+   * euler matrix in matEuler function.
+   * @param euler the rotation matrix
+   * @return angles in radian around x y and z
+   */
+  inline vec3d anglesEuler(mat3d euler) {
+    const double theta = std::asin(euler[2]);
+    const double c = std::cos(theta);
+    double psi = 0;
+    double phi = 0;
+    if ( std::abs(c) > 1e-4 ){
+      psi = std::atan2(-euler[5]/c,euler[8]/c);
+      phi = std::atan2(-euler[1]/c,euler[0]/c);
+    }
+    else {
+      psi = 0;
+      phi = std::atan2(euler[3],euler[4]);
+    }
+    return vec3d({{ psi,theta,phi }});
+  }
 }
 #endif // GEOMETRY_HPP
 

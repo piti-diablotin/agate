@@ -58,19 +58,21 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
   _drawAtoms(),
   _center(atom),
   _positions(),
-  _shifts()
+  _shifts(),
+  _basis()
 {
-  if ( geometry::det(rprim) < 1.e-6 )
+  using namespace geometry;
+  if ( det(rprim) < 1.e-6 )
     throw EXCEPTION("Octahedra cannot be built without translations",ERRDIV);
 
-  geometry::vec3d center = {{ xcart[atom*3], xcart[atom*3+1], xcart[atom*3+2] }};
+  vec3d center = {{ xcart[atom*3], xcart[atom*3+1], xcart[atom*3+2] }};
   std::vector< std::pair<int, float> > distance;
   if ( natom < 4 ) return;
 
   typedef struct {
     unsigned id;
     std::array<float,3>  shift;
-    geometry::vec3d  xcart;
+    vec3d  xcart;
     float    distance;
   } atomInfo;
   std::vector<atomInfo> allAtoms;
@@ -99,7 +101,6 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
           if ( xred[iatom*3+1] + plusY >= -ny || xred[iatom*3+1] + plusY <= 1.f+ny ) {
             for ( int plusZ = -1 ; plusZ < 2 ; ++plusZ ) {
               if ( xred[iatom*3+2] + plusZ >= -nz || xred[iatom*3+2] + plusZ <= 1.f+nz ) {
-                using namespace geometry;
                 info.xcart[0] = xcart[iatom*3  ] + plusX*rprim[0] + plusY*rprim[1] + plusZ*rprim[2];
                 info.xcart[1] = xcart[iatom*3+1] + plusX*rprim[3] + plusY*rprim[4] + plusZ*rprim[5];
                 info.xcart[2] = xcart[iatom*3+2] + plusX*rprim[6] + plusY*rprim[7] + plusZ*rprim[8];
@@ -147,7 +148,6 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
 
   {
     // Find _top1 (always 0) and _top2
-    using namespace geometry;
     vec3d vec0 = allAtoms[0].xcart;
     vec3d vec1 = allAtoms[1].xcart-vec0;
     vec3d vec2 = allAtoms[2].xcart-vec0;
@@ -175,44 +175,46 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
     _shifts[_top2*3+2] = allAtoms[length[4].first].shift[2];
     allAtoms.erase(allAtoms.begin()+length[4].first);
     allAtoms.erase(allAtoms.begin());
-  
-  // Sort by X
-  std::sort(allAtoms.begin(),allAtoms.end(),
-      [](atomInfo a1,atomInfo a2){
-      return a1.xcart[0] < a2.xcart[0];
-      }
-      );
 
-  //Only 4 left.
-  //Need to be sorted by angle
-  //Since sorted by x, 0 and 3 are along x axis.:w
-//    vec3d vec1 = allAtoms[0].xcart - center;
-//    vec3d vec2 = allAtoms[1].xcart - center;
-//    vec3d vec3 = allAtoms[2].xcart - center;
-//    vec3d vec4 = allAtoms[3].xcart - center;
-//    std::vector< std::pair<int, float> > angles;
-//    angles.push_back(std::make_pair(1,angle(vec1,vec2)));
-//    angles.push_back(std::make_pair(2,angle(vec1,vec3)));
-//    angles.push_back(std::make_pair(3,angle(vec1,vec4)));
-//    std::sort(angles.begin(),angles.end(),
-//        [](std::pair<int, float> p1,std::pair<int, float> p2){
-//        return p1.second < p2.second;
-//        }
-//        );
+    // Sort by X
+    std::sort(allAtoms.begin(),allAtoms.end(),
+        [](atomInfo a1,atomInfo a2){
+        return a1.xcart[0] < a2.xcart[0];
+        }
+        );
+    if ( allAtoms[1].xcart[1] < allAtoms[0].xcart[1] ) {
+      auto tmp = allAtoms[1];
+      allAtoms[1] = allAtoms[0];
+      allAtoms[0] = tmp;
+    }
+    vec0 = allAtoms[0].xcart;
+    vec1 = allAtoms[1].xcart-vec0;
+    vec2 = allAtoms[2].xcart-vec0;
+    vec3 = allAtoms[3].xcart-vec0;
+    length.resize(3);
+    length[0]=(std::make_pair(1,norm(vec1)));
+    length[1]=(std::make_pair(2,norm(vec2)));
+    length[2]=(std::make_pair(3,norm(vec3)));
+    std::sort(length.begin(),length.end(),
+        [](std::pair<int, float> p1,std::pair<int, float> p2){
+        return p1.second < p2.second;
+        }
+        );
+
     _positions[_atom1 ] = allAtoms[0].id;
     _shifts[_atom1*3  ] = allAtoms[0].shift[0];
     _shifts[_atom1*3+1] = allAtoms[0].shift[1];
     _shifts[_atom1*3+2] = allAtoms[0].shift[2];
 
-    _positions[_atom3 ] = allAtoms[3].id;
-    _shifts[_atom3*3  ] = allAtoms[3].shift[0];
-    _shifts[_atom3*3+1] = allAtoms[3].shift[1];
-    _shifts[_atom3*3+2] = allAtoms[3].shift[2];
+    _positions[_atom3 ] = allAtoms[length[2].first].id;
+    _shifts[_atom3*3  ] = allAtoms[length[2].first].shift[0];
+    _shifts[_atom3*3+1] = allAtoms[length[2].first].shift[1];
+    _shifts[_atom3*3+2] = allAtoms[length[2].first].shift[2];
 
-    allAtoms.erase(allAtoms.begin()+3);
+    allAtoms.erase(allAtoms.begin()+length[2].first);
     allAtoms.erase(allAtoms.begin());
 
-  // Sort by X
+  // Sort by Y
     std::sort(allAtoms.begin(),allAtoms.end(),
         [](atomInfo a1,atomInfo a2){
         return a1.xcart[1] < a2.xcart[1];
@@ -229,6 +231,25 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
     _shifts[_atom4*3+1] = allAtoms[1].shift[1];
     _shifts[_atom4*3+2] = allAtoms[1].shift[2];
   }
+
+  std::array<vec3d,6> _xcart;
+
+  for ( _uint elt = 0 ; elt < 6 ; ++elt ) {
+    _xcart[elt] = {{
+      xcart[_positions[elt]*3  ] + _shifts[elt*3  ]*rprim[0] + _shifts[elt*3+1]*rprim[1] + _shifts[elt*3+2]*rprim[2],
+      xcart[_positions[elt]*3+1] + _shifts[elt*3  ]*rprim[3] + _shifts[elt*3+1]*rprim[4] + _shifts[elt*3+2]*rprim[5],
+      xcart[_positions[elt]*3+2] + _shifts[elt*3  ]*rprim[6] + _shifts[elt*3+1]*rprim[7] + _shifts[elt*3+2]*rprim[8]
+    }};
+  }
+
+  _basis[0] = _xcart[_atom3]-_xcart[_atom1];
+  _basis[1] = _xcart[_atom4]-_xcart[_atom2];
+  _basis[2] = _xcart[_top2]-_xcart[_top1];
+  /*
+  _basis[0] = _basis[0]*(1./norm(_basis[0]));
+  _basis[1] = _basis[1]*(1./norm(_basis[1]));
+  _basis[2] = _basis[2]*(1./norm(_basis[2]));
+  */
 
   for ( unsigned a = 0 ; a < 6 ; ++a ) 
     if ( _shifts[a*3] != 0 || _shifts[a*3+1] != 0 || _shifts[a*3+2] != 0 ) 
@@ -273,6 +294,54 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
 #endif
 }
 
+Octahedra::Octahedra(const Octahedra& octa) : TriObj(octa),
+  _build(octa._build),
+  _vboLine(octa._vboLine),
+  _lines(),
+  _drawAtoms(octa._drawAtoms),
+  _center(octa._center),
+  _positions(octa._positions),
+  _shifts(octa._shifts),
+  _basis(octa._basis)
+{
+  _lines[ 0] = 1;
+  _lines[ 1] = 2;
+  _lines[ 2] = 5;
+  _lines[ 3] = 8;
+  _lines[ 4] = 1;
+  _lines[ 5] = 0;
+  _lines[ 6] = 4;
+  _lines[ 7] = 5;
+  _lines[ 8] = 0;
+  _lines[ 9] = 8;
+  _lines[10] = 12;
+  _lines[11] = 1;
+  _lines[12] = 2;
+  _lines[13] = 12;
+  _lines[14] = 5;
+  _unitIndex = new _uint[24];
+  _unitVertex = new _float[72];
+  for ( _uint i = 0 ; i < 8*3 ; ++ i )
+    _unitIndex[i] = i;
+#if defined(HAVE_GL) && defined(HAVE_GLEXT)
+  if ( _build && _mode == VBO && _opengl) {
+    glGenBuffers(1,&_vboLine);
+    glBindBuffer(GL_ARRAY_BUFFER,_vbos[0]);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(_float)*8*3*3,nullptr,GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_vbos[1]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(_uint)*8*3,(void*)&_unitIndex[0],GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_vboLine);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(_uint)*15,(void*)&_lines[0],GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER,0); // Release VBO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+  }
+
+#endif
+}
+
 Octahedra::Octahedra(Octahedra&& octa) : TriObj(std::move(octa)),
   _build(octa._build),
   _vboLine(octa._vboLine),
@@ -280,7 +349,8 @@ Octahedra::Octahedra(Octahedra&& octa) : TriObj(std::move(octa)),
   _drawAtoms(octa._drawAtoms),
   _center(octa._center),
   _positions(octa._positions),
-  _shifts(octa._shifts)
+  _shifts(octa._shifts),
+  _basis(octa._basis)
 {
   _lines[ 0] = 1;
   _lines[ 1] = 2;

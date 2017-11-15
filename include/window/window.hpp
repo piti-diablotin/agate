@@ -56,6 +56,15 @@ class Window {
   private :
     enum ImageSuffix { convert, animate };
 
+    /**
+     * Make the correct transformation to set the camera view
+     * @param zoom is the total factor for camera vector
+     * @param tx is the target point x coordinate
+     * @param ty is the target point y coordinate
+     * @param tz is the target point z coordinate
+     */
+    void lookAt(double zoom, double tx, double ty, double tz);
+
 
   protected :
 
@@ -86,6 +95,11 @@ class Window {
     unsigned int _keyEscape;      ///< Set the correct value according to the library.
     unsigned int _keyArrowUp;     ///< Set the correct value according to the library.
     unsigned int _keyArrowDown;   ///< Set the correct value according to the library.
+    unsigned int _keyArrowLeft;   ///< Set the correct value according to the library.
+    unsigned int _keyArrowRight;  ///< Set the correct value according to the library.
+    unsigned int _keyX;           ///< Set the correct value according to the library.
+    unsigned int _keyY;           ///< Set the correct value according to the library.
+    unsigned int _keyZ;           ///< Set the correct value according to the library.
     InputMode    _mode;           ///< Current mode for user input
     InputMode    _modeMouse;      ///< Current mode for mouse input
     std::string  _command;        ///< String to know the action to perform

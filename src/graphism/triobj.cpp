@@ -108,6 +108,58 @@ TriObj::TriObj(TriObj &&obj) :
   obj._vbos[0] = (_uint) -1;
 }
 
+TriObj::TriObj(const TriObj &obj) : 
+  _opengl(obj._opengl),
+  _unitVertex(nullptr),
+  _unitIndex(nullptr),
+  _vbos(),
+  _division(obj._division),
+  _nvertex(obj._nvertex),
+  _nindices(obj._nindices),
+  _drawing(obj._drawing),
+  _mode(obj._mode)
+{
+  _vbos[0] = (_uint) -1;
+  _vbos[1] = (_uint) -1;
+  if ( !_opengl ) return;
+#ifdef HAVE_GL
+  const GLubyte *cstrver = glGetString(GL_VERSION);
+  char strver[500]; 
+  int major = -1, minor =-1;
+  if ( cstrver != nullptr ) {
+    strcpy(strver,(char*)cstrver);
+    char *pch;
+    pch = strtok(strver,".");
+    major = utils::stoi(std::string(pch));
+    pch = strtok(nullptr,".");
+    minor = utils::stoi(std::string(pch));
+  }
+
+  if ( major > 1 ) {
+#ifdef HAVE_GLEXT
+    _mode = VBO;
+    glGenBuffers(2,&_vbos[0]);
+#else
+    _mode = ARRAY;
+#endif
+  }
+  else {
+    if ( minor > 4 ) {
+#ifdef HAVE_GLEXT
+      _mode = VBO;
+      glGenBuffers(2,&_vbos[0]);
+#else
+      _mode = ARRAY;
+#endif
+    }
+    else {
+      _mode = VERTEX;
+      _division = 4;
+    }
+  }
+#endif
+}
+
 //
 TriObj::~TriObj() {
   if ( _unitVertex != nullptr ) {

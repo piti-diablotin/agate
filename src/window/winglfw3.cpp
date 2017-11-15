@@ -57,6 +57,11 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
   _keyEscape = GLFW_KEY_ESCAPE;
   _keyArrowUp = GLFW_KEY_UP;
   _keyArrowDown = GLFW_KEY_DOWN;
+  _keyArrowLeft = GLFW_KEY_LEFT;
+  _keyArrowRight = GLFW_KEY_RIGHT;
+  _keyX = GLFW_KEY_X;
+  _keyY = GLFW_KEY_Y;
+  _keyZ = GLFW_KEY_Z;
 
   GLFWmonitor *monitor = ( mode == WinGlfw3::window ? nullptr : glfwGetPrimaryMonitor() );
 

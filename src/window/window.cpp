@@ -33,6 +33,7 @@
 #include <string>
 #include <cmath>
 #include <fstream>
+#  include <GLFW/glfw3.h>
 
 #if defined(HAVE_UNISTD_H) && (!defined(WIN32) && !defined(_WIN32)) /* freetype force the definition of HAVE_UNISTD_H */
 #include <unistd.h>
@@ -59,7 +60,7 @@
 #endif
 
 #include "canvas/canvaspos.hpp"
-#include "canvas/canvasrot.hpp"
+#include "canvas/canvaslocal.hpp"
 #include "canvas/canvasphonons.hpp"
 
 using std::abs;
@@ -90,6 +91,11 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _keyEscape(0),
   _keyArrowUp(0),
   _keyArrowDown(0),
+  _keyArrowLeft(0),
+  _keyArrowRight(0),
+  _keyX(0),
+  _keyY(0),
+  _keyZ(0),
   _mode(mode_static),
   _modeMouse(mode_static),
   _command(),
@@ -102,7 +108,6 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _canvas(canvas),
   _arrow(nullptr)
 {
-  const float pi = (float) phys::pi;
 
   _background[0] = 0.f;
   _background[1] = 0.f;
@@ -113,10 +118,11 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
 
   _optionf["x0"] = 0.f;
   _optionf["y0"] = 0.f;
-  _optionf["camphi"] = 90.f;
+  _optionf["campsi"] = 0.f;
   _optionf["camtheta"] = 0.f;
-  _optionf["camtheta"] *= pi/180.f;
-  _optionf["camphi"] *= pi/180.f;
+  _optionf["camphi"] = 0.f;
+  _optionf["shiftOriginX"] = 0.f;
+  _optionf["shiftOriginY"] = 0.f;
   _optionf["speed"] = 1.f;
   _optionf["aspect"] = 1.f;
   //_optionf["distance"] = 1.1f*_canvas->typicalDim();
@@ -345,26 +351,18 @@ void Window::loopStep() {
 #endif
 
 
-    const float& camphi = _optionf["camphi"];
-    const float& camtheta = _optionf["camtheta"];
     const float totalfactor = ( (aspect > 1.f || paral_proj) ? 1.f : 1.f/aspect ) 
       * factor_proj * distance * ( paral_proj ? 4.f : zoom); // 4 is for the spot light
-    const float sinphi = sin(camphi);
-    const float cosphi = cos(camphi);
-    const float sintheta = sin(camtheta);
-    const float costheta = cos(camtheta);
-    const float camx = totalfactor*sinphi*costheta;
-    const float camy = totalfactor*sinphi*sintheta;
-    const float camz = totalfactor*cosphi;
-
-#ifdef HAVE_GLU
-    gluLookAt( camx, camy, camz,    // Eye-position
-        0.0f, 0.0f, 0.0f,   // View-point
-        -abs(cosphi)*costheta,-abs(cosphi)*sintheta,sinphi);
-#endif
+    
+    const float campsi   = _optionf["campsi"];
+    const float camtheta = _optionf["camtheta"];
+    const float camphi   = _optionf["camphi"];
+    geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
+    glTranslatef(totalfactor*_optionf["shiftOriginX"],totalfactor*_optionf["shiftOriginY"],0.);
+    this->lookAt(totalfactor,0,0,0);
 
 
-    _canvas->refresh({{camx,camy,camz}},_render);
+    _canvas->refresh({{euler[0],euler[3],euler[6]}},_render);
     if ( _canvas->ntime() >= 1 && _optionb["axis"] ) this->drawAxis();
 
     if ( _optionb["takeSnapshot"] || (_movie && !_canvas->isPaused()) ) this->snapshot();
@@ -429,8 +427,9 @@ bool Window::userInput(std::stringstream& info) {
 #ifdef HAVE_GL
   bool& msaa = _optionb["msaa"];
 #endif
-  float& camphi = _optionf["camphi"];
+  float& campsi = _optionf["campsi"];
   float& camtheta = _optionf["camtheta"];
+  float& camphi = _optionf["camphi"];
   //static std::string string_static;
   float x = 0;
   float y = 0;
@@ -474,7 +473,7 @@ bool Window::userInput(std::stringstream& info) {
           }
           _mode = mode_static;
         }
-        else if ( _mode == mode_static ) {
+        else if ( _mode == mode_static && _modeMouse != mode_mouse ) {
           switch ( ic ) {
 #ifdef HAVE_GL
             case 'A' : {
@@ -483,16 +482,18 @@ bool Window::userInput(std::stringstream& info) {
                          break;
                        }
 #endif
-            case 'x' : {camtheta = 0; camphi = pi*0.5f;_mode = mode_static;break;}
-            case 'y' : {camtheta = pi*0.5; camphi = pi*0.5;_mode = mode_static;break;}
-            case 'z' : {camtheta = -pi*0.5; camphi = 0.;_mode = mode_static;break;}
+            case 'x' : {campsi = 0      ; camtheta =  0     ; camphi = 0.    ;_mode = mode_static;break;}
+            case 'y' : {campsi = 0      ; camtheta =  0     ; camphi = pi*0.5;_mode = mode_static;break;}
+            case 'z' : {campsi = 0      ; camtheta = pi*0.5 ; camphi = pi    ;_mode = mode_static;break;}
             case '+' : {_mode = mode_add;break;}
             case '-' : {_mode = mode_remove;break;}
             case '*' : {_optionf["speed"] *= 2.0f;break;}
             case '/' : {_optionf["speed"] /= (_optionf["speed"] <= 0.001 ? 1.f : 2.0f);break;}
             case 'a' : { 
                          if ( !_render._isOk && !view_angle )
-                           std::clog << "theta=" << (int)(camtheta>pi ? (camtheta/pi-2)*180.f : camtheta/pi*180.f)
+                           std::clog 
+                             << "psi=" << (int)(campsi/pi*180.f) 
+                             << ", theta=" << (int)(camtheta/pi*180.f)
                              << ", phi=" << (int)(camphi/pi*180.f) << std::endl;
                          view_angle = !view_angle;
                          break;
@@ -618,6 +619,11 @@ bool Window::userInput(std::stringstream& info) {
               this->setParameters(filename);
             }
           }
+          else if ( token == "psi") {
+            float angle;
+            cin >> angle;
+            if ( !cin.fail() ) campsi = angle*pi/180.f;
+          }
           else if ( token == "theta") {
             float angle;
             cin >> angle;
@@ -648,8 +654,8 @@ bool Window::userInput(std::stringstream& info) {
           else if ( token == "m" || token == "mode" ) {
             std::string cmode;
             cin >> cmode;
-            if ( cmode == "rot" || cmode == "rotations" ) {
-              _canvas.reset(new CanvasRot(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
+            if ( cmode == "loc" || cmode == "local" ) {
+              _canvas.reset(new CanvasLocal(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
             }
             else if ( cmode == "pos" || cmode == "positions" ) {
               _canvas.reset(new CanvasPos(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
@@ -757,13 +763,47 @@ bool Window::userInput(std::stringstream& info) {
         this->getMousePosition(x0,y0);
       }
       this->getMousePosition(x,y);
-      camphi += (y0-y)/(float)_height*pi;
-      camphi += ( camphi > pi ? -twopi : ( camphi < -pi ? twopi : 0.f ) );
-      camtheta += (x0-x)/(float)_width*twopi * ( camphi >= 0.f ? 1.f : -1.f );
-      camtheta += ( camtheta > pi ? -twopi : ( camtheta < -pi ? twopi : 0.f ) );
+      using namespace geometry;
+      //std::cerr << "start" << std::endl;
+      mat3d euler = matEuler(campsi,camtheta,camphi);
+      vec3d axe1({{euler[2],euler[5],euler[8]}});
+      vec3d axe2({{euler[1],euler[4],euler[7]}});
+      double angle1 = (x0-x)/_width*twopi;
+      double angle2 = (y0-y)/_height*twopi;
+      auto mat1 = matRotation(angle1,axe1);
+      auto mat2 = matRotation(angle2,axe2);
+      auto total = (mat1*mat2)*euler;
+      auto newangles = anglesEuler(total);
+      if ( !this->getCharPress(_keyX) )
+        campsi   = newangles[0];
+      if ( !this->getCharPress(_keyY) )
+        camtheta = newangles[1];
+      if ( !this->getCharPress(_keyZ) )
+        camphi   = newangles[2];
       x0 = x; y0 = y;
     }
-    else if (_modeMouse == mode_mouse ) _modeMouse = mode_static;
+    else if ( this->getMousePress(_mouseButtonRight) ) {
+      action = true;
+      if ( _modeMouse != mode_mouse ){
+        _modeMouse = mode_mouse;
+        this->getMousePosition(x0,y0);
+      }
+      this->getMousePosition(x,y);
+      using namespace geometry;
+
+      const double shiftX = (x-x0)/_width;
+      const double shiftY = (y0-y)/_height;
+      _optionf["shiftOriginX"] += shiftX;
+      _optionf["shiftOriginY"] += shiftY;
+
+      x0 = x; y0 = y;
+    }
+    else if (_modeMouse == mode_mouse ) {
+      _modeMouse = mode_static;
+      this->getChar(_keyX);
+      this->getChar(_keyY);
+      this->getChar(_keyZ);
+    }
   }
   catch (Exception &eerror) {
     std::cerr << eerror.fullWhat() << std::endl;
@@ -784,8 +824,11 @@ bool Window::userInput(std::stringstream& info) {
     action |= true;
   }
 
-  if ( view_angle ) info << "theta=" << (int)(camtheta>pi ? (camtheta/pi-2)*180.f : camtheta/pi*180.f)
-    << ", phi=" << (int)(camphi/pi*180.f) << " ";
+  if ( view_angle ) 
+    info
+      << "psi=" << (int)(campsi/pi*180.f) 
+      << ", theta=" << (int)(camtheta/pi*180.f)
+      << ", phi=" << (int)(camphi/pi*180.f) << " ";
   if ( view_angle && view_time ) info << "| ";
   if ( view_time ) info << "Time step: " << _canvas->itime() << "/" << _canvas->ntime()-1 << " ";
   if ( _exit ) _optioni["shouldExit"] = 1;
@@ -801,8 +844,6 @@ void Window::drawAxis() {
   glLoadIdentity();
   const bool paral_proj = _optionb["paral_proj"];
   const float aspect = _optionf["aspect"];
-  const float camphi = _optionf["camphi"];
-  const float camtheta = _optionf["camtheta"];
   if ( paral_proj )  {
     (( _height > _width ) ?
      glOrtho(-10,10,-10/aspect,10/aspect,-100.f,100.f) :
@@ -823,18 +864,8 @@ void Window::drawAxis() {
   const float factor_proj = paral_proj ? 1.f : 2.f;
   const float totalfactor = ( (paral_proj) ? 1.f : 1.f/aspect ) 
     * factor_proj * ( paral_proj ? 4.f : 10 ); // 4 is for the spot light
-  const float sinphi = sin(camphi);
-  const float cosphi = cos(camphi);
-  const float sintheta = sin(camtheta);
-  const float costheta = cos(camtheta);
-  const float camx = totalfactor*sinphi*costheta;
-  const float camy = totalfactor*sinphi*sintheta;
-  const float camz = totalfactor*cosphi;
-#ifdef HAVE_GLU
-  gluLookAt( camx, camy, camz,    // Eye-position
-      0.0f, 0.0f, 0.0f,   // View-point
-      -abs(cosphi)*costheta,-abs(cosphi)*sintheta,sinphi);
-#endif
+
+  this->lookAt(totalfactor,0,0,0);
 
   _arrow->push();
   glColor3f(0.f,0.f,1.f);
@@ -858,6 +889,69 @@ void Window::drawAxis() {
   //glDrawPixels(buffer.cols(), buffer.rows(), GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buffer.getPtr());
   /* End draw cartesian axis */
 #endif
+}
+
+void Window::lookAt(double zoom, double centerX, double centerY, double centerZ) {
+  using namespace geometry;
+    const float& campsi   = _optionf["campsi"];
+    const float& camtheta = _optionf["camtheta"];
+    const float& camphi   = _optionf["camphi"];
+
+    geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
+    const float eyeX = zoom*euler[0];
+    const float eyeY = zoom*euler[3];
+    const float eyeZ = zoom*euler[6];
+
+    const float upX = euler[2];
+    const float upY = euler[5];
+    const float upZ = euler[8];
+
+    vec3d f({{
+        centerX-eyeX,
+        centerY-eyeY,
+        centerZ-eyeZ
+        }});
+    f = f*(1./norm(f));
+
+    vec3d s({{
+         f[1]*upZ-f[2]*upY,
+         f[2]*upX-f[0]*upZ,
+         f[0]*upY-f[1]*upX
+        }});
+    s = s*(1./norm(s));
+
+    vec3d u({{
+         s[1]*f[2]-s[2]*f[1],
+         s[2]*f[0]-s[0]*f[2],
+         s[0]*f[1]-s[1]*f[0]
+        }});
+    u = u*(1./norm(u));
+    
+
+    float M[16];
+    M[0] =  s[0];
+    M[4] =  s[1];
+    M[8] =  s[2];
+    M[12] = 0;
+
+    M[1] =  u[0];
+    M[5] =  u[1];
+    M[9] =  u[2];
+    M[13] = 0;
+
+    M[2] = -f[0];
+    M[6] = -f[1];
+    M[10] = -f[2];
+    M[14] = 0;
+
+    M[3] = 0;
+    M[7] = 0;
+    M[11] = 0;
+    M[15] = 1;
+
+    glMultMatrixf(M);
+    glTranslated(-eyeX, -eyeY, -eyeZ);
+
 }
 
 void Window::help(){
@@ -895,7 +989,7 @@ void Window::help(){
   cout << setw(40) << ":img_qlt or :image_quality X" << setw(59) << "Set the quality to export image (between 1 and 100)." << endl;
   cout << setw(40) << ":img_suf or :image_suffix (convert|animate)" << setw(59) << "Choose the suffix to be append to the image file name. convert to be used with the \"convert\" tool and \"animate\" to be used with the latex animate package." << endl;
   cout << setw(40) << ":load filename" << setw(59) << "Load a file with commands inside." << endl;
-  cout << setw(40) << ":m or :mode ((rot|rotations)|(pos|positions)|(ph|phonons))" << setw(59) << "Choose what kind of propertie to visualize:" << endl;
+  cout << setw(40) << ":m or :mode ((loc|local)|(pos|positions)|(ph|phonons))" << setw(59) << "Choose what kind of propertie to visualize:" << endl;
   cout << setw(40) << "" << setw(59) << "pos or positions to visualize atomic positions." << endl;
   cout << setw(40) << "" << setw(59) << "rot or rotations to visualize rotations of octahedra. Need to define the z for octahedra (:octa_z)" << endl;
   cout << setw(40) << "" << setw(59) << "ph or phonons to visualize phonons in a reference structure." << endl;
@@ -912,5 +1006,5 @@ void Window::help(){
   Canvas::help(cout);
   CanvasPos::help(cout);
   CanvasPhonons::help(cout);
-  CanvasRot::help(cout);
+  CanvasLocal::help(cout);
 }

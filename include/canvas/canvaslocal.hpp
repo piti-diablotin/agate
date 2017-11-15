@@ -1,5 +1,5 @@
 /**
- * @file include/canvasrot.hpp
+ * @file include/canvaslocal.hpp
  *
  * @brief 
  *
@@ -37,20 +37,22 @@
 #endif
 
 #include "canvas/canvaspos.hpp"
-#include "shape/octaangles.hpp"
 #include "graphism/tricube.hpp"
 
 /** 
- * This canvas is designed to only draw the rotation of octahedra.
+ * This canvas is designed to only draw local information around octahedra
  * The atoms are not plotted, only a square is display at the position of the atom at the center of the octahedra
  * with colors related to the rotations of the octahedra.
  */
-class CanvasRot : public CanvasPos {
+class CanvasLocal : public CanvasPos {
 
   private :
+    enum LocalView { ANGLES, LENGTHS };
 
     float                   _octacolor[6]; ///< Store the two colors for plotting the cubes representing the rotations.
     TriCube                 _cube;         ///< A cube to visualize the rotations.
+    LocalView               _view;
+    std::vector<std::array<float,3>> _orientations; ///< Orientation of the octahedra with respect to cartesian axis.
 
   protected :
 
@@ -61,24 +63,30 @@ class CanvasRot : public CanvasPos {
      */
     void my_alter(std::string token, std::istringstream &stream);
 
+    
+    /**
+     * Convert the octahedra to the correct type
+     */
+    void convertOctahedra();
+
   public :
 
     /**
      * Constructor.
      */
-    CanvasRot(bool drawing);
+    CanvasLocal(bool drawing);
 
     /**
      * Constructor from a canvaspos
      * Move everything and initialize octacolor and cube
      * @param canvas Canvas to move
      */
-    CanvasRot(CanvasPos &&canvas);
+    CanvasLocal(CanvasPos &&canvas);
 
     /**
      * Destructor.
      */
-    virtual ~CanvasRot();
+    virtual ~CanvasLocal();
 
     /**
      * Refresh what to see on the screen

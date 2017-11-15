@@ -65,6 +65,7 @@ class Octahedra : public TriObj {
     unsigned             _center;       ///< Id of the atom at the center of the octahedra
     std::array<int,6>    _positions;    ///< Position to form an oc.
     std::array<float,18> _shifts;       ///< Shift to apply to get the octahedra
+    std::array<geometry::vec3d,3> _basis; ///< Reference basis.
 
   public :
 
@@ -88,7 +89,7 @@ class Octahedra : public TriObj {
      * Copy
      * @param octa The octahedra to copy
      */
-    Octahedra(const Octahedra& octa) = delete;
+    Octahedra(const Octahedra& octa);
 
     /**
      * Move

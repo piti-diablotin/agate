@@ -33,7 +33,6 @@
 #include <string>
 #include <cmath>
 #include <fstream>
-#  include <GLFW/glfw3.h>
 
 #if defined(HAVE_UNISTD_H) && (!defined(WIN32) && !defined(_WIN32)) /* freetype force the definition of HAVE_UNISTD_H */
 #include <unistd.h>

@@ -182,113 +182,71 @@ void CanvasPos::setHist(HistData& hist) {
 
     const double *rprimd0 = hist.getRprimd(0);
 
-    for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
+    // Find atoms on borders
+    if ( geometry::det(rprimd0) > 1e-6 ) {
+      _hasTranslations = true;
+      _info = hist.filename();
 
-      // Find atoms on borders
-      if ( itime == 0 && geometry::det(rprimd0) > 1e-6 ) {
-        _hasTranslations = true;
-        _info = hist.filename();
-
-        const double *ptrR = hist.getXred(itime);
-        double normvec = 0.0;
-        double nx = ( (normvec = geometry::norm({{
-                rprimd0[0],
-                rprimd0[3],
-                rprimd0[6] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-        double ny = ( (normvec = geometry::norm({{
-                rprimd0[1],
-                rprimd0[4],
-                rprimd0[7] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-        double nz = ( (normvec = geometry::norm({{
-                rprimd0[2],
-                rprimd0[5],
-                rprimd0[8] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-
-        /// sorted store reduces coordinates.
-        std::vector<Atom> sorted;
-        for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
-          sorted.push_back(Atom(iatom,_typat[iatom],
-                (float) ptrR[iatom*3  ],
-                (float) ptrR[iatom*3+1],
-                (float) ptrR[iatom*3+2]));
+      //*
+      const double *ptrR = hist.getXred(0);
+      double normvec = 0.0;
+      double nx = ( (normvec = geometry::norm({{
+              rprimd0[0],
+              rprimd0[3],
+              rprimd0[6] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+      double ny = ( (normvec = geometry::norm({{
+              rprimd0[1],
+              rprimd0[4],
+              rprimd0[7] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+      double nz = ( (normvec = geometry::norm({{
+              rprimd0[2],
+              rprimd0[5],
+              rprimd0[8] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+      for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
+        geometry::vec3d shift({{0,0,0}});
+        if ( ptrR[iatom*3  ] <= nx ) {
+          shift[0] = 1;
+          _onBorders.push_back(std::make_pair(iatom, shift));
+          if ( ptrR[iatom*3+1] <= ny ) {
+            shift[1] = 1;
+            _onBorders.push_back(std::make_pair(iatom, shift));
+            if ( ptrR[iatom*3+2] <= nz ) {
+              shift[2] = 1;
+              _onBorders.push_back(std::make_pair(iatom, shift));
+            }
+          }
+          shift[1] = shift[2] = 0;
+          if ( ptrR[iatom*3+2] <= nz ) {
+            shift[2] = 1;
+            _onBorders.push_back(std::make_pair(iatom, shift));
+          }
         }
-        std::sort(sorted.begin(),sorted.end(),Atom::sortX);
-        int it = 0;
-        int last = sorted.size();
-        while ( it < last && (sorted[it].x() <= nx)  ){
-          sorted.push_back(Atom(sorted[it].id(),1000,
-                1.0f+sorted[it].x(),
-                0.0f+sorted[it].y(),
-                0.0f+sorted[it].z()));
-
-          /// store (+1,0,0) in cartesian coordinates.
-          geometry::vec3d topush = {{ 1.0,0.0,0.0 }};
-          _onBorders.push_back(std::make_pair(sorted[it].id(), topush));
-          it++;
+        shift = {{0,0,0}};
+        if ( ptrR[iatom*3+1] <= ny ) {
+          shift[1] = 1;
+          _onBorders.push_back(std::make_pair(iatom, shift));
+          if ( ptrR[iatom*3+2] <= nz ) {
+            shift[2] = 1;
+            _onBorders.push_back(std::make_pair(iatom, shift));
+          }
         }
-        std::sort(sorted.begin(),sorted.end(),Atom::sortY);
-        it = 0;
-        last = sorted.size();
-        while ( it < last && (sorted[it].y() <= ny)  ){
-          if ( sorted[it].typat() == 1000 ) { // Need a translation
-            sorted.push_back(Atom(sorted[it].id(),1001,
-                  0.0f+sorted[it].x(),
-                  1.0f+sorted[it].y(),
-                  0.0f+sorted[it].z()));
-
-            /// store (+1,+1,0) in cartesian coordinates.
-            geometry::vec3d topush = {{ 1.0,1.0,0.0 }};
-            _onBorders.push_back(std::make_pair(sorted[it].id(), topush));
-          }
-          else{
-            sorted.push_back(Atom(sorted[it].id(),2000,
-                  0.0f+sorted[it].x(),
-                  1.0f+sorted[it].y(),
-                  0.0f+sorted[it].z()));
-
-            /// store (0,+1,0) in cartesian coordinates.
-            geometry::vec3d topush = {{ 0.0,1.0,0.0 }};
-            _onBorders.push_back(std::make_pair(sorted[it].id(),topush));
-          }
-          it++;
+        shift = {{0,0,0}};
+        if ( ptrR[iatom*3+2] <= nz ) {
+          shift[2] = 1;
+          _onBorders.push_back(std::make_pair(iatom, shift));
         }
-        std::sort(sorted.begin(),sorted.end(),Atom::sortZ);
-        it = 0;
-        last = sorted.size();
-        while ( it < last && (sorted[it].z() <= nz)  ){
-          if ( sorted[it].typat() == 1000 ) { // Need a translation with x
-            /// store (+1,0,+1) in cartesian coordinates.
-            geometry::vec3d topush = {{ 1.0,0.0,1.0 }};
-            _onBorders.push_back(std::make_pair(sorted[it].id(),topush));
-          }
-          else if ( sorted[it].typat() == 1001 ) { // Need a translation with x and y
-            /// store (+1,+1,+1) in cartesian coordinates.
-            geometry::vec3d topush = {{ 1.0,1.0,1.0 }};
-            _onBorders.push_back(std::make_pair(sorted[it].id(),topush));
-          }
-          else if ( sorted[it].typat() == 2000 ) { // Need a translation with y
-            /// store (0,+1,+1) in cartesian coordinates.
-            geometry::vec3d topush = {{ 0.0,1.0,1.0 }};
-            _onBorders.push_back(std::make_pair(sorted[it].id(),topush));
-          }
-          else {
-            /// store (0,0,+1) in cartesian coordinates.
-            geometry::vec3d topush = {{ 0.0,0.0,1.0 }};
-            _onBorders.push_back(std::make_pair(sorted[it].id(),topush));
-          }
-          it++;
-        }
-        for ( auto &atom : _onBorders ) {
-          _typat.push_back(_typat[atom.first]);
-        }
-        _xcartBorders.resize(_onBorders.size()*3);
       }
-      else if ( itime == 0 ) { // No rprimd
-        _hasTranslations = false;
-        std::clog << "Translations are not available." << std::endl;
-        _info = hist.filename();
+
+      for ( auto &atom : _onBorders ) {
+        _typat.push_back(_typat[atom.first]);
       }
-      //end itime = 1
+      _xcartBorders.resize(_onBorders.size()*3);
+      //*/
+    }
+    else { // No rprimd
+      _hasTranslations = false;
+      std::clog << "Translations are not available." << std::endl;
+      _info = hist.filename();
     }
 
     // Build octahedra
@@ -1483,6 +1441,63 @@ void CanvasPos::buildBorders(unsigned itime) {
   // Atoms on border
   const double *xred = _histdata->getXred(itime);
   const double *rprimd = _histdata->getRprimd(itime);
+
+  /*
+  double normvec = 0.0;
+  const double nx = ( (normvec = geometry::norm({{
+          rprimd[0],
+          rprimd[3],
+          rprimd[6] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+  const double ny = ( (normvec = geometry::norm({{
+          rprimd[1],
+          rprimd[4],
+          rprimd[7] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+  const double nz = ( (normvec = geometry::norm({{
+          rprimd[2],
+          rprimd[5],
+          rprimd[8] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+  for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
+    geometry::vec3d shift({{0,0,0}});
+    if ( xred[iatom*3  ] <= nx ) {
+      shift[0] = 1;
+      _onBorders.push_back(std::make_pair(iatom, shift));
+      if ( xred[iatom*3+1] <= ny ) {
+        shift[1] = 1;
+        _onBorders.push_back(std::make_pair(iatom, shift));
+        if ( xred[iatom*3+2] <= nz ) {
+          shift[2] = 1;
+          _onBorders.push_back(std::make_pair(iatom, shift));
+        }
+      }
+      shift[1] = shift[2] = 0;
+      if ( xred[iatom*3+2] <= nz ) {
+        shift[2] = 1;
+        _onBorders.push_back(std::make_pair(iatom, shift));
+      }
+    }
+    shift = {{0,0,0}};
+    if ( xred[iatom*3+1] <= ny ) {
+      shift[1] = 1;
+      _onBorders.push_back(std::make_pair(iatom, shift));
+      if ( xred[iatom*3+2] <= nz ) {
+        shift[2] = 1;
+        _onBorders.push_back(std::make_pair(iatom, shift));
+      }
+    }
+    shift = {{0,0,0}};
+    if ( xred[iatom*3+2] <= nz ) {
+      shift[2] = 1;
+      _onBorders.push_back(std::make_pair(iatom, shift));
+    }
+  }
+
+  _typat.resize(_natom);
+  for ( auto &atom : _onBorders ) {
+    _typat.push_back(_typat[atom.first]);
+  }
+  _xcartBorders.resize(_onBorders.size()*3);
+  */
+
   int batom = 0;
   for ( auto &atom : _onBorders ) {
     GLfloat xredAtom[3] = {

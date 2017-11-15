@@ -525,9 +525,11 @@ bool Window::userInput(std::stringstream& info) {
         //while ( !_inputChar.empty() ) {
         //char c = static _cast<char>(_inputChar.front());
         if ( ic != '\n') {
-          _command += ic;
           _inputChar.pop();
-          if ( !_render._isOk ) {std::clog << ic; std::clog.flush();}
+          if ( _modeMouse != mode_mouse ) {
+            _command += ic;
+            if ( !_render._isOk ) {std::clog << ic; std::clog.flush();}
+          }
         }
         else 
           process = true;

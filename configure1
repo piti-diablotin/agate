@@ -1,6 +1,6 @@
 # Basic information
 PACKAGE = AbiOut
-VERSION = 0.0.8
+VERSION = 0.0.9
 MAIL = jordan.bieder@cea.fr
 
 # Initial information about the package

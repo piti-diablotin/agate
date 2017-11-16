@@ -190,49 +190,52 @@ void CanvasPos::setHist(HistData& hist) {
       //*
       const double *ptrR = hist.getXred(0);
       double normvec = 0.0;
-      double nx = ( (normvec = geometry::norm({{
+      const double nx = ( (normvec = geometry::norm({{
               rprimd0[0],
               rprimd0[3],
               rprimd0[6] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-      double ny = ( (normvec = geometry::norm({{
+      const double ny = ( (normvec = geometry::norm({{
               rprimd0[1],
               rprimd0[4],
               rprimd0[7] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-      double nz = ( (normvec = geometry::norm({{
+      const double nz = ( (normvec = geometry::norm({{
               rprimd0[2],
               rprimd0[5],
               rprimd0[8] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+      const double mx = 1-nx;
+      const double my = 1-ny;
+      const double mz = 1-nz;
       for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
         geometry::vec3d shift({{0,0,0}});
-        if ( ptrR[iatom*3  ] <= nx ) {
-          shift[0] = 1;
+        if ( ptrR[iatom*3  ] <= nx || ptrR[iatom*3  ] >= mx ) {
+          shift[0] = (ptrR[iatom*3  ] < 0.5 ? 1 : -1);
           _onBorders.push_back(std::make_pair(iatom, shift));
-          if ( ptrR[iatom*3+1] <= ny ) {
-            shift[1] = 1;
+          if ( ptrR[iatom*3+1] <= ny || ptrR[iatom*3+1] >= my ) {
+            shift[1] = (ptrR[iatom*3+1] < 0.5 ? 1 : -1);
             _onBorders.push_back(std::make_pair(iatom, shift));
-            if ( ptrR[iatom*3+2] <= nz ) {
-              shift[2] = 1;
+            if ( ptrR[iatom*3+2] <= nz || ptrR[iatom*3+2] >= mz ) {
+              shift[2] = (ptrR[iatom*3+2] < 0.5 ? 1 : -1);
               _onBorders.push_back(std::make_pair(iatom, shift));
             }
           }
           shift[1] = shift[2] = 0;
-          if ( ptrR[iatom*3+2] <= nz ) {
-            shift[2] = 1;
+          if ( ptrR[iatom*3+2] <= nz || ptrR[iatom*3+2] >= mz ) {
+            shift[2] = (ptrR[iatom*3+2] < 0.5 ? 1 : -1);
             _onBorders.push_back(std::make_pair(iatom, shift));
           }
         }
         shift = {{0,0,0}};
-        if ( ptrR[iatom*3+1] <= ny ) {
-          shift[1] = 1;
+        if ( ptrR[iatom*3+1] <= ny || ptrR[iatom*3+1] >= my ) {
+          shift[1] = (ptrR[iatom*3+1] < 0.5 ? 1 : -1);
           _onBorders.push_back(std::make_pair(iatom, shift));
-          if ( ptrR[iatom*3+2] <= nz ) {
-            shift[2] = 1;
+          if ( ptrR[iatom*3+2] <= nz || ptrR[iatom*3+2] >= mz ) {
+            shift[2] = (ptrR[iatom*3+2] < 0.5 ? 1 : -1);
             _onBorders.push_back(std::make_pair(iatom, shift));
           }
         }
         shift = {{0,0,0}};
-        if ( ptrR[iatom*3+2] <= nz ) {
-          shift[2] = 1;
+        if ( ptrR[iatom*3+2] <= nz || ptrR[iatom*3+2] >= mz ) {
+          shift[2] = (ptrR[iatom*3+2] < 0.5 ? 1 : -1);
           _onBorders.push_back(std::make_pair(iatom, shift));
         }
       }

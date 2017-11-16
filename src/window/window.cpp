@@ -50,14 +50,6 @@
 # endif
 #endif
 
-#ifdef HAVE_GLU
-# ifdef __APPLE__
-#  include <OpenGL/glu.h>
-# else
-#  include <GL/glu.h>
-# endif
-#endif
-
 #include "canvas/canvaspos.hpp"
 #include "canvas/canvaslocal.hpp"
 #include "canvas/canvasphonons.hpp"

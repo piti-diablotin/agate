@@ -76,7 +76,7 @@ WinGlfw2::WinGlfw2(pCanvas &canvas, const int width, const int height, const int
   glfwGetWindowSize(&_width,&_height);
   glfwSetCharCallback(CharCallback);
 #else
-  throw EXCEPTION("GLFW2 support is not available.\nConsider compiling the code with OpenGL+GLU+GLFW",ERRDIV);
+  throw EXCEPTION("GLFW2 support is not available.\nConsider compiling the code with OpenGL+GLFW",ERRDIV);
 #endif
   //glfwDisable(GLFW_MOUSE_CURSOR);
 
@@ -96,7 +96,7 @@ void WinGlfw2::init() {
   if ( !glfwInit() )
     throw EXCEPTION("Failed to init GLFW",ERRDIV);
 #else
-  throw EXCEPTION("GLFW2 support is not available.\nConsider compiling the code with OpenGL+GLU+GLFW",ERRDIV);
+  throw EXCEPTION("GLFW2 support is not available.\nConsider compiling the code with OpenGL+GLFW",ERRDIV);
 #endif
 }
 

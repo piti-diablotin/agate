@@ -137,12 +137,6 @@ namespace utils {
     out << " * GLEXT....: no" << std::endl;
 #endif
 
-#ifdef HAVE_GLU
-    out << " * GLU......: yes" << std::endl;
-#else
-    out << " * GLU......: no" << std::endl;
-#endif
-
 #if defined(HAVE_GLFW2) || defined(HAVE_GLFW3)
     out << " * GLFW.....: yes" << std::endl;
 #  ifdef HAVE_GLFW3

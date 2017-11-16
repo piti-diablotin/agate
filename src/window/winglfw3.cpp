@@ -89,7 +89,7 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
   glfwSetCharCallback(_win,CharCallback);
   glfwSetKeyCallback(_win,KeyCallback);
 #else
-  throw EXCEPTION("GLFW support is not available.\nConsider compiling the code with OpenGL+GLU+GLFW",ERRDIV);
+  throw EXCEPTION("GLFW support is not available.\nConsider compiling the code with OpenGL+GLFW",ERRDIV);
 #endif
   //glfwDisable(GLFW_MOUSE_CURSOR);
 
@@ -113,7 +113,7 @@ void WinGlfw3::init() {
   if ( !glfwInit() )
     throw EXCEPTION("Failed to init GLFW",ERRDIV);
 #else
-  throw EXCEPTION("GLFW support is not available.\nConsider compiling the code with OpenGL+GLU+GLFW",ERRDIV);
+  throw EXCEPTION("GLFW support is not available.\nConsider compiling the code with OpenGL+GLFW",ERRDIV);
 #endif
 }
 

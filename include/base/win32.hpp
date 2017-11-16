@@ -59,7 +59,6 @@
 //#  define HAVE_NETCDF
 #  define HAVE_GL
 #  define HAVE_GLEXT
-#  define HAVE_GLU
 //#  define HAVE_GLFW3
 //#  define HAVE_GLFW3_DROP
 //#  define HAVE_LIBPNG

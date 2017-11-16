@@ -1235,23 +1235,6 @@ if test x"$glsupport" = x"yes"; then
     AC_DEFINE(HAVE_GLEXT,1,[Define to 1 if OpenGL is usable])
   fi
 
-  # GLU
-  AC_CHECK_HEADER([$GL_PREFIX/glu.h],[glu_check_h=yes],[glu_check_h=no])
-  if test x"$host_vendor" == x"apple"; then
-    AC_MSG_WARN([On apple device, GLU support is assumed.])
-    glu_check_lib=yes
-  else
-    AC_CHECK_LIB([GLU],[gluLookAt],[glu_check_lib=yes],[glu_check_lib=no])
-  fi
-  if test x"$glu_check_h" = x"yes" && test x"$glu_check_lib" = x"yes"
-  then
-    if test x"$host_vendor" != x"apple"; then
-      LIBS="$LIBS -lGLU"
-    fi
-    have_glu_usable="yes"
-    AC_DEFINE(HAVE_GLU,1,[Define to 1 if GLU is usable])
-  fi
-
   # GLX
   #AC_CHECK_HEADER([$GL_PREFIX/glx.h],[glx_check_h=yes],[glx_check_h=no])
   #if test x"$host_vendor" != x"apple"; then

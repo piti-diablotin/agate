@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <fstream>
+#include <cmath>
 #ifdef HAVE_OMP
 #include "omp.h"
 #endif
@@ -404,13 +405,14 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       // VACF
       else if ( function == "vacf" ){
         filename = "VACF";
+        xlabel = "Time [ps]";
         ylabel = "VACF [nm^2/ps^2]";
         title = "VACF";
         std::clog << std::endl << " -- VACF --" << std::endl;
 
         y = std::move(this->getVACF(tbegin,tend));
 
-        const double dtion = phys::atu2fs*( _time.size() > 1 ? _time[1]-_time[0] : 100);
+        const double dtion = phys::atu2fs*1e-3*( _time.size() > 1 ? _time[1]-_time[0] : 100);
         x.resize(y.front().size());
         for ( unsigned itime = 0 ; itime < y.front().size() ; ++itime )
           x[itime] = itime*dtion;
@@ -433,10 +435,10 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
 
         y = std::move(this->getPDOS(tbegin,tend));
 
-        const double dtion = phys::atu2fs*1e-3*( _time.size() > 1 ? _time[1]-_time[0] : 100);
+        const double dtion = phys::atu2fs*1e-3*( _time.size() > 1 ? _time[1]-_time[0] : 100); //ps
         x.resize(y.front().size());
         for ( unsigned itime = 0 ; itime < y.front().size() ; ++itime )
-          x[itime] = phys::THz2Ha * phys::Ha2eV *1e3 * itime/(dtion*y.front().size()*2); // *2 because there is an oversampling from ntime to 2*ntime for acf ?
+          x[itime] = phys::THz2Ha * phys::Ha2eV *1e3 * itime/(dtion*y.front().size()*2); // *2 because of niquist frequency
 
         for ( unsigned typ = 0 ; typ < y.size() ; ++typ ) {
           if ( typ == 0 )
@@ -444,6 +446,27 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
           else
             labels.push_back(utils::trim(std::string(mendeleev::name[_znucl[typ-1]])));
         }
+
+        auto first =_temperature.begin();
+        std::advance(first,tbegin);
+        auto last = _temperature.begin();
+        std::advance(last,tend);
+        const double T = utils::mean(first,last);
+
+        first =_etotal.begin();
+        std::advance(first,tbegin);
+        last = _etotal.begin();
+        std::advance(last,tend);
+        const double Etotal = utils::mean(first,last)*phys::Ha2eV/_natom;
+
+        auto thermo = this->computeThermoFunctionHA(y.front(),T);
+        std::cout << "Thermodynamic functions in the Harmonic Approximation " << std::endl;
+        std::cout << "E_0   = " << Etotal    << " eV/atom" << std::endl;
+        std::cout << "F_vib = " << thermo[0] << " eV/atom" << std::endl;
+        std::cout << "E_vib = " << thermo[1] << " eV/atom" << std::endl;
+        std::cout << "C_v   = " << thermo[2] << " kB/atom" << std::endl;
+        std::cout << "S_vib = " << thermo[3] << " kB/atom" << std::endl;
+        std::cout << "F_tot = " << thermo[0]+Etotal << " kB/atom" << std::endl;
       }
 
       else {
@@ -621,4 +644,88 @@ void HistDataMD::computePressureTemperature(unsigned itime) {
       -(_stress[itime*6  ]+_stress[itime*6+1]+_stress[itime*6+2])/3.0
       + _natom/volume*factorP*_temperature[itime] );
 
+}
+
+std::array<double,4> HistDataMD::computeThermoFunctionHA(unsigned tbegin, unsigned tend, const double omegaMax) const {
+  using std::min;
+  try {
+    HistData::checkTimes(tbegin,tend);
+  }
+  catch (Exception &e) {
+    e.ADD("Thermodynamics calculations aborted",ERRDIV);
+    throw e;
+  }
+
+  std::vector<double> pdos;
+  try {
+    auto pdosfull = std::move(this->getPDOS(tbegin,tend));
+    pdos = std::move(pdosfull.front());
+  }
+  catch ( Exception &e ) {
+    e.ADD("Unable to compute thermodynamics functions.",ERRDIV);
+  }
+
+  auto first =_temperature.begin();
+  std::advance(first,tbegin);
+  auto last = _temperature.begin();
+  std::advance(last,tend);
+  const double T = utils::mean(first,last);
+
+  return this->computeThermoFunctionHA(pdos,T,omegaMax);
+}
+
+std::array<double,4> HistDataMD::computeThermoFunctionHA(std::vector<double> &pdos, const double T, const double omegaMax) const {
+  using std::min;
+  const unsigned nfreq = pdos.size();
+  const double dtion = phys::atu2fs*1e-3*( _time.size() > 1 ? _time[1]-_time[0] : 100); //ps
+  const double domega = 1./(2.*dtion*nfreq); // THz
+  std::vector<double> omega;
+  for ( unsigned itime = 0 ; itime < pdos.size() ; ++itime )
+    omega.push_back(phys::THz2Ha * phys::Ha2eV * (itime+0.5) * domega ); // eV
+  // omega is shifted on the grid to be at the middle of a segement [i i+1]
+
+  unsigned nmax = ( omegaMax < 0 ? nfreq : min(unsigned(omegaMax/domega),nfreq) );
+
+  // Renormalize the pdos \int_0^nmax pdos domega = 1
+  double norme = 0;
+  for ( unsigned iomega = 0 ; iomega < nmax-1 ; ++iomega )
+    norme += (pdos[iomega]+pdos[iomega+1])*0.5*domega;
+  for ( unsigned iomega = 0 ; iomega < nmax ; ++iomega )
+    pdos[iomega] /= norme;
+
+  static std::string file = "test.vdos";
+  std::ofstream out(file);
+  for ( unsigned iomega = 0 ; iomega < nmax ; ++iomega ) {
+    out << omega[iomega] << "    " << pdos[iomega] << std::endl;
+  }
+  out.close();
+  file="test2.vdos";
+
+
+  // Compute F E C S
+  double F = 0.;
+  double E = 0.;
+  double C = 0.;
+  double S = 0.;
+  double kBT = phys::kB*T/phys::eV; // eV
+  const double inv_2kBT = 0.5/kBT /* in eV-1 */ ;
+  for ( unsigned iomega = 0 ; iomega < nmax-1 ; ++iomega ) {
+    using std::log;
+    using std::sinh;
+    using std::tanh;
+    const double argument = omega[iomega]*inv_2kBT;
+    const double gwdw = (pdos[iomega]+pdos[iomega+1])*domega*0.5;
+    const double sinharg = sinh(argument);
+    const double cotharg = 1./tanh(argument);
+    const double log2sinharg = log(2.*sinharg);
+    F += log2sinharg*gwdw;
+    E += omega[iomega]*cotharg*gwdw;
+    C += argument*argument/(sinharg*sinharg)*gwdw;
+    S += (argument*cotharg-log2sinharg)*gwdw;
+  }
+  F *= 3*kBT;
+  E *= 3*0.5;
+  C *= 3.;
+  S *= 3.;
+  return std::array<double,4> ({{F,E,C,S}});
 }

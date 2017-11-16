@@ -72,6 +72,27 @@ class HistDataMD : public HistData {
      */
     void computePressureTemperature(unsigned itime);
 
+    /**
+     * Compute the free energy, the internal energy, the heat capacity and the entropy using the PDOS.
+     * This compute the function at a unique temperature computed as the average temperature between
+     * tbegin and tend
+     * @param tbegin first time to use
+     * @param tend last time to use.
+     * @param omegaMax The largest frequency. Default value -1 means all spectrum.
+     * @return the values of F,E,Cv,S in eV eV kB et kB
+     */
+    std::array<double,4> computeThermoFunctionHA(unsigned tbegin, unsigned tend, const double omegaMax = -1) const;
+
+    /**
+     * Compute the free energy, the internal energy, the heat capacity and the entropy using the PDOS.
+     * This compute the function at a unique temperature computed as the average temperature between
+     * tbegin and tend
+     * @param pdos The precomputed PDOS.
+     * @param omegaMax The largest frequency. Default value -1 means all spectrum.
+     * @return the values of F,E,Cv,S in eV eV kB et kB
+     */
+    std::array<double,4> computeThermoFunctionHA(std::vector<double> &pdos, const double T, const double omegaMax = -1) const ;
+
   public :
 
     /**

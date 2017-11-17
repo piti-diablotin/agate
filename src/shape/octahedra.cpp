@@ -182,7 +182,7 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
         return a1.xcart[0] < a2.xcart[0];
         }
         );
-    if ( allAtoms[1].xcart[1] < allAtoms[0].xcart[1] ) {
+    if ( std::abs(allAtoms[1].xcart[0]-allAtoms[0].xcart[0]) < 1e-2 && allAtoms[1].xcart[1] < allAtoms[0].xcart[1] ) {
       auto tmp = allAtoms[1];
       allAtoms[1] = allAtoms[0];
       allAtoms[0] = tmp;
@@ -242,6 +242,7 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
     }};
   }
 
+  //std::clog << atom << ": " << _positions[_top1] << "->" << _positions[_top2] << " " << _positions[_atom1] << "->" << _positions[_atom3] << " "<< _positions[_atom2] << "->" << _positions[_atom4] << std::endl;
   _basis[0] = _xcart[_atom3]-_xcart[_atom1];
   _basis[1] = _xcart[_atom4]-_xcart[_atom2];
   _basis[2] = _xcart[_top2]-_xcart[_top1];

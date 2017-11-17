@@ -66,6 +66,7 @@ class DispDB {
 
     std::vector<vec3d>  _qpts;          ///< List all the qpts coordinates
     std::vector<cplx>   _modes;         ///< List all the eigen displacements
+    std::vector<cplx>   _linResE;       ///< Linear Response E displacements
     std::vector<double> _energies;      ///< List all the energies of each mode
 
   public :
@@ -118,6 +119,15 @@ class DispDB {
      * @param ddb the ddb from abinit
      */
     void computeFromDDB(Ddb &ddb);
+
+    /**
+     * Compute linear response to electric field 
+     * The direction is given by x y z and the amplitude by A
+     * @param Edir Direction of the electric field
+     * @param A Amplitude of the E field
+     * @param ddb Derivative data base 
+     */
+    void linearResponseE(std::vector<double> &Edir, double A, Ddb &ddb);
 
     /**
      * Ask if a qpts is present in the DDB.

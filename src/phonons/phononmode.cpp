@@ -180,13 +180,13 @@ const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qp
 
 
 /*Calculate Linear Repsonse of Phonons to a static dielectric field from DFPT*/
-void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
+std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::vec3d &E_vec, double E_Amp, const Ddb& ddb) {
 	/*---- Get necessary Data ---*/
 	
-	double E_Amp;
-	std::vector<double> E_vec(3);
-        E_vec = {1,0,0}; 
-	E_Amp = 10000; 
+	//double E_Amp;
+	//std::vector<double> E_vec(3);
+        //E_vec = {1,0,0}; 
+	//E_Amp = 10000; 
 	
 	_natom = ddb.natom();  					/// get natom 
 	_zeff = getzeff(_qpt, ddb, ddb.getDdb(_qpt)); 		/// get BEC-Tensors
@@ -206,8 +206,7 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 	double cell_V; 						/// get unit cell volume (bohr^3)
 	cell_V = geometry::det(rprim);
 	cell_V = cell_V*phys::b2A*phys::b2A*phys::b2A;
-        std::cout<<"cell_V(bohr): "<<cell_V<<std::endl; 
- 	
+       	
 	/*Following lines: get Eigenfrequencies and Modes at Gamma */
 	PhononMode gamma(_natom);
 	gamma.computeASR(ddb);
@@ -216,7 +215,9 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 	std::vector<complex> disp_gamma(3*_natom*3*_natom);
 	gamma.computeEigen(&freq_gamma[0],&disp_gamma[0]);
 	for (unsigned m = 0; m < freq_gamma.size(); ++m){	/// Transform mode energies from Ha in THz                
-		freq_gamma[m] = phys::Ha2THz * freq_gamma[m];		
+		freq_gamma[m] = phys::Ha2THz * freq_gamma[m];	
+		if (freq_gamma[m] < -1)
+			throw EXCEPTION("NEGATIVE PHONON FREQUENCY FOUND: The linear response to an Electric-Field calculation makes only sense in stable structures. Fully relax your structure",ERRDIV);	
 	}
         for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
             _mass[iatom] = mendeleev::mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]; // type starts at 1
@@ -225,7 +226,7 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
             disp_gamma[i] = disp_gamma[i].real()*pow(phys::amu_emass,0.5);
         }
 
-	/* Calculate diplacement under electric filed */ 
+	/*--------- Calculate diplacement under electric filed ---------*/ 
 	/* 1. Calculate polarity of each mode and store*/
 	/*** organization pol[i] = p(olarity)_m(ode)_(direction)x, p_m_y, p_m_z, p_m+1_x...*/	 
 	std::vector<double> pol(3*freq_gamma.size());
@@ -257,12 +258,13 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 	std::vector<double> disp_E(3*_natom);
 	
 	for (unsigned i = 0 ; i < _natom; ++i){ 
-		disp_E[3*i + 0] = E_Amp*E_vec[0]*tau[9*i + 0] + E_Amp*E_vec[1]*tau[9*i + 3] + E_Amp*E_vec[2]*tau[9*i + 6];  
-		disp_E[3*i + 1] = E_Amp*E_vec[0]*tau[9*i + 1] + E_Amp*E_vec[1]*tau[9*i + 4] + E_Amp*E_vec[2]*tau[9*i + 7];
-		disp_E[3*i + 2] = E_Amp*E_vec[0]*tau[9*i + 2] + E_Amp*E_vec[1]*tau[9*i + 6] + E_Amp*E_vec[2]*tau[9*i + 8];  
+		disp_E[3*i + 0] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 0] + E_Amp*E_vec[1]*tau[9*i + 3] + E_Amp*E_vec[2]*tau[9*i + 6]);  
+		disp_E[3*i + 1] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 1] + E_Amp*E_vec[1]*tau[9*i + 4] + E_Amp*E_vec[2]*tau[9*i + 7]);
+		disp_E[3*i + 2] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 2] + E_Amp*E_vec[1]*tau[9*i + 6] + E_Amp*E_vec[2]*tau[9*i + 8]);  
 	}
 	
-	/* Calculate vibronic dielectric constant */ 
+	/*   Calculate vibronic dielectric constant  */
+        /*Currently not used but kept if ever needed */ 
 	geometry::mat3d diel; 
 	for (unsigned m = 3; m < freq_gamma.size(); ++m) { 
 		diel[geometry::mat3dind( 1, 1)] = diel[geometry::mat3dind( 1, 1)] + pol[m*3]*pol[m*3]/(freq_gamma[m]*freq_gamma[m]);
@@ -278,7 +280,9 @@ void PhononMode::lin_res(const geometry::vec3d& _qpt, const Ddb& ddb) {
 		diel[geometry::mat3dind( 3, 3)] = diel[geometry::mat3dind( 3, 3)] + pol[m*3+2]*pol[m*3+2]/(freq_gamma[m]*freq_gamma[m]);	
 	} 
         diel = geometry::sc_mult(diel, phys::fac/(phys::Eps_0 * cell_V));
-	geometry::print(diel,  std::cout);
+	
+	/*4. returen displacement under electric field */ 
+	return disp_E;
 }
 
  

@@ -40,7 +40,8 @@ CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
   _condensedModes(),
   _qptModes(),
   _ntime(50),
-  _originalFile()
+  _originalFile(),
+  _ddb(nullptr)
 {
   this->nLoop(-2);
   _qptModes = _condensedModes.end();
@@ -55,7 +56,8 @@ CanvasPhonons::CanvasPhonons(const CanvasPos &canvas) : CanvasPos(canvas.opengl(
   _condensedModes(),
   _qptModes(),
   _ntime(50),
-  _originalFile()
+  _originalFile(),
+  _ddb(nullptr)
 {
   if ( canvas.histdata() != nullptr && canvas.histdata()->ntimeAvail() > 0 ) {
     _histdata.reset(nullptr);
@@ -109,9 +111,8 @@ void CanvasPhonons::openFile(const std::string& filename) {
 
 bool CanvasPhonons::readDdb(const std::string& filename) {
   // Try to read a DDB file
-  Ddb *ddb = nullptr;
   try { 
-    ddb = Ddb::getDdb(filename);
+    _ddb.reset(Ddb::getDdb(filename));
     /*
      * This is bad because we are not sure the _reference structure
      * is the same as the ddb but if the number of elements is correct 
@@ -119,10 +120,9 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
      * We cannot do in an other way since qpoints.yaml does not always provide
      * the structure (1.10 at least does not)
      */
-    ddb->buildFrom(_reference); 
+    _ddb->buildFrom(_reference); 
     DispDB disp;
-    disp.computeFromDDB(*ddb);
-    delete ddb;
+    disp.computeFromDDB(*_ddb.get());
     _displacements += disp;
     std::clog << "Displacements loaded" << std::endl;
     if ( _status == PAUSE ) _status = UPDATE;
@@ -130,7 +130,7 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
   }
   catch (Exception& e) {
     //e.ADD("Not a DDB file",ERRDIV);
-    if ( ddb != nullptr ) delete ddb;
+    if ( _ddb != nullptr ) _ddb.reset(nullptr);
     if ( e.getReturnValue() == ERRABT )  
       std::clog << e.fullWhat() << std::endl;
     return false;
@@ -172,6 +172,15 @@ void CanvasPhonons::appendFile(const std::string& filename) {
 void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   std::ostringstream out;
   bool rebuild = false;
+
+  std::string line;
+  size_t pos = stream.tellg();
+  std::getline(stream,line);
+  stream.clear();
+  stream.seekg(pos);
+  ConfigParser parser;
+  parser.setContent(line);
+ 
   if ( token == "qpt" ) {
     geometry::vec3d qpt;
     stream >> qpt[0] >> qpt[1] >> qpt[2];
@@ -524,6 +533,37 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     Graph::plot(config,gplot);
     delete gplot;
   }
+  else if ( token == "lin_res_E" ) {
+    try {
+      double Eamp = parser.getToken<double>("a");
+      std::vector<double> Edir = parser.getToken<double>("edir",3);
+      _displacements.linearResponseE(Edir,Eamp,*_ddb.get());
+      if ( this->selectQpt({{0,0,0}}) ) {
+        DispDB::qMode vibnrj {3*(unsigned)_natom,1,0};
+        _qptModes->second.push_back(vibnrj);
+      }
+      else {
+        DispDB::qMode vibnrj {3*(unsigned)_natom,1,0};
+        _condensedModes.insert(
+        std::pair<geometry::vec3d,std::vector<DispDB::qMode>>(
+          {{0,0,0}},
+          std::vector<DispDB::qMode>(1,vibnrj)
+          )
+        );
+      }
+      rebuild = true;
+    }
+    catch ( Exception &e ) {
+      if ( e.getReturnValue() == ConfigParser::ERFOUND ) {
+        e.ADD("You need to set both Edir and A",ERRDIV);
+        throw e;
+      }
+      else {
+        e.ADD("Unable to parser the line",ERRDIV);
+        throw e;
+      }
+    }
+  }
   else { 
     CanvasPos::my_alter(token,stream);
     return;
@@ -593,5 +633,6 @@ void CanvasPhonons::help(std::ostream &out) {
   out << setw(40) << ":qpt qx qy qz" << setw(59) << "Select or add the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":remove or :rm qx qy qz" << setw(59) << "Remove the q-pt from the frozen modes." << endl;
   out << setw(40) << ":reset" << setw(59) << "Reset to the initial reference structure." << endl;
+  out << setw(40) << ":lin_res_E Edir x y z A amp" << setw(59) << "Calculate linear response to an applied Electric field in dir [x y z] with Amplitude [amp]." <<endl;
   out << "Commands from positions mode are also available." << endl;
 }

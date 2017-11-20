@@ -4,7 +4,7 @@ VERSION = 0.0.9
 MAIL = jordan.bieder@cea.fr
 
 # Initial information about the package
-AC_INIT([AbiOut],[0.0.8],[jordan.bieder@cea.fr])
+AC_INIT([AbiOut],[0.0.9],[jordan.bieder@cea.fr])
 
 # Check source directory
 AC_CONFIG_SRCDIR([bin/agate.cpp])

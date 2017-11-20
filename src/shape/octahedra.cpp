@@ -145,6 +145,16 @@ Octahedra::Octahedra(int atom, int natom, const double *xred, const double *xcar
       return a1.xcart[2] < a2.xcart[2];
       }
       );
+  if ( std::abs(allAtoms[1].xcart[2]-allAtoms[0].xcart[2]) < 1e-2 && allAtoms[1].xcart[0] < allAtoms[0].xcart[0] ) {
+    auto tmp = allAtoms[1];
+    allAtoms[1] = allAtoms[0];
+    allAtoms[0] = tmp;
+  }
+  if ( std::abs(allAtoms[2].xcart[2]-allAtoms[0].xcart[2]) < 1e-2 && allAtoms[2].xcart[0] < allAtoms[0].xcart[0] ) {
+    auto tmp = allAtoms[2];
+    allAtoms[2] = allAtoms[0];
+    allAtoms[0] = tmp;
+  }
 
   {
     // Find _top1 (always 0) and _top2

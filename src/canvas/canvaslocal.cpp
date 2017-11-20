@@ -37,12 +37,12 @@ CanvasLocal::CanvasLocal(bool drawing) : CanvasPos(drawing),
   _view(ANGLES),
   _orientations()
 {
-  _octacolor[0] = 1.f;
+  _octacolor[0] = 0.f;
   _octacolor[1] = 0.f;
-  _octacolor[2] = 0.f;
-  _octacolor[3] = 0.f;
+  _octacolor[2] = 1.f;
+  _octacolor[3] = 1.f;
   _octacolor[4] = 0.f;
-  _octacolor[5] = 1.f;
+  _octacolor[5] = 0.f;
   ;
 }
 
@@ -53,12 +53,12 @@ CanvasLocal::CanvasLocal(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _view(ANGLES),
   _orientations()
 {
-  _octacolor[0] = 1.f;
+  _octacolor[0] = 0.f;
   _octacolor[1] = 0.f;
-  _octacolor[2] = 0.f;
-  _octacolor[3] = 0.f;
+  _octacolor[2] = 1.f;
+  _octacolor[3] = 1.f;
   _octacolor[4] = 0.f;
-  _octacolor[5] = 1.f;
+  _octacolor[5] = 0.f;
 
   const double *rprimd = _histdata->getRprimd(0);
   const double *xcart = _histdata->getXcart(0);
@@ -387,9 +387,9 @@ void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
     stream >> value;
     if ( stream.fail() )
       throw EXCEPTION("You need to specify rotations or lengths",ERRDIV);
-    if ( value == "rot" || value == "rotations" ) 
+    if ( value == "rot" || value == "rotation" ) 
       _view = ANGLES;
-    else if ( value == "lengths" ) 
+    else if ( value == "length" ) 
       _view = LENGTHS;
     else 
       throw EXCEPTION("Bad value. rotattions or lengths are allowed", ERRDIV);
@@ -426,6 +426,6 @@ void CanvasLocal::help(std::ostream &out) {
   out << setw(40) << ":c or :color (plus|minus)" << setw(59) << "Set the color in RGB for plus or minus rotations." << endl;
   out << setw(40) << ":length filename" << setw(59) << "Dump for each octaheadra the a b and c lengths in filename." << endl;
   out << setw(40) << ":rot filename" << setw(59) << "Dump for each octaheadra the alpha, beta and gamma angles in filename." << endl;
-  out << setw(49) << ":loc or :local (rotatations|lengths)" << setw(59) << "Select which proppertie of the octahedra is displayed" << endl;
+  out << setw(49) << ":loc or :local (rotatation|length)" << setw(59) << "Select which proppertie of the octahedra is displayed" << endl;
   out << "Commands from positions mode are also available." << endl;
 }

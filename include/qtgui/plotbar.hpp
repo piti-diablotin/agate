@@ -87,6 +87,7 @@ class PlotBar : public QWidget {
     QAction *_positions;
     QAction *_vacf;
     QAction *_pdos;
+    QAction *_thermo;
     QAction *_msd;
     QAction *_pacf;
     QAction *_tdep;
@@ -124,6 +125,7 @@ class PlotBar : public QWidget {
     void plotPositions();
     void plotVacf();
     void plotPdos();
+    void plotThermo();
     void plotMsd();
     void plotPacf();
     void plotTdep();

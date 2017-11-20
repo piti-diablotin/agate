@@ -50,6 +50,7 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   _positions(nullptr),
   _vacf(nullptr),
   _pdos(nullptr),
+  _thermo(nullptr),
   _msd(nullptr),
   _pacf(nullptr),
   _tdep(nullptr),
@@ -85,11 +86,12 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   _entropy = new QAction("S",_plotBar); _entropy->setToolTip("Electronic entropy");
   _positions = new QAction("Positions",_plotBar); _positions->setToolTip("Atomic positions");
   _vacf = new QAction("VACF",_plotBar); _vacf->setToolTip("Velocity autocorrelation function");
-  _pdos = new QAction("PDOS",_plotBar); _vacf->setToolTip("Phonon Density of States");
-  _msd = new QAction("MSD",_plotBar); _vacf->setToolTip("Mean Square Displacements");
-  _pacf = new QAction("PACF",_plotBar); _vacf->setToolTip("Position autocorrelation function");
-  _tdep = new QAction("TDEP",_plotBar); _vacf->setToolTip("Phonons");
-  _gyration = new QAction("Gyration",_plotBar); _vacf->setToolTip("Gyration tensor");
+  _pdos = new QAction("PDOS",_plotBar); _pdos->setToolTip("Phonon Density of States");
+  _thermo = new QAction("Thermo",_plotBar); _thermo->setToolTip("Thermodynamical functions");
+  _msd = new QAction("MSD",_plotBar); _msd->setToolTip("Mean Square Displacements");
+  _pacf = new QAction("PACF",_plotBar); _pacf->setToolTip("Position autocorrelation function");
+  _tdep = new QAction("TDEP",_plotBar); _tdep->setToolTip("Phonons");
+  _gyration = new QAction("Gyration",_plotBar); _gyration->setToolTip("Gyration tensor");
 
   _plotBar->addAction(_acell);
   _plotBar->addAction(_angle);
@@ -110,6 +112,7 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   _plotBar->addAction(_entropy);
   _plotBar->addAction(_vacf);
   _plotBar->addAction(_pdos);
+  _plotBar->addAction(_thermo);
   _plotBar->addAction(_tdep);
 
   connect(_choice,SIGNAL(currentIndexChanged(int)),this,SLOT(changeAction(int)));
@@ -129,6 +132,7 @@ PlotBar::PlotBar(QWidget *parent) : QWidget(parent),
   connect(_gyration,SIGNAL(triggered()),this,SLOT(plotGyration()));
   connect(_vacf,SIGNAL(triggered()),this,SLOT(plotVacf()));
   connect(_pdos,SIGNAL(triggered()),this,SLOT(plotPdos()));
+  connect(_thermo,SIGNAL(triggered()),this,SLOT(plotThermo()));
   connect(_msd,SIGNAL(triggered()),this,SLOT(plotMsd()));
   connect(_pacf,SIGNAL(triggered()),this,SLOT(plotPacf()));
   connect(_tdep,SIGNAL(triggered()),this,SLOT(plotTdep()));
@@ -173,6 +177,7 @@ void PlotBar::refreshButtons(GLWidget *glwidget) {
     _entropy->setEnabled(thermo);
     _vacf->setEnabled(thermo);
     _pdos->setEnabled(thermo);
+    _thermo->setEnabled(thermo);
     _tdep->setEnabled(thermo);
     _gyration->setEnabled( hist->nimage() > 1 );
   }
@@ -265,6 +270,10 @@ void PlotBar::plotVacf() {
 
 void PlotBar::plotPdos() {
   emit(sentCommand(_action+" pdos"));
+}
+
+void PlotBar::plotThermo() {
+  emit(sentCommand(_action+" thermo"));
 }
 
 void PlotBar::plotMsd() {

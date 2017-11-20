@@ -334,6 +334,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       std::string &xlabel = config.xlabel;
       std::string &ylabel = config.ylabel;
       std::string &title = config.title;
+      config.doSumUp = true;
 
       try {
         std::string tunit = parser.getToken<std::string>("tunit");
@@ -469,11 +470,58 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         std::cout << "F_tot = " << thermo[0]+Etotal << " kB/atom" << std::endl;
       }
 
+      // thermo
+      else if ( function == "thermo" ){
+        filename = "thermoFunctions";
+        ylabel = "Thermodynamical Functions";
+        xlabel = "Temperature [K]";
+        title = "Thermodynamical Functions";
+        std::clog << std::endl << " -- Thermodynamical Functions --" << std::endl;
+        auto first =_temperature.begin();
+        std::advance(first,tbegin);
+        auto last = _temperature.begin();
+        std::advance(last,tend);
+        const double T = utils::mean(first,last);
+        first =_etotal.begin();
+        std::advance(first,tbegin);
+        last = _etotal.begin();
+        std::advance(last,tend);
+        const double Etotal = utils::mean(first,last)*phys::Ha2eV/_natom;
+        std::cout << "E_0   = " << Etotal    << " eV/atom" << std::endl;
+
+        x.resize(1000);
+        y.resize(4);
+        auto tmp = y.begin();
+        auto& F = *(tmp);
+        auto& E = *(++tmp);
+        auto& C = *(++tmp);
+        auto& S = *(++tmp);
+        F.resize(1000);
+        E.resize(1000);
+        C.resize(1000);
+        S.resize(1000);
+        auto pdos = this->getPDOS(tbegin,tend);
+        double dT = 2.*T/1000.;
+        for ( unsigned itime = 0 ; itime < 1000 ; ++itime ) {
+          x[itime] = (itime+1)*dT;
+          auto thermo = this->computeThermoFunctionHA(pdos.front(),x[itime]);
+          F[itime] = thermo[0];
+          E[itime] = thermo[1];
+          C[itime] = thermo[2];
+          S[itime] = thermo[3];
+        }
+
+        labels.push_back("F_vib [eV/atom]");
+        labels.push_back("E_vib [eV/atom]");
+        labels.push_back("C_v   [kB/atom]");
+        labels.push_back("S_vib [kB/atom]");
+        config.doSumUp = false;
+      }
+
       else {
         throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
       }
 
-      config.doSumUp = true;
       config.save = save;
       Graph::plot(config,gplot);
       stream.clear();

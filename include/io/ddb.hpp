@@ -61,6 +61,7 @@ class Ddb : public Dtset {
     unsigned                   _nqpt;   ///< Number of qpt/block in the DDB file
     std::map< geometry::vec3d, 
       std::vector< d2der > > _blocks; ///< Second derivative for each qpt
+    std::vector<unsigned>            _zion;    ///< Ionic Charge of each atom. Different than _znucl because of Pseudopotentials.
 
   public :
 
@@ -125,6 +126,13 @@ class Ddb : public Dtset {
     virtual void buildFrom(const Dtset &dtset) {
       *dynamic_cast<Dtset*>(this) = dtset;
     }
+
+    /**
+     * Get the zion 
+     * @return _zion
+     */
+    inline const std::vector<unsigned>& zion() const { return _zion; }
+
 };
 
 #endif  // DDB_HPP

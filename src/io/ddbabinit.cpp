@@ -63,6 +63,13 @@ void DdbAbinit::readFromFile(const std::string& filename) {
       e.ADD(std::string("Failed to read header from DDB file ")+filename,ERRDIV);
       throw e;
     }
+   // zion is given as double so readConfig fails to read zion as unsigned.
+    std::vector<double> zion(parser.getToken<double>("zion",_ntypat));
+    _zion.resize(_typat.size());                                 // resize with typat.size() to account for cases with several atoms of same type	
+    for( unsigned x = 0 ; x < _typat.size() ; ++x ) {
+        _zion[x] = static_cast<unsigned>(zion[_typat[x]-1]);     // write values into _zion
+    } 	
+ 	
     try{
       std::vector<double> amu(parser.getToken<double>("amu",_ntypat));
       for ( unsigned ityp = 0 ; ityp < _ntypat ; ++ityp ) {
@@ -153,15 +160,12 @@ bool DdbAbinit::readBlock(std::ifstream& idd) {
   // Vector size is twice the real size ... I don't know why
   if ( block.size() != nelts ) 
     throw EXCEPTION("Not enought derivates to construct block",ERRDIV);
-
   if ( qx*qx+qy*qy+qz*qz < 1e-7 ) {
     std::clog << "Reading Gamma point. Setting imaginary part to 0." << std::endl;
     for ( unsigned ielt = 0 ; ielt < nelts && !idd.eof() ; ++ielt ) {
       block[ielt].second.imag(0.e0);
     }
   }
-
-
   _blocks.insert(std::make_pair(
           geometry::vec3d({{ qx, qy, qz }}),
           block));

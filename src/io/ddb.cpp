@@ -38,7 +38,8 @@
 Ddb::Ddb() : Dtset(),
   _haveMasses(false),
   _nqpt(0),
-  _blocks()
+  _blocks(),
+  _zion()
 {
   ;
 }

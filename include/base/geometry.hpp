@@ -260,6 +260,13 @@ namespace geometry {
         }});
   }
   /** 
+  * Multiply a matrix by a scalar(double) 
+  * @param mat The mat3d 
+  * @param a the double scalar 
+  */ 
+   mat3d sc_mult(const mat3d& mat, double a);
+  
+   /** 
    * Multiply a matrix by a matrix
    * @param mat1 The mat3d
    * @param mat2 The mat3d

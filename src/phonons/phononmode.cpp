@@ -31,6 +31,8 @@
 #include "base/phys.hpp"
 #include "base/geometry.hpp"
 #include <cmath>
+#include <iostream>
+#include <typeinfo>
 
 
 //
@@ -44,7 +46,10 @@ PhononMode::PhononMode() :
   _eigenDisp(),
   _frequencies(),
   _gprim(),
+  _rprim(),	
   _asr(),
+  _zeff(),  
+  _zion(),	
 #endif
   _mass()
 {
@@ -66,7 +71,10 @@ PhononMode::PhononMode(unsigned natom) :
   _eigenDisp(3*natom,3*natom),
   _frequencies(),
   _gprim(),
+  _rprim(),
   _asr(),
+  _zeff(),
+  _zion(),
 #endif
   _mass(natom)
 {
@@ -91,7 +99,8 @@ void PhononMode::resize(const unsigned natom) {
   _eigenVec.resize(3*_natom,3*natom);
   _eigenDisp.resize(3*_natom,3*natom);
   _frequencies.resize(3*_natom);
-#endif
+  _zeff.resize(_natom);
+#endif 
   _mass.resize(_natom);
 }
 
@@ -123,6 +132,160 @@ void PhononMode::computeForceCst(const geometry::vec3d& qpt, const Ddb& ddb) {
 }
 
 
+/*Function to read Born-Effective Charges (_zeff) out of ddb and translate it into C/A*/
+const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qpt, const Ddb& ddb1, const std::vector<Ddb::d2der>& ddb2) {
+	this->resize(ddb1.natom());	/// resize variables
+	_natom = ddb1.natom();		/// get number of atoms
+	_qpt << qpt[0], qpt[1], qpt[2]; /// get q_point (Always Gamma) 
+	
+	geometry::mat3d gprim = ddb1.gprim(); /// get gprim
+ 	 _gprim << gprim[0], gprim[1],gprim[2],
+         gprim[3], gprim[4], gprim[5],
+         gprim[6], gprim[7], gprim[8];
+
+	geometry::mat3d rprim = ddb1.rprim(); /// get rprim
+ 	 _rprim << rprim[0], rprim[1],rprim[2],
+         rprim[3], rprim[4], rprim[5],
+         rprim[6], rprim[7], rprim[8];
+	
+	_zion = ddb1.zion();  ///get zion 
+	
+	/* Read values from ddb into _zeff*/
+	for ( auto& elt : ddb2 ) {
+    		const unsigned idir1 = elt.first[0];
+    		const unsigned ipert1 = elt.first[1];
+   		const unsigned idir2 = elt.first[2];
+  		const unsigned ipert2 = elt.first[3];
+	if ( !(idir1 < 3 && idir2 < 3 && ipert1 == _natom+1 && ipert2 < _natom) ) continue;
+    		_zeff[ipert2][geometry::mat3dind( idir1+1, idir2+1)] = elt.second.real();
+	}  	
+	/*Change unit/add zion on diagonal axis of BEC-Tensor*/
+	for ( unsigned ipert2 = 0 ; ipert2 < _natom ; ++ipert2 ) {
+		for ( unsigned idir1 = 1 ; idir1 <= 3 ; ++idir1 ) {
+			for ( unsigned idir2 = 1 ; idir2 <= 3; ++idir2 ) {
+					if ( std::abs(_zeff[ipert2][geometry::mat3dind( idir1, idir2)])  > pow(10,-10) && idir1 == idir2  ) {
+							_zeff[ipert2][geometry::mat3dind( idir1, idir2)] = ( _zeff[ipert2][geometry::mat3dind( idir1, idir2)]/(2*phys::pi)) + _zion[ipert2];		
+					}
+					else if ( std::abs(_zeff[ipert2][geometry::mat3dind( idir1, idir2)])   > pow(10,-10) && idir1 != idir2 ) { 
+						_zeff[ipert2][geometry::mat3dind( idir1, idir2)] =  _zeff[ipert2][geometry::mat3dind( idir1, idir2)]*_rprim(idir1-1,idir1-1)*_gprim(idir2-1,idir2-1)/(2*phys::pi);
+					}				
+					else { 
+						_zeff[ipert2][geometry::mat3dind( idir1, idir2)] = 0; 
+					}	
+			}
+    		}
+  	}
+	return _zeff;			
+} 
+
+
+/*Calculate Linear Repsonse of Phonons to a static dielectric field from DFPT*/
+std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::vec3d &E_vec, double E_Amp, const Ddb& ddb) {
+	/*---- Get necessary Data ---*/
+	
+	//double E_Amp;
+	//std::vector<double> E_vec(3);
+        //E_vec = {1,0,0}; 
+	//E_Amp = 10000; 
+	
+	_natom = ddb.natom();  					/// get natom 
+	_zeff = getzeff(_qpt, ddb, ddb.getDdb(_qpt)); 		/// get BEC-Tensors
+	for (int i = 0; i < _zeff.size(); i++) {
+		if (_zeff[i][geometry::mat3dind( 2,1 )] == 0 ){ 
+			  _zeff[i][geometry::mat3dind( 1, 2)] = 0; 
+		}	
+		if (_zeff[i][geometry::mat3dind( 3,1 )] == 0 ){ 
+			  _zeff[i][geometry::mat3dind( 1, 3)] = 0; 
+		}     		
+	} 
+
+	geometry::mat3d rprim = ddb.rprim(); 			/// get rprim
+ 	 _rprim << rprim[0], rprim[1],rprim[2],
+         rprim[3], rprim[4], rprim[5],
+         rprim[6], rprim[7], rprim[8];
+	double cell_V; 						/// get unit cell volume (bohr^3)
+	cell_V = geometry::det(rprim);
+	cell_V = cell_V*phys::b2A*phys::b2A*phys::b2A;
+       	
+	/*Following lines: get Eigenfrequencies and Modes at Gamma */
+	PhononMode gamma(_natom);
+	gamma.computeASR(ddb);
+	gamma.computeForceCst({{0,0,0}},ddb);
+	std::vector<double> freq_gamma(3*_natom);
+	std::vector<complex> disp_gamma(3*_natom*3*_natom);
+	gamma.computeEigen(&freq_gamma[0],&disp_gamma[0]);
+	for (unsigned m = 0; m < freq_gamma.size(); ++m){	/// Transform mode energies from Ha in THz                
+		freq_gamma[m] = phys::Ha2THz * freq_gamma[m];	
+		if (freq_gamma[m] < -1)
+			throw EXCEPTION("NEGATIVE PHONON FREQUENCY FOUND: The linear response to an Electric-Field calculation makes only sense in stable structures. Fully relax your structure",ERRDIV);	
+	}
+        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+            _mass[iatom] = mendeleev::mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]; // type starts at 1
+        }	
+	for ( unsigned i = 0; i < disp_gamma.size(); ++i ) {             
+            disp_gamma[i] = disp_gamma[i].real()*pow(phys::amu_emass,0.5);
+        }
+
+	/*--------- Calculate diplacement under electric filed ---------*/ 
+	/* 1. Calculate polarity of each mode and store*/
+	/*** organization pol[i] = p(olarity)_m(ode)_(direction)x, p_m_y, p_m_z, p_m+1_x...*/	 
+	std::vector<double> pol(3*freq_gamma.size());
+	for (unsigned m = 3; m < freq_gamma.size(); ++m) { 
+		for ( unsigned alpha = 0; alpha < 3; ++alpha) {
+			for (unsigned i = 0; i < _natom; ++i) { 
+				for(unsigned gamma = 0; gamma < 3; ++gamma) {				
+				pol[m*3+alpha] = pol[m*3+alpha] + _zeff[i][geometry::mat3dind( alpha+1, gamma+1)] * disp_gamma[(m*3*_natom) + 3*i + gamma].real(); 	
+				}
+			}		
+		} 
+	}
+	/*2. Calculate Displacements Matrix under Electric Field */ 
+	/*** Size of Matrix tau = 9*iatom ***/ 
+	/*** Organisatzion tau = d(isp)_(atom)i_(direc)_x_E(field)x, d_i_y_Ex, d_i_z_Ex, d_i_x_Ey... ***/ 
+	std::vector<double> tau(9*_natom);
+	for (unsigned m = 0	; m < freq_gamma.size(); ++m) { 
+		for (unsigned i = 0; i < _natom; ++i) {
+			for ( unsigned E_al = 0; E_al < 3; ++E_al) {			 
+			tau[9*i+3*E_al+0] = tau[9*i+3*E_al+0] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 0].real()/(1e05*freq_gamma[m]*freq_gamma[m]);
+			tau[9*i+3*E_al+1] = tau[9*i+3*E_al+1] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 1].real()/(1e05*freq_gamma[m]*freq_gamma[m]);
+			tau[9*i+3*E_al+2] = tau[9*i+3*E_al+2] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 2].real()/(1e05*freq_gamma[m]*freq_gamma[m]);				
+			}
+		}
+	}
+
+	/*3. Calculate Real Space displacement in Angstrom  */ 
+	/*			E_field * tau 		    */
+	std::vector<double> disp_E(3*_natom);
+	
+	for (unsigned i = 0 ; i < _natom; ++i){ 
+		disp_E[3*i + 0] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 0] + E_Amp*E_vec[1]*tau[9*i + 3] + E_Amp*E_vec[2]*tau[9*i + 6]);  
+		disp_E[3*i + 1] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 1] + E_Amp*E_vec[1]*tau[9*i + 4] + E_Amp*E_vec[2]*tau[9*i + 7]);
+		disp_E[3*i + 2] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 2] + E_Amp*E_vec[1]*tau[9*i + 6] + E_Amp*E_vec[2]*tau[9*i + 8]);  
+	}
+	
+	/*   Calculate vibronic dielectric constant  */
+        /*Currently not used but kept if ever needed */ 
+	geometry::mat3d diel; 
+	for (unsigned m = 3; m < freq_gamma.size(); ++m) { 
+		diel[geometry::mat3dind( 1, 1)] = diel[geometry::mat3dind( 1, 1)] + pol[m*3]*pol[m*3]/(freq_gamma[m]*freq_gamma[m]);
+		diel[geometry::mat3dind( 1, 2)] = diel[geometry::mat3dind( 1, 2)] + pol[m*3]*pol[m*3+1]/(freq_gamma[m]*freq_gamma[m]);
+		diel[geometry::mat3dind( 1, 3)] = diel[geometry::mat3dind( 1, 3)] + pol[m*3]*pol[m*3+2]/(freq_gamma[m]*freq_gamma[m]);
+
+		diel[geometry::mat3dind( 2, 1)] = diel[geometry::mat3dind( 2, 1)] + pol[m*3+1]*pol[m*3]/(freq_gamma[m]*freq_gamma[m]);
+		diel[geometry::mat3dind( 2, 2)] = diel[geometry::mat3dind( 2, 2)] + pol[m*3+1]*pol[m*3+1]/(freq_gamma[m]*freq_gamma[m]);
+		diel[geometry::mat3dind( 2, 3)] = diel[geometry::mat3dind( 2, 3)] + pol[m*3+1]*pol[m*3+2]/(freq_gamma[m]*freq_gamma[m]);
+
+		diel[geometry::mat3dind( 3, 1)] = diel[geometry::mat3dind( 3, 1)] + pol[m*3+2]*pol[m*3]/(freq_gamma[m]*freq_gamma[m]);
+		diel[geometry::mat3dind( 3, 2)] = diel[geometry::mat3dind( 3, 2)] + pol[m*3+2]*pol[m*3+1]/(freq_gamma[m]*freq_gamma[m]);
+		diel[geometry::mat3dind( 3, 3)] = diel[geometry::mat3dind( 3, 3)] + pol[m*3+2]*pol[m*3+2]/(freq_gamma[m]*freq_gamma[m]);	
+	} 
+        diel = geometry::sc_mult(diel, phys::fac/(phys::Eps_0 * cell_V));
+	
+	/*4. returen displacement under electric field */ 
+	return disp_E;
+}
+
+ 
 //
 void PhononMode::computeForceCst(const std::vector<Ddb::d2der>& ddb) {
   if ( _natom == 0 )

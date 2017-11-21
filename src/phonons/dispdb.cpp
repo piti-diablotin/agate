@@ -31,6 +31,7 @@
 #include <algorithm>
 #include "phonons/dispdb.hpp"
 #include "base/exception.hpp"
+#include "base/geometry.hpp"
 #include "io/configparser.hpp"
 #include "base/utils.hpp"
 #include "io/ddb.hpp"
@@ -44,6 +45,7 @@ DispDB::DispDB() :
   _iqpt(),
   _qpts(),
   _modes(),
+  _linResE(),
   _energies()
 {
   _iqpt = _qpts.end();
@@ -57,6 +59,7 @@ DispDB::DispDB(unsigned natom) :
   _iqpt(),
   _qpts(),
   _modes(),
+  _linResE(),
   _energies()
 {
   _iqpt = _qpts.end();
@@ -72,6 +75,7 @@ void DispDB::clear() {
   _qpts.clear();
   _modes.clear();
   _energies.clear();
+  _linResE.clear();
 }
 
 //
@@ -257,7 +261,12 @@ void DispDB::computeFromDDB(Ddb &ddb) {
   _nmode = 3*_natom;
   _modes.resize(_nqpt*_nmode*3*_natom); // nqpt * nmode * 1vector per atom
   _energies.resize(_nqpt*_nmode);
-
+  // little print loop for _qpts (Marcus) 
+  /*
+  for (int i = 0 ; i < _qpts.size(); i++) {
+	std::cout<<"_qpts in dispdb";
+  	geometry::print( _qpts[i], std::cout);
+} */
   if ( _nqpt > 0 ) {
     PhononMode modes(natom);
     try { 
@@ -272,6 +281,19 @@ void DispDB::computeFromDDB(Ddb &ddb) {
   else {
     Exception e = EXCEPTION("There is no qpt in this DDB",ERRWAR);
     std::clog << e.fullWhat() << std::endl;
+  }
+}
+
+
+void DispDB::linearResponseE(std::vector<double> &Edir, double A, Ddb &ddb) {
+  PhononMode respE;
+  geometry::vec3d E_dir = {{ Edir[0], Edir[1], Edir[2] }};
+  geometry::vec3d gamma = {{ 0,0,0 }};
+  auto disp_E = respE.lin_res(gamma, E_dir, A, ddb);
+  _linResE.resize(3*ddb.natom());
+  for ( int i = 0 ; i < 3*ddb.natom() ; ++i ) {
+    _linResE[i].real(disp_E[i]);
+    _linResE[i].imag(0.);
   }
 }
 
@@ -321,10 +343,14 @@ std::vector<DispDB::cplx>::const_iterator DispDB::getMode(unsigned imode) {
   if ( _iqpt == _qpts.end() )
     throw EXCEPTION("Select first a qpt with setQpt",ERRDIV);
   unsigned dq = std::distance(_qpts.begin(),_iqpt);
-  if ( imode >=  _nmode )
-    throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
-  //std::vector<cplx>::iterator pos = _modes.begin()+dq*_nmode*3*_natom+imode*3*_natom;
-  return _modes.begin()+dq*_nmode*3*_natom+imode*3*_natom;
+  if ( geometry::norm(*_iqpt) < 1e-6 && _linResE.size() == 3*_natom && imode == _nmode )
+    return _linResE.begin();
+  else {
+    if ( imode >=  _nmode )
+      throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
+    //std::vector<cplx>::iterator pos = _modes.begin()+dq*_nmode*3*_natom+imode*3*_natom;
+    return _modes.begin()+dq*_nmode*3*_natom+imode*3*_natom;
+  }
 }
 
 //
@@ -332,28 +358,44 @@ double DispDB::getEnergyMode(unsigned imode) {
   if ( _iqpt == _qpts.end() )
     throw EXCEPTION("Select first a qpt with setQpt",ERRDIV);
   unsigned dq = std::distance(_qpts.begin(),_iqpt);
-  if ( imode >=  _nmode )
-    throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
-  return _energies[dq*_nmode+imode];
+  if ( geometry::norm(*_iqpt) < 1e-6 && _linResE.size() == 3*_natom && imode == _nmode )
+    throw EXCEPTION("No energy for linear response displacement",ERRDIV);
+  else {
+    if ( imode >=  _nmode )
+      throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
+    return _energies[dq*_nmode+imode];
+  }
 }
 
 //
 std::vector<DispDB::cplx>::const_iterator DispDB::getMode(unsigned dq, unsigned imode) {
   if ( dq >= _qpts.size() )
     throw EXCEPTION("dq is too large",ERRDIV);
-  if ( imode >=  _nmode )
-    throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
-  //std::vector<cplx>::iterator pos = _modes.begin()+(dq*_nmode*3*_natom+imode*3*_natom);
-  return _modes.begin()+dq*_nmode*3*_natom+imode*3*_natom;
+  auto iqpt = _qpts.begin();
+  std::advance(iqpt,dq);
+  if ( geometry::norm(*iqpt) < 1e-6 && _linResE.size() == 3*_natom && imode == _nmode )
+    return _linResE.begin();
+  else {
+    if ( imode >=  _nmode )
+      throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
+    //std::vector<cplx>::iterator pos = _modes.begin()+(dq*_nmode*3*_natom+imode*3*_natom);
+    return _modes.begin()+dq*_nmode*3*_natom+imode*3*_natom;
+  }
 }
 
 //
 double DispDB::getEnergyMode(unsigned dq, unsigned imode) {
   if ( dq >= _qpts.size() )
     throw EXCEPTION("dq is too large",ERRDIV);
-  if ( imode >=  _nmode )
-    throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
-  return _energies[dq*_nmode+imode];
+  auto iqpt = _qpts.begin();
+  std::advance(iqpt,dq);
+  if ( geometry::norm(*iqpt) < 1e-6 && _linResE.size() == 3*_natom && imode == _nmode )
+    throw EXCEPTION("No energy for linear response displacement",ERRDIV);
+  else {
+    if ( imode >=  _nmode )
+      throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
+    return _energies[dq*_nmode+imode];
+  }
 }
 
 //
@@ -377,6 +419,7 @@ DispDB& DispDB::operator += ( const DispDB& disp ) {
   _qpts.resize(_nqpt);
   _modes.resize(_nqpt*_nmode*3*_natom); // nqpt * nmode * 1vector per atom
   _energies.resize(_nqpt*_nmode);
+  _linResE.clear();
 
   if ( empty ) {
     _qpts = disp._qpts;

@@ -39,7 +39,9 @@
 #include "canvas/canvaspos.hpp"
 #include "phonons/dispdb.hpp"
 #include "phonons/supercell.hpp"
+#include "io/ddb.hpp"
 #include <map>
+#include <memory>
 
 /** 
  *
@@ -56,6 +58,7 @@ class CanvasPhonons : public CanvasPos {
     DispDB::qptTree::iterator _qptModes;
     unsigned _ntime;
     std::string _originalFile; ///< Opened file.
+    std::unique_ptr<Ddb> _ddb; ///< Current ddb file used
 
     /**
      * Alter/modify a canvas with respect to a keyword and stream containing data.

@@ -424,17 +424,34 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     catch (Exception &e) {
       config.filename = utils::noSuffix(filetraj)+"_Analysis";
     }
-    config.xlabel = "Time Step";
+
+    HistData *trajectory = HistData::getHist(filetraj,true);
+
+    double dt = 1.;
+    try {
+      std::string tunit = parser.getToken<std::string>("tunit");
+      if ( tunit == "fs" ) {
+        config.xlabel = "Time [fs]";
+        if ( trajectory->ntimeAvail() > 1 ) {
+          dt = (trajectory->getTime(1)-trajectory->getTime(0))*phys::atu2fs;
+        }
+      }
+      else if ( tunit == "step" ) {
+        config.xlabel = "Time [step]";
+      }
+      else {
+        throw EXCEPTION("Unknow time unit, allowed values fs and step",ERRDIV);
+      }
+    }
+    catch (Exception &e) {
+      config.xlabel = "Time [step]";
+    }
+
     config.ylabel = "Mode decomposition ";
     config.ylabel +=  ( norm ? "a_i^2" : "A^2*a_i^2" );
     config.title = "Phonon modes analysis";
     config.save = Graph::GraphSave::DATA;
 
-#ifdef DEBUG
-    HistData *trajectory = _histdata.get(); 
-#else
-    HistData *trajectory = HistData::getHist(filetraj,true);
-#endif
     Supercell superfirst(*trajectory,0);
     try {
       superfirst.findReference(_reference);
@@ -463,7 +480,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     Exception etmp;
 #pragma omp parallel for schedule(static), default(shared)
     for ( unsigned itime = 0 ; itime < trajectory->ntimeAvail() ; ++itime ) {
-      config.x[itime]=itime;
+      config.x[itime]=itime*dt;
       Supercell supercell(*trajectory,itime);
       supercell.setReference(superfirst);
       try {
@@ -511,16 +528,32 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     catch (Exception &e) {
       config.filename = utils::noSuffix(filetraj)+"_qpt";
     }
-    config.xlabel = "Time Step";
     config.ylabel = "Qpt amplitude A^2";
     config.title = "Qpt analysis";
     config.save = Graph::GraphSave::DATA;
 
-#ifdef DEBUG
-    HistData *trajectory = _histdata.get(); 
-#else
     HistData *trajectory = HistData::getHist(filetraj,true);
-#endif
+
+    double dt = 1.;
+    try {
+      std::string tunit = parser.getToken<std::string>("tunit");
+      if ( tunit == "fs" ) {
+        config.xlabel = "Time [fs]";
+        if ( trajectory->ntimeAvail() > 1 ) {
+          dt = (trajectory->getTime(1)-trajectory->getTime(0))*phys::atu2fs;
+        }
+      }
+      else if ( tunit == "step" ) {
+        config.xlabel = "Time [step]";
+      }
+      else {
+        throw EXCEPTION("Unknow time unit, allowed values fs and step",ERRDIV);
+      }
+    }
+    catch (Exception &e) {
+      config.xlabel = "Time [step]";
+    }
+
     Supercell superfirst(*trajectory,0);
     try {
       superfirst.findReference(_reference);
@@ -547,7 +580,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     Exception etmp;
 #pragma omp parallel for schedule(static), default(shared), ordered
     for ( unsigned itime = 0 ; itime < trajectory->ntimeAvail() ; ++itime ) {
-      config.x[itime]=itime;
+      config.x[itime]=itime*dt;
       Supercell supercell(*trajectory,itime);
       supercell.setReference(superfirst);
       try {

@@ -93,6 +93,12 @@ class CanvasPhonons : public CanvasPos {
     CanvasPhonons(bool drawing);
 
     /**
+     * Move constructor.
+     */
+    CanvasPhonons(CanvasPos&&);
+
+
+    /**
      * Copy constructor from CanvasPos
      */
     CanvasPhonons(const CanvasPos& canvas);

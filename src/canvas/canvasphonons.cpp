@@ -48,6 +48,33 @@ CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
 }
 
 //
+CanvasPhonons::CanvasPhonons(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
+  _amplitudeDisplacement(100),
+  _displacements(),
+  _reference(),
+  _supercell(),
+  _condensedModes(),
+  _qptModes(),
+  _ntime(50),
+  _originalFile(),
+  _ddb(nullptr)
+{
+  if ( _histdata != nullptr && _histdata->ntimeAvail() > 0 ) {
+    _originalFile = _histdata->filename();
+    _reference = Dtset(*_histdata.get());
+    _histdata.reset(nullptr);
+    this->clear();
+    _displacements = DispDB(_reference.natom());
+    _condensedModes.clear();
+
+    this->readDdb(_originalFile);
+    this->buildAnimation();
+  }
+  this->nLoop(-2);
+  _qptModes = _condensedModes.end();
+}
+
+//
 CanvasPhonons::CanvasPhonons(const CanvasPos &canvas) : CanvasPos(canvas.opengl()),
   _amplitudeDisplacement(100),
   _displacements(),
@@ -462,9 +489,10 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 #ifndef DEBUG
     delete trajectory;
 #endif
-    Gnuplot *gplot = new Gnuplot;
-    Graph::plot(config,gplot);
-    delete gplot;
+    if ( _gplot == nullptr )  {
+      _gplot.reset(new Gnuplot);
+    }
+    Graph::plot(config,_gplot.get());
   }
   else if ( token == "findqpt" ) {
     std::string filetraj;
@@ -540,8 +568,9 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 #ifndef DEBUG
     delete trajectory;
 #endif
-    if ( _gplot == nullptr ) 
+    if ( _gplot == nullptr )  {
       _gplot.reset(new Gnuplot);
+    }
     Graph::plot(config,_gplot.get());
   }
   else if ( token == "lin_res_E" ) {

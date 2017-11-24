@@ -81,7 +81,7 @@ void EigParserPHBST::readFromFile(const std::string& filename) {
   kpts = (unsigned) dimval;
   _hasSpin = false;
 
-  _eunit = Ha;
+  _eunit = eV;
 
   geometry::vec3d prev_kpt = {{0.,0.,0.}};
   double length = 0.0;

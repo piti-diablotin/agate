@@ -179,6 +179,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   stream.clear();
   stream.seekg(pos);
   ConfigParser parser;
+  parser.setSensitive(true);
   parser.setContent(line);
  
   if ( token == "qpt" ) {
@@ -390,7 +391,12 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     if ( stream.fail() ) stream.clear();
     bool norm = (normalized == "normalized");
 
-    config.filename = filetraj+"_Analysis";
+    try {
+      config.filename = parser.getToken<std::string>("output");
+    }
+    catch (Exception &e) {
+      config.filename = utils::noSuffix(filetraj)+"_Analysis";
+    }
     config.xlabel = "Time Step";
     config.ylabel = "Mode decomposition ";
     config.ylabel +=  ( norm ? "a_i^2" : "A^2*a_i^2" );
@@ -471,7 +477,12 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     if ( stream.fail() )
       throw EXCEPTION("You need to provide a filename",ERRDIV);
 
-    config.filename = filetraj+"_qpt";
+    try {
+      config.filename = parser.getToken<std::string>("output");
+    }
+    catch (Exception &e) {
+      config.filename = utils::noSuffix(filetraj)+"_qpt";
+    }
     config.xlabel = "Time Step";
     config.ylabel = "Qpt amplitude A^2";
     config.title = "Qpt analysis";
@@ -529,14 +540,14 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 #ifndef DEBUG
     delete trajectory;
 #endif
-    Gnuplot *gplot = new Gnuplot;
-    Graph::plot(config,gplot);
-    delete gplot;
+    if ( _gplot == nullptr ) 
+      _gplot.reset(new Gnuplot);
+    Graph::plot(config,_gplot.get());
   }
   else if ( token == "lin_res_E" ) {
     try {
-      double Eamp = parser.getToken<double>("a");
-      std::vector<double> Edir = parser.getToken<double>("edir",3);
+      double Eamp = parser.getToken<double>("A");
+      std::vector<double> Edir = parser.getToken<double>("Edir",3);
       _displacements.linearResponseE(Edir,Eamp,*_ddb.get());
       if ( this->selectQpt({{0,0,0}}) ) {
         DispDB::qMode vibnrj {3*(unsigned)_natom,1,0};

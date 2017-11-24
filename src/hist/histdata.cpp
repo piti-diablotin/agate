@@ -990,6 +990,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   stream.clear();
   stream.seekg(pos);
   ConfigParser parser;
+  parser.setSensitive(true);
   parser.setContent(line);
 
   unsigned ntime = tend-tbegin;
@@ -1352,6 +1353,12 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   }
 
   config.save = save;
+  try {
+    filename = parser.getToken<std::string>("output");
+  }
+  catch (Exception &e) {
+    filename = utils::noSuffix(_filename)+std::string("_")+filename;
+  }
   Graph::plot(config,gplot);
   if ( gplot != nullptr )
     gplot->clearCustom();

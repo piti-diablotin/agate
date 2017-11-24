@@ -115,6 +115,12 @@ class ConfigParser {
     void setContent(const std::string& content) _NOEXCEPT;
 
     /**
+     * Set the case sensitivity of the parser
+     * @param sensitive true or false
+     */
+    void setSensitive(const bool sensitive) _NOEXCEPT {_caseSensitive = sensitive;}
+
+    /**
      * Load the entire file in memory removing the comments
      */
     void parse();

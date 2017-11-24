@@ -119,7 +119,6 @@ void ConfigParser::parse() {
 void ConfigParser::setContent(const std::string& content) _NOEXCEPT {
   _content = content;
   _contentOrig = content;
-  _caseSensitive = false;
   _isParsed = true;
 
   size_t pos_useless;

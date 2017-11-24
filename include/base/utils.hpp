@@ -216,6 +216,13 @@ namespace utils {
    * Small function to print mean value of plot function
    */
   void sumUp(const std::list<std::vector<double>>& y, const std::list<std::string>& labels,std::ostream& sum);
+
+  /**
+   * Remove suffix of a file name
+   * @param filenmae the file to treat
+   * @return The filename without its extension if it has one.
+   */
+  std::string noSuffix(std::string filename);
 }
 
 #endif  // UTILS_HPP

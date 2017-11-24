@@ -332,5 +332,10 @@ namespace utils {
       }
     }
   }
+
+  std::string noSuffix(std::string filename) {
+    auto pos = filename.find_last_of(".");
+    return ( pos != std::string::npos ) ? filename.substr(0,pos) : filename;
+  }
 }
 

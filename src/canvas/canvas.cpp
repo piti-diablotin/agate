@@ -248,6 +248,7 @@ void Canvas::translateZ(TransDir trans) {
 //
 void Canvas::alter(std::string token, std::istringstream &stream) {
   ConfigParser parser;
+  parser.setSensitive(true);
   parser.setContent(stream.str());
   if ( token == "o" || token == "open" || token == "e" || token == "edit" ) {
     std::string ext;

@@ -56,6 +56,7 @@ void EigParserPHFRQ::readFromFile(const std::string& filename) {
     if ( pos_com != std::string::npos ) {
       line.resize(pos_com);
     }
+    if ( line.size() == 0 ) continue;
     std::istringstream sline(line);
     double length;
     sline >> length;

@@ -1199,13 +1199,13 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
   stream.clear();
   stream.seekg(pos);
   ConfigParser parser;
+  parser.setSensitive(true);
   parser.setContent(line);
 
   // band
   if ( function == "band" ) {
     if ( _gplot != nullptr )
       _gplot->setWinTitle("Band Structure");
-    filename = "bandStruct";
     doSumUp = false;
     title = "Band Structure";
     xlabel = "k-path";
@@ -1214,6 +1214,14 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     stream >> bandfile;
     if ( stream.fail() )
       throw EXCEPTION("You need to specify a filename",ERRDIV);
+
+    try {
+      filename = parser.getToken<std::string>("output");
+    }
+    catch (Exception &e) {
+      filename = utils::noSuffix(bandfile)+"_bandStruct";
+    }
+    
 
     EigParser* eigparser;
     try {

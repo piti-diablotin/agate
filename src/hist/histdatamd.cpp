@@ -324,6 +324,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       stream.clear();
       stream.seekg(pos);
       ConfigParser parser;
+      parser.setSensitive(true);
       parser.setContent(line);
 
       unsigned ntime = tend-tbegin;
@@ -523,6 +524,12 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       }
 
       config.save = save;
+      try {
+        filename = parser.getToken<std::string>("output");
+      }
+      catch (Exception &e) {
+        filename = utils::noSuffix(_filename)+std::string("_")+filename;
+      }
       Graph::plot(config,gplot);
       stream.clear();
     }

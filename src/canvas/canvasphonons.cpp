@@ -608,8 +608,8 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   }
   else if ( token == "lin_res_E" ) {
     try {
-      double Eamp = parser.getToken<double>("A");
-      std::vector<double> Edir = parser.getToken<double>("Edir",3);
+      double Eamp = parser.getToken<double>("a");
+      std::vector<double> Edir = parser.getToken<double>("edir",3);
       _displacements.linearResponseE(Edir,Eamp,*_ddb.get());
       if ( this->selectQpt({{0,0,0}}) ) {
         DispDB::qMode vibnrj {3*(unsigned)_natom,1,0};

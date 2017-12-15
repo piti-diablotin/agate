@@ -408,7 +408,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       else if ( function == "vacf" ){
         filename = "VACF";
         xlabel = "Time [ps]";
-        ylabel = "VACF [nm^2/ps^2]";
+        ylabel = "VACF [nm^2/ps^2/atom]";
         title = "VACF";
         std::clog << std::endl << " -- VACF --" << std::endl;
 
@@ -430,14 +430,33 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       // PDOS
       else if ( function == "pdos" ){
         filename = "PDOS";
-        ylabel = "PDOS [arbitrary units]";
+        ylabel = "PDOS [arbitrary units/atom]";
         xlabel = "Frequency [meV]";
         title = "PDOS";
         std::clog << std::endl << " -- PDOS --" << std::endl;
 
-        y = std::move(this->getPDOS(tbegin,tend));
-
         const double dtion = phys::atu2fs*1e-3*( _time.size() > 1 ? _time[1]-_time[0] : 100); //ps
+
+        auto first =_temperature.begin();
+        std::advance(first,tbegin);
+        auto last = _temperature.begin();
+        std::advance(last,tend);
+        const double T = utils::mean(first,last);
+
+        double smearing = 0;
+        try {
+          smearing = parser.getToken<double>("tsmear");
+        }
+        catch ( Exception &e ) {
+          smearing = 0.05*T;
+        }
+        if ( smearing < 0 )
+          throw EXCEPTION("tsmear needs to be positive",ERRDIV);
+
+        smearing *= (phys::kB/phys::eV*1e3)/(phys::THz2Ha * phys::Ha2eV *1e3)*(dtion*2); // kBT(ev) / Scaling x axis
+
+        y = std::move(this->getPDOS(tbegin,tend,smearing));
+
         x.resize(y.front().size());
         for ( unsigned itime = 0 ; itime < y.front().size() ; ++itime )
           x[itime] = phys::THz2Ha * phys::Ha2eV *1e3 * itime/(dtion*y.front().size()*2); // *2 because of niquist frequency
@@ -449,19 +468,14 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
             labels.push_back(utils::trim(std::string(mendeleev::name[_znucl[typ-1]])));
         }
 
-        auto first =_temperature.begin();
-        std::advance(first,tbegin);
-        auto last = _temperature.begin();
-        std::advance(last,tend);
-        const double T = utils::mean(first,last);
-
         first =_etotal.begin();
         std::advance(first,tbegin);
         last = _etotal.begin();
         std::advance(last,tend);
         const double Etotal = utils::mean(first,last)*phys::Ha2eV/_natom;
 
-        auto thermo = this->computeThermoFunctionHA(y.front(),T);
+        auto pdos_tmp = y.front();
+        auto thermo = this->computeThermoFunctionHA(pdos_tmp,T);
         std::cout << "Thermodynamic functions in the Harmonic Approximation " << std::endl;
         std::cout << "E_0   = " << Etotal    << " eV/atom" << std::endl;
         std::cout << "F_vib = " << thermo[0] << " eV/atom" << std::endl;
@@ -501,7 +515,22 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         E.resize(1000);
         C.resize(1000);
         S.resize(1000);
-        auto pdos = this->getPDOS(tbegin,tend);
+
+        double smearing = 0;
+        try {
+          smearing = parser.getToken<double>("tsmear");
+        }
+        catch ( Exception &e ) {
+          smearing = 0.05*T;
+        }
+        if ( smearing < 0 )
+          throw EXCEPTION("tsmear needs to be positive",ERRDIV);
+
+        const double dtion = phys::atu2fs*1e-3*( _time.size() > 1 ? _time[1]-_time[0] : 100); //ps
+        smearing *= (phys::kB/phys::eV*1e3)/(phys::THz2Ha * phys::Ha2eV *1e3)*(dtion*2); // kBT(ev) / Scaling x axis
+
+        auto pdos = this->getPDOS(tbegin,tend,smearing);
+
         double dT = 2.*T/1000.;
         for ( unsigned itime = 0 ; itime < 1000 ; ++itime ) {
           x[itime] = (itime+1)*dT;
@@ -589,7 +618,7 @@ std::list<std::vector<double>> HistDataMD::getVACF(unsigned tbegin, unsigned ten
   return vacf;
 }
 
-std::list<std::vector<double>> HistDataMD::getPDOS(unsigned tbegin, unsigned tend) const {
+std::list<std::vector<double>> HistDataMD::getPDOS(unsigned tbegin, unsigned tend, double tsmear) const {
 #ifndef HAVE_FFTW3
   throw EXCEPTION("FFTW3 is needed to compute the PDOS",ERRDIV);
   (void) tbegin;
@@ -632,11 +661,35 @@ std::list<std::vector<double>> HistDataMD::getPDOS(unsigned tbegin, unsigned ten
 
   fftw_execute(plan_forward);
 
+  if ( tsmear > 0 ) {
+    const double sigma = tsmear;
+    const double renorm = 1./(sigma*std::sqrt(2*phys::pi));
+    const double inv_2sigma2 = 1./(2.*sigma*sigma);
+    const double inv_n = 1./(double)n;
+
 #pragma omp parallel for
-  for ( int u = 0 ; u < howmany ; ++u ) {
-    auto ptrpdos = pdos.begin();
-    std::advance(ptrpdos,u);
-    std::copy(&fft_out[u*n],&fft_out[(u+1)*n],ptrpdos->begin());
+    for ( int u = 0 ; u < howmany ; ++u ) {
+      auto ptrpdos = pdos.begin();
+      std::advance(ptrpdos,u);
+
+      std::vector<double> &fit = *ptrpdos;
+      std::fill(fit.begin(),fit.end(),0.);
+      for ( unsigned i = 0 ; i < n ; ++i ) {
+        const double mean = i*inv_n;
+        const double max = fft_out[u*n+i]*renorm;
+        for ( unsigned g = 0; g < n ; ++g ) {
+          fit[g]+=max*std::exp(-(g*inv_n-mean)*(g*inv_n-mean)*inv_2sigma2);
+        }
+      }
+    }
+  }
+  else {
+#pragma omp parallel for
+    for ( int u = 0 ; u < howmany ; ++u ) {
+      auto ptrpdos = pdos.begin();
+      std::advance(ptrpdos,u);
+      std::copy(&fft_out[u*n],&fft_out[(u+1)*n],ptrpdos->begin());
+    }
   }
 
 #pragma omp critical (pdos_fft)
@@ -713,7 +766,7 @@ std::array<double,4> HistDataMD::computeThermoFunctionHA(unsigned tbegin, unsign
 
   std::vector<double> pdos;
   try {
-    auto pdosfull = std::move(this->getPDOS(tbegin,tend));
+    auto pdosfull = std::move(this->getPDOS(tbegin,tend,0));
     pdos = std::move(pdosfull.front());
   }
   catch ( Exception &e ) {
@@ -747,15 +800,6 @@ std::array<double,4> HistDataMD::computeThermoFunctionHA(std::vector<double> &pd
     norme += (pdos[iomega]+pdos[iomega+1])*0.5*domega;
   for ( unsigned iomega = 0 ; iomega < nmax ; ++iomega )
     pdos[iomega] /= norme;
-
-  static std::string file = "test.vdos";
-  std::ofstream out(file);
-  for ( unsigned iomega = 0 ; iomega < nmax ; ++iomega ) {
-    out << omega[iomega] << "    " << pdos[iomega] << std::endl;
-  }
-  out.close();
-  file="test2.vdos";
-
 
   // Compute F E C S
   double F = 0.;

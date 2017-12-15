@@ -990,9 +990,9 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     stream >> toPeriodic;
     if ( !stream.fail() ) {
       _histdata->periodicBoundaries(toPeriodic);
-      this->updateOctahedra(_octahedra_z);
       if ( !toPeriodic)
         this->buildBorders(_itime,true);
+      this->updateOctahedra(_octahedra_z);
     }
     else
       throw EXCEPTION("Could not read line", ERRDIV);

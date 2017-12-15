@@ -253,8 +253,9 @@ class HistDataMD : public HistData {
      * Compute the phonon density of state using the fourier transform of VACF
      * @param tbegin First time to use to calculate mean values
      * @param tend Last time to use to calculate mean values
+     * @param smearing Smearing to fit the PDOS with gaussians
      */
-    std::list<std::vector<double>> getPDOS(unsigned tbegin, unsigned tend) const;
+    std::list<std::vector<double>> getPDOS(unsigned tbegin, unsigned tend, double smearing) const;
 };
 
 #endif  // HISTDATAMD_HPP

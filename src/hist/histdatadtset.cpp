@@ -106,6 +106,15 @@ void HistDataDtset::readFromFile(const std::string& filename) {
 
     this->buildFromDtset(*dtset);
     delete dtset;
+    try {
+      _fcart = parser.getToken<double>("fcart",_natom*3);
+    } catch (Exception &e)
+    {;}
+    try {
+      _stress = parser.getToken<double>("strten",6);
+    } catch (Exception &e)
+    {;}
+      
     if ( nimage > 1 ) {
       bool imageIsTime = true;
       switch ( imgmov ) {
@@ -133,6 +142,8 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         *this += hist;
         std::clog << " ..." << img;
       }
+      _fcart.resize(3*_natom*nimage);
+      _stress.resize(6*nimage);
       for ( unsigned img = 1 ; img <= nimage ; ++ img ) {
         std::string suffix = " ";
        if ( img > 1 ) suffix = "_"+utils::to_string(img)+"img";
@@ -142,6 +153,20 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         }
         catch (...) {
           etot = 0.;
+        }
+        try {
+          auto fcart = parser.getToken<double>("fcart"+suffix,_natom*3);
+          std::copy(fcart.begin(),fcart.end(),_fcart.begin()+3*_natom*(img-1));
+        } 
+        catch (Exception &e) {
+          std::fill_n(_fcart.begin()+3*_natom*(img-1),3*_natom,0.);
+        }
+        try {
+          auto stress = parser.getToken<double>("strten"+suffix,6);
+          std::copy(stress.begin(),stress.end(),_stress.begin()+6*(img-1));
+        } 
+        catch (Exception &e) {
+          std::fill_n(_stress.begin()+6*(img-1),6,0.);
         }
         _etotal[img-1] = etot;
       }

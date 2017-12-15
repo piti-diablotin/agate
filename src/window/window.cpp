@@ -695,7 +695,7 @@ bool Window::userInput(std::stringstream& info) {
             size_t pos = info.find_last_of("/\\");
             if ( !info.empty() ) this->setTitle(info.substr(pos+1));
           }
-          if ( cin.fail() ) throw EXCEPTION("Bad line argument",ERRCOM);
+          //if ( cin.fail() ) throw EXCEPTION("Bad line argument",ERRCOM);
           error = false;
           _command = _canvas->info();
         } // try process

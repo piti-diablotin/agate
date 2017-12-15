@@ -114,7 +114,7 @@ void CanvasLocal::refresh(const geometry::vec3d &cam, TextRender &render){
 
   const float factor = ( _view == ANGLES ? 1.f/15.f : 1.f/0.10f ); CanvasPos::drawCell(); 
 
-  this->buildBorders(_itime);
+  this->buildBorders(_itime,false);
 
   //glDisable(GL_LIGHTING);
   Octahedra::u3f angles;
@@ -193,7 +193,7 @@ void CanvasLocal::updateOctahedra(int z) {
     const double *xred = _histdata->getXred(0);
     const double *rprimd = _histdata->getRprimd(0);
 
-    this->buildBorders(0);
+    this->buildBorders(0,false);
     std::copy(&histXcart[0],&histXcart[_natom*3],&xcartTotal[0]);
     std::copy(&_xcartBorders[0],&_xcartBorders[_onBorders.size()*3],&xcartTotal[_natom*3]);
 

@@ -144,8 +144,9 @@ class CanvasPos : public Canvas {
     /**
      * Build the cartesian position of the atoms on the borders
      * @param itime Build for this time step
+     * @param findBorders True if the border is searched
      */
-    virtual void buildBorders(unsigned itime);
+    virtual void buildBorders(unsigned itime, bool findBorders);
 
     /**
      * Look for all bondings.

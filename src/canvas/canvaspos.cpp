@@ -187,64 +187,6 @@ void CanvasPos::setHist(HistData& hist) {
       _hasTranslations = true;
       _info = hist.filename();
 
-      //*
-      const double *ptrR = hist.getXred(0);
-      double normvec = 0.0;
-      const double nx = ( (normvec = geometry::norm({{
-              rprimd0[0],
-              rprimd0[3],
-              rprimd0[6] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-      const double ny = ( (normvec = geometry::norm({{
-              rprimd0[1],
-              rprimd0[4],
-              rprimd0[7] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-      const double nz = ( (normvec = geometry::norm({{
-              rprimd0[2],
-              rprimd0[5],
-              rprimd0[8] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-      const double mx = 1-nx;
-      const double my = 1-ny;
-      const double mz = 1-nz;
-      for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
-        geometry::vec3d shift({{0,0,0}});
-        if ( ptrR[iatom*3  ] <= nx || ptrR[iatom*3  ] >= mx ) {
-          shift[0] = (ptrR[iatom*3  ] < 0.5 ? 1 : -1);
-          _onBorders.push_back(std::make_pair(iatom, shift));
-          if ( ptrR[iatom*3+1] <= ny || ptrR[iatom*3+1] >= my ) {
-            shift[1] = (ptrR[iatom*3+1] < 0.5 ? 1 : -1);
-            _onBorders.push_back(std::make_pair(iatom, shift));
-            if ( ptrR[iatom*3+2] <= nz || ptrR[iatom*3+2] >= mz ) {
-              shift[2] = (ptrR[iatom*3+2] < 0.5 ? 1 : -1);
-              _onBorders.push_back(std::make_pair(iatom, shift));
-            }
-          }
-          shift[1] = shift[2] = 0;
-          if ( ptrR[iatom*3+2] <= nz || ptrR[iatom*3+2] >= mz ) {
-            shift[2] = (ptrR[iatom*3+2] < 0.5 ? 1 : -1);
-            _onBorders.push_back(std::make_pair(iatom, shift));
-          }
-        }
-        shift = {{0,0,0}};
-        if ( ptrR[iatom*3+1] <= ny || ptrR[iatom*3+1] >= my ) {
-          shift[1] = (ptrR[iatom*3+1] < 0.5 ? 1 : -1);
-          _onBorders.push_back(std::make_pair(iatom, shift));
-          if ( ptrR[iatom*3+2] <= nz || ptrR[iatom*3+2] >= mz ) {
-            shift[2] = (ptrR[iatom*3+2] < 0.5 ? 1 : -1);
-            _onBorders.push_back(std::make_pair(iatom, shift));
-          }
-        }
-        shift = {{0,0,0}};
-        if ( ptrR[iatom*3+2] <= nz || ptrR[iatom*3+2] >= mz ) {
-          shift[2] = (ptrR[iatom*3+2] < 0.5 ? 1 : -1);
-          _onBorders.push_back(std::make_pair(iatom, shift));
-        }
-      }
-
-      for ( auto &atom : _onBorders ) {
-        _typat.push_back(_typat[atom.first]);
-      }
-      _xcartBorders.resize(_onBorders.size()*3);
-      //*/
     }
     else { // No rprimd
       _hasTranslations = false;
@@ -254,6 +196,7 @@ void CanvasPos::setHist(HistData& hist) {
 
     // Build octahedra
     _histdata.reset(&hist);
+    this->buildBorders(0,_hasTranslations);
     this->updateOctahedra(_octahedra_z);
 
     _itime = _tbegin;
@@ -280,11 +223,11 @@ void CanvasPos::updateOctahedra(int z) {
     _octahedra_z = z;
     _octahedra.clear();
     std::vector<double> xcartTotal((_natom+_onBorders.size())*3);
-    const double *histXcart = _histdata->getXcart(0);
-    const double *xred = _histdata->getXred(0);
-    const double *rprimd = _histdata->getRprimd(0);
+    const double *histXcart = _histdata->getXcart(_itime);
+    const double *xred = _histdata->getXred(_itime);
+    const double *rprimd = _histdata->getRprimd(_itime);
 
-    this->buildBorders(0);
+    this->buildBorders(_itime,false);
     std::copy(&histXcart[0],&histXcart[_natom*3],&xcartTotal[0]);
     std::copy(&_xcartBorders[0],&_xcartBorders[_onBorders.size()*3],&xcartTotal[_natom*3]);
 
@@ -324,7 +267,8 @@ void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
   glPushMatrix();
   CanvasPos::drawCell();
 
-  this->buildBorders(_itime);
+  if ( _display & DISP_BORDER )
+    this->buildBorders(_itime,_histdata->isPeriodic());
 
   /* Find bond here */
   std::vector< std::pair<int ,int> > bonds; // iatom/distance
@@ -441,83 +385,87 @@ void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
   CanvasPos::drawAtom(-1,0.f,0.f,0.f);
   _sphere.pop();
 
-  std::vector< std::pair<unsigned,double> > drawOrder;
-  for( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
-    const int id = _octahedra[i]->center();
-    geometry::vec3d center;
-    if ( id < _natom ) {
-    center = {{ cam[0]-xcart[id*3], 
-      cam[1]-xcart[id*3+1], 
-      cam[2]-xcart[id*3+2] }};
-    }
-    else {
-    center = {{ cam[0]-_xcartBorders[(id-_natom)*3], 
-      cam[1]-_xcartBorders[(id-_natom)*3+1], 
-      cam[2]-_xcartBorders[(id-_natom)*3+2] }};
-    }
-    drawOrder.push_back(std::make_pair(i,geometry::dot(cam,center)));
-  }
-  std::sort(drawOrder.begin(), drawOrder.end(), []
-      (std::pair<unsigned,double> t1, std::pair<unsigned,double>t2) {
-      return t1.second > t2.second;
+  if ( _octahedra_z != -1 ) {
+    if ( _histdata->isPeriodic() )
+      this->updateOctahedra(_octahedra_z);
+    std::vector< std::pair<unsigned,double> > drawOrder;
+    for( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
+      const int id = _octahedra[i]->center();
+      geometry::vec3d center;
+      if ( id < _natom ) {
+        center = {{ cam[0]-xcart[id*3], 
+          cam[1]-xcart[id*3+1], 
+          cam[2]-xcart[id*3+2] }};
       }
-      );
-
-  //glPopMatrix();
-
-  for ( int k = 0 ; k < _translate[2] ; ++k ) {
-    const GLfloat fk = (GLfloat) k;
-    const GLfloat ztrans[] = { (fk)*fz[0], (fk)*fz[1],(fk)*fz[2] };
-    for ( int j = 0 ; j < _translate[1] ; ++j) {
-      const GLfloat fj = (GLfloat) j;
-      const GLfloat ytrans[] = { ztrans[0]+(fj)*fy[0], ztrans[1]+(fj)*fy[1],ztrans[2]+(fj)*fy[2] };
-      for ( int i = 0 ; i < _translate[0] ; ++i) {
-        const GLfloat fi = (GLfloat) i;
-        const GLfloat xtrans[] = { ytrans[0]+(fi)*fx[0], ytrans[1]+(fi)*fx[1],ytrans[2]+(fi)*fx[2] };
-        glPushMatrix();
-        glTranslatef(xtrans[0],xtrans[1],xtrans[2]);
-
-        Octahedra::u3f na;
-        if (  k == 0 && j == 0 && i == 0 ) {
-          for( auto& iocta : drawOrder )
-            if ( (_display & DISP_BORDER ) || ( _octahedra[iocta.first]->center() < _natom ) )
-              _octahedra[iocta.first]->build(rprimd,xcart, na);
+      else {
+        center = {{ cam[0]-_xcartBorders[(id-_natom)*3], 
+          cam[1]-_xcartBorders[(id-_natom)*3+1], 
+          cam[2]-_xcartBorders[(id-_natom)*3+2] }};
+      }
+      drawOrder.push_back(std::make_pair(i,geometry::dot(cam,center)));
+    }
+    std::sort(drawOrder.begin(), drawOrder.end(), []
+        (std::pair<unsigned,double> t1, std::pair<unsigned,double>t2) {
+        return t1.second > t2.second;
         }
-        else {
-          for( auto& iocta : drawOrder )
-            if ( (_display & DISP_BORDER ) || ( _octahedra[iocta.first]->center() < _natom ) )
-              _octahedra[iocta.first]->build(rprimd,nullptr, na);
-        }
+        );
 
-        if ( _octaDrawAtoms && !_octahedra.empty() ) {
-          _sphere.push();
-          for ( auto &a : na ) {
-            CanvasPos::drawAtom(_znucl[_typat[a.first]],a.second[0],a.second[1],a.second[2]);
-            if ( _display & (DISP_NAME | DISP_ID | DISP_ZNUCL) ) {
-              std::stringstream label;
-              if ( _display & DISP_NAME ) label << mendeleev::name[_znucl[_typat[a.first]]];
-              else if ( _display & DISP_ID   ) label << a.first+1;
-              else if ( _display & DISP_ZNUCL ) label << _znucl[_typat[a.first]];
-              glDisable(GL_DEPTH_TEST);
-              glRasterPos3f(
-                  a.second[0],
-                  a.second[1],
-                  a.second[2]);
-              render.render(utils::trim(label.str()),true);
-              glEnable(GL_DEPTH_TEST);
-            }
+    //glPopMatrix();
+
+    for ( int k = 0 ; k < _translate[2] ; ++k ) {
+      const GLfloat fk = (GLfloat) k;
+      const GLfloat ztrans[] = { (fk)*fz[0], (fk)*fz[1],(fk)*fz[2] };
+      for ( int j = 0 ; j < _translate[1] ; ++j) {
+        const GLfloat fj = (GLfloat) j;
+        const GLfloat ytrans[] = { ztrans[0]+(fj)*fy[0], ztrans[1]+(fj)*fy[1],ztrans[2]+(fj)*fy[2] };
+        for ( int i = 0 ; i < _translate[0] ; ++i) {
+          const GLfloat fi = (GLfloat) i;
+          const GLfloat xtrans[] = { ytrans[0]+(fi)*fx[0], ytrans[1]+(fi)*fx[1],ytrans[2]+(fi)*fx[2] };
+          glPushMatrix();
+          glTranslatef(xtrans[0],xtrans[1],xtrans[2]);
+
+          Octahedra::u3f na;
+          if (  k == 0 && j == 0 && i == 0 ) {
+            for( auto& iocta : drawOrder )
+              if ( (_display & DISP_BORDER ) || ( _octahedra[iocta.first]->center() < _natom ) )
+                _octahedra[iocta.first]->build(rprimd,xcart, na);
           }
-          CanvasPos::drawAtom(-1,0.f,0.f,0.f);
-          _sphere.pop();
+          else {
+            for( auto& iocta : drawOrder )
+              if ( (_display & DISP_BORDER ) || ( _octahedra[iocta.first]->center() < _natom ) )
+                _octahedra[iocta.first]->build(rprimd,nullptr, na);
+          }
+
+          if ( _octaDrawAtoms && !_octahedra.empty() ) {
+            _sphere.push();
+            for ( auto &a : na ) {
+              CanvasPos::drawAtom(_znucl[_typat[a.first]],a.second[0],a.second[1],a.second[2]);
+              if ( _display & (DISP_NAME | DISP_ID | DISP_ZNUCL) ) {
+                std::stringstream label;
+                if ( _display & DISP_NAME ) label << mendeleev::name[_znucl[_typat[a.first]]];
+                else if ( _display & DISP_ID   ) label << a.first+1;
+                else if ( _display & DISP_ZNUCL ) label << _znucl[_typat[a.first]];
+                glDisable(GL_DEPTH_TEST);
+                glRasterPos3f(
+                    a.second[0],
+                    a.second[1],
+                    a.second[2]);
+                render.render(utils::trim(label.str()),true);
+                glEnable(GL_DEPTH_TEST);
+              }
+            }
+            CanvasPos::drawAtom(-1,0.f,0.f,0.f);
+            _sphere.pop();
+          }
+
+          if ( _light ) glDisable(GL_LIGHTING);
+          for( auto& iocta : drawOrder )
+            if ( (_display & DISP_BORDER ) || ( _octahedra[iocta.first]->center() < _natom ) )
+              _octahedra[iocta.first]->draw(_octacolor);
+          if ( _light ) glEnable(GL_LIGHTING);
+
+          glPopMatrix();
         }
-
-        if ( _light ) glDisable(GL_LIGHTING);
-        for( auto& iocta : drawOrder )
-          if ( (_display & DISP_BORDER ) || ( _octahedra[iocta.first]->center() < _natom ) )
-            _octahedra[iocta.first]->draw(_octacolor);
-        if ( _light ) glEnable(GL_LIGHTING);
-
-        glPopMatrix();
       }
     }
   }
@@ -926,8 +874,10 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     std::string what;
     stream >> what;
     if ( !stream.fail() ) { 
-      if ( what == "border" )
+      if ( what == "border" ) {
         _display |= DISP_BORDER;
+        this->buildBorders(_itime,true);
+      }
       else if ( what == "name" ) 
         _display = (_display&~(DISP_ZNUCL | DISP_ID))|DISP_NAME;
       else if ( what == "znucl" )
@@ -1041,6 +991,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     if ( !stream.fail() ) {
       _histdata->periodicBoundaries(toPeriodic);
       this->updateOctahedra(_octahedra_z);
+      if ( !toPeriodic)
+        this->buildBorders(_itime,true);
     }
     else
       throw EXCEPTION("Could not read line", ERRDIV);
@@ -1448,66 +1400,71 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     _gplot->clearCustom();
 }
 
-void CanvasPos::buildBorders(unsigned itime) {
+void CanvasPos::buildBorders(unsigned itime, bool findBorder) {
   // Atoms on border
+  if ( _histdata == nullptr )  return;
   const double *xred = _histdata->getXred(itime);
   const double *rprimd = _histdata->getRprimd(itime);
 
-  /*
-  double normvec = 0.0;
-  const double nx = ( (normvec = geometry::norm({{
-          rprimd[0],
-          rprimd[3],
-          rprimd[6] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-  const double ny = ( (normvec = geometry::norm({{
-          rprimd[1],
-          rprimd[4],
-          rprimd[7] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-  const double nz = ( (normvec = geometry::norm({{
-          rprimd[2],
-          rprimd[5],
-          rprimd[8] }})) < 1e-6 ? 0.0 : 1.2/normvec);
-  for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
-    geometry::vec3d shift({{0,0,0}});
-    if ( xred[iatom*3  ] <= nx ) {
-      shift[0] = 1;
-      _onBorders.push_back(std::make_pair(iatom, shift));
-      if ( xred[iatom*3+1] <= ny ) {
-        shift[1] = 1;
-        _onBorders.push_back(std::make_pair(iatom, shift));
-        if ( xred[iatom*3+2] <= nz ) {
-          shift[2] = 1;
+  if ( findBorder ) {
+      _onBorders.clear();
+      double normvec = 0.0;
+      const double nx = ( (normvec = geometry::norm({{
+              rprimd[0],
+              rprimd[3],
+              rprimd[6] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+      const double ny = ( (normvec = geometry::norm({{
+              rprimd[1],
+              rprimd[4],
+              rprimd[7] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+      const double nz = ( (normvec = geometry::norm({{
+              rprimd[2],
+              rprimd[5],
+              rprimd[8] }})) < 1e-6 ? 0.0 : 1.2/normvec);
+      const double mx = 1-nx;
+      const double my = 1-ny;
+      const double mz = 1-nz;
+      for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
+        geometry::vec3d shift({{0,0,0}});
+        if ( xred[iatom*3  ] <= nx || xred[iatom*3  ] >= mx ) {
+          shift[0] = (xred[iatom*3  ] < 0.5 ? 1 : -1);
+          _onBorders.push_back(std::make_pair(iatom, shift));
+          if ( xred[iatom*3+1] <= ny || xred[iatom*3+1] >= my ) {
+            shift[1] = (xred[iatom*3+1] < 0.5 ? 1 : -1);
+            _onBorders.push_back(std::make_pair(iatom, shift));
+            if ( xred[iatom*3+2] <= nz || xred[iatom*3+2] >= mz ) {
+              shift[2] = (xred[iatom*3+2] < 0.5 ? 1 : -1);
+              _onBorders.push_back(std::make_pair(iatom, shift));
+            }
+          }
+          shift[1] = shift[2] = 0;
+          if ( xred[iatom*3+2] <= nz || xred[iatom*3+2] >= mz ) {
+            shift[2] = (xred[iatom*3+2] < 0.5 ? 1 : -1);
+            _onBorders.push_back(std::make_pair(iatom, shift));
+          }
+        }
+        shift = {{0,0,0}};
+        if ( xred[iatom*3+1] <= ny || xred[iatom*3+1] >= my ) {
+          shift[1] = (xred[iatom*3+1] < 0.5 ? 1 : -1);
+          _onBorders.push_back(std::make_pair(iatom, shift));
+          if ( xred[iatom*3+2] <= nz || xred[iatom*3+2] >= mz ) {
+            shift[2] = (xred[iatom*3+2] < 0.5 ? 1 : -1);
+            _onBorders.push_back(std::make_pair(iatom, shift));
+          }
+        }
+        shift = {{0,0,0}};
+        if ( xred[iatom*3+2] <= nz || xred[iatom*3+2] >= mz ) {
+          shift[2] = (xred[iatom*3+2] < 0.5 ? 1 : -1);
           _onBorders.push_back(std::make_pair(iatom, shift));
         }
       }
-      shift[1] = shift[2] = 0;
-      if ( xred[iatom*3+2] <= nz ) {
-        shift[2] = 1;
-        _onBorders.push_back(std::make_pair(iatom, shift));
-      }
-    }
-    shift = {{0,0,0}};
-    if ( xred[iatom*3+1] <= ny ) {
-      shift[1] = 1;
-      _onBorders.push_back(std::make_pair(iatom, shift));
-      if ( xred[iatom*3+2] <= nz ) {
-        shift[2] = 1;
-        _onBorders.push_back(std::make_pair(iatom, shift));
-      }
-    }
-    shift = {{0,0,0}};
-    if ( xred[iatom*3+2] <= nz ) {
-      shift[2] = 1;
-      _onBorders.push_back(std::make_pair(iatom, shift));
-    }
-  }
 
-  _typat.resize(_natom);
-  for ( auto &atom : _onBorders ) {
-    _typat.push_back(_typat[atom.first]);
+    _typat.resize(_natom);
+    for ( auto &atom : _onBorders ) {
+      _typat.push_back(_typat[atom.first]);
+    }
+    _xcartBorders.resize(_onBorders.size()*3);
   }
-  _xcartBorders.resize(_onBorders.size()*3);
-  */
 
   int batom = 0;
   for ( auto &atom : _onBorders ) {

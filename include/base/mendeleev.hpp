@@ -46,6 +46,9 @@ struct mendeleev {
  /** Define the radius of each specie. */
  static double radius[119];
 
+ /** Define the covalent radius of each specie. */
+ static double rcov[119];
+
  /** Define the color of each specie. */
  static float color[119][3];
 

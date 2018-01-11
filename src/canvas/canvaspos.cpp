@@ -650,8 +650,8 @@ void CanvasPos::drawBonds(std::vector< std::pair<int,int> >& bonds) {
       const int i2 = hb->second;
       const unsigned t1 = _typat[i1];
       const unsigned t2 = _typat[i2];
-      const double r1 = mendeleev::radius[_znucl[t1]];
-      const double r2 = mendeleev::radius[_znucl[t2]];
+      const double r1 = mendeleev::rcov[_znucl[t1]];
+      const double r2 = mendeleev::rcov[_znucl[t2]];
       const float *c1 = mendeleev::color[_znucl[t1]];
       const float *c2 = mendeleev::color[_znucl[t2]];
       const double prop = 1./(r1+r2);
@@ -1000,6 +1000,39 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     }
     else if ( z > 0 && z < 119 ) {
       tomodify = &mendeleev::radius[z];
+    }
+    else throw EXCEPTION("Bad atomic number",ERRDIV);
+
+    stream >> radius;
+    if ( !stream.fail() && radius > 0.0 ) {
+      *tomodify = radius;
+    }
+    else throw EXCEPTION("Radius must be positive",ERRDIV);
+  }
+  else if ( token == "rcov" ){
+    double *tomodify = nullptr;
+    int z;
+    double radius;
+    auto pos = stream.tellg();
+    stream >> z;
+    if ( stream.fail() ) {
+      stream.clear();
+      stream.seekg(pos);
+      std::string name;
+      stream >> name;
+      if ( !stream.fail() ) {
+        if ( name == "bond" ) {
+          tomodify = &_bondRadius;
+        }
+        else {
+          z = mendeleev::znucl(name);
+          tomodify = &mendeleev::rcov[z];
+        }
+      }
+      else throw EXCEPTION("No radius to define for "+name,ERRDIV);
+    }
+    else if ( z > 0 && z < 119 ) {
+      tomodify = &mendeleev::rcov[z];
     }
     else throw EXCEPTION("Bad atomic number",ERRDIV);
 
@@ -1542,11 +1575,11 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
     // Inside
     for ( int iatom = first ; iatom < last ; ++iatom ) {
       const unsigned typ1 = _typat[iatom];
-      const double rad1 = mendeleev::radius[_znucl[typ1]];
+      const double rad1 = mendeleev::rcov[_znucl[typ1]];
       geometry::vec3d pos={{ xcart[3*iatom], xcart[3*iatom+1], xcart[3*iatom+2] }};
       for ( int hatom = iatom+1 ; hatom < last ; ++hatom ) {
         unsigned typ2 = _typat[hatom];
-        const double blength = rad1 + mendeleev::radius[_znucl[typ2]];
+        const double blength = rad1 + mendeleev::rcov[_znucl[typ2]];
         geometry::vec3d hpos={{ xcart[3*hatom]-pos[0], xcart[3*hatom+1]-pos[1], xcart[3*hatom+2]-pos[2] }};
         double norm2 = geometry::dot(hpos,hpos);
         if ( norm2 < (blength*blength)*b2 )
@@ -1558,7 +1591,7 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
           int atomref = _onBorders[batom].first;
           if ( atomref >= first && atomref < last ) {
             unsigned typ2 = _typat[atomref];
-            const double blength = rad1 + mendeleev::radius[_znucl[typ2]];
+            const double blength = rad1 + mendeleev::rcov[_znucl[typ2]];
             geometry::vec3d hpos={{ _xcartBorders[3*batom]-pos[0], _xcartBorders[3*batom+1]-pos[1], _xcartBorders[3*batom+2]-pos[2] }};
             double norm2 = geometry::dot(hpos,hpos);
             if ( norm2 < (blength*blength)*b2 )
@@ -1573,14 +1606,14 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
         int atomref1 = _onBorders[batom1].first;
         if ( atomref1 >= first && atomref1 < last ) {
           const unsigned typ1 = _typat[atomref1];
-          const double rad1 = mendeleev::radius[_znucl[typ1]];
+          const double rad1 = mendeleev::rcov[_znucl[typ1]];
           geometry::vec3d pos={{ _xcartBorders[3*batom1], _xcartBorders[3*batom1+1], _xcartBorders[3*batom1+2] }};
           // Border - Border
           for ( unsigned batom2 = 0 ; batom2 <  _onBorders.size() ; ++batom2 ) {
             int atomref2 = _onBorders[batom2].first;
             if ( atomref2 >= first && atomref2 < last ) {
               int typ2 = _typat[atomref2];
-              const double blength = rad1 + mendeleev::radius[_znucl[typ2]];
+              const double blength = rad1 + mendeleev::rcov[_znucl[typ2]];
               geometry::vec3d hpos={{ _xcartBorders[3*batom2]-pos[0], _xcartBorders[3*batom2+1]-pos[1], _xcartBorders[3*batom2+2]-pos[2] }};
               double norm2 = geometry::dot(hpos,hpos);
               if ( norm2 < (blength*blength)*b2 )
@@ -1615,6 +1648,7 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":octa_z or :octahedra_z Z A" << setw(59) << "To draw an octahedron around the atoms Z (atomic numbers or name) A=(0|1) to draw the atoms at the tops." << endl;
   out << setw(40) << ":periodic (0|1)" << setw(59) << "Move all the atoms inside the celle (1) or make a continuous trajectory (0)" << endl;
   out << setw(40) << ":rad or :radius S R" << setw(59) << "Set the radius of atom S (atomic number or name) to R bohr." << endl;
+  out << setw(40) << ":rcov S R" << setw(59) << "Set the covalent radius of atom S (atomic number or name) to R bohr (used for bonds)." << endl;
   out << setw(40) << ":s or :speed factor" << setw(59) << "Velocity scaling factor to change the animation speed." << endl;
   out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(border|name|znucl|id)" << endl;
   out << setw(40) << ":spin COMPONENTS" << setw(59) << "Specify what component of the spin to draw (x,y,z,xy,yz,xz,xyz)" << endl;

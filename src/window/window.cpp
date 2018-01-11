@@ -353,7 +353,7 @@ void Window::loopStep() {
     this->lookAt(totalfactor,0,0,0);
 
 
-    _canvas->refresh({{euler[0],euler[3],euler[6]}},_render);
+    _canvas->refresh({{totalfactor*euler[0],totalfactor*euler[3],totalfactor*euler[6]}},_render);
     if ( _canvas->ntime() >= 1 && _optionb["axis"] ) this->drawAxis();
 
     if ( _optionb["takeSnapshot"] || (_movie && !_canvas->isPaused()) ) this->snapshot();

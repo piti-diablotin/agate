@@ -682,10 +682,11 @@ void CanvasPhonons::buildAnimation() {
       }
     }
   }
-  int z = _octahedra_z;
+  auto save = _octahedra_z;
   this->setHist(*hist);
   if ( _status == PAUSE && _histdata->ntime() > 1 ) _status = START;
-  this->updateOctahedra(z);
+  for ( auto z : save )
+    this->updateOctahedra(z);
 }
 
 //

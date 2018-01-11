@@ -110,7 +110,7 @@ void CanvasLocal::refresh(const geometry::vec3d &cam, TextRender &render){
   const GLfloat fx[] = {(GLfloat)rprimd[0], (GLfloat)rprimd[3], (GLfloat)rprimd[6]};
   const GLfloat fy[] = {(GLfloat)rprimd[1], (GLfloat)rprimd[4], (GLfloat)rprimd[7]};
   const GLfloat fz[] = {(GLfloat)rprimd[2], (GLfloat)rprimd[5], (GLfloat)rprimd[8]};
-  const float width = (float)mendeleev::radius[_octahedra_z];
+  //const float width = (float)mendeleev::radius[_octahedra_z];
 
   const float factor = ( _view == ANGLES ? 1.f/15.f : 1.f/0.10f ); CanvasPos::drawCell(); 
 
@@ -166,7 +166,7 @@ void CanvasLocal::refresh(const geometry::vec3d &cam, TextRender &render){
           glRotatef(-_orientations[i][0],1.,0.,0.);
           glRotatef(-_orientations[i][1],0.,1.,0.);
           glRotatef(-_orientations[i][2],0.,0.,1.);
-          glScalef(width,width,width);
+          glScalef(mendeleev::radius[_znucl[_typat[iatom]]],mendeleev::radius[_znucl[_typat[iatom]]],mendeleev::radius[_znucl[_typat[iatom]]]);
           _cube.draw(&_octacolor[0],&_octacolor[3],angles[i].second[0]*factor,angles[i].second[1]*factor,angles[i].second[2]*factor);
           glPopMatrix();
         }
@@ -185,9 +185,21 @@ void CanvasLocal::refresh(const geometry::vec3d &cam, TextRender &render){
 
 //
 void CanvasLocal::updateOctahedra(int z) {
+  int typat = -1;
+  for ( int t = 0 ; t < _znucl.size() ; ++t ) {
+    if ( _znucl[t] == std::abs(z) ) {
+      typat = t;
+      break;
+    }
+  }
   if ( z > 0 && (_natom+_onBorders.size()) > 6 && _hasTranslations) {
-    _octahedra_z = z;
-    _octahedra.clear();
+    for ( auto it = _octahedra_z.begin() ; it != _octahedra_z.end() ; ++it ) {
+      if ( *it == z ) {
+        return;
+      }
+    }
+    _octahedra_z.push_back(z);
+    unsigned startOcta = _octahedra.size();
     std::vector<double> xcartTotal((_natom+_onBorders.size())*3);
     const double *histXcart = _histdata->getXcart(0);
     const double *xred = _histdata->getXred(0);
@@ -202,7 +214,7 @@ void CanvasLocal::updateOctahedra(int z) {
       switch ( _view ) {
         case ANGLES :
           for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom ){
-            if ( _znucl[_typat[iatom]] == _octahedra_z ) {
+            if ( _typat[iatom] == typat ) {
               OctaAngles *tmpocta = new OctaAngles(iatom,_natom,xred,&xcartTotal[0],rprimd,_opengl); //Construct octahedra based on xcart at time 0
               tmpocta->buildCart(rprimd,histXcart,angles);
               _octahedra.push_back(std::unique_ptr<Octahedra>(tmpocta));
@@ -211,7 +223,7 @@ void CanvasLocal::updateOctahedra(int z) {
           break;
         case LENGTHS :
           for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom ){
-            if ( _znucl[_typat[iatom]] == _octahedra_z ) {
+            if ( _typat[iatom] == typat ) {
               OctaAngles *tmpocta = new OctaAngles(iatom,_natom,xred,&xcartTotal[0],rprimd,_opengl); //Construct octahedra based on xcart at time 0
               tmpocta->buildCart(rprimd,histXcart,angles);
               OctaLengths *pushocta = new OctaLengths(std::move(*tmpocta));
@@ -222,8 +234,8 @@ void CanvasLocal::updateOctahedra(int z) {
       }
 
       _orientations.resize(_octahedra.size());
-      for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
-        _orientations[i] = angles[i].second;
+      for ( unsigned i = startOcta ; i <_octahedra.size() ; ++i ) {
+        _orientations[i] = angles[i-startOcta].second;
       }
     }
     catch (Exception &e) {
@@ -231,9 +243,30 @@ void CanvasLocal::updateOctahedra(int z) {
       throw e;
     }
   }
-  else if ( z == -1 || z == 0) {
+  else if ( z < 0) {
+    for ( auto it = _octahedra_z.begin() ; it != _octahedra_z.end() ; ++it ) {
+      if ( *it == -z ) {
+        _octahedra_z.erase(it);
+        break;
+      }
+    }
+    auto octa = _octahedra.begin();
+    auto iocta = 0;
+    do {
+      if ( _typat[octa->get()->center()] == typat ) {
+        octa = _octahedra.erase(octa);
+        _orientations.erase(_orientations.begin()+iocta);
+      }
+      else {
+        ++octa;
+        ++iocta;
+      }
+    } while ( octa != _octahedra.end() );
+  }
+  else if ( z == 0) {
     _octahedra.clear();
-    _octahedra_z = -1;
+    _octahedra_z.clear();
+    _orientations.clear();
   }
   else{
     throw EXCEPTION("Not enough data to build octahedra",ERRDIV);

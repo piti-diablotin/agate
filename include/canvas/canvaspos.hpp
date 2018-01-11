@@ -72,7 +72,7 @@ class CanvasPos : public Canvas {
     std::vector<int>              _znucl;      ///< atomic number of each type of atom.
     std::vector<indVec3d>         _onBorders;  ///< atom id and shift to apply w/r to xcart to get the new atom (from the original one)
     std::vector<double>           _xcartBorders; ///< xcart coordiates for atoms on border
-    int                           _octahedra_z;///< Type of atom to draw octahedra
+    std::vector<int>              _octahedra_z;///< Type of atom to draw octahedra
     std::vector<std::unique_ptr<Octahedra>>   _octahedra;  ///< List of octahedra to draw (should be a generic unique_ptr<polygon*> to be able to draw something else.
     bool                          _hasTranslations; ///< True if rprimd is available for translations.
     unsigned int                  _display;    ///< What labels to display on screen

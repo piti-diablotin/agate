@@ -100,12 +100,15 @@ struct TextRender {
       _render.render(str,_buffer,_color);
 #ifdef HAVE_GL
       if ( center ) {
-        GLint pos[4];
-        glGetIntegerv(GL_CURRENT_RASTER_POSITION,&pos[0]);
+        GLfloat pos[4];
+        GLfloat dist;
+        glGetFloatv(GL_CURRENT_RASTER_POSITION,&pos[0]);
+        glGetFloatv(GL_CURRENT_RASTER_DISTANCE,&dist);
+        if ( dist  < 1e-2 ) return;
         pos[0]-=_buffer.cols()/2;
         pos[1]-=_buffer.rows()/2;
 #ifdef HAVE_GLEXT
-        glWindowPos3iv(&pos[0]);
+        glWindowPos3fv(&pos[0]);
 #endif
       }
       glDrawPixels(_buffer.cols(), _buffer.rows(), GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, _buffer.getPtr());

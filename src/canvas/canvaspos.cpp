@@ -61,7 +61,7 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _znucl(),
   _onBorders(),
   _xcartBorders(),
-  _octahedra_z(-1),
+  _octahedra_z(),
   _octahedra(),
   _hasTranslations(false),
   _display(DISP_BORDER),
@@ -147,7 +147,7 @@ CanvasPos::~CanvasPos() {
 void CanvasPos::clear() {
   _natom = 0;
   _ntypat = 0;
-  _octahedra_z = -1;
+  _octahedra_z.clear();
   _hasTranslations = false;
   _typat.clear();
   _znucl.clear();
@@ -197,7 +197,8 @@ void CanvasPos::setHist(HistData& hist) {
     // Build octahedra
     _histdata.reset(&hist);
     this->buildBorders(0,_hasTranslations);
-    this->updateOctahedra(_octahedra_z);
+    for ( auto z : _octahedra_z ) 
+      this->updateOctahedra(z);
 
     _itime = _tbegin;
     if ( _natom > 0 )
@@ -219,9 +220,20 @@ void CanvasPos::updateHist() {
 
 //
 void CanvasPos::updateOctahedra(int z) {
+  int typat = -1;
+  for ( int t = 0 ; t < _znucl.size() ; ++t ) {
+    if ( _znucl[t] == std::abs(z) ) {
+      typat = t;
+      break;
+    }
+  }
   if ( z > 0 && (_natom+_onBorders.size()) > 6 && _hasTranslations) {
-    _octahedra_z = z;
-    _octahedra.clear();
+    for ( auto it = _octahedra_z.begin() ; it != _octahedra_z.end() ; ++it ) {
+      if ( *it == z ) {
+        return;
+      }
+    }
+    _octahedra_z.push_back(z);
     std::vector<double> xcartTotal((_natom+_onBorders.size())*3);
     const double *histXcart = _histdata->getXcart(_itime);
     const double *xred = _histdata->getXred(_itime);
@@ -233,7 +245,7 @@ void CanvasPos::updateOctahedra(int z) {
 
     try {
       for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom )
-        if ( _znucl[_typat[iatom]] == _octahedra_z ) {
+        if ( _znucl[_typat[iatom]] == z ) {
           Octahedra *tmpocta = new Octahedra(iatom,_natom,xred,&xcartTotal[0],rprimd,_opengl);
           _octahedra.push_back(std::unique_ptr<Octahedra>(tmpocta)); //Construct octahedra based on xcart at time 0
         }
@@ -243,9 +255,26 @@ void CanvasPos::updateOctahedra(int z) {
       throw e;
     }
   }
-  else if ( z == -1 || z == 0) {
+  else if ( z < 0) {
+    for ( auto it = _octahedra_z.begin() ; it != _octahedra_z.end() ; ++it ) {
+      if ( *it == -z ) {
+        _octahedra_z.erase(it);
+        break;
+      }
+    }
+    auto octa = _octahedra.begin();
+    do {
+      if ( _typat[octa->get()->center()] == typat ) {
+        octa = _octahedra.erase(octa);
+      }
+      else {
+        ++octa;
+      }
+    } while ( octa != _octahedra.end() );
+  }
+  else if ( z == 0) {
     _octahedra.clear();
-    _octahedra_z = -1;
+    _octahedra_z.clear();
   }
   else{
     throw EXCEPTION("Not enough data to build octahedra",ERRDIV);
@@ -253,7 +282,7 @@ void CanvasPos::updateOctahedra(int z) {
 }
 
 //
-void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
+void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
   if ( _natom < 1 ) return;
   this->updateHist();
   if ( ! _opengl ) return;
@@ -263,6 +292,7 @@ void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
   const GLfloat fx[] = {(GLfloat)rprimd[0], (GLfloat)rprimd[3], (GLfloat)rprimd[6]};
   const GLfloat fy[] = {(GLfloat)rprimd[1], (GLfloat)rprimd[4], (GLfloat)rprimd[7]};
   const GLfloat fz[] = {(GLfloat)rprimd[2], (GLfloat)rprimd[5], (GLfloat)rprimd[8]};
+  auto cam = geometry::operator*(camin,1./geometry::norm(camin));
 
   glPushMatrix();
   CanvasPos::drawCell();
@@ -302,16 +332,17 @@ void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
               xcart[iatom*3+2]);
           if ( _display & (DISP_NAME | DISP_ID | DISP_ZNUCL) ) {
             std::stringstream label;
+            float radius = mendeleev::radius[znucl];
             if ( _display & DISP_NAME ) label << mendeleev::name[znucl];
             else if ( _display & DISP_ID   ) label << iatom+1;
             else if ( _display & DISP_ZNUCL ) label << znucl;
-            glDisable(GL_DEPTH_TEST);
+            //glDisable(GL_DEPTH_TEST);
             glRasterPos3f(
-                xcart[iatom*3+0],
-                xcart[iatom*3+1],
-                xcart[iatom*3+2]);
+                xcart[iatom*3+0]+cam[0]*radius,
+                xcart[iatom*3+1]+cam[1]*radius,
+                xcart[iatom*3+2]+cam[2]*radius);
             render.render(utils::trim(label.str()),true);
-            glEnable(GL_DEPTH_TEST);
+            //glEnable(GL_DEPTH_TEST);
           }
         }
         _sphere.pop();
@@ -385,9 +416,10 @@ void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
   CanvasPos::drawAtom(-1,0.f,0.f,0.f);
   _sphere.pop();
 
-  if ( _octahedra_z != -1 ) {
+  if ( !_octahedra_z.empty() ) {
     if ( _histdata->isPeriodic() )
-      this->updateOctahedra(_octahedra_z);
+      for ( auto z : _octahedra_z )
+        this->updateOctahedra(z);
     std::vector< std::pair<unsigned,double> > drawOrder;
     for( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
       const int id = _octahedra[i]->center();
@@ -459,9 +491,18 @@ void CanvasPos::refresh(const geometry::vec3d &cam, TextRender &render) {
           }
 
           if ( _light ) glDisable(GL_LIGHTING);
-          for( auto& iocta : drawOrder )
-            if ( (_display & DISP_BORDER ) || ( _octahedra[iocta.first]->center() < _natom ) )
-              _octahedra[iocta.first]->draw(_octacolor);
+          for( auto& iocta : drawOrder ) {
+            auto center = _octahedra[iocta.first]->center();
+            if ( (_display & DISP_BORDER ) || ( center < _natom ) ) {
+              float color[4];
+              float *atcolor = mendeleev::color[_znucl[_typat[center]]];
+              color[0] = (_octacolor[0]+atcolor[0])/2;
+              color[1] = (_octacolor[1]+atcolor[1])/2;
+              color[2] = (_octacolor[2]+atcolor[2])/2;
+              color[3] = _octacolor[3];
+              _octahedra[iocta.first]->draw(color);
+            }
+          }
           if ( _light ) glEnable(GL_LIGHTING);
 
           glPopMatrix();
@@ -707,7 +748,12 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       std::string name;
       stream >> name;
       if ( !stream.fail() ) {
-        z = mendeleev::znucl(name);
+        int sign = 1;
+        if ( name[0] == '-' ) {
+          name = name.substr(1);
+          sign = -1;
+        }
+        z = sign*mendeleev::znucl(name);
       }
       else throw EXCEPTION("Cannot find element "+name,ERRDIV);
     }
@@ -727,7 +773,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       hist = backup->average(_tbegin,_tend);
       auto save = _octahedra_z;
       this->setHist(*hist);
-      this->updateOctahedra(save);
+      for( auto z : save )
+        this->updateOctahedra(z);
       if ( _status == PAUSE ) _status = UPDATE;
     }
     catch (Exception& e) {
@@ -783,7 +830,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       if ( !_info.empty() ) {
         auto save = _octahedra_z;
         this->openFile(_info);
-        this->updateOctahedra(save);
+        for ( auto z : _octahedra_z )
+          this->updateOctahedra(z);
       }
     }
     catch ( Exception &e ) {
@@ -836,7 +884,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       myHist->centroid();
       auto save = _octahedra_z;
       this->setHist(*myHist);
-      this->updateOctahedra(save);
+      for ( auto z : save ) 
+        this->updateOctahedra(z);
     }
     catch ( Exception &e ) {
       _histdata.reset(myHist);
@@ -992,7 +1041,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       _histdata->periodicBoundaries(toPeriodic);
       if ( !toPeriodic)
         this->buildBorders(_itime,true);
-      this->updateOctahedra(_octahedra_z);
+      for ( auto z : _octahedra_z )
+        this->updateOctahedra(z);
     }
     else
       throw EXCEPTION("Could not read line", ERRDIV);

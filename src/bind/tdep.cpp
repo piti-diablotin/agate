@@ -321,12 +321,23 @@ void Tdep::tdep() {
   input << std::setw(10) << std::floor(_rcut*1000.)/1000. << std::endl;
 
   input << std::setw(16) << "# Optional inputs" << std::endl;
+  input << std::setw(16) << "Ngqpt2";
+  input << std::setw(10) << "4 4 4" << std::endl;
   input << std::setw(16) << "TheEnd" << std::endl;
 
   input.close();
   HistDataNC::dump(*_supercell.get(),"HIST.nc",_tbegin,_tend,_step);
 
-  int err = system("tdep");
-  if ( err != 0 || errno != 0) 
+  //int err = system("tdep <<< \"input.in \nHIST.nc\"");
+  FILE *tdep;
+  tdep = popen("tdep","w");
+  if ( tdep == nullptr ) 
+    throw EXCEPTION("Unable to open pipe for tdep",ERRDIV);
+
+  fputs("input.in\nHIST.nc",tdep);
+  int st = pclose(tdep);
+  if ( WIFEXITED(st) && WEXITSTATUS(st) != 0 ) {
+    std::cerr << WEXITSTATUS(st) << std::endl;
     throw EXCEPTION("Unable to execute tdep",ERRDIV);
+  }
 }

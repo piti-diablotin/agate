@@ -389,16 +389,17 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
                 _xcartBorders[batom*3+2]);
             if ( _display & (DISP_NAME | DISP_ID | DISP_ZNUCL) ) {
               std::stringstream label;
+              float radius = mendeleev::radius[znucl];
               if ( _display & DISP_NAME ) label << mendeleev::name[znucl];
               else if ( _display & DISP_ID   ) label << _onBorders[batom].first+1;
               else if ( _display & DISP_ZNUCL ) label << znucl;
-              glDisable(GL_DEPTH_TEST);
+              //glDisable(GL_DEPTH_TEST);
               glRasterPos3f(
-                  _xcartBorders[batom*3+0],
-                  _xcartBorders[batom*3+1],
-                  _xcartBorders[batom*3+2]);
+                  _xcartBorders[batom*3+0]+cam[0]*radius,
+                  _xcartBorders[batom*3+1]+cam[1]*radius,
+                  _xcartBorders[batom*3+2]+cam[2]*radius);
               render.render(utils::trim(label.str()),true);
-              glEnable(GL_DEPTH_TEST);
+              //glEnable(GL_DEPTH_TEST);
             }
           }
           _sphere.pop();
@@ -471,19 +472,21 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
           if ( _octaDrawAtoms && !_octahedra.empty() ) {
             _sphere.push();
             for ( auto &a : na ) {
-              CanvasPos::drawAtom(_znucl[_typat[a.first]],a.second[0],a.second[1],a.second[2]);
+              const int znucl = _znucl[_typat[a.first]];
+              CanvasPos::drawAtom(znucl,a.second[0],a.second[1],a.second[2]);
               if ( _display & (DISP_NAME | DISP_ID | DISP_ZNUCL) ) {
                 std::stringstream label;
-                if ( _display & DISP_NAME ) label << mendeleev::name[_znucl[_typat[a.first]]];
+                float radius = mendeleev::radius[znucl];
+                if ( _display & DISP_NAME ) label << mendeleev::name[znucl];
                 else if ( _display & DISP_ID   ) label << a.first+1;
-                else if ( _display & DISP_ZNUCL ) label << _znucl[_typat[a.first]];
-                glDisable(GL_DEPTH_TEST);
+                else if ( _display & DISP_ZNUCL ) label << znucl;
+                //glDisable(GL_DEPTH_TEST);
                 glRasterPos3f(
-                    a.second[0],
-                    a.second[1],
-                    a.second[2]);
+                    a.second[0]+cam[0]*radius,
+                    a.second[1]+cam[1]*radius,
+                    a.second[2]+cam[2]*radius);
                 render.render(utils::trim(label.str()),true);
-                glEnable(GL_DEPTH_TEST);
+                //glEnable(GL_DEPTH_TEST);
               }
             }
             CanvasPos::drawAtom(-1,0.f,0.f,0.f);

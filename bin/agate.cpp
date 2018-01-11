@@ -262,7 +262,8 @@ int main(int argc, char** argv) {
 
     unsigned width  = parser.getOption<unsigned>("width");
     unsigned height = parser.getOption<unsigned>("height");
-    if ( !parser.getOption<bool>("term") ) {
+    bool useopengl = !parser.getOption<bool>("term");
+    if ( useopengl ) {
 #ifdef HAVE_GL
 #ifdef HAVE_GLFW3
       WinGlfw3::init();
@@ -276,9 +277,11 @@ int main(int argc, char** argv) {
 #else
       Winfake::init();
       ptrwin = new Winfake(crystal,width,height);
+      useopengl = false;
 #endif
 #else
       std::clog << "Using no window mode" << std::endl;
+      useopengl = false;
       if ( config.empty() )
         throw EXCEPTION("Currently you need to creat a config file to use the no window mode",ERRDIV);
       Winfake::init();
@@ -307,9 +310,8 @@ int main(int argc, char** argv) {
 
 
 
-    bool term = parser.getOption<bool>("term");
     bool wait = parser.getOption<bool>("wait");
-    crystal.reset(new CanvasPos(!term));
+    crystal.reset(new CanvasPos(useopengl));
     if ( wait ) {
       std::istringstream stream("1");
       crystal->alter("wait",stream);
@@ -320,7 +322,7 @@ int main(int argc, char** argv) {
     }
     catch ( Exception &e ) {
       std::clog << e.fullWhat() << std::endl;
-      crystal.reset(new CanvasPos(!term));
+      crystal.reset(new CanvasPos(useopengl));
     }
     try{
       if ( parser.isSetOption("font") )

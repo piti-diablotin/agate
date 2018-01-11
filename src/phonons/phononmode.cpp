@@ -134,6 +134,9 @@ void PhononMode::computeForceCst(const geometry::vec3d& qpt, const Ddb& ddb) {
 
 /*Function to read Born-Effective Charges (_zeff) out of ddb and translate it into C/A*/
 const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qpt, const Ddb& ddb1, const std::vector<Ddb::d2der>& ddb2) {
+#ifndef HAVE_EIGEN
+  throw EXCEPTION("To use this functionnality you need to compile with EIGEN support",ERRABT);
+#else
 	this->resize(ddb1.natom());	/// resize variables
 	_natom = ddb1.natom();		/// get number of atoms
 	_qpt << qpt[0], qpt[1], qpt[2]; /// get q_point (Always Gamma) 
@@ -176,11 +179,15 @@ const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qp
     		}
   	}
 	return _zeff;			
+#endif
 } 
 
 
 /*Calculate Linear Repsonse of Phonons to a static dielectric field from DFPT*/
 std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::vec3d &E_vec, double E_Amp, const Ddb& ddb) {
+#ifndef HAVE_EIGEN
+  throw EXCEPTION("To use this functionnality you need to compile with EIGEN support",ERRABT);
+#else
 	/*---- Get necessary Data ---*/
 	
 	//double E_Amp;
@@ -283,6 +290,7 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::v
 	
 	/*4. returen displacement under electric field */ 
 	return disp_E;
+#endif
 }
 
  

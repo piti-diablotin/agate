@@ -337,7 +337,6 @@ void Tdep::tdep() {
   fputs("input.in\nHIST.nc",tdep);
   int st = pclose(tdep);
   if ( WIFEXITED(st) && WEXITSTATUS(st) != 0 ) {
-    std::cerr << WEXITSTATUS(st) << std::endl;
     throw EXCEPTION("Unable to execute tdep",ERRDIV);
   }
 }

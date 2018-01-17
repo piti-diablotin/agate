@@ -322,11 +322,28 @@ void Tdep::tdep() {
 
   input << std::setw(16) << "# Optional inputs" << std::endl;
   input << std::setw(16) << "Ngqpt2";
-  input << std::setw(10) << "4 4 4" << std::endl;
+  input << std::setw(10) << "1 1 1" << std::endl;
   input << std::setw(16) << "TheEnd" << std::endl;
 
   input.close();
   HistDataNC::dump(*_supercell.get(),"HIST.nc",_tbegin,_tend,_step);
+  try {
+    if ( _tbegin != 0 ) {
+      HistDataNC::dump(*_supercell.get(),"first.nc",0,1,1);
+      HistDataNC first;
+      HistDataNC traj;
+      first.readFromFile("first.nc");
+      traj.readFromFile("HIST.nc");
+      first += traj;
+      first.dump("HIST.nc",0,traj.ntimeAvail()+1);
+      remove("first.nc");
+    }
+  }
+  catch( Exception &e ) {
+    e.ADD("First time step migth be missing",ERRWAR);
+    std::cerr << e.fullWhat() << std::endl;
+  }
+
 
   //int err = system("tdep <<< \"input.in \nHIST.nc\"");
   FILE *tdep;

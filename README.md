@@ -18,12 +18,12 @@ Here is a small list of quantities that you can extract with **agate** from an M
 - PIMD aware : centroid, gyration
 - NEB/String methode
 - Plot functions :
-* Temperature
-* Pression
-* Volume
-* Lattice parameters
+  * Temperature
+  * Pression
+  * Volume
+  * Lattice parameters
   * Stress tensor
-* Electronic energy (DFT energy)
+  * Electronic energy (DFT energy)
   * Electronic entropy
   * Kinetic energy
   * Positions
@@ -32,6 +32,7 @@ Here is a small list of quantities that you can extract with **agate** from an M
   * Positions autocorrelation
   * Velocities autocorrelation
   * Phonon density of states
+  * Phonons band structures (if tdep from abinit is available)
 
   Ans some phonon related capabilities:
 - Visualize indivual or combined mode(s)
@@ -59,22 +60,25 @@ Here is a small list of quantities that you can extract with **agate** from an M
   First you need to install some dependancies.
   On Ubuntu <= 15.04
   ```
-  sudo apt-get install debhelper autotools-dev automake autoconf m4 libjpeg8-dev libpng3-dev libnetcdf-dev libnetcdfc++4 libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig libglu1-mesa-dev wget unzip cmake xorg-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev
+  sudo apt-get install autotools-dev automake autoconf m4 libjpeg8-dev libpng3-dev libnetcdf-dev libnetcdfc++4 libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig libglu1-mesa-dev wget unzip cmake xorg-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev
   ```
 On Ubuntu >= 16.04 (15.10 not maintained anymore)
   ```
-  debhelper (>= 8.0.0), autotools-dev, automake, autoconf, m4, libjpeg8-dev, libpng-dev, libnetcdf-dev, libnetcdf-c++4-dev, libcurl3-dev, libfreetype6-dev, libglfw3-dev, libeigen3-dev, fontconfig, libglu1-mesa-dev, ttf-ubuntu-font-family, libxml2-dev, gnuplot-qt, libyaml-cpp-dev, libboost-dev, qtbase5-dev, qt5-qmake, qt5-default, libqt5opengl5-dev, libfftw3-dev
+  sudo autotools-dev, automake, autoconf, m4, libjpeg8-dev, libpng-dev, libnetcdf-dev, libnetcdf-c++4-dev, libcurl3-dev, libfreetype6-dev, libglfw3-dev, libeigen3-dev, fontconfig, libglu1-mesa-dev, ttf-ubuntu-font-family, libxml2-dev, gnuplot-qt, libyaml-cpp-dev, libboost-dev, qtbase5-dev, qt5-qmake, qt5-default, libqt5opengl5-dev, libfftw3-dev
   ```
   Then the procedure is the same.
   Compile spglib if desired with
   ```
   tar xfz spglib-1.9.9.tar.gz
   cd spglib-1.9.9 && mkdir build && cd build && ../configure &&  make && sudo make install
+  cd ..
   ```
   Finally compile abiout with
   ```
   ./autogent.sh
-  ./configure --with-qt
+  mkdir build
+  cd build
+  ../configure --with-qt
   make
   sudo make install
   ```

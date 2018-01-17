@@ -119,7 +119,7 @@ Supercell::Supercell(const Dtset& dtset, const unsigned nx, const unsigned ny, c
       }
     }
   }
-  _xred = geometry::changeBasis(_rprim, _xcart);
+  geometry::changeBasis(_rprim, _xcart, _xred, true);
 }
 
 //
@@ -157,7 +157,7 @@ void Supercell::makeDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned
     //std::cerr << iatom << " " << mymode[iatomUC*3] << " " << mymode[iatomUC*3+1] << " " << mymode[iatomUC*3+2] << std::endl;
     _xcart[iatom] += (Re*std::cos(qR_theta)-Im*std::sin(qR_theta))*amplitude;
   }
-  _xred = geometry::changeBasis(_rprim, _xcart);
+  geometry::changeBasis(_rprim, _xcart, _xred, true);
 }
 
 //

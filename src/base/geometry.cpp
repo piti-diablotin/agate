@@ -158,18 +158,28 @@ namespace geometry {
 
 
   //
-  std::vector<vec3d> changeBasis(const mat3d& basis, const std::vector<vec3d>& vecs) {
-    std::vector<vec3d> newcoords(vecs.size());
-    mat3d invBasis = invertTranspose(basis);
-    for( unsigned ivec=0 ; ivec < vecs.size() ; ++ivec ) {
-      newcoords[ivec] = {{
-        invBasis[0]*vecs[ivec][0] + invBasis[1]*vecs[ivec][1] + invBasis[2]*vecs[ivec][2] ,
-        invBasis[3]*vecs[ivec][0] + invBasis[4]*vecs[ivec][1] + invBasis[5]*vecs[ivec][2] ,
-        invBasis[6]*vecs[ivec][0] + invBasis[7]*vecs[ivec][1] + invBasis[8]*vecs[ivec][2] ,
+  void changeBasis(const mat3d& rprim, std::vector<vec3d>& cart, std::vector<vec3d>& red, const bool C2R ) {
+    mat3d matrix;
+    std::vector<vec3d> *vecs = nullptr;
+    std::vector<vec3d> *newcoords = nullptr;
+    if ( C2R ) {
+      matrix = invert(rprim);
+      vecs = &cart;
+      newcoords = &red;
+    }
+    else {
+      matrix = rprim;
+      vecs = &red;
+      newcoords = &cart;
+    }
+    newcoords->resize(vecs->size());
+    for( unsigned ivec=0 ; ivec < vecs->size() ; ++ivec ) {
+      newcoords->at(ivec) = {{
+        matrix[0]*vecs->at(ivec)[0] + matrix[1]*vecs->at(ivec)[1] + matrix[2]*vecs->at(ivec)[2] ,
+          matrix[3]*vecs->at(ivec)[0] + matrix[4]*vecs->at(ivec)[1] + matrix[5]*vecs->at(ivec)[2] ,
+          matrix[6]*vecs->at(ivec)[0] + matrix[7]*vecs->at(ivec)[1] + matrix[8]*vecs->at(ivec)[2] ,
       }};
     }
-
-    return newcoords;
   }
 
 

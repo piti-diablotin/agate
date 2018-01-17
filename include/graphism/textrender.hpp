@@ -104,7 +104,8 @@ struct TextRender {
         GLfloat dist;
         glGetFloatv(GL_CURRENT_RASTER_POSITION,&pos[0]);
         glGetFloatv(GL_CURRENT_RASTER_DISTANCE,&dist);
-        if ( dist  < 1e-2 ) return;
+        std::cerr << dist << std::endl;
+        if ( std::abs(dist)  < 1e-2 ) return;
         pos[0]-=_buffer.cols()/2;
         pos[1]-=_buffer.rows()/2;
 #ifdef HAVE_GLEXT

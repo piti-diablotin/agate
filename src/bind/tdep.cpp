@@ -184,7 +184,7 @@ void Tdep::tdep() {
   auto rprimd = _supercell->getRprimd(0);
   double small = geometry::getWignerSeitzRadius(rprimd);
 
-  if ( _rcut >= 0 &&  _rcut*_rcut < small ) {
+  if ( _rcut >= 0 &&  _rcut > small ) {
     std::ostringstream mess;
     mess << "Rcut seems to be larger than a safe value which is ";
     mess << small << " bohr.\nPlease make a check.";

@@ -338,7 +338,7 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
       _xcart.shrink_to_fit();
 #endif
 
-      _xred = geometry::changeBasis(_rprim, _xcart);
+      geometry::changeBasis(_rprim, _xcart, _xred,true);
     }
     catch (Exception& e) {
       if ( e.getReturnValue() == ConfigParser::ERFOUND ) {
@@ -351,7 +351,7 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
         _xred.shrink_to_fit();
 #endif
 
-        _xcart = geometry::changeBasis(_gprim, _xred);
+        geometry::changeBasis(_rprim, _xcart, _xred, false);
       }
       else {
         e.ADD("Neither xcart nor xred were found in the input file",ERRABT);
@@ -759,7 +759,7 @@ void Dtset::reBuildStructure(const double tolerance, const bool prtcif) {
     _rprim[geometry::mat3dind(3,3)] *= _acell[2]; // vec3.z
 
     _gprim = geometry::invertTranspose(_rprim);
-    _xcart = geometry::changeBasis(_gprim, _xred);
+    geometry::changeBasis(_rprim, _xcart, _xred, false);
   }
   catch (Exception& e) {
     e.ADD("Abording reBuildStructure, rprim misbuilt",ERRABT);
@@ -830,7 +830,7 @@ void Dtset::standardizeCell(const bool primitive, const double tolerance) {
     _typat.shrink_to_fit();
 #endif
     _gprim = geometry::invertTranspose(_rprim);
-    _xcart = geometry::changeBasis(_gprim, _xred);
+    geometry::changeBasis(_rprim, _xcart, _xred, false);
   }
 #ifdef HAVE_SHRINK_TO_FIT
     _xcart.shrink_to_fit();

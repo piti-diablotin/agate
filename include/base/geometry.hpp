@@ -140,11 +140,11 @@ namespace geometry {
 
   /**
    * Change some 3D vectors from basis.
-   * @param base destination basis in the current basis.
-   * @param vecs All the vectors to change.
-   * @result vecs in the destination basis.
+   * @param rprim new basis
+   * @param cart coordinates in cartesian coordinates
+   * @oaram red coordinates in rprim basis
    */
-  std::vector<vec3d> changeBasis(const mat3d& base, const std::vector<vec3d>& vecs);
+  void changeBasis(const mat3d& rprim, std::vector<vec3d>& cart, std::vector<vec3d>& red, const bool C2R );
 
 
   /** 

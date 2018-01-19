@@ -38,7 +38,7 @@ HistDataDtset::HistDataDtset() : HistData(){
 
 HistDataDtset::HistDataDtset(const Dtset& dtset) {
   this->buildFromDtset(dtset);
-  _nimage = 1;
+  _nimage = 0;
 }
 
 //
@@ -61,10 +61,10 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         nimage = parser.getToken<unsigned>(" nimage");
       }
       catch ( Exception &e ) {
-        nimage = 1;
+        nimage = 0;
         (void)e;
       }
-      if ( nimage > 1 ) {
+      if ( nimage > 0 ) {
         try {
           imgmov = parser.getToken<unsigned>("imgmov");
         }
@@ -115,7 +115,7 @@ void HistDataDtset::readFromFile(const std::string& filename) {
     } catch (Exception &e)
     {;}
       
-    if ( nimage > 1 ) {
+    if ( nimage > 0 ) {
       bool imageIsTime = true;
       switch ( imgmov ) {
         //string
@@ -178,7 +178,7 @@ void HistDataDtset::readFromFile(const std::string& filename) {
           std::copy(&_typat[0],&_typat[_natom],&_typat[_natom*img]);
         }
         _natom *= nimage;
-        _acell.resize(3);
+        _acell.resize(3*nimage);
         _rprimd.resize(9);
         _etotal.resize(1);
         _time.resize(1);

@@ -674,10 +674,10 @@ std::list<std::vector<double>> HistDataMD::getPDOS(unsigned tbegin, unsigned ten
 
       std::vector<double> &fit = *ptrpdos;
       std::fill(fit.begin(),fit.end(),0.);
-      for ( unsigned i = 0 ; i < n ; ++i ) {
+      for ( int i = 0 ; i < n ; ++i ) {
         const double mean = i*inv_n;
         const double max = fft_out[u*n+i]*renorm;
-        for ( unsigned g = 0; g < n ; ++g ) {
+        for ( int g = 0; g < n ; ++g ) {
           fit[g]+=max*std::exp(-(g*inv_n-mean)*(g*inv_n-mean)*inv_2sigma2);
         }
       }

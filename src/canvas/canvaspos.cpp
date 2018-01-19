@@ -221,7 +221,10 @@ void CanvasPos::updateHist() {
 //
 void CanvasPos::updateOctahedra(int z) {
   int typat = -1;
-  for ( int t = 0 ; t < _znucl.size() ; ++t ) {
+  if ( _histdata->nimage() > 1 ) {
+    throw EXCEPTION("This functionnality is not yet implemented with images",ERRWAR);
+  }
+  for ( unsigned t = 0 ; t < _znucl.size() ; ++t ) {
     if ( _znucl[t] == std::abs(z) ) {
       typat = t;
       break;

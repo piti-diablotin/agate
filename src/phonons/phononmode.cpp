@@ -197,7 +197,7 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::v
 	
 	_natom = ddb.natom();  					/// get natom 
 	_zeff = getzeff(_qpt, ddb, ddb.getDdb(_qpt)); 		/// get BEC-Tensors
-	for (int i = 0; i < _zeff.size(); i++) {
+	for (unsigned i = 0; i < _zeff.size(); i++) {
 		if (_zeff[i][geometry::mat3dind( 2,1 )] == 0 ){ 
 			  _zeff[i][geometry::mat3dind( 1, 2)] = 0; 
 		}	

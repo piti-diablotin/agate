@@ -186,7 +186,7 @@ void CanvasLocal::refresh(const geometry::vec3d &cam, TextRender &render){
 //
 void CanvasLocal::updateOctahedra(int z) {
   int typat = -1;
-  for ( int t = 0 ; t < _znucl.size() ; ++t ) {
+  for ( unsigned t = 0 ; t < _znucl.size() ; ++t ) {
     if ( _znucl[t] == std::abs(z) ) {
       typat = t;
       break;

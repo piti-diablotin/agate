@@ -76,7 +76,7 @@ HistData::HistData() :
   _natom(0),
   _xyz(0),
   _ntime(0),
-  _nimage(1),
+  _nimage(0),
   _isPeriodic(false),
   _ntimeAvail(0),
   _xcart(),
@@ -1120,7 +1120,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 
   // GYRATION factor
   else if ( function == "gyration" ) {
-    if ( _nimage == 1 ) throw EXCEPTION("Your data contains only 1 image",ERRDIV);
+    if ( _nimage < 2 ) throw EXCEPTION("Your data contains only 1 image",ERRDIV);
     filename = "gyration_tensor";
     ylabel = "Gyration radius tensor [bohr^2]";
     title = "Gyration radius tensor";
@@ -1568,7 +1568,7 @@ void HistData::periodicBoundaries(bool toPeriodic) {
 
 //
 void HistData::centroid() {
-  if ( _nimage == 1 ) 
+  if ( _nimage < 2 ) 
     throw EXCEPTION("There is no image in this file",ERRCOM);
 #ifdef HAVE_CPPTHREAD
   if ( _thread.joinable() ) {
@@ -1638,7 +1638,7 @@ void HistData::centroid() {
 }
 
 std::list<std::vector<double>> HistData::getGyration(unsigned tbegin,unsigned tend) const {
-  if ( _nimage == 1 ) 
+  if ( _nimage < 2 ) 
     throw EXCEPTION("Need more than 1 image",ERRDIV);
   unsigned natomImg = _natom/_nimage;
   double inv_nimage = 1./_nimage;

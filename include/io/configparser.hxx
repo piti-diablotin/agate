@@ -35,38 +35,48 @@
 #include <type_traits>
 #include "base/utils.hpp"
 #include "base/phys.hpp"
+#include <regex>
 
 template<typename T>
 T ConfigParser::parseNumber(std::string& str) {
   T numerator;
   T denominator;
+  auto convertNumber = [](std::string snum) {
+    using namespace std::regex_constants;
+    std::smatch m;
+    if ( std::regex_search ( snum, m, std::regex("sqrt\\((.*)\\)") ) ) {
+      std::istringstream inside(m[1]);
+      T value;
+      inside >> value;
+      if ( inside.fail() ) throw EXCEPTION("",1);
+      return static_cast<T>(std::sqrt(value));
+    }
+    else {
+      std::istringstream basic(snum);
+      T value;
+      basic >> value;
+      if ( basic.fail() ) throw EXCEPTION("",1);
+      return  value;
+    }
+  };
+
   if ( std::is_arithmetic<T>::value ) {
     std::vector<std::string> divide = utils::explode(str,'/');
     if ( divide.size() == 0 ) {
       return static_cast<T>(0);
     }
     else if ( divide.size() == 1 ) { // No / found
-      std::istringstream conv(divide[0]);
-      conv >> numerator;
-      if ( conv.fail() ) throw EXCEPTION("",1);
+      numerator = convertNumber(divide[0]);
       denominator = static_cast<T>(1);
     }
     else if ( divide.size() == 2 ) { // We have on / found
-      std::istringstream conv(divide[0]);
-      conv >> numerator;
-      if ( conv.fail() ) throw EXCEPTION("",2);
-      conv.clear();
-      conv.str(divide[1]);
-      conv >> denominator;
-      if ( conv.fail() ) throw EXCEPTION("",2);
+      numerator = convertNumber(divide[0]);
+      denominator = convertNumber(divide[1]);
     }
     return numerator/denominator;
   }
   else {
-    std::istringstream conv(str);
-    T value;
-    conv >> value;
-    return value;
+    return convertNumber(str);
   }
 }
 

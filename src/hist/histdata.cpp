@@ -582,12 +582,14 @@ HistData& HistData::operator+=(HistData& hist) {
   bool reorder = false;
   try {
     order = this->reorder(hist);
-    for ( unsigned i=0 ; i < order.size() ; ++i ) 
-      if ( i != order[i] ) {
-        reorder = true;
-        break;
+    if ( _natom < 100 ) {
+      for ( unsigned i=0 ; i < order.size() ; ++i ) {
+        if ( i != order[i] ) {
+          reorder = true;
+          break;
+        }
       }
-
+    }
   }
   catch ( Exception &e ){
     e.ADD("Unable to map structures",ERRABT);
@@ -2059,30 +2061,36 @@ std::vector<unsigned> HistData::reorder(const HistData &hist) const {
   for ( unsigned i = 0 ; i < 9 ; ++i )
     rprim[i] = _rprimd[i];
 
-  for ( unsigned matom = 0 ; matom < _natom ; ++matom ) {
-    double closest = 9999999999;
-    bool testz = false;
-    for ( unsigned oatom = 0 ; oatom < _natom ; ++oatom ) {
-      if ( _znucl[_typat[matom]-1] != hist._znucl[hist._typat[oatom]-1] ) continue;
-      testz = true;
-      geometry::vec3d difference = {{
-        hist._xred[oatom*3  ]-_xred[matom*3  ],
-        hist._xred[oatom*3+1]-_xred[matom*3+1],
-        hist._xred[oatom*3+2]-_xred[matom*3+2],
-      }};
-      for ( unsigned i = 0 ; i < 3 ; ++i ) {
-        while ( difference[i] < 0.5 ) ++difference[i];
-        while ( difference[i] >= 0.5 ) --difference[i];
+  unsigned nimage = std::max(_nimage,(unsigned)1);
+  unsigned natom = _natom/nimage;
+  for ( unsigned image = 0 ; image < nimage ; ++image ) {
+    for ( unsigned mmatom = 0 ; mmatom < natom ; ++mmatom ) {
+      unsigned matom = image*natom+mmatom;
+      double closest = 9999999999;
+      bool testz = false;
+      for ( unsigned ooatom = 0 ; ooatom < natom ; ++ooatom ) {
+      unsigned oatom = image*natom+ooatom;
+        if ( _znucl[_typat[matom]-1] != hist._znucl[hist._typat[oatom]-1] ) continue;
+        testz = true;
+        geometry::vec3d difference = {{
+          hist._xred[oatom*3  ]-_xred[matom*3  ],
+            hist._xred[oatom*3+1]-_xred[matom*3+1],
+            hist._xred[oatom*3+2]-_xred[matom*3+2],
+        }};
+        for ( unsigned i = 0 ; i < 3 ; ++i ) {
+          while ( difference[i] < 0.5 ) ++difference[i];
+          while ( difference[i] >= 0.5 ) --difference[i];
+        }
+        auto diffcart = rprim * difference;
+        double distance = norm(diffcart);
+        if ( distance < closest ) {
+          order[matom] = oatom;
+          closest = distance;
+        }
       }
-      auto diffcart = rprim * difference;
-      double distance = norm(diffcart);
-      if ( distance < closest ) {
-        order[matom] = oatom;
-        closest = distance;
-      }
+      if ( !testz )
+        throw EXCEPTION("Cannot find a correct typat for atom "+utils::to_string(matom)+" in the appended HistData",ERRABT);
     }
-    if ( !testz )
-      throw EXCEPTION("Cannot find a correct typat for atom "+utils::to_string(matom)+" in the appended HistData",ERRABT);
   }
   //bool reorder = false;
   unsigned sum = 0;

@@ -51,7 +51,6 @@
 //
 HistDataNC::HistDataNC() : HistDataMD(),
   _imgmov(0),
-  _mdtemp{0},
   _acell_img(),
   _rprimd_img(),
   _etotal_img(),
@@ -63,7 +62,6 @@ HistDataNC::HistDataNC() : HistDataMD(),
 
 HistDataNC::HistDataNC(const HistData& hist) : HistDataMD(hist),
   _imgmov(0),
-  _mdtemp{0},
   _acell_img(),
   _rprimd_img(),
   _etotal_img(),
@@ -71,12 +69,19 @@ HistDataNC::HistDataNC(const HistData& hist) : HistDataMD(hist),
   _ekin_img(),
   _entropy_img()
 {
+  if ( _nimage > 0 ) {
+    _acell_img.resize(_nimage*_ntime);
+    _rprimd_img.resize(_nimage*_ntime);
+    _etotal_img.resize(_nimage*_ntime);
+    _stress_img.resize(_nimage*_ntime);
+    _ekin_img.resize(_nimage*_ntime);
+    _entropy_img.resize(_nimage*_ntime);
+  }
 }
 
 //
 HistDataNC::HistDataNC(HistData&& hist) : HistDataMD(hist),
   _imgmov(0),
-  _mdtemp{0},
   _acell_img(),
   _rprimd_img(),
   _etotal_img(),
@@ -84,6 +89,14 @@ HistDataNC::HistDataNC(HistData&& hist) : HistDataMD(hist),
   _ekin_img(),
   _entropy_img()
 {
+  if ( _nimage > 0 ) {
+    _acell_img.resize(_nimage*_ntime);
+    _rprimd_img.resize(_nimage*_ntime);
+    _etotal_img.resize(_nimage*_ntime);
+    _stress_img.resize(_nimage*_ntime);
+    _ekin_img.resize(_nimage*_ntime);
+    _entropy_img.resize(_nimage*_ntime);
+  }
 }
 
 //
@@ -872,6 +885,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
     if ( step == 1 ) step = ntime;
     else countp[0]=1;
 
+
     for ( unsigned iitime = tbegin ; iitime < tend ; iitime += step ) {
       ++tstart;
       countp[1+addimg]=_natom/nimage;
@@ -1016,7 +1030,19 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
 void HistDataNC::dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
   HistDataMD *histmd;
   if ( ( histmd = dynamic_cast<HistDataMD*>(&hist) ) ) {
-    reinterpret_cast<HistDataNC*>(histmd)->dump(filename,tbegin,tend,step);
+    HistDataNC *histnc = reinterpret_cast<HistDataNC*>(histmd);
+    bool nimage;
+    if ( (nimage=histnc->_nimage) > 0 ) {
+      auto ntime = histnc->_ntime;
+      histnc->_acell_img.resize(nimage*ntime);
+      histnc->_rprimd_img.resize(nimage*ntime);
+      histnc->_etotal_img.resize(nimage*ntime);
+      histnc->_stress_img.resize(nimage*ntime);
+      histnc->_ekin_img.resize(nimage*ntime);
+      histnc->_entropy_img.resize(nimage*ntime);
+    }
+    histnc->dump(filename,tbegin,tend,step);
+
   }
   else {
     HistDataNC histTmp(std::move(hist));

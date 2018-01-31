@@ -46,6 +46,7 @@ using std::abs;
 
 //
 HistDataMD::HistDataMD() : HistData(),
+  _mdtemp{0},
   _ekin(),
   _velocities(),
   _temperature(),
@@ -55,6 +56,7 @@ HistDataMD::HistDataMD() : HistData(),
 }
 
 HistDataMD::HistDataMD(const HistData& hist) : HistData(hist),
+  _mdtemp{0},
   _ekin(),
   _velocities(),
   _temperature(),
@@ -70,6 +72,7 @@ HistDataMD::HistDataMD(const HistData& hist) : HistData(hist),
 
 //
 HistDataMD::HistDataMD(HistData&& hist) : HistData(hist),
+  _mdtemp{0},
   _ekin(),
   _velocities(),
   _temperature(),
@@ -208,11 +211,39 @@ HistDataMD& HistDataMD::operator+=(HistDataMD& hist) {
     std::cout << e.fullWhat() << std::endl;
   }
 
+  std::vector<unsigned> order;
+  bool reorder = false;
+  try {
+    order = this->reorder(hist);
+    for ( unsigned i ; i < order.size() ; ++i ) 
+      if ( i != order[i] ) {
+        reorder = true;
+        break;
+      }
+
+  }
+  catch ( Exception &e ){
+    // This should never happen since it has already been done before !
+    e.ADD("Unable to map structures",ERRABT);
+  }
+
   _pressure.resize(_ntime);
   std::copy(hist._pressure.begin(), hist._pressure.end(),_pressure.begin()+prevNtime);
 
   _velocities.resize(_ntime*_natom*_xyz);
-  std::copy(hist._velocities.begin(), hist._velocities.end(),_velocities.begin()+prevNtime*_natom*_xyz);
+  if ( !reorder ) {
+    std::copy(hist._velocities.begin(), hist._velocities.end(),_velocities.begin()+prevNtime*_natom*_xyz);
+  }
+  else {
+    unsigned start = prevNtime*_natom*_xyz;
+    for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
+      for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+        for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+          _velocities[start+itime*3*_natom+iatom*3+coord] = hist._velocities[itime*3*_natom+order[iatom]*3+coord];
+        }
+      }
+    }
+  }
 
   _entropy.resize(_ntime);
   std::copy(hist._ekin.begin(), hist._ekin.end(),_ekin.begin()+prevNtime);

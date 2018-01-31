@@ -49,6 +49,7 @@ class HistDataMD : public HistData {
 
   protected :
 
+    double _mdtemp[2];                ///< Temperature for MD simulation. 0 is for thermalization et 1 the real thermostat
     std::vector<double> _ekin;        ///< Kinetic energy 
     std::vector<double> _velocities;  ///< Atom velocities
     std::vector<double> _temperature; ///< Ionic temperature

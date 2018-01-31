@@ -131,9 +131,7 @@ HistData::HistData(const HistData& hist) :
 
 #ifdef HAVE_CPPTHREAD
   // Wait for gathering all data
-  if ( hist._thread.joinable() ) {
-    hist._thread.join();
-  }
+  hist.waitTime(hist._ntime);
 #endif
   _ntime = hist._ntime;
   _ntimeAvail.store(hist._ntimeAvail.load());
@@ -180,9 +178,7 @@ HistData::HistData(HistData&& hist) :
 
 #ifdef HAVE_CPPTHREAD
   // Wait for gathering all data
-  if ( hist._thread.joinable() ) {
-    hist._thread.join();
-  }
+  hist.waitTime(hist._ntime);
 #endif
   _ntime = hist._ntime;
   _ntimeAvail.store(hist._ntimeAvail.load());
@@ -229,9 +225,7 @@ HistData& HistData::operator=(const HistData& hist) {
 
 #ifdef HAVE_CPPTHREAD
   // Wait for gathering all data
-  if ( hist._thread.joinable() ) {
-    hist._thread.join();
-  }
+  hist.waitTime(hist._ntime);
 #endif
   _ntime = hist._ntime;
   _ntimeAvail.store(hist._ntimeAvail.load());
@@ -270,9 +264,7 @@ HistData& HistData::operator=(HistData&& hist) {
 
 #ifdef HAVE_CPPTHREAD
   // Wait for gathering all data
-  if ( hist._thread.joinable() ) {
-    hist._thread.join();
-  }
+  hist.waitTime(hist._ntime);
 #endif
   _ntime = hist._ntime;
   _ntimeAvail.store(hist._ntimeAvail.load());
@@ -291,11 +283,22 @@ HistData& HistData::operator=(HistData&& hist) {
 }
 
 void HistData::waitTime(unsigned t) const {
-  while(t >= _ntimeAvail && _ntimeAvail < _ntime) {
 #ifdef HAVE_CPPTHREAD_YIELD
-      std::this_thread::yield();
-#endif
+  bool ok = false;
+  if ( t == _ntime && _ntimeAvail != _ntime)  {
+    std::clog << "Making sure full file is loaded...";
+    std::clog.flush();
+    ok = true;
   }
+  while(t >= _ntimeAvail && _ntimeAvail < _ntime) {
+    std::this_thread::yield();
+  }
+  if ( t == _ntime && _thread.joinable() ) {
+    _thread.join();
+  }
+  if ( ok ) 
+    std::clog << "ok" << std::endl;
+#endif
 }
 
 //
@@ -538,10 +541,8 @@ HistData* HistData::getHist(const std::string& file, bool wait){
     if ( hist != nullptr ) {
       std::clog << "Format is "+p.second << std::endl;
 #ifdef HAVE_CPPTHREAD
-      if ( wait && hist->_thread.joinable() ) {
-        std::clog << "Waiting until full file is loaded..." << std::endl;
-        std::clog.flush();
-        hist->_thread.join();
+      if ( wait ) {
+        hist->waitTime(hist->_ntime);
       }
 #endif
       return hist;
@@ -560,37 +561,89 @@ HistData& HistData::operator+=(HistData& hist) {
     throw EXCEPTION("HistData have a different number of znucl",ERRABT);
   if ( _typat.size() != hist._typat.size() )
     throw EXCEPTION("HistData have a different number of typat",ERRABT);
+
   for ( unsigned z = 0 ; z < _znucl.size() ; ++z ) {
-    if ( _znucl[z] != hist._znucl[z] )
-      throw EXCEPTION("HistData have a different znucl for typat="+utils::to_string(z),ERRABT);
+    bool found = false;
+    for ( unsigned zo = 0 ; zo < hist._znucl.size() ; ++zo ) {
+      if ( _znucl[z] == hist._znucl[zo] )
+        found = true;
+    }
+    if ( !found )
+      throw EXCEPTION("New HistData does not have znucl="+utils::to_string(z),ERRABT);
   }
-  for ( unsigned t = 0 ; t < _typat.size() ; ++t ) {
-    if ( _typat[t] != hist._typat[t] )
-      throw EXCEPTION("HistData have a different typat for iatom="+utils::to_string(t),ERRABT);
-  }
+
 #ifdef HAVE_CPPTHREAD
   // Wait for gathering all data
-  if ( _thread.joinable() ) {
-    _thread.join();
-  }
-  if ( hist._thread.joinable() ) {
-    hist._thread.join();
-  }
+  this->waitTime(_ntime);
+  hist.waitTime(hist._ntime);
 #endif
+
+  std::vector<unsigned> order(_natom,0);
+  bool reorder = false;
+  try {
+    order = this->reorder(hist);
+    for ( unsigned i=0 ; i < order.size() ; ++i ) 
+      if ( i != order[i] ) {
+        reorder = true;
+        break;
+      }
+
+  }
+  catch ( Exception &e ){
+    e.ADD("Unable to map structures",ERRABT);
+  }
+
   const unsigned prevNtime = _ntime;
   _ntime += hist._ntime;
   _ntimeAvail += hist._ntimeAvail;
 
   _xcart.resize(_ntime*_natom*_xyz);
-  std::copy(hist._xcart.begin(), hist._xcart.end(),_xcart.begin()+prevNtime*_natom*_xyz);
-
   _xred.resize(_ntime*_natom*_xyz);
-  std::copy(hist._xred.begin(), hist._xred.end(),_xred.begin()+prevNtime*_natom*_xyz);
-
-  if ( !_fcart.empty() || !hist._fcart.empty() ) {
+  bool dofcart;
+  bool dospinat;
+  if ( ( dofcart = !_fcart.empty() || !hist._fcart.empty()) )
     _fcart.resize(_ntime*_natom*_xyz,0.);
+  if ( ( dospinat = !hist._spinat.empty() || !_spinat.empty()) )
+    _spinat.resize(_ntime*_natom*_xyz,0.);
+  if ( !reorder ) {
+    std::copy(hist._xcart.begin(), hist._xcart.end(),_xcart.begin()+prevNtime*_natom*_xyz);
+    std::copy(hist._xred.begin(), hist._xred.end(),_xred.begin()+prevNtime*_natom*_xyz);
     if ( !hist._fcart.empty() )
       std::copy(hist._fcart.begin(), hist._fcart.end(),_fcart.begin()+prevNtime*_natom*_xyz);
+    if ( !hist._spinat.empty() )
+      std::copy(hist._spinat.begin(), hist._spinat.end(),_spinat.begin()+prevNtime*_natom*_xyz);
+  }
+  else {
+    std::clog << "Reordering:" << std::endl;
+    for ( unsigned i = 0; i < order.size() ; ++i )
+      std::clog << i << "->" << order[i] << std::endl;
+    unsigned start = prevNtime*_natom*_xyz;
+    for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
+      for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+        for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+          _xred[start+itime*3*_natom+iatom*3+coord] = hist._xred[itime*3*_natom+order[iatom]*3+coord];
+          _xcart[start+itime*3*_natom+iatom*3+coord] = hist._xcart[itime*3*_natom+order[iatom]*3+coord];
+        }
+      }
+    }
+    if ( dofcart ) {
+      for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
+        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+          for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+            _fcart[start+itime*3*_natom+iatom*3+coord] = hist._fcart[itime*3*_natom+order[iatom]*3+coord];
+          }
+        }
+      }
+    }
+    if ( dospinat ) {
+      for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
+        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+          for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+            _spinat[start+itime*3*_natom+iatom*3+coord] = hist._spinat[itime*3*_natom+order[iatom]*3+coord];
+          }
+        }
+      }
+    }
   }
 
   _acell.resize(_ntime*_xyz);
@@ -608,11 +661,7 @@ HistData& HistData::operator+=(HistData& hist) {
   _stress.resize(_ntime*6);
   std::copy(hist._stress.begin(), hist._stress.end(),_stress.begin()+prevNtime*6);
 
-  if ( !hist._spinat.empty() || !_spinat.empty() ) {
-    _spinat.resize(_ntime*_natom*_xyz,0.);
-    if ( !hist._spinat.empty() )
-      std::copy(hist._spinat.begin(), hist._spinat.end(),_spinat.begin()+prevNtime*_natom*_xyz);
-  }
+  if ( reorder && !_isPeriodic ) this->periodicBoundaries(-1,false);
 
   //std::clog << "Appending " << hist._ntime << " ionic steps from file " << hist._filename << std::endl;
 
@@ -1515,15 +1564,17 @@ std::vector<double> HistData::acf(std::vector<double>::const_iterator begin, std
 }
 
 //
-void HistData::periodicBoundaries(bool toPeriodic) {
-#ifdef HAVE_CPPTHREAD
-  if ( _thread.joinable() ) {
-    std::clog << "Making sure full file is loaded...";
-    std::clog.flush();
-    _thread.join();
-    std::clog << "ok" << std::endl;
-  }
-#endif
+void HistData::periodicBoundaries(unsigned iitime, bool toPeriodic) {
+  bool allTimes = (iitime == (unsigned) -1);
+  if ( !allTimes && iitime >= _ntime )
+    throw EXCEPTION("Out of range for time",ERRDIV);
+  if ( !toPeriodic && iitime == 0 ) return;
+
+  unsigned begin = (allTimes ? 0 : iitime );
+  unsigned end = (allTimes ? _ntime : iitime+1 );
+
+  this->waitTime(end);
+
   geometry::mat3d chkrprimd;
   std::copy(_rprimd.begin(),_rprimd.begin()+9,&chkrprimd[0]);
   if ( geometry::det(chkrprimd) < 1e-6 ) 
@@ -1531,7 +1582,7 @@ void HistData::periodicBoundaries(bool toPeriodic) {
 
   if ( toPeriodic ) {
     // Impose periodicity
-    for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
+    for ( unsigned itime = begin ; itime < end ; ++itime ) {
       double * xredT = &_xred[itime*_natom*3];
 #pragma omp for schedule(static)
       for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
@@ -1541,11 +1592,11 @@ void HistData::periodicBoundaries(bool toPeriodic) {
         }
       }
     }
-    _isPeriodic = true;
+    if ( allTimes ) _isPeriodic = true;
   }
   else {
     // Remove periodicity
-    for ( unsigned itime = 1 ; itime < _ntime ; ++itime ) {
+    for ( unsigned itime = (allTimes ? 1 : begin); itime < end ; ++itime ) {
 #pragma omp for schedule(static)
       for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
         for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
@@ -1554,10 +1605,10 @@ void HistData::periodicBoundaries(bool toPeriodic) {
         }
       }
     }
-    _isPeriodic = false;
+    if ( allTimes ) _isPeriodic = false;
   }
 #pragma omp for schedule(static)
-  for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
+  for ( unsigned itime = begin ; itime < end ; ++itime ) {
     for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
       _xcart[itime*3*_natom+iatom*3  ] = _rprimd[itime*9+0]*_xred[itime*3*_natom+iatom*3] + _rprimd[itime*9+1]*_xred[itime*3*_natom+iatom*3+1] + _rprimd[itime*9+2]*_xred[itime*3*_natom+iatom*3+2];
       _xcart[itime*3*_natom+iatom*3+1] = _rprimd[itime*9+3]*_xred[itime*3*_natom+iatom*3] + _rprimd[itime*9+4]*_xred[itime*3*_natom+iatom*3+1] + _rprimd[itime*9+5]*_xred[itime*3*_natom+iatom*3+2];
@@ -1570,14 +1621,7 @@ void HistData::periodicBoundaries(bool toPeriodic) {
 void HistData::centroid() {
   if ( _nimage < 2 ) 
     throw EXCEPTION("There is no image in this file",ERRCOM);
-#ifdef HAVE_CPPTHREAD
-  if ( _thread.joinable() ) {
-    std::clog << "Making sure full file is loaded...";
-    std::clog.flush();
-    _thread.join();
-    std::clog << "ok" << std::endl;
-  }
-#endif
+  this->waitTime(_ntime);
   double inv_nimage = 1./_nimage;
   _natom /= _nimage;
   _typat.resize(_natom);
@@ -1715,6 +1759,29 @@ void HistData::moveAtom(unsigned itime, unsigned iatom, double x, double y, doub
   _xcart[itime*3*_natom+iatom*3+1] = _rprimd[itime*9+3]*x + _rprimd[itime*9+4]*y + _rprimd[itime*9+5]*z;
   _xcart[itime*3*_natom+iatom*3+2] = _rprimd[itime*9+6]*x + _rprimd[itime*9+7]*y + _rprimd[itime*9+8]*z;
 
+}
+
+void HistData::shiftOrigin(unsigned itime, double x, double y, double z) {
+  bool allTimes = (itime == (unsigned) -1);
+  if ( !allTimes && itime >= _ntime )
+    throw EXCEPTION("Out of range for time",ERRDIV);
+
+  unsigned begin = (allTimes ? 0 : itime );
+  unsigned end = (allTimes ? _ntime : itime+1 );
+
+  this->waitTime(end);
+
+  for ( unsigned iitime = begin ; iitime < end ; ++iitime ) {
+    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+      _xred[iitime*3*_natom+iatom*3  ] -= x;
+      _xred[iitime*3*_natom+iatom*3+1] -= y;
+      _xred[iitime*3*_natom+iatom*3+2] -= z;
+
+      _xcart[iitime*3*_natom+iatom*3  ] -= _rprimd[iitime*9+0]*x + _rprimd[iitime*9+1]*y + _rprimd[iitime*9+2]*z;
+      _xcart[iitime*3*_natom+iatom*3+1] -= _rprimd[iitime*9+3]*x + _rprimd[iitime*9+4]*y + _rprimd[iitime*9+5]*z;
+      _xcart[iitime*3*_natom+iatom*3+2] -= _rprimd[iitime*9+6]*x + _rprimd[iitime*9+7]*y + _rprimd[iitime*9+8]*z;
+    }
+  }
 }
 
 //
@@ -1978,7 +2045,60 @@ void HistData::decorrelate(unsigned tbegin, unsigned tend, unsigned ntime, doubl
   delete hist;
 }
 
+//
+std::vector<unsigned> HistData::reorder(const HistData &hist) const {
+  using namespace geometry;
+  if ( hist._natom != _natom )
+    throw EXCEPTION("Bad number of atoms",ERRABT);
 
+  std::vector<unsigned> order(_natom,0);
+
+  /* !!! We work at itime = 0 only for both */
+
+  mat3d rprim;
+  for ( unsigned i = 0 ; i < 9 ; ++i )
+    rprim[i] = _rprimd[i];
+
+  for ( unsigned matom = 0 ; matom < _natom ; ++matom ) {
+    double closest = 9999999999;
+    bool testz = false;
+    for ( unsigned oatom = 0 ; oatom < _natom ; ++oatom ) {
+      if ( _znucl[_typat[matom]-1] != hist._znucl[hist._typat[oatom]-1] ) continue;
+      testz = true;
+      geometry::vec3d difference = {{
+        hist._xred[oatom*3  ]-_xred[matom*3  ],
+        hist._xred[oatom*3+1]-_xred[matom*3+1],
+        hist._xred[oatom*3+2]-_xred[matom*3+2],
+      }};
+      for ( unsigned i = 0 ; i < 3 ; ++i ) {
+        while ( difference[i] < 0.5 ) ++difference[i];
+        while ( difference[i] >= 0.5 ) --difference[i];
+      }
+      auto diffcart = rprim * difference;
+      double distance = norm(diffcart);
+      if ( distance < closest ) {
+        order[matom] = oatom;
+        closest = distance;
+      }
+    }
+    if ( !testz )
+      throw EXCEPTION("Cannot find a correct typat for atom "+utils::to_string(matom)+" in the appended HistData",ERRABT);
+  }
+  //bool reorder = false;
+  unsigned sum = 0;
+  for ( unsigned oatom = 0 ; oatom < _natom ; ++oatom ) {
+    sum += order[oatom];
+    /*
+    if ( order[oatom] != oatom ) {
+      reorder = true;
+    }
+    */
+  }
+  if ( sum != (_natom*(_natom-1)/2) )
+    throw EXCEPTION("Bad reordering",ERRABT);
+  //if ( !reorder ) order.clear();
+  return order;
+}
 
 
 

@@ -108,6 +108,14 @@ class HistData {
 
     void waitTime(unsigned t) const;
 
+    /**
+     * Check if the atomes in the hist are in the same order as in this one.
+     * If not, it returns a vector of how to get the order of this in hist.
+     * @param hist the new hist to reorder eventually.
+     * @return A vector of indice to explore hist to get the same order as in this.
+     */
+    std::vector<unsigned> reorder(const HistData &hist) const ;
+
   public :
 
 
@@ -373,7 +381,7 @@ class HistData {
      * or remove periodic boundaries
      * @param toPeriodic True to impose periodicity, False to remove periodicity
      */
-    virtual void periodicBoundaries(bool toPeriodic);
+    virtual void periodicBoundaries(unsigned itime, bool toPeriodic);
 
     /**
      * Driver to plot something 
@@ -419,6 +427,15 @@ class HistData {
      * @param z Nez z position of the atom
      */
     void moveAtom(unsigned itime, unsigned iatom, double x, double y, double z);
+    
+    /**
+     * Change the origin of the box
+     * @param itime The time step 
+     * @param x New x position of the origin
+     * @param y New y position of the origin
+     * @param z Nez z position of the origin
+     */
+    void shiftOrigin(unsigned itime, double x, double y, double z);
 
     /**
      * Check if tbegin and tend are compatible with the current set of data

@@ -203,8 +203,8 @@ void TabCanvasPos::displayBond(int state) {
 //
 void TabCanvasPos::periodic(int state) {
   ( state == Qt::Unchecked ) 
-    ? emit(sentCommand(":periodic 0"))
-    : emit(sentCommand(":periodic 1"));
+    ? emit(sentCommand(":periodic 0 all"))
+    : emit(sentCommand(":periodic 1 all"));
 }
 
 //

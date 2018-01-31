@@ -836,7 +836,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       if ( !_info.empty() ) {
         auto save = _octahedra_z;
         this->openFile(_info);
-        for ( auto z : _octahedra_z )
+        for ( auto z : save )
           this->updateOctahedra(z);
       }
     }
@@ -1074,10 +1074,12 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
   else if ( token == "periodic" ) {
     if ( _histdata == nullptr ) 
       throw EXCEPTION("Load a file first !",ERRDIV);
+    std::string all;
     bool toPeriodic;
     stream >> toPeriodic;
     if ( !stream.fail() ) {
-      _histdata->periodicBoundaries(toPeriodic);
+      stream >> all;
+      _histdata->periodicBoundaries((all=="all"?-1:_itime),toPeriodic);
       if ( !toPeriodic)
         this->buildBorders(_itime,true);
       for ( auto z : _octahedra_z )
@@ -1095,6 +1097,25 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     catch ( Exception &e ) {
       throw e;
     }
+  }
+  else if ( token == "shift" ){
+    double red[3]={0};
+    std::string all;
+    stream >> red[0] >> red[1] >> red[2];
+    if ( !stream.bad() ) {
+      stream >> all;
+      if ( _histdata != nullptr ) {
+        try {
+          _histdata->shiftOrigin((all=="all"?-1:_itime),red[0],red[1],red[2]);
+        }
+        catch ( Exception &e ) {
+          e.ADD("Failed to shift origin",ERRDIV);
+          throw e;
+        }
+      }
+      stream.clear();
+    }
+    else throw EXCEPTION("Usage is :shift X Y Z",ERRDIV);
   }
   else if ( token == "spin" ) {
     _drawSpins[0] = false;
@@ -1656,6 +1677,7 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":rad or :radius S R" << setw(59) << "Set the radius of atom S (atomic number or name) to R bohr." << endl;
   out << setw(40) << ":rcov S R" << setw(59) << "Set the covalent radius of atom S (atomic number or name) to R bohr (used for bonds)." << endl;
   out << setw(40) << ":s or :speed factor" << setw(59) << "Velocity scaling factor to change the animation speed." << endl;
+  out << setw(40) << ":shift X Y Z [all]" << setw(59) << "Shift the origin to the new REDUCED coordinate (X,Y,Z)" << endl;
   out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(border|name|znucl|id)" << endl;
   out << setw(40) << ":spin COMPONENTS" << setw(59) << "Specify what component of the spin to draw (x,y,z,xy,yz,xz,xyz)" << endl;
   out << setw(40) << ":spg or :spacegroup [tol]" << setw(59) << "Get the space group number and name. Tol is the tolerance for the symmetry finder." << endl;

@@ -673,17 +673,17 @@ HistData& HistData::operator+=(HistData& hist) {
   std::copy(hist._stress.begin(), hist._stress.end(),_stress.begin()+prevNtime*6);
 
   if ( _nimage > 0 ) {
-    _imgdata._acell_img.resize(_ntime*_nimage*_xyz);
-    std::copy(hist._imgdata._acell_img.begin(), hist._imgdata._acell_img.end(),_imgdata._acell_img.begin()+prevNtime*_nimage*_xyz);
+    _imgdata._acell.resize(_ntime*_nimage*_xyz);
+    std::copy(hist._imgdata._acell.begin(), hist._imgdata._acell.end(),_imgdata._acell.begin()+prevNtime*_nimage*_xyz);
 
-    _imgdata._rprimd_img.resize(_ntime*_nimage*9);
-    std::copy(hist._imgdata._rprimd_img.begin(), hist._imgdata._rprimd_img.end(),_imgdata._rprimd_img.begin()+prevNtime*_nimage*9);
+    _imgdata._rprimd.resize(_ntime*_nimage*9);
+    std::copy(hist._imgdata._rprimd.begin(), hist._imgdata._rprimd.end(),_imgdata._rprimd.begin()+prevNtime*_nimage*9);
 
-    _imgdata._etotal_img.resize(_ntime*_nimage);
-    std::copy(hist._imgdata._etotal_img.begin(), hist._imgdata._etotal_img.end(),_imgdata._etotal_img.begin()+prevNtime*_nimage);
+    _imgdata._etotal.resize(_ntime*_nimage);
+    std::copy(hist._imgdata._etotal.begin(), hist._imgdata._etotal.end(),_imgdata._etotal.begin()+prevNtime*_nimage);
 
-    _imgdata._stress_img.resize(_ntime*_nimage*6);
-    std::copy(hist._imgdata._stress_img.begin(), hist._imgdata._stress_img.end(),_imgdata._stress_img.begin()+prevNtime*_nimage*6);
+    _imgdata._stress.resize(_ntime*_nimage*6);
+    std::copy(hist._imgdata._stress.begin(), hist._imgdata._stress.end(),_imgdata._stress.begin()+prevNtime*_nimage*6);
   }
 
 
@@ -2135,10 +2135,10 @@ std::vector<unsigned> HistData::reorder(const HistData &hist) const {
 //
 HistData::ImgData::ImgData() :
   _imgmov(0),
-  _acell_img(),
-  _rprimd_img(),
-  _etotal_img(),
-  _stress_img()
+  _acell(),
+  _rprimd(),
+  _etotal(),
+  _stress()
 {
   ;
 }
@@ -2146,16 +2146,16 @@ HistData::ImgData::ImgData() :
 //
 void HistData::ImgData::clear() {
   _imgmov = 0;
-  _acell_img.clear(); 
-  _rprimd_img.clear();
-  _etotal_img.clear();
-  _stress_img.clear();
+  _acell.clear(); 
+  _rprimd.clear();
+  _etotal.clear();
+  _stress.clear();
 }
 
 //
 void HistData::ImgData::resize(unsigned n) {
-  _acell_img.resize(3*n);
-  _rprimd_img.resize(9*n);
-  _etotal_img.resize(n);
-  _stress_img.resize(6*n);
+  _acell.resize(3*n);
+  _rprimd.resize(9*n);
+  _etotal.resize(n);
+  _stress.resize(6*n);
 }

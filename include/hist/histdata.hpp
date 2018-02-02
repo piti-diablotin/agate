@@ -64,10 +64,10 @@ class HistData {
     class ImgData {
       public :
         int                 _imgmov;      ///< Remember if PIMD/NEB/String/... See abinit input variables
-        std::vector<double> _acell_img;   ///< CELL lattice vector scaling
-        std::vector<double> _rprimd_img;  ///< Real space PRIMitive translations, Dimensional
-        std::vector<double> _etotal_img;  ///< Total energy of the system
-        std::vector<double> _stress_img;  ///< 6 voigt value of the stress tensor for each time.
+        std::vector<double> _acell;   ///< CELL lattice vector scaling
+        std::vector<double> _rprimd;  ///< Real space PRIMitive translations, Dimensional
+        std::vector<double> _etotal;  ///< Total energy of the system
+        std::vector<double> _stress;  ///< 6 voigt value of the stress tensor for each time.
 
         ImgData();
 

@@ -227,10 +227,10 @@ void HistDataNC::readFromFile(const std::string& filename) {
   _temperature.resize(_ntime);
   _pressure.resize(_ntime);
   if ( _nimage > 0 ) {
-    _imgdata._acell_img  .resize(_nimage*_ntime*_xyz); 
-    _imgdata._rprimd_img .resize(_nimage*_ntime*_xyz*_xyz); 
-    _imgdata._etotal_img .resize(_nimage*_ntime); 
-    _imgdata._stress_img .resize(_nimage*_ntime*6); 
+    _imgdata._acell  .resize(_nimage*_ntime*_xyz); 
+    _imgdata._rprimd .resize(_nimage*_ntime*_xyz*_xyz); 
+    _imgdata._etotal .resize(_nimage*_ntime); 
+    _imgdata._stress .resize(_nimage*_ntime*6); 
     _ekin_img   .resize(_nimage*_ntime); 
     _entropy_img.resize(_nimage*_ntime);
   }
@@ -560,7 +560,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
 
               count[1] = nimage; // Read all image for storage purpose
               count[2] = _xyz;
-              get_var(local_ncid,start,count,&_imgdata._rprimd_img    [nimage*itime*_xyz*_xyz],"rprimd");
+              get_var(local_ncid,start,count,&_imgdata._rprimd    [nimage*itime*_xyz*_xyz],"rprimd");
 
               count[1] = 1;
               count[2] = _xyz;
@@ -568,15 +568,15 @@ void HistDataNC::readFromFile(const std::string& filename) {
 
               count[1] = nimage;
               count[2] = _xyz;
-              get_var(local_ncid,start,count,&_imgdata._acell_img  [nimage*itime*_xyz],"acell");
+              get_var(local_ncid,start,count,&_imgdata._acell  [nimage*itime*_xyz],"acell");
 
               count[1] = nimage;
               count[2] = 6;
-              double *tmp0 = &_imgdata._stress_img[itime*nimage*6];
+              double *tmp0 = &_imgdata._stress[itime*nimage*6];
               get_var(local_ncid,start,count,&tmp0[0],"strten");
 
               count[1] = {nimage};
-              double *tmp1 = &_imgdata._etotal_img[itime*nimage];
+              double *tmp1 = &_imgdata._etotal[itime*nimage];
               double *tmp2 = &_ekin_img[itime*nimage];
               double *tmp3 = &_entropy_img[itime*nimage];
               get_var(local_ncid,start,count,&tmp1[0],"etotal");
@@ -660,17 +660,17 @@ void HistDataNC::readFromFile(const std::string& filename) {
             _rprimd[ltime*9+3] = swap1;
             _rprimd[ltime*9+6] = swap2;
             _rprimd[ltime*9+7] = swap3;
-            if ( _imgdata._rprimd_img.size() > 0 ) {
+            if ( _imgdata._rprimd.size() > 0 ) {
               for ( unsigned img = 0 ; img < nimage ; ++img ) {
-                double swap1 = _imgdata._rprimd_img[ltime*9*nimage+img*9+1];
-                double swap2 = _imgdata._rprimd_img[ltime*9*nimage+img*9+2];
-                double swap3 = _imgdata._rprimd_img[ltime*9*nimage+img*9+5];
-                _imgdata._rprimd_img[ltime*9*nimage+img*9+1] = _imgdata._rprimd_img[ltime*9*nimage+img*9+3];
-                _imgdata._rprimd_img[ltime*9*nimage+img*9+2] = _imgdata._rprimd_img[ltime*9*nimage+img*9+6];
-                _imgdata._rprimd_img[ltime*9*nimage+img*9+5] = _imgdata._rprimd_img[ltime*9*nimage+img*9+7];
-                _imgdata._rprimd_img[ltime*9*nimage+img*9+3] = swap1;
-                _imgdata._rprimd_img[ltime*9*nimage+img*9+6] = swap2;
-                _imgdata._rprimd_img[ltime*9*nimage+img*9+7] = swap3;
+                double swap1 = _imgdata._rprimd[ltime*9*nimage+img*9+1];
+                double swap2 = _imgdata._rprimd[ltime*9*nimage+img*9+2];
+                double swap3 = _imgdata._rprimd[ltime*9*nimage+img*9+5];
+                _imgdata._rprimd[ltime*9*nimage+img*9+1] = _imgdata._rprimd[ltime*9*nimage+img*9+3];
+                _imgdata._rprimd[ltime*9*nimage+img*9+2] = _imgdata._rprimd[ltime*9*nimage+img*9+6];
+                _imgdata._rprimd[ltime*9*nimage+img*9+5] = _imgdata._rprimd[ltime*9*nimage+img*9+7];
+                _imgdata._rprimd[ltime*9*nimage+img*9+3] = swap1;
+                _imgdata._rprimd[ltime*9*nimage+img*9+6] = swap2;
+                _imgdata._rprimd[ltime*9*nimage+img*9+7] = swap3;
               }
             }
 
@@ -919,7 +919,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
 
 
       {
-        const double *pointer = (_nimage > 0 ? &_imgdata._acell_img[0] : &_acell[0] );
+        const double *pointer = (_nimage > 0 ? &_imgdata._acell[0] : &_acell[0] );
 
         //acell(time,xyz)
         units = "bohr" ;
@@ -931,7 +931,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
 
       //rprimd(time,xyz,xyz)
       {
-        const  double *pointer = (_nimage > 0 ? &_imgdata._rprimd_img[0] : &_rprimd[0] );
+        const  double *pointer = (_nimage > 0 ? &_imgdata._rprimd[0] : &_rprimd[0] );
         double *rprimd = new double[countp[0]*_xyz*_xyz*nimage];
         for ( unsigned itime = 0 ; itime < countp[0] ; ++itime ) {
           for ( int iimage = 0 ; iimage < nimage ; ++iimage ) {
@@ -960,7 +960,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
 
       {
         //etotal(time)
-        const  double *pointer = (_nimage > 0 ? &_imgdata._etotal_img[0] : &_etotal[0] );
+        const  double *pointer = (_nimage > 0 ? &_imgdata._etotal[0] : &_etotal[0] );
         units = "Ha" ;
         mnemo = "TOTAL Energy" ;
         put_var(ncid,"etotal",units,mnemo,NC_DOUBLE,1+addimg,dimids,countp,tstart,&pointer[iitime*nimage]);
@@ -993,7 +993,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
 
       {
         //strten(time,six)
-        const  double *pointer = (_nimage > 0 ? &_imgdata._stress_img[0] : &_stress[0] );
+        const  double *pointer = (_nimage > 0 ? &_imgdata._stress[0] : &_stress[0] );
         dimids[1+addimg]=sixid;
         countp[1+addimg]=6;
         units = "Ha/bohr^3" ;

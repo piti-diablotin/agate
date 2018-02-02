@@ -189,10 +189,10 @@ void HistDataDtset::readFromFile(const std::string& filename) {
           std::copy_n(_rprimd.begin(),9,rprimd.begin());
         }
 
-        std::copy_n(acell.begin() ,3,_imgdata._acell_img.begin()+3*(img-1));
-        std::copy_n(rprimd.begin(),9,_imgdata._rprimd_img.begin()+9*(img-1));
-        std::copy_n(stress.begin(),6,_imgdata._stress_img.begin()+6*(img-1));
-        _imgdata._etotal_img[img-1] = etot;
+        std::copy_n(acell.begin() ,3,_imgdata._acell.begin()+3*(img-1));
+        std::copy_n(rprimd.begin(),9,_imgdata._rprimd.begin()+9*(img-1));
+        std::copy_n(stress.begin(),6,_imgdata._stress.begin()+6*(img-1));
+        _imgdata._etotal[img-1] = etot;
 
       }
       std::clog << std::endl;
@@ -210,17 +210,17 @@ void HistDataDtset::readFromFile(const std::string& filename) {
           mdtemp = parser.getToken<double>("mdtemp",2);
         }
         catch (Exception &e) {
-          _etotal[0] = _imgdata._etotal_img[0];
+          _etotal[0] = _imgdata._etotal[0];
           for ( unsigned v = 0 ; v < 6 ; ++v ) 
-            _stress[v] = _imgdata._stress_img[v];
+            _stress[v] = _imgdata._stress[v];
         }
         _nimage = nimage;
       }
       else {
-        _acell = _imgdata._acell_img;
-        _rprimd =_imgdata._rprimd_img;
-        _stress = _imgdata._stress_img;
-        _etotal = _imgdata._etotal_img;
+        _acell = _imgdata._acell;
+        _rprimd =_imgdata._rprimd;
+        _stress = _imgdata._stress;
+        _etotal = _imgdata._etotal;
         _imgdata.clear();
       }
     }

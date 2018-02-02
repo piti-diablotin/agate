@@ -9,7 +9,7 @@ cat > $1 << EOF
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
- * @copyright Copyright 2017 Jordan Bieder
+ * @copyright Copyright 2018 Jordan Bieder
  *
  * This file is part of AbiOut.
  *

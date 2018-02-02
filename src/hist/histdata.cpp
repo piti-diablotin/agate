@@ -90,6 +90,7 @@ HistData::HistData() :
   _spinat(),
   _typat(),
   _znucl(),
+  _imgdata(),
 #ifdef HAVE_SPGLIB
   _symprec(0.001),
 #endif
@@ -119,6 +120,7 @@ HistData::HistData(const HistData& hist) :
   _spinat(),
   _typat(hist._typat),
   _znucl(hist._znucl),
+  _imgdata(),
 #ifdef HAVE_SPGLIB
   _symprec(hist._symprec),
 #endif
@@ -145,6 +147,7 @@ HistData::HistData(const HistData& hist) :
   _time = hist._time;
   _stress = hist._stress;
   _spinat = hist._spinat;
+  _imgdata = hist._imgdata;
 }
 
 //
@@ -166,6 +169,7 @@ HistData::HistData(HistData&& hist) :
   _spinat(),
   _typat(hist._typat),
   _znucl(hist._znucl),
+  _imgdata(),
 #ifdef HAVE_SPGLIB
   _symprec(hist._symprec),
 #endif
@@ -192,6 +196,7 @@ HistData::HistData(HistData&& hist) :
   _time = std::move(hist._time);
   _stress = std::move(hist._stress);
   _spinat = std::move(hist._spinat);
+  _imgdata = std::move(hist._imgdata);
 }
 
 //
@@ -239,6 +244,7 @@ HistData& HistData::operator=(const HistData& hist) {
   _time = hist._time;
   _stress = hist._stress;
   _spinat = hist._spinat;
+  _imgdata = hist._imgdata;
   
   return *this;
 }
@@ -278,6 +284,7 @@ HistData& HistData::operator=(HistData&& hist) {
   _time = std::move(hist._time);
   _stress = std::move(hist._stress);
   _spinat = std::move(hist._spinat);
+  _imgdata = std::move(hist._imgdata);
   
   return *this;
 }
@@ -555,6 +562,8 @@ HistData* HistData::getHist(const std::string& file, bool wait){
 }
 
 HistData& HistData::operator+=(HistData& hist) {
+  if ( _nimage != hist._nimage )
+    throw EXCEPTION("HistData have a different number of images",ERRABT);
   if ( _natom != hist._natom )
     throw EXCEPTION("HistData have a different number of atoms",ERRABT);
   if ( _znucl.size() != hist._znucl.size() )
@@ -662,6 +671,21 @@ HistData& HistData::operator+=(HistData& hist) {
 
   _stress.resize(_ntime*6);
   std::copy(hist._stress.begin(), hist._stress.end(),_stress.begin()+prevNtime*6);
+
+  if ( _nimage > 0 ) {
+    _imgdata._acell_img.resize(_ntime*_nimage*_xyz);
+    std::copy(hist._imgdata._acell_img.begin(), hist._imgdata._acell_img.end(),_imgdata._acell_img.begin()+prevNtime*_nimage*_xyz);
+
+    _imgdata._rprimd_img.resize(_ntime*_nimage*9);
+    std::copy(hist._imgdata._rprimd_img.begin(), hist._imgdata._rprimd_img.end(),_imgdata._rprimd_img.begin()+prevNtime*_nimage*9);
+
+    _imgdata._etotal_img.resize(_ntime*_nimage);
+    std::copy(hist._imgdata._etotal_img.begin(), hist._imgdata._etotal_img.end(),_imgdata._etotal_img.begin()+prevNtime*_nimage);
+
+    _imgdata._stress_img.resize(_ntime*_nimage*6);
+    std::copy(hist._imgdata._stress_img.begin(), hist._imgdata._stress_img.end(),_imgdata._stress_img.begin()+prevNtime*_nimage*6);
+  }
+
 
   if ( reorder && !_isPeriodic ) this->periodicBoundaries(-1,false);
 
@@ -2108,5 +2132,30 @@ std::vector<unsigned> HistData::reorder(const HistData &hist) const {
   return order;
 }
 
+//
+HistData::ImgData::ImgData() :
+  _imgmov(0),
+  _acell_img(),
+  _rprimd_img(),
+  _etotal_img(),
+  _stress_img()
+{
+  ;
+}
 
+//
+void HistData::ImgData::clear() {
+  _imgmov = 0;
+  _acell_img.clear(); 
+  _rprimd_img.clear();
+  _etotal_img.clear();
+  _stress_img.clear();
+}
 
+//
+void HistData::ImgData::resize(unsigned n) {
+  _acell_img.resize(3*n);
+  _rprimd_img.resize(9*n);
+  _etotal_img.resize(n);
+  _stress_img.resize(6*n);
+}

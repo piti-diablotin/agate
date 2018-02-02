@@ -129,11 +129,12 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         case 9:
           //PIMD  Nose Hoover
         case 13:
-          _nimage = nimage;
           imageIsTime = false;
+          _imgdata._imgmov = imgmov;
           std::clog << "Reading PIMD" << std::endl;
           break;
       }
+      _fcart.clear();
       std::clog << "Building images";
       for ( unsigned img = 2 ; img <= nimage ; ++ img ) {
         Dtset dtsetimg;
@@ -143,10 +144,19 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         std::clog << " ..." << img;
       }
       _fcart.resize(3*_natom*nimage);
-      _stress.resize(6*nimage);
+      _imgdata.resize(nimage);
       for ( unsigned img = 1 ; img <= nimage ; ++ img ) {
         std::string suffix = " ";
-       if ( img > 1 ) suffix = "_"+utils::to_string(img)+"img";
+        if ( img > 1 ) suffix = "_"+utils::to_string(img)+"img";
+
+        try {
+          auto fcart = parser.getToken<double>("fcart"+suffix,_natom*3);
+          std::copy_n(fcart.begin(),3*_natom,_fcart.begin()+3*_natom*(img-1));
+        } 
+        catch (Exception &e) {
+          std::fill_n(_fcart.begin()+3*_natom*(img-1),3*_natom,0.);
+        }
+
         double etot = 0.;
         try {
           etot = parser.getToken<double>("etotal"+suffix);
@@ -154,21 +164,36 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         catch (...) {
           etot = 0.;
         }
+
+        std::vector<double> stress(6);
         try {
-          auto fcart = parser.getToken<double>("fcart"+suffix,_natom*3);
-          std::copy(fcart.begin(),fcart.end(),_fcart.begin()+3*_natom*(img-1));
+          stress = parser.getToken<double>("strten"+suffix,6);
         } 
         catch (Exception &e) {
-          std::fill_n(_fcart.begin()+3*_natom*(img-1),3*_natom,0.);
+          std::fill_n(stress.begin(),6,0.);
         }
+
+        std::vector<double> acell(3);
         try {
-          auto stress = parser.getToken<double>("strten"+suffix,6);
-          std::copy(stress.begin(),stress.end(),_stress.begin()+6*(img-1));
+          acell= parser.getToken<double>("acell"+suffix,3);
         } 
         catch (Exception &e) {
-          std::fill_n(_stress.begin()+6*(img-1),6,0.);
+          std::copy_n(_acell.begin(),3,acell.begin());
         }
-        _etotal[img-1] = etot;
+
+        std::vector<double> rprimd(9);
+        try {
+          rprimd= parser.getToken<double>("rprimd"+suffix,9);
+        } 
+        catch (Exception &e) {
+          std::copy_n(_rprimd.begin(),9,rprimd.begin());
+        }
+
+        std::copy_n(acell.begin() ,3,_imgdata._acell_img.begin()+3*(img-1));
+        std::copy_n(rprimd.begin(),9,_imgdata._rprimd_img.begin()+9*(img-1));
+        std::copy_n(stress.begin(),6,_imgdata._stress_img.begin()+6*(img-1));
+        _imgdata._etotal_img[img-1] = etot;
+
       }
       std::clog << std::endl;
       if ( !imageIsTime ) {
@@ -178,12 +203,25 @@ void HistDataDtset::readFromFile(const std::string& filename) {
           std::copy(&_typat[0],&_typat[_natom],&_typat[_natom*img]);
         }
         _natom *= nimage;
-        _acell.resize(3*nimage);
-        _rprimd.resize(9);
-        _etotal.resize(1);
-        _time.resize(1);
+        std::vector<double> mdtemp(2);
         _stress.resize(6);
-        _fcart.resize(0);
+        _etotal.resize(1);
+        try {
+          mdtemp = parser.getToken<double>("mdtemp",2);
+        }
+        catch (Exception &e) {
+          _etotal[0] = _imgdata._etotal_img[0];
+          for ( unsigned v = 0 ; v < 6 ; ++v ) 
+            _stress[v] = _imgdata._stress_img[v];
+        }
+        _nimage = nimage;
+      }
+      else {
+        _acell = _imgdata._acell_img;
+        _rprimd =_imgdata._rprimd_img;
+        _stress = _imgdata._stress_img;
+        _etotal = _imgdata._etotal_img;
+        _imgdata.clear();
       }
     }
 

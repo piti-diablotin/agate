@@ -61,10 +61,25 @@ class HistData {
 
   protected :
 
+    class ImgData {
+      public :
+        int                 _imgmov;      ///< Remember if PIMD/NEB/String/... See abinit input variables
+        std::vector<double> _acell_img;   ///< CELL lattice vector scaling
+        std::vector<double> _rprimd_img;  ///< Real space PRIMitive translations, Dimensional
+        std::vector<double> _etotal_img;  ///< Total energy of the system
+        std::vector<double> _stress_img;  ///< 6 voigt value of the stress tensor for each time.
+
+        ImgData();
+
+        void clear();
+        void resize(unsigned n);
+    };
+
+
     unsigned _natom;    ///< Number of atom in the cell.
     unsigned _xyz;      ///< Number of dimension in space.
     unsigned _ntime;    ///< Number of time step.
-    unsigned _nimage;
+    unsigned _nimage;   ///< Number of images if used.
     bool     _isPeriodic; ///< Are the position all inside the cell or not
 
 #ifdef HAVE_CPPTHREAD
@@ -85,6 +100,9 @@ class HistData {
 
     std::vector<int> _typat; ///< Type of each atom.
     std::vector<int> _znucl; ///< znucl for each type of atom
+
+    ImgData _imgdata; ///<Store information for imgages
+
 #ifdef HAVE_SPGLIB
     double   _symprec; ///< Precision to find symmetries
 #endif

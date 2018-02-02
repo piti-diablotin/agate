@@ -50,30 +50,16 @@
 
 //
 HistDataNC::HistDataNC() : HistDataMD(),
-  _imgmov(0),
-  _acell_img(),
-  _rprimd_img(),
-  _etotal_img(),
-  _stress_img(),
   _ekin_img(),
   _entropy_img()
 {
 }
 
 HistDataNC::HistDataNC(const HistData& hist) : HistDataMD(hist),
-  _imgmov(0),
-  _acell_img(),
-  _rprimd_img(),
-  _etotal_img(),
-  _stress_img(),
   _ekin_img(),
   _entropy_img()
 {
   if ( _nimage > 0 ) {
-    _acell_img.resize(_nimage*_ntime);
-    _rprimd_img.resize(_nimage*_ntime);
-    _etotal_img.resize(_nimage*_ntime);
-    _stress_img.resize(_nimage*_ntime);
     _ekin_img.resize(_nimage*_ntime);
     _entropy_img.resize(_nimage*_ntime);
   }
@@ -81,19 +67,10 @@ HistDataNC::HistDataNC(const HistData& hist) : HistDataMD(hist),
 
 //
 HistDataNC::HistDataNC(HistData&& hist) : HistDataMD(hist),
-  _imgmov(0),
-  _acell_img(),
-  _rprimd_img(),
-  _etotal_img(),
-  _stress_img(),
   _ekin_img(),
   _entropy_img()
 {
   if ( _nimage > 0 ) {
-    _acell_img.resize(_nimage*_ntime);
-    _rprimd_img.resize(_nimage*_ntime);
-    _etotal_img.resize(_nimage*_ntime);
-    _stress_img.resize(_nimage*_ntime);
     _ekin_img.resize(_nimage*_ntime);
     _entropy_img.resize(_nimage*_ntime);
   }
@@ -155,7 +132,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
         throw EXCEPTION("Bad dimension for etotal with image",ERRABT);
       else if ( ndim_check == 1 ) {
         nimage = 0;
-        _imgmov = 0;
+        _imgdata._imgmov = 0;
       }
     }
   }
@@ -194,12 +171,12 @@ void HistDataNC::readFromFile(const std::string& filename) {
     if ( nc_inq_varid(ncid, "imgmov", &varid) )
       throw Exception();
     size_t start[] = {0};
-    if ( nc_get_var1_int(ncid, varid, start, &_imgmov ) ) {
-      _imgmov = 0;
+    if ( nc_get_var1_int(ncid, varid, start, &_imgdata._imgmov ) ) {
+      _imgdata._imgmov = 0;
     }
   }
   catch (...) {
-    _imgmov = 0;
+    _imgdata._imgmov = 0;
   }
 
   _filename = filename;
@@ -209,12 +186,12 @@ void HistDataNC::readFromFile(const std::string& filename) {
   if ( nimage > 0 ) {
     dtion = 1; // Abinit writes itime*dtion in imgmov, and itime in mover.
     has_dtion = true;
-    if ( _imgmov == 0 ) {
-      _imgmov = 9;
+    if ( _imgdata._imgmov == 0 ) {
+      _imgdata._imgmov = 9;
       auto e = EXCEPTION("\"imgmov\" is not provided in the file. Assuming it is a PIMD run",ERRWAR);
       std::clog << e.fullWhat() << std::endl;
     }
-    switch ( _imgmov ) {
+    switch ( _imgdata._imgmov ) {
       //string
       case 2:
         // NEB
@@ -250,10 +227,10 @@ void HistDataNC::readFromFile(const std::string& filename) {
   _temperature.resize(_ntime);
   _pressure.resize(_ntime);
   if ( _nimage > 0 ) {
-    _acell_img  .resize(_nimage*_ntime*_xyz); 
-    _rprimd_img .resize(_nimage*_ntime*_xyz*_xyz); 
-    _etotal_img .resize(_nimage*_ntime); 
-    _stress_img .resize(_nimage*_ntime*6); 
+    _imgdata._acell_img  .resize(_nimage*_ntime*_xyz); 
+    _imgdata._rprimd_img .resize(_nimage*_ntime*_xyz*_xyz); 
+    _imgdata._etotal_img .resize(_nimage*_ntime); 
+    _imgdata._stress_img .resize(_nimage*_ntime*6); 
     _ekin_img   .resize(_nimage*_ntime); 
     _entropy_img.resize(_nimage*_ntime);
   }
@@ -583,7 +560,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
 
               count[1] = nimage; // Read all image for storage purpose
               count[2] = _xyz;
-              get_var(local_ncid,start,count,&_rprimd_img    [nimage*itime*_xyz*_xyz],"rprimd");
+              get_var(local_ncid,start,count,&_imgdata._rprimd_img    [nimage*itime*_xyz*_xyz],"rprimd");
 
               count[1] = 1;
               count[2] = _xyz;
@@ -591,15 +568,15 @@ void HistDataNC::readFromFile(const std::string& filename) {
 
               count[1] = nimage;
               count[2] = _xyz;
-              get_var(local_ncid,start,count,&_acell_img  [nimage*itime*_xyz],"acell");
+              get_var(local_ncid,start,count,&_imgdata._acell_img  [nimage*itime*_xyz],"acell");
 
               count[1] = nimage;
               count[2] = 6;
-              double *tmp0 = &_stress_img[itime*nimage*6];
+              double *tmp0 = &_imgdata._stress_img[itime*nimage*6];
               get_var(local_ncid,start,count,&tmp0[0],"strten");
 
               count[1] = {nimage};
-              double *tmp1 = &_etotal_img[itime*nimage];
+              double *tmp1 = &_imgdata._etotal_img[itime*nimage];
               double *tmp2 = &_ekin_img[itime*nimage];
               double *tmp3 = &_entropy_img[itime*nimage];
               get_var(local_ncid,start,count,&tmp1[0],"etotal");
@@ -683,6 +660,19 @@ void HistDataNC::readFromFile(const std::string& filename) {
             _rprimd[ltime*9+3] = swap1;
             _rprimd[ltime*9+6] = swap2;
             _rprimd[ltime*9+7] = swap3;
+            if ( _imgdata._rprimd_img.size() > 0 ) {
+              for ( unsigned img = 0 ; img < nimage ; ++img ) {
+                double swap1 = _imgdata._rprimd_img[ltime*9*nimage+img*9+1];
+                double swap2 = _imgdata._rprimd_img[ltime*9*nimage+img*9+2];
+                double swap3 = _imgdata._rprimd_img[ltime*9*nimage+img*9+5];
+                _imgdata._rprimd_img[ltime*9*nimage+img*9+1] = _imgdata._rprimd_img[ltime*9*nimage+img*9+3];
+                _imgdata._rprimd_img[ltime*9*nimage+img*9+2] = _imgdata._rprimd_img[ltime*9*nimage+img*9+6];
+                _imgdata._rprimd_img[ltime*9*nimage+img*9+5] = _imgdata._rprimd_img[ltime*9*nimage+img*9+7];
+                _imgdata._rprimd_img[ltime*9*nimage+img*9+3] = swap1;
+                _imgdata._rprimd_img[ltime*9*nimage+img*9+6] = swap2;
+                _imgdata._rprimd_img[ltime*9*nimage+img*9+7] = swap3;
+              }
+            }
 
             //Scale mdtime
             //if ( !has_dtion )
@@ -866,7 +856,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
         throw EXCEPTION(std::string(std::string("Error creating attribut mnemonics for variable dtion with error "))+std::string(nc_strerror(rval)),ERRABT);
       if ( (rval = nc_enddef(ncid) ) )
         throw EXCEPTION(std::string("Error ending define mode with error ")+std::string(nc_strerror(rval)),ERRABT);
-      if ( (rval = nc_put_var_int(ncid,varid,&_imgmov) ) )
+      if ( (rval = nc_put_var_int(ncid,varid,&_imgdata._imgmov) ) )
         throw EXCEPTION(std::string("Error putting variable dtion with error ")+std::string(nc_strerror(rval)),ERRABT);
       // set dtion to 1 so mdtime is still itime*dtion
       dtion = 1;
@@ -929,7 +919,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
 
 
       {
-        const double *pointer = (_nimage > 0 ? &_acell_img[0] : &_acell[0] );
+        const double *pointer = (_nimage > 0 ? &_imgdata._acell_img[0] : &_acell[0] );
 
         //acell(time,xyz)
         units = "bohr" ;
@@ -941,7 +931,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
 
       //rprimd(time,xyz,xyz)
       {
-        const  double *pointer = (_nimage > 0 ? &_rprimd_img[0] : &_rprimd[0] );
+        const  double *pointer = (_nimage > 0 ? &_imgdata._rprimd_img[0] : &_rprimd[0] );
         double *rprimd = new double[countp[0]*_xyz*_xyz*nimage];
         for ( unsigned itime = 0 ; itime < countp[0] ; ++itime ) {
           for ( int iimage = 0 ; iimage < nimage ; ++iimage ) {
@@ -970,7 +960,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
 
       {
         //etotal(time)
-        const  double *pointer = (_nimage > 0 ? &_etotal_img[0] : &_etotal[0] );
+        const  double *pointer = (_nimage > 0 ? &_imgdata._etotal_img[0] : &_etotal[0] );
         units = "Ha" ;
         mnemo = "TOTAL Energy" ;
         put_var(ncid,"etotal",units,mnemo,NC_DOUBLE,1+addimg,dimids,countp,tstart,&pointer[iitime*nimage]);
@@ -1003,7 +993,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
 
       {
         //strten(time,six)
-        const  double *pointer = (_nimage > 0 ? &_stress_img[0] : &_stress[0] );
+        const  double *pointer = (_nimage > 0 ? &_imgdata._stress_img[0] : &_stress[0] );
         dimids[1+addimg]=sixid;
         countp[1+addimg]=6;
         units = "Ha/bohr^3" ;
@@ -1031,16 +1021,13 @@ void HistDataNC::dump(HistData &hist, const std::string& filename, unsigned tbeg
   HistDataMD *histmd;
   if ( ( histmd = dynamic_cast<HistDataMD*>(&hist) ) ) {
     HistDataNC *histnc = reinterpret_cast<HistDataNC*>(histmd);
-    bool nimage;
+    unsigned nimage;
     if ( (nimage=histnc->_nimage) > 0 ) {
       auto ntime = histnc->_ntime;
-      histnc->_acell_img.resize(nimage*ntime);
-      histnc->_rprimd_img.resize(nimage*ntime);
-      histnc->_etotal_img.resize(nimage*ntime);
-      histnc->_stress_img.resize(nimage*ntime);
       histnc->_ekin_img.resize(nimage*ntime);
       histnc->_entropy_img.resize(nimage*ntime);
     }
+    
     histnc->dump(filename,tbegin,tend,step);
 
   }

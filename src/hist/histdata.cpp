@@ -37,6 +37,7 @@
 #include "hist/vaspxml.hpp"
 #include "hist/multibinit.hpp"
 #include "hist/histdataxyz.hpp"
+#include "hist/histdatagsr.hpp"
 #include "plot/gnuplot.hpp"
 #include "io/configparser.hpp"
 #ifdef HAVE_SPGLIB
@@ -523,6 +524,7 @@ HistData* HistData::getHist(const std::string& file, bool wait){
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new Multibinit),"Multibinit"));     //4
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataXYZ),"XYZ"));     //5
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataOutNC),"Abinit _OUT.nc"));   //6
+  allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataGSR),"Abinit _GSR.nc"));   //7
 
   if ( file.find("_HIST") != std::string::npos || file.find("_HIST.nc") != std::string::npos ) allFormat[0].swap(allFormat[1]);
   else if ( file.find("_OUT.nc") != std::string::npos ) allFormat[0].swap(allFormat[6]);
@@ -530,6 +532,7 @@ HistData* HistData::getHist(const std::string& file, bool wait){
   else if ( file.find(".xml") != std::string::npos ) allFormat[0].swap(allFormat[4]);
   else if ( file.find(".xyz") != std::string::npos ) allFormat[0].swap(allFormat[5]);
   else if ( file.find(".dsp") != std::string::npos ) allFormat[0].swap(allFormat[2]);
+  else if ( file.find("_GSR.nc") != std::string::npos ) allFormat[0].swap(allFormat[7]);
 
   for ( auto& p : allFormat ) {
     try {

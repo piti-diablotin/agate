@@ -275,6 +275,8 @@ int main(int argc, char** argv) {
       WinGlfw2::init();
       ptrwin = new WinGlfw2(crystal,width,height);
 #else
+      std::clog << "Using no window mode" << std::endl;
+      useopengl = false;
       Winfake::init();
       ptrwin = new Winfake(crystal,width,height);
       useopengl = false;
@@ -282,16 +284,12 @@ int main(int argc, char** argv) {
 #else
       std::clog << "Using no window mode" << std::endl;
       useopengl = false;
-      if ( config.empty() )
-        throw EXCEPTION("Currently you need to creat a config file to use the no window mode",ERRDIV);
       Winfake::init();
       ptrwin = new Winfake(crystal,width,height);
 #endif
     }
     else {
       std::clog << "Using no window mode" << std::endl;
-      //if ( config.empty() )
-      //  throw EXCEPTION("Currently you need to creat a config file to use the no window mode",ERRDIV);
       Winfake::init();
       ptrwin = new Winfake(crystal,width,height);
     }
@@ -312,7 +310,7 @@ int main(int argc, char** argv) {
 
     bool wait = parser.getOption<bool>("wait");
     crystal.reset(new CanvasPos(useopengl));
-    if ( wait ) {
+    if ( wait || !useopengl ) {
       std::istringstream stream("1");
       crystal->alter("wait",stream);
     }

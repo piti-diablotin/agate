@@ -1304,12 +1304,21 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     title = "Volume";
     std::clog << std::endl << " -- Volume --" << std::endl;
     std::vector<double> volume(ntime);
+    std::vector<double> multiplicity(3,1.);
+    try {
+      multiplicity = parser.getToken<double>("multiplicity",3);
+    }
+    catch ( Exception &e ) {
+      multiplicity.resize(3,1);
+    }
+    double scaleV = 1.;
+    for ( auto m : multiplicity ) scaleV /= m;
 
 #pragma omp parallel for schedule(static)
     for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
       geometry::mat3d rprimd;
       std::copy(&_rprimd[itime*3*3],&_rprimd[itime*3*3+9],rprimd.begin());
-      volume[itime-tbegin] = geometry::det(rprimd);
+      volume[itime-tbegin] = scaleV*geometry::det(rprimd);
     }
     y.push_back(std::move(volume));
   }
@@ -1317,19 +1326,27 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   ///ACELL 
   else if ( function == "acell" ) {
     filename = "latticeLengths";
-    ylabel = "Lattice length [Bohr^3]";
+    ylabel = "Lattice length [Bohr]";
     title = "Lattice parameters";
     std::clog << std::endl << " -- Lattice parameters --" << std::endl;
     std::vector<double> acell1(ntime);
     std::vector<double> acell2(ntime);
     std::vector<double> acell3(ntime);
+    std::vector<double> multiplicity(3,1.);
+    try {
+      multiplicity = parser.getToken<double>("multiplicity",3);
+    }
+    catch ( Exception &e ) {
+      multiplicity.resize(3,1);
+    }
+    for ( auto &m : multiplicity ) m = 1/m;
 
 #pragma omp parallel for schedule(static)
     for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
       const double *rp = &_rprimd[itime*3*3];
-      acell1[itime-tbegin] = std::sqrt(rp[0]*rp[0]+rp[3]*rp[3]+rp[6]*rp[6]);
-      acell2[itime-tbegin] = std::sqrt(rp[1]*rp[1]+rp[4]*rp[4]+rp[7]*rp[7]);
-      acell3[itime-tbegin] = std::sqrt(rp[2]*rp[2]+rp[5]*rp[5]+rp[8]*rp[8]);
+      acell1[itime-tbegin] = multiplicity[0]*std::sqrt(rp[0]*rp[0]+rp[3]*rp[3]+rp[6]*rp[6]);
+      acell2[itime-tbegin] = multiplicity[1]*std::sqrt(rp[1]*rp[1]+rp[4]*rp[4]+rp[7]*rp[7]);
+      acell3[itime-tbegin] = multiplicity[2]*std::sqrt(rp[2]*rp[2]+rp[5]*rp[5]+rp[8]*rp[8]);
     }
     y.push_back(std::move(acell1));
     y.push_back(std::move(acell2));

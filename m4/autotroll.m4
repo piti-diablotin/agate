@@ -193,7 +193,7 @@ dnl Memo: AC_ARG_WITH(package, help-string, [if-given], [if-not-given])
 
   # Find qmake.
   AC_ARG_VAR([QMAKE], [Qt Makefile generator command])
-  AX_PATH_TOOLS([QMAKE], [qmake qmake-qt5 qmake-qt4 qmake-qt3], [missing],
+  AX_PATH_TOOLS([QMAKE], [qmake-qt5 qmake-qt4 qmake-qt3 qmake], [missing],
                 [$QT_DIR:$QT_PATH:$PATH:$tmp_qt_paths])
   if test x"$QMAKE" = xmissing; then
     AX_INSTEAD_IF([$4], [Cannot find qmake. Try --with-qt=PATH.])
@@ -202,7 +202,7 @@ dnl Memo: AC_ARG_WITH(package, help-string, [if-given], [if-not-given])
 
   # Find moc (Meta Object Compiler).
   AC_ARG_VAR([MOC], [Qt Meta Object Compiler command])
-  AX_PATH_TOOLS([MOC], [moc moc-qt5 moc-qt4 moc-qt3], [missing],
+  AX_PATH_TOOLS([MOC], [moc-qt5 moc-qt4 moc-qt3 moc], [missing],
                 [$QT_PATH:$PATH:$tmp_qt_paths])
   if test x"$MOC" = xmissing; then
     AX_INSTEAD_IF([$4],
@@ -212,7 +212,7 @@ dnl Memo: AC_ARG_WITH(package, help-string, [if-given], [if-not-given])
 
   # Find uic (User Interface Compiler).
   AC_ARG_VAR([UIC], [Qt User Interface Compiler command])
-  AX_PATH_TOOLS([UIC], [uic uic-qt5 uic-qt4 uic-qt3 uic3], [missing],
+  AX_PATH_TOOLS([UIC], [uic-qt5 uic-qt4 uic-qt3 uic3 uic], [missing],
                 [$QT_PATH:$PATH:$tmp_qt_paths])
   if test x"$UIC" = xmissing; then
     AX_INSTEAD_IF([$4],

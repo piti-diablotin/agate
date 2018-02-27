@@ -149,7 +149,7 @@ void HistDataGSR::readFromFile(const std::string& filename) {
   size_t start[2] = {0};
   size_t count[2] = {_natom,_xyz};
   get_var(ncid, start, count, _xred.data(), "reduced_atom_positions");
-  get_var(ncid, start, count, _xred.data(), "cartesian_forces");
+  get_var(ncid, start, count, _fcart.data(), "cartesian_forces");
 
   count[0] = 6;
   get_var(ncid, start, count, _stress.data(), "cartesian_stress_tensor");
@@ -176,6 +176,11 @@ void HistDataGSR::readFromFile(const std::string& filename) {
     _rprimd[itime*9+3] = swap1;
     _rprimd[itime*9+6] = swap2;
     _rprimd[itime*9+7] = swap3;
+    for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {
+      _xcart[itime*3*_natom+iatom*3  ] = _rprimd[itime*9+0]*_xred[itime*3*_natom+iatom*3] + _rprimd[itime*9+1]*_xred[itime*3*_natom+iatom*3+1] + _rprimd[itime*9+2]*_xred[itime*3*_natom+iatom*3+2];
+      _xcart[itime*3*_natom+iatom*3+1] = _rprimd[itime*9+3]*_xred[itime*3*_natom+iatom*3] + _rprimd[itime*9+4]*_xred[itime*3*_natom+iatom*3+1] + _rprimd[itime*9+5]*_xred[itime*3*_natom+iatom*3+2];
+      _xcart[itime*3*_natom+iatom*3+2] = _rprimd[itime*9+6]*_xred[itime*3*_natom+iatom*3] + _rprimd[itime*9+7]*_xred[itime*3*_natom+iatom*3+1] + _rprimd[itime*9+8]*_xred[itime*3*_natom+iatom*3+2];
+    }
   }
 
   _filename = filename;

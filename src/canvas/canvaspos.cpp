@@ -1461,6 +1461,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     }
 
     try {
+      parser.setSensitive(true);
       std::string unitcell = parser.getToken<std::string>("unitcell");
       auto uc = HistData::getHist(unitcell,true);
       tdep.unitcell(uc,0);

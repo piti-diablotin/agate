@@ -109,6 +109,7 @@ Ddb* Ddb::getDdb(const std::string& file){
 
   for ( auto& p : allFormat ) {
     try {
+  std::cerr << "ich 9" << std::endl;
       p.first->readFromFile(file);
       ddb = p.first.release();
     }
@@ -116,6 +117,7 @@ Ddb* Ddb::getDdb(const std::string& file){
       ddb = nullptr;
       eloc += e;
       eloc.ADD("Format is not "+p.second,ERRDIV);
+      std::cerr << eloc.fullWhat() << std::endl;
       if ( e.getReturnValue() == ERRABT ) {
         break;
       }

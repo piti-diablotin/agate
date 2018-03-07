@@ -654,9 +654,11 @@ bool Window::userInput(std::stringstream& info) {
               _canvas.reset(new CanvasPos(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
             }
             else if ( cmode == "ph" || cmode == "phonons" ) {
+            std::clog << "changing" << std::endl;
               _canvas.reset(new CanvasPhonons(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
             }
             else throw EXCEPTION("Bad mode "+cmode,ERRDIV);
+            std::clog << "Mode changed" << std::endl;
           }
           else if ( token == "height" ) {
             int height;

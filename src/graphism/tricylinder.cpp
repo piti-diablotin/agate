@@ -25,6 +25,7 @@
 
 
 #include "graphism/tricylinder.hpp"
+#include "base/phys.hpp"
 #include <cmath>
 #include <iostream>
 #include <algorithm>
@@ -198,10 +199,15 @@ void TriCylinder::draw(const double start[3], const double end[3], const _float 
   const float nn = sqrt(n0*n0+n1*n1+n2*n2);
   const float inv_nn = 1.f/nn;
   const float nprod = sqrt(n1*n1+n0*n0);
-  const float angle = ( (n2<0) ? 180.f+180.f/3.14f*asin(nprod*inv_nn) : -180.f/3.14f*asin(nprod*inv_nn) );
+  const float angle = ( (n2<0) ? 180.f+180.f/phys::pi*asin(nprod*inv_nn) : -180.f/phys::pi*asin(nprod*inv_nn) );
   glPushMatrix();
   glTranslatef(start[0],start[1],start[2]);
-  glRotatef(angle,n1,-n0,0.0f);
+  if ( nprod > 1e-6 ) {
+    glRotatef(angle,n1,-n0,0.0f);
+  }
+  else {
+    glRotatef(angle,1.f,0.f,0.0f);
+  }
 
   this->draw(radius,nn);
   glPopMatrix();

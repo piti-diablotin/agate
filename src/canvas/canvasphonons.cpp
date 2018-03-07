@@ -59,6 +59,7 @@ CanvasPhonons::CanvasPhonons(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _originalFile(),
   _ddb(nullptr)
 {
+  std::cerr << "ich bin da" << std::endl;
   if ( _histdata != nullptr && _histdata->ntimeAvail() > 0 ) {
     _originalFile = _histdata->filename();
     _reference = Dtset(*_histdata.get());
@@ -67,9 +68,21 @@ CanvasPhonons::CanvasPhonons(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
     _displacements = DispDB(_reference.natom());
     _condensedModes.clear();
 
+  try {
     this->readDdb(_originalFile);
-    this->buildAnimation();
   }
+  catch( Exception &e ) {
+    std::clog << e.fullWhat() << std::endl;
+    _histdata.reset(new HistDataDtset());
+    _reference = Dtset();
+    this->clear();
+    _displacements = DispDB();
+  }
+  std::cerr << "DDB OK" << std::endl;
+  this->buildAnimation();
+  std::cerr << "animation OK" << std::endl;
+  }
+  std::cerr << "ich ok" << std::endl;
   this->nLoop(-2);
   _qptModes = _condensedModes.end();
 }
@@ -139,7 +152,9 @@ void CanvasPhonons::openFile(const std::string& filename) {
 bool CanvasPhonons::readDdb(const std::string& filename) {
   // Try to read a DDB file
   try { 
+  std::cerr << "ich 8" << std::endl;
     _ddb.reset(Ddb::getDdb(filename));
+  std::cerr << "ich 9" << std::endl;
     /*
      * This is bad because we are not sure the _reference structure
      * is the same as the ddb but if the number of elements is correct 

@@ -81,7 +81,7 @@ class CanvasPos : public Canvas {
 
     double                        _bond;       ///< Length to draw H bond.
     double                        _bondRadius; ///< Radius of the cylinder for bonds.
-    TriSphere                     _sphere;     ///< Sphere to draw atoms
+    TriSphere*                    _sphere;     ///< Sphere to draw atoms
     TriCylinder                   _cylinder;   ///< Cylinder to draw bonds.
     TriArrow                      _arrow;      ///< Arrow to draw spins or displacement.
     float                         _up[3];      ///< Color spin up

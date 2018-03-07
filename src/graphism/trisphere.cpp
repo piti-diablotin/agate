@@ -162,12 +162,16 @@ void TriSphere::genUnit() {
 TriSphere::~TriSphere() {
 }
 
-void TriSphere::draw(const _float radius) {
+void TriSphere::draw(const _float pos[3], const _float color[3], const _float radius) {
+  static _float prev_color[3] = {-1.,-1.,-1.};
   if ( !_opengl ) return;
 #if defined(HAVE_GL)
 
   glPushMatrix();
+  glTranslatef(pos[0],pos[1],pos[2]);
   glScalef(radius,radius,radius);
+  if ( color[0]!=prev_color[0] || color[1]!=prev_color[1] || color[2]!=prev_color[2])
+    glColor3f(color[0],color[1],color[2]);
 
   switch(_mode) {
     case VERTEX :

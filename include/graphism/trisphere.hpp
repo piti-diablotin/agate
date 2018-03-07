@@ -98,9 +98,11 @@ class TriSphere : public TriObj{
 
     /**
      * Draw a sphere or compute it and store it
-     * @param radius The radius of the sphere placed at (0,0,0)
+     * @param pos The position of the sphere
+     * @param color The color of the sphere
+     * @param radius The radius of the sphere
      */
-    void draw(const _float radius);
+    virtual void draw(const _float pos[3], const _float color[3], const _float radius);
 
     /**
      * Pop method to do something if needed

@@ -52,6 +52,7 @@
 #include "io/configparser.hpp"
 #include "bind/tdep.hpp"
 #include "hist/histdatadtset.hpp"
+#include "graphism/tricloud.hpp"
 
 //
 CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
@@ -67,7 +68,7 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _display(DISP_BORDER),
   _bond(2.00), 
   _bondRadius(0.15), 
-  _sphere(_opengl),
+  _sphere(nullptr),
   _cylinder(_opengl),
   _arrow(_opengl),
   _up(),
@@ -77,6 +78,7 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _drawSpins(),
   _maxDim(1.1)
 {
+  _sphere = new TriSphere(_opengl);
   _up[0] = 1.0;
   _up[1] = 0.5;
   _up[2] = 0.0;
@@ -106,7 +108,7 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _display(DISP_BORDER),
   _bond(canvas._bond), 
   _bondRadius(canvas._bondRadius), 
-  _sphere(std::move(canvas._sphere)),
+  _sphere(canvas._sphere),
   _cylinder(std::move(canvas._cylinder)),
   _arrow(std::move(canvas._arrow)),
   _up(),
@@ -116,6 +118,7 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _drawSpins(),
   _maxDim(canvas._maxDim)
 {
+  canvas._sphere = nullptr;
   _up[0] = canvas._up[0];
   _up[1] = canvas._up[1];
   _up[2] = canvas._up[2];
@@ -142,6 +145,7 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
 //
 CanvasPos::~CanvasPos() {
   this->clear();
+  if ( _sphere != nullptr ) delete _sphere;
 }
 
 void CanvasPos::clear() {
@@ -161,6 +165,9 @@ void CanvasPos::setHist(HistData& hist) {
   try {
     this->clear();
     _natom = hist.natom();
+    delete _sphere;
+    _sphere = ( _natom <= 5000 ) ? new TriSphere(_opengl) : new TriCloud(_opengl);
+
     while ( hist.ntimeAvail() < 1 ) {
 #ifdef HAVE_CPPTHREAD_YIELD
       std::this_thread::yield();
@@ -310,7 +317,7 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
   }
 
 
-  _sphere.push();
+  _sphere->push();
   for ( int i = 0 ; i < _translate[0] ; ++i) {
     const GLfloat fi = (GLfloat) i;
     const GLfloat xtrans[] = { fi*fx[0], fi*fx[1], fi*fx[2] };
@@ -326,7 +333,7 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
         glPushMatrix();
         glTranslatef(ztrans[0],ztrans[1],ztrans[2]);
         // Erase color 
-        CanvasPos::drawAtom(-1,0.f,0.f,0.f);
+        //CanvasPos::drawAtom(-1,0.f,0.f,0.f);
         for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
           const int znucl = _znucl[_typat[iatom]];
           CanvasPos::drawAtom(znucl,
@@ -348,12 +355,12 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
             //glEnable(GL_DEPTH_TEST);
           }
         }
-        _sphere.pop();
+        _sphere->pop();
         this->drawSpins();
         this->drawBonds(bonds);
-        _sphere.push();
+        _sphere->push();
         // Erase color 
-        CanvasPos::drawAtom(-1,0.f,0.f,0.f);
+        //CanvasPos::drawAtom(-1,0.f,0.f,0.f);
         if ( (_display & DISP_BORDER ) && ( ex || ey || ez ) ) {
           std::vector<unsigned> drawBorder;
           if ( (ex && !ey && !ez) || (!ex && ey && !ez) || (!ex && !ey && ez) ) {
@@ -405,11 +412,11 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
               //glEnable(GL_DEPTH_TEST);
             }
           }
-          _sphere.pop();
+          _sphere->pop();
           for ( auto batom : drawBorder ) {
             this->drawSpins(batom);
           }
-          _sphere.push();
+          _sphere->push();
         }
         glPopMatrix();
       }
@@ -417,8 +424,8 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
   }
 
   // Erase color
-  CanvasPos::drawAtom(-1,0.f,0.f,0.f);
-  _sphere.pop();
+  //CanvasPos::drawAtom(-1,0.f,0.f,0.f);
+  _sphere->pop();
 
   if ( !_octahedra_z.empty() ) {
     if ( _histdata->isPeriodic() )
@@ -473,7 +480,7 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
           }
 
           if ( _octaDrawAtoms && !_octahedra.empty() ) {
-            _sphere.push();
+            _sphere->push();
             for ( auto &a : na ) {
               const int znucl = _znucl[_typat[a.first]];
               CanvasPos::drawAtom(znucl,a.second[0],a.second[1],a.second[2]);
@@ -492,8 +499,8 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
                 //glEnable(GL_DEPTH_TEST);
               }
             }
-            CanvasPos::drawAtom(-1,0.f,0.f,0.f);
-            _sphere.pop();
+            //CanvasPos::drawAtom(-1,0.f,0.f,0.f);
+            _sphere->pop();
           }
 
           if ( _light ) glDisable(GL_LIGHTING);
@@ -535,24 +542,8 @@ void CanvasPos::nextFrame(const int count) {
 
 //
 void CanvasPos::drawAtom(const int znucl, GLfloat posX, GLfloat posY, GLfloat posZ) {
-#if defined(HAVE_GL)
-  static int zprev = -1;
-  if ( zprev != znucl ) {
-    zprev = znucl;
-    if ( zprev == -1 ) return;
-    glColor3f(mendeleev::color[znucl][0], mendeleev::color[znucl][1], mendeleev::color[znucl][2]);
-  }
-  glPushMatrix();
-  glTranslatef(posX,posY,posZ);
-  if ( znucl >= 0 ) 
-    _sphere.draw((float)mendeleev::radius[znucl]);
-  glPopMatrix();
-#else
-  (void) znucl;
-  (void) posX;
-  (void) posY;
-  (void) posZ;
-#endif
+  GLfloat pos[3]={posX,posY,posZ};
+  _sphere->draw(pos,mendeleev::color[znucl],(float)mendeleev::radius[znucl]);
 }
 
 //
@@ -968,8 +959,15 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       unsigned int div;
       stream >> div;
       if ( !stream.fail() ) { 
-        _sphere.division(div);
-        _sphere.genUnit();
+          delete _sphere;
+        if ( div == 1 ) {
+          _sphere = new TriCloud(_opengl);
+        }
+        else {
+          _sphere = new TriSphere(_opengl);
+        _sphere->division(div);
+        _sphere->genUnit();
+        }
         _cylinder.division(div);
         _cylinder.genUnit();
         _arrow.division(div);

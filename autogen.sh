@@ -242,7 +242,7 @@ EOF
   echo "  bin doc FINDSYM Win_x86" >> Makefile.am
 
   cat >> Makefile.am << EOF
-EXTRA_DIST = autogen.sh configure1 configure2 icons icons.qrc $(if test "$1" = "-t"; then echo "glfw-3.1.1.zip"; fi)
+EXTRA_DIST = autogen.sh configure1 configure2 icons icons.qrc spglib-1.9.9.tar.gz $(if test "$1" = "-t"; then echo "glfw-3.1.1.zip"; fi)
 #EXTRA_DIST = autogen.sh glfw-3.1.2.zip spglib-1.8.3.tar.gz
 
 clean-local:

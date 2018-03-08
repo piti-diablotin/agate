@@ -60,21 +60,17 @@ Here is a small list of quantities that you can extract with **agate** from an M
   First you need to install some dependancies.
   On Ubuntu <= 15.04
   ```
-  sudo apt-get install autotools-dev automake autoconf m4 libjpeg8-dev libpng3-dev libnetcdf-dev libnetcdfc++4 libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig libglu1-mesa-dev wget unzip cmake xorg-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev
+  sudo apt-get install autotools-dev automake autoconf m4 g++ libjpeg8-dev libpng3-dev libnetcdf-dev libnetcdfc++4 libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig libglu1-mesa-dev wget unzip cmake xorg-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev git
   ```
 On Ubuntu >= 16.04 (15.10 not maintained anymore)
   ```
-  sudo autotools-dev, automake, autoconf, m4, libjpeg8-dev, libpng-dev, libnetcdf-dev, libnetcdf-c++4-dev, libcurl3-dev, libfreetype6-dev, libglfw3-dev, libeigen3-dev, fontconfig, libglu1-mesa-dev, ttf-ubuntu-font-family, libxml2-dev, gnuplot-qt, libyaml-cpp-dev, libboost-dev, qtbase5-dev, qt5-qmake, qt5-default, libqt5opengl5-dev, libfftw3-dev
+  sudo autotools-dev automake autoconf m4 g++ libjpeg8-dev libpng-dev libnetcdf-dev libnetcdf-c++4-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig libglu1-mesa-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev git
   ```
   Then the procedure is the same.
-  Compile spglib if desired with
+  Compile abiout with
   ```
-  tar xfz spglib-1.9.9.tar.gz
-  cd spglib-1.9.9 && mkdir build && cd build && ../configure &&  make && sudo make install
-  cd ..
-  ```
-  Finally compile abiout with
-  ```
+  git clone https://github.com/piti-diablotin/abiout.git
+  cd abiout
   ./autogent.sh
   mkdir build
   cd build
@@ -83,6 +79,20 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
   sudo make install
   ```
   That's it.
+
+## Fedora
+  It is exactly the same as for Ubuntu with the following packages (Fedora 22)
+  ```
+  sudo su
+  yum install autoconf automake m4 libjpeg-turbo-devel libpng-devel netcdf-devel libcurl-devel freetype-devel glfw-devel eigen3-devel fontconfig wget unzip libxml2-devel yaml-cpp-devel fftw-devel qt5-qtbase-devel gambas3-gb-qt5-opengl qt-devel git gcc-c++ gnuplot
+  git clone https://github.com/piti-diablotin/abiout.git
+  ./autogen.sh
+  mkdir build
+  cd build
+  ../configure --with-qt
+  make
+  make install
+  ```
 
 ## Windows and MacOS
   You will find in the Win_x86 and OSX directories a ```.exe``` for windows and a ```.dmg```  for MacOS that will install everything needed

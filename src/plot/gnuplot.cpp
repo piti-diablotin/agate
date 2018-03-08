@@ -35,18 +35,12 @@ Gnuplot::Gnuplot() :
   _buffer(),
   _custom()
 {
-#ifdef HAVE_GNUPLOT
-  std::string bin(GNUPLOT_BIN);
-  bin += " -persist";
-  _gp.reset(popen(bin.c_str(),"w"));
+  _gp.reset(popen("gnuplot -persist","w"));
   if ( _gp.get() == nullptr )
-    throw EXCEPTION("Can not pipe gnuplot",ERRABT);
+    throw EXCEPTION("Unable to open pipe for gnuplot",ERRABT);
   _header << "reset" << std::endl;
   _header << "set style data line" << std::endl;
   _header << "set autoscale xy" << std::endl;
-#else
-  throw EXCEPTION("Gnuplot was not found on this computer",ERRABT);
-#endif
 }
 
 //

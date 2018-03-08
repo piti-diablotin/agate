@@ -156,6 +156,7 @@ void GLWidget::keyReleaseEvent(QKeyEvent *keyEvent) {
       break;
     case Qt::Key_Right:
       _inputKeys[_keyArrowRight] = false;
+      break;
     case Qt::Key_X:
       _inputKeys[_keyX] = false;
       break;

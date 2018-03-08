@@ -31,7 +31,6 @@ echo
 echo " - Libraries (Tools) -"
 echo " ~~~~~~~~~~~~~~~~~~~~~"
 echo " * cURL.....: $have_curl_usable"
-echo " * gnuplot..: $GNUPLOT"
 echo " * NetCDF...: $have_netcdf_usable"
 if test x"$have_netcdfcxx4_usable" == x"yes"; then
   echo "              (C++4)"

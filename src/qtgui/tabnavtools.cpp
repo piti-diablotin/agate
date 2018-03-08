@@ -162,6 +162,7 @@ void TabNavTools::refreshButtons(GLWidget *glwidget) {
         _repeatButton->toggle();
         _repeatButton->setIcon(QIcon(":/repeat.png"));
       }
+      break;
     default :
       canvas->nLoop(0);
       if ( _repeatButton->isChecked() ) {

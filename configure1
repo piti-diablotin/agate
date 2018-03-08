@@ -98,29 +98,6 @@ AC_DEFINE_UNQUOTED([COMPILE_BUILD],"$build", [Build target : on which target sho
 
 
 ##########################################################################
-# Gnuplot
-##########################################################################
-AC_MSG_CHECKING([whether we have a user defined gnuplot prefix])                                                  
-AC_ARG_WITH([gnuplot],                                                                              
-            [
-             AS_HELP_STRING([--with-gnuplot],                                                     
-                            [path to gnuplot executable]
-                            )                                 
-            ],                                                                                    
-            [gnuplot_prefix="$with_gnuplot";resultgnuplot=yes],
-            [gnuplot_prefix="";resultgnuplot=no]
-            )
-
-AC_MSG_RESULT([$resultgnuplot])                                                                             
-
-AC_PATH_PROG([GNUPLOT],[gnuplot],[no],[$PATH$PATH_SEPARATOR$gnuplot_prefix])                                                             
-if test x"$GNUPLOT" != x"no";                                                                          
-then                                                                                            
-  AC_DEFINE(HAVE_GNUPLOT,1,[Define if gnuplot is usable])                                       
-  AC_DEFINE_UNQUOTED(GNUPLOT_BIN,"$GNUPLOT",[Gnuplot binary])                             
-fi                                                                                              
-
-##########################################################################
 # C++ support
 ##########################################################################
 echo 

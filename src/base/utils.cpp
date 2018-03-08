@@ -72,11 +72,6 @@ namespace utils {
 #else
     out << " * cURL.....: no" << std::endl;
 #endif
-#ifdef HAVE_GNUPLOT
-    out << " * gnuplot..: " << GNUPLOT_BIN << std::endl;
-#else
-    out << " * gnuplot..: no" << std::endl;
-#endif
 
 #ifdef HAVE_NETCDF
     out << " * NetCDF...: yes" << std::endl;

@@ -86,6 +86,7 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
   sudo su
   yum install autoconf automake m4 libjpeg-turbo-devel libpng-devel netcdf-devel libcurl-devel freetype-devel glfw-devel eigen3-devel fontconfig wget unzip libxml2-devel yaml-cpp-devel fftw-devel qt5-qtbase-devel gambas3-gb-qt5-opengl qt-devel git gcc-c++ gnuplot
   git clone https://github.com/piti-diablotin/abiout.git
+  cd abiout
   ./autogen.sh
   mkdir build
   cd build

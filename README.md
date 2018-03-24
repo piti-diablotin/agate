@@ -97,7 +97,8 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
 
 ## Windows and MacOS
   You will find in the Win_x86 and OSX directories a ```.exe``` for windows and a ```.dmg```  for MacOS that will install everything needed
-***WARNING:*** Thoses 2 versions are 2 years old and completely outdated !!! Use at your own risk. (WIP for new versions)
+  ***WARNING:*** MacOSX version has been updated on March 8th, 2018.
+  ***WARNING:*** The windows version is 2 years old and completely outdated !!! Use at your own risk. (WIP for new versions)
 
 
 

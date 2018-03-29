@@ -109,7 +109,6 @@ Ddb* Ddb::getDdb(const std::string& file){
 
   for ( auto& p : allFormat ) {
     try {
-  std::cerr << "ich 9" << std::endl;
       p.first->readFromFile(file);
       ddb = p.first.release();
     }

@@ -59,7 +59,6 @@ CanvasPhonons::CanvasPhonons(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _originalFile(),
   _ddb(nullptr)
 {
-  std::cerr << "ich bin da" << std::endl;
   if ( _histdata != nullptr && _histdata->ntimeAvail() > 0 ) {
     _originalFile = _histdata->filename();
     _reference = Dtset(*_histdata.get());
@@ -78,11 +77,8 @@ CanvasPhonons::CanvasPhonons(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
     this->clear();
     _displacements = DispDB();
   }
-  std::cerr << "DDB OK" << std::endl;
   this->buildAnimation();
-  std::cerr << "animation OK" << std::endl;
   }
-  std::cerr << "ich ok" << std::endl;
   this->nLoop(-2);
   _qptModes = _condensedModes.end();
 }
@@ -152,9 +148,7 @@ void CanvasPhonons::openFile(const std::string& filename) {
 bool CanvasPhonons::readDdb(const std::string& filename) {
   // Try to read a DDB file
   try { 
-  std::cerr << "ich 8" << std::endl;
     _ddb.reset(Ddb::getDdb(filename));
-  std::cerr << "ich 9" << std::endl;
     /*
      * This is bad because we are not sure the _reference structure
      * is the same as the ddb but if the number of elements is correct 
@@ -223,6 +217,9 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   ConfigParser parser;
   parser.setSensitive(true);
   parser.setContent(line);
+
+  if ( _ddb == nullptr ) 
+    throw EXCEPTION("First load a DDB",ERRDIV);
  
   if ( token == "qpt" ) {
     geometry::vec3d qpt;
@@ -431,7 +428,9 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     std::string normalized;
     stream >> normalized;
     if ( stream.fail() ) stream.clear();
-    bool norm = (normalized == "normalized");
+    Supercell::Norming norm = Supercell::Norming::NONE;
+    if ( normalized == "normalized") norm = Supercell::Norming::NORMQ;
+    if ( normalized == "fullnormalized") norm = Supercell::Norming::NORMALL;
 
     try {
       config.filename = parser.getToken<std::string>("output");
@@ -500,7 +499,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       supercell.setReference(superfirst);
       try {
         auto projection = supercell.projectOnModes(_reference,_displacements,_condensedModes, norm);
-        if ( itime == 0) supercell.amplitudes(_reference);
+        //if ( itime == 0) supercell.amplitudes(_reference);
         //double norm2 = 0;
         //for ( auto p : projection )
         //  norm2 += p*p;
@@ -518,9 +517,6 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       etmp.ADD("Projection may be wrong or incomplete",ERRDIV);
       throw etmp;
     }
-#ifndef DEBUG
-    delete trajectory;
-#endif
     if ( _gplot == nullptr )  {
       _gplot.reset(new Gnuplot);
     }
@@ -613,9 +609,6 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       etmp.ADD("Qpt analysis may be wrong or incomplete",ERRDIV);
       throw etmp;
     }
-#ifndef DEBUG
-    delete trajectory;
-#endif
     if ( _gplot == nullptr )  {
       _gplot.reset(new Gnuplot);
     }
@@ -710,7 +703,7 @@ void CanvasPhonons::help(std::ostream &out) {
   using std::setw;
   out << endl << "-- Here are the commands related to phonons mode --" << endl;
   out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
-  out << setw(40) << ":analyze or :ana filename [normalized]" << setw(59) << "Project the trajectory of filename onto the selected condensed qpt/modes. normalized allows to get ride of each mode amplitude." << endl;
+  out << setw(40) << ":analyze or :ana filename [[full]normalized]" << setw(59) << "Project the trajectory of filename onto the selected condensed qpt/modes. normalized is for each indivual qpt, fullnormalized is for the global displacement." << endl;
   out << setw(40) << ":amplitude A [imode [imode ...] ]" << setw(59) << "Set the amplitude of the listed modes. If none is present then set the default amplitude" << endl;
   out << setw(40) << ":add qx qy qz imode" << setw(59) << "Freeze the mode imode at the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":a or :append filename" << setw(59) << "Use file filename to get the eigen displacements." << endl;

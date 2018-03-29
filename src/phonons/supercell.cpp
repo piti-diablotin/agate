@@ -335,11 +335,27 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
     for ( unsigned d = 0 ; d < 3 ; ++ d )
       displacements[iatom*3+d] = super_xcart_in_ref[d] - position[d];
   }
+
+  // Compute center of mass of displacement and set it to 0
+  double bmass[3] = {0};
+  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+    double mass = mendeleev::mass[_znucl[_typat[iatom]-1]]*phys::amu_emass; // type starts at 1
+    for ( unsigned d = 0 ; d < 3 ; ++ d ){
+      bmass[d] +=  mass*displacements[iatom*3+d];
+    }
+  }
+  //std::clog << "Bmass was at " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
+  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+    double mass = mendeleev::mass[_znucl[_typat[iatom]-1]]*phys::amu_emass; // type starts at 1
+    for ( unsigned d = 0 ; d < 3 ; ++ d ){
+      displacements[iatom*3+d] -= bmass[d]/(_natom*mass);
+    }
+  }
   _fft.clear();
   return displacements;
 }
 
-std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, const DispDB::qptTree& modes,bool normalized) {
+std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, const DispDB::qptTree& modes,Norming normalized) {
   using namespace geometry;
   if ( _baseAtom.size() != _natom 
       || _cellCoord.size() != _natom 
@@ -360,8 +376,17 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
   }
 
   double norm2_disp = 0.;
+  double norm2_tot = 0.;
+  double norm2_final = 1;
 
   std::vector<double> results;
+
+  if ( normalized == NORMALL ) {
+    auto normq = this->amplitudes(dtset);
+    for ( auto& v : normq )
+      norm2_tot += v[3];
+  }
+  if ( normalized == NORMALL ) norm2_final = norm2_tot;
 
   // For all qpt;
   for ( auto qpt = modes.begin() ; qpt != modes.end() ; ++qpt ) {
@@ -373,7 +398,9 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
     for ( unsigned iatomUC = 0 ; iatomUC < 3*_natom/(_dim[0]*_dim[1]*_dim[2]) ; ++iatomUC ) {
       norm2_disp += mass[iatomUC/3]*std::norm(filtered[iatomUC]);
     }
-    // Renormalize
+    if ( normalized == NONE ) norm2_tot = norm2_disp;
+
+    // Renormalize for projection
     for ( unsigned iatomUC = 0 ; iatomUC < 3*_natom/(_dim[0]*_dim[1]*_dim[2]) ; ++iatomUC ) {
       filtered[iatomUC] /= std::sqrt(norm2_disp);
     }
@@ -385,7 +412,7 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
       for ( unsigned iall = 0 ; iall < filtered.size() ; ++iall ) {
         projection += mass[iall/3]*filtered[iall]*mymode[iall];
       }
-      results.push_back(normalized ? std::norm(projection) : std::norm(projection)*norm2_disp);
+      results.push_back(normalized == NORMQ ? std::norm(projection) : std::norm(projection)*norm2_disp/norm2_final);
     }
   }
   return results;
@@ -395,6 +422,7 @@ std::vector<std::complex<double>> Supercell::filterDisp(const geometry::vec3d& q
   const int nx = (int) _dim[0];
   const int ny = (int) _dim[1];
   const int nz = (int) _dim[2];
+  const int nyh = ny/2+1;
   const int nzh = nz/2+1;
   std::vector<std::complex<double>> dispq;
 
@@ -403,17 +431,24 @@ std::vector<std::complex<double>> Supercell::filterDisp(const geometry::vec3d& q
   int selectz = (int) ( qpt[2]*nz );
 
   if ( qpt[0] < 0. )
-    selectx = nx + selectx;
+    selectx *= -1;
   if ( qpt[1] < 0. )
-    selecty = ny + selecty;
+    selecty *= -1;
   if ( qpt[2] < 0. )
     selectz *= -1.;
+
+  if ( qpt[0] > 0.5 )
+    selectx = 1-selectx;
+  if ( qpt[1] > 0.5 )
+    selecty = 1-selecty;
+  if ( qpt[2] > 0.5 )
+    selectz = 1-selectz;
 
 
   this->fft(disp);
   int natomUC = _natom/(nx*ny*nz);
   auto begin = _fft.begin();
-  std::advance(begin,(selectx*ny*nzh+selecty*nzh+selectz)*natomUC*3);
+  std::advance(begin,(selectx*nyh*nzh+selecty*nzh+selectz)*natomUC*3);
   auto end = begin;
   std::advance(end,3*natomUC);
   dispq.resize(3*natomUC);
@@ -426,10 +461,12 @@ std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset) {
   const int nx = (int) _dim[0];
   const int ny = (int) _dim[1];
   const int nz = (int) _dim[2];
+  const int nxh = nx/2+1;
+  const int nyh = ny/2+1;
   const int nzh = nz/2+1;
   const int natomUC = _natom/(nx*ny*nz);
 
-  std::vector<std::array<double,4>> amplitudes(nx*ny*nzh);
+  std::vector<std::array<double,4>> amplitudes(nxh*nyh*nzh);
 
   std::vector<std::complex<double>> dispq(3*natomUC);
 
@@ -452,17 +489,17 @@ std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset) {
   }
   this->fft(displacements);
 
-  for ( int qx = 0 ; qx < nx ; ++qx ) {
-    for ( int qy = 0 ; qy < ny ; ++qy ) {
+  for ( int qx = 0 ; qx < nxh ; ++qx ) {
+    for ( int qy = 0 ; qy < nyh ; ++qy ) {
       for ( int qz = 0 ; qz < nzh ; ++qz ) {
         auto dispq = _fft.begin();
-        std::advance(dispq,(qx*ny*nzh+qy*nzh+qz)*natomUC*3);
+        std::advance(dispq,(qx*nyh*nzh+qy*nzh+qz)*natomUC*3);
         double norm2_disp = 0.;
         for ( int iatomUC = 0 ; iatomUC < 3*natomUC ; ++iatomUC ) {
           norm2_disp += mass[iatomUC/3]*std::norm(dispq[iatomUC]);
         }
         if ( norm2_disp < 1e-10 ) norm2_disp = 0;
-        amplitudes[qx*ny*nzh+qy*nzh+qz] = {{(double)qx/(double)nx,(double)qy/(double)ny,(double)qz/(double)nz,norm2_disp}};
+        amplitudes[qx*nyh*nzh+qy*nzh+qz] = {{(double)qx/(double)nx,(double)qy/(double)ny,(double)qz/(double)nz,norm2_disp}};
       }
     }
   }
@@ -514,17 +551,25 @@ void Supercell::fft(const std::vector<double>& dispr) {
   }
 
   fftw_execute(plan_forward);
-  _fft.resize(nx*ny*nzh*natomUC*3);
+
+  int nxh = nx/2+1;
+  int nyh = nx/2+1;
+  _fft.resize(nxh*nyh*nzh*natomUC*3);
+  bool nx_even = (nx%2==0);
+  bool ny_even = (ny%2==0);
 
 #define outIndice(dim,iatom,qx,qy,qz) ((iatom*3+dim)*odist+(qx*ny+qy)*nzh+qz)
-#define dispqIndice(dim,iatom,qx,qy,qz) ( ((((qx*ny+qy)*nzh+qz)*natomUC+iatom)*3)+dim )
-  for ( int qx = 0 ; qx < nx ; ++qx ) {
-    for ( int qy = 0 ; qy < ny ; ++qy ) {
+#define dispqIndice(dim,iatom,qx,qy,qz) ( ((((qx*nyh+qy)*nzh+qz)*natomUC+iatom)*3)+dim )
+  for ( int qx = 0 ; qx < nxh ; ++qx ) {
+    double fx = ( qx == 0 || ( nx_even &&  qx == nxh-1 ) ) ? 1 : 2;
+    for ( int qy = 0 ; qy < nyh ; ++qy ) {
+      double fy = ( qy == 0 || ( ny_even &&  qy == nyh-1 ) ) ? 1 : 2;
+      if ( fx*fy == 4 ) fy=1;
       for ( int qz = 0 ; qz < nzh ; ++qz ) {
         for ( int iatom = 0 ; iatom < natomUC ; ++iatom ) {
           for ( int dim = 0 ; dim < 3 ; ++dim ) {
-            _fft[dispqIndice(dim,iatom,qx,qy,qz)].real(fft_out[outIndice(dim,iatom,qx,qy,qz)][0]*inv_vol);
-            _fft[dispqIndice(dim,iatom,qx,qy,qz)].imag(fft_out[outIndice(dim,iatom,qx,qy,qz)][1]*inv_vol);
+            _fft[dispqIndice(dim,iatom,qx,qy,qz)].real(fx*fy*fft_out[outIndice(dim,iatom,qx,qy,qz)][0]*inv_vol);
+            _fft[dispqIndice(dim,iatom,qx,qy,qz)].imag(fx*fy*fft_out[outIndice(dim,iatom,qx,qy,qz)][1]*inv_vol);
           }
         }
       }

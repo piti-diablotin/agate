@@ -58,6 +58,8 @@ class Supercell : public Dtset{
 
   public :
 
+    enum Norming { NONE, NORMQ, NORMALL };
+
     /**
      * Constructor.
      */
@@ -133,7 +135,7 @@ class Supercell : public Dtset{
      * @param normalized If set to true, the projection \alpha_i^2 is normalized \sum _alpha_i^2 =1, otherwise the projection is A^2*\alpha_i^2
      * @result A vector of amplitude for each couple of qpt,mode in modes
      */
-    std::vector<double> projectOnModes(const Dtset& dtset, DispDB& db, const DispDB::qptTree& modes, bool normalized);
+    std::vector<double> projectOnModes(const Dtset& dtset, DispDB& db, const DispDB::qptTree& modes, Norming normalized);
 
     /**
      * This routine is aimed at filtering a displacement to extract the only qpt of interest

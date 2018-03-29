@@ -78,8 +78,8 @@ void DdbPhonopy::readFromFile(const std::string& filename) {
   (void) (filename);
   throw EXCEPTION("You need the yaml-cpp library to read a yaml file",ERRDIV);
 #else
-  YAML::Node fulldoc = YAML::LoadFile(filename);
   try {
+    YAML::Node fulldoc = YAML::LoadFile(filename);
     _natom = fulldoc["natom"].as<unsigned>();
 
     YAML::Node rlattice;

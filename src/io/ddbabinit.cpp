@@ -93,8 +93,8 @@ void DdbAbinit::readFromFile(const std::string& filename) {
     do {
       std::getline(idd,tmp_line);
       if ( idd.fail() || idd.eof() )
-        throw EXCEPTION(std::string("Bad DDB format in file ")+filename,ERRDIV);
-    } while ( tmp_line.compare(" **** Database of total energy derivatives ****") != 0 );
+        throw EXCEPTION(std::string("Bad DDB format in file ")+filename+". Could not find \"**** Database of total energy derivatives ****\"",ERRDIV);
+   } while ( tmp_line.compare(" **** Database of total energy derivatives ****") != 0 );
 
     // Next line is the number of block
     std::getline(idd,tmp_line,'=');

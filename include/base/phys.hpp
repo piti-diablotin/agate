@@ -53,8 +53,8 @@ namespace phys {
 
   /** Mass */
   const double amu = 1.660538921e-27;                        ///< u in Kg 
-  const double amu_emass = 1.660538921e-27/9.10938215e-31;   ///< Atomic mass unit 
   const double emass =   9.10938215e-31;                     ///< emass in Kg 
+  const double amu_emass = amu/emass;   ///< Atomic mass unit 
 
   /** Dielectric Constant */
   const double Eps_0 = 0.0055263494;

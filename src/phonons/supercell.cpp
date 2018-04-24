@@ -141,6 +141,9 @@ Supercell::~Supercell() {
 void Supercell::makeDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned imode, double amplitude, double phase) {
   using namespace geometry;
   unsigned natom = db.natom();
+
+  const double A_sqrtamu2b_sqrtu = sqrt(phys::amu_emass)/phys::b2A;
+
   if ( natom*static_cast<unsigned>(_dim[0]*_dim[1]*_dim[2]) != _natom )
     throw EXCEPTION("Hmm supercell and DispDB are incoherent",ERRDIV);
   if ( _cellCoord.size() == 0 or _baseAtom.size() == 0 )
@@ -155,7 +158,7 @@ void Supercell::makeDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned
     vec3d Re = {{ mymode[iatomUC*3].real(),mymode[iatomUC*3+1].real(),mymode[iatomUC*3+2].real() }};
     vec3d Im = {{ mymode[iatomUC*3].imag(),mymode[iatomUC*3+1].imag(),mymode[iatomUC*3+2].imag() }};
     //std::cerr << iatom << " " << mymode[iatomUC*3] << " " << mymode[iatomUC*3+1] << " " << mymode[iatomUC*3+2] << std::endl;
-    _xcart[iatom] += (Re*std::cos(qR_theta)-Im*std::sin(qR_theta))*amplitude;
+    _xcart[iatom] += (Re*std::cos(qR_theta)-Im*std::sin(qR_theta))*amplitude*A_sqrtamu2b_sqrtu;
   }
   geometry::changeBasis(_rprim, _xcart, _xred, true);
 }
@@ -339,16 +342,17 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
   // Compute center of mass of displacement and set it to 0
   double bmass[3] = {0};
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    double mass = mendeleev::mass[_znucl[_typat[iatom]-1]]*phys::amu_emass; // type starts at 1
+    double mass = mendeleev::mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
       bmass[d] +=  mass*displacements[iatom*3+d];
     }
   }
   //std::clog << "Bmass was at " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    double mass = mendeleev::mass[_znucl[_typat[iatom]-1]]*phys::amu_emass; // type starts at 1
+    double mass = mendeleev::mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
       displacements[iatom*3+d] -= bmass[d]/(_natom*mass);
+      //std::clog << phys::b2A*displacements[iatom*3+d] << std::endl;
     }
   }
   _fft.clear();
@@ -371,13 +375,15 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
     throw e;
   }
   std::vector<double> mass(dtset.natom(),0.);
+  // Keep mass in atomic mass unit since eigen vectors are normalized like this.
   for ( unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom ) {
     mass[iatom] = mendeleev::mass[dtset.znucl()[dtset.typat()[iatom]-1]]*phys::amu_emass; // type starts at 1
   }
 
   double norm2_disp = 0.;
   double norm2_tot = 0.;
-  double norm2_final = 1;
+  double norm_final = 1;
+  const double b_sqrtu2A_sqrtamu = phys::b2A/sqrt(phys::amu_emass);
 
   std::vector<double> results;
 
@@ -386,7 +392,8 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
     for ( auto& v : normq )
       norm2_tot += v[3];
   }
-  if ( normalized == NORMALL ) norm2_final = norm2_tot;
+  if ( normalized == NORMALL ) norm_final = sqrt(norm2_tot)*b_sqrtu2A_sqrtamu;
+  //std::cout << "Distortion amplitude [A/sqrt(amu)]: " << sqrt(norm2_tot)*b_sqrtu2A_sqrtamu << std::endl;
 
   // For all qpt;
   for ( auto qpt = modes.begin() ; qpt != modes.end() ; ++qpt ) {
@@ -398,7 +405,7 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
     for ( unsigned iatomUC = 0 ; iatomUC < 3*_natom/(_dim[0]*_dim[1]*_dim[2]) ; ++iatomUC ) {
       norm2_disp += mass[iatomUC/3]*std::norm(filtered[iatomUC]);
     }
-    if ( normalized == NONE ) norm2_tot = norm2_disp;
+  //std::cerr << "Norm disp " << sqrt(norm2_disp) * b_sqrtu2A_sqrtamu << std::endl;
 
     // Renormalize for projection
     for ( unsigned iatomUC = 0 ; iatomUC < 3*_natom/(_dim[0]*_dim[1]*_dim[2]) ; ++iatomUC ) {
@@ -408,11 +415,14 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
     for ( auto& vib : qpt->second ) {
       auto mymode = db.getMode(dq,vib.imode);
 
+    //double normE = 0;
       std::complex<double> projection(0,0);
       for ( unsigned iall = 0 ; iall < filtered.size() ; ++iall ) {
         projection += mass[iall/3]*filtered[iall]*mymode[iall];
+        //normE += mass[iall/3]*mymode[iall].real()*mymode[iall].real();
       }
-      results.push_back(normalized == NORMQ ? std::norm(projection) : std::norm(projection)*norm2_disp/norm2_final);
+      //std::cerr << "Norme mode " << normE << std::endl;
+      results.push_back(normalized == NORMQ ? std::abs(projection) : std::abs(projection)*std::sqrt(norm2_disp)*b_sqrtu2A_sqrtamu/norm_final);
     }
   }
   return results;
@@ -465,6 +475,7 @@ std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset) {
   const int nyh = ny/2+1;
   const int nzh = nz/2+1;
   const int natomUC = _natom/(nx*ny*nz);
+  const double b_sqrtu2A_sqrtamu = phys::b2A/sqrt(phys::amu_emass);
 
   std::vector<std::array<double,4>> amplitudes(nxh*nyh*nzh);
 
@@ -499,7 +510,7 @@ std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset) {
           norm2_disp += mass[iatomUC/3]*std::norm(dispq[iatomUC]);
         }
         if ( norm2_disp < 1e-10 ) norm2_disp = 0;
-        amplitudes[qx*nyh*nzh+qy*nzh+qz] = {{(double)qx/(double)nx,(double)qy/(double)ny,(double)qz/(double)nz,norm2_disp}};
+        amplitudes[qx*nyh*nzh+qy*nzh+qz] = {{(double)qx/(double)nx,(double)qy/(double)ny,(double)qz/(double)nz,std::sqrt(norm2_disp)*b_sqrtu2A_sqrtamu}};
       }
     }
   }
@@ -565,6 +576,7 @@ void Supercell::fft(const std::vector<double>& dispr) {
     for ( int qy = 0 ; qy < nyh ; ++qy ) {
       double fy = ( qy == 0 || ( ny_even &&  qy == nyh-1 ) ) ? 1 : 2;
       if ( fx*fy == 4 ) fy=1;
+      //if ( nx_even && (qx == nxh-1 || qy == nyh-1 )) { fx = std::sqrt(2); fy=1; }
       for ( int qz = 0 ; qz < nzh ; ++qz ) {
         for ( int iatom = 0 ; iatom < natomUC ; ++iatom ) {
           for ( int dim = 0 ; dim < 3 ; ++dim ) {

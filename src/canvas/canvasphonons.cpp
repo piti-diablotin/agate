@@ -33,7 +33,7 @@
 
 //
 CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
-  _amplitudeDisplacement(100),
+  _amplitudeDisplacement(1),
   _displacements(),
   _reference(),
   _supercell(),
@@ -49,7 +49,7 @@ CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
 
 //
 CanvasPhonons::CanvasPhonons(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
-  _amplitudeDisplacement(100),
+  _amplitudeDisplacement(1),
   _displacements(),
   _reference(),
   _supercell(),
@@ -85,7 +85,7 @@ CanvasPhonons::CanvasPhonons(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
 
 //
 CanvasPhonons::CanvasPhonons(const CanvasPos &canvas) : CanvasPos(canvas.opengl()),
-  _amplitudeDisplacement(100),
+  _amplitudeDisplacement(1),
   _displacements(),
   _reference(),
   _supercell(),
@@ -462,7 +462,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
 
     config.ylabel = "Mode decomposition ";
-    config.ylabel +=  ( norm ? "a_i^2" : "A^2*a_i^2" );
+    config.ylabel +=  ( norm!=Supercell::Norming::NONE ? "cos(theta)" : "A*cos(theta) [A/sqrt(amu)]" );
     config.title = "Phonon modes analysis";
     config.save = Graph::GraphSave::DATA;
 
@@ -539,7 +539,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     catch (Exception &e) {
       config.filename = utils::noSuffix(filetraj)+"_qpt";
     }
-    config.ylabel = "Qpt amplitude A^2";
+    config.ylabel = "Qpt amplitude [A/sqrt(amu)]";
     config.title = "Qpt analysis";
     config.save = Graph::GraphSave::DATA;
 

@@ -615,17 +615,23 @@ HistData& HistData::operator+=(HistData& hist) {
   _xred.resize(_ntime*_natom*_xyz);
   bool dofcart;
   bool dospinat;
-  if ( ( dofcart = !_fcart.empty() || !hist._fcart.empty()) )
-    _fcart.resize(_ntime*_natom*_xyz,0.);
-  if ( ( dospinat = !hist._spinat.empty() || !_spinat.empty()) )
-    _spinat.resize(_ntime*_natom*_xyz,0.);
+  dofcart = !(_fcart.empty() || hist._fcart.empty());
+  dospinat = !(hist._spinat.empty() || _spinat.empty());
   if ( !reorder ) {
     std::copy(hist._xcart.begin(), hist._xcart.end(),_xcart.begin()+prevNtime*_natom*_xyz);
     std::copy(hist._xred.begin(), hist._xred.end(),_xred.begin()+prevNtime*_natom*_xyz);
-    if ( !hist._fcart.empty() )
+    if ( dofcart ) {
+      _fcart.resize(_ntime*_natom*_xyz,0.);
       std::copy(hist._fcart.begin(), hist._fcart.end(),_fcart.begin()+prevNtime*_natom*_xyz);
-    if ( !hist._spinat.empty() )
+    }
+    else
+      _fcart.clear();
+    if ( dospinat ) {
+      _spinat.resize(_ntime*_natom*_xyz,0.);
       std::copy(hist._spinat.begin(), hist._spinat.end(),_spinat.begin()+prevNtime*_natom*_xyz);
+    }
+    else
+      _spinat.clear();
   }
   else {
     std::clog << "Reordering:" << std::endl;
@@ -640,7 +646,9 @@ HistData& HistData::operator+=(HistData& hist) {
         }
       }
     }
+
     if ( dofcart ) {
+      _fcart.resize(_ntime*_natom*_xyz,0.);
       for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
         for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
           for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
@@ -649,7 +657,12 @@ HistData& HistData::operator+=(HistData& hist) {
         }
       }
     }
+    else {
+      _fcart.clear();
+    }
+
     if ( dospinat ) {
+      _spinat.resize(_ntime*_natom*_xyz,0.);
       for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
         for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
           for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
@@ -658,6 +671,10 @@ HistData& HistData::operator+=(HistData& hist) {
         }
       }
     }
+    else {
+      _spinat.clear();
+    }
+
   }
 
   _acell.resize(_ntime*_xyz);

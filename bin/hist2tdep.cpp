@@ -70,6 +70,7 @@ int main(int argc, char** argv) {
 
     int natom = hist.natom();
     int ntime = hist.ntime();
+    hist.waitTime(ntime);
 
     // Sort atoms once for all
     auto typat = hist.typat();
@@ -85,12 +86,15 @@ int main(int argc, char** argv) {
     std::ofstream positions("infile.positions",std::ios::out);
     std::ofstream forces("infile.forces",std::ios::out);
     std::ofstream stat("infile.stat",std::ios::out);
+    std::ofstream meta("infile.meta",std::ios::out);
     positions.setf(std::ios::scientific,std::ios::floatfield);
     positions.setf(std::ios::right,std::ios::adjustfield);
     forces.setf(std::ios::scientific,std::ios::floatfield);
     forces.setf(std::ios::right,std::ios::adjustfield);
     stat.setf(std::ios::fixed,std::ios::floatfield);
     stat.setf(std::ios::right,std::ios::adjustfield);
+    stat.setf(std::ios::fixed,std::ios::floatfield);
+    meta.setf(std::ios::left,std::ios::adjustfield);
 
     if ( !positions || !forces ) 
       throw EXCEPTION("Unable to open a file for writing",ERRDIV);
@@ -118,7 +122,7 @@ int main(int argc, char** argv) {
         << std::setprecision(6) << std::setw(15) << hist.getEtotal(itime) * phys::Ha2eV
         << std::setprecision(6) << std::setw(12) << hist.getEkin(itime) * phys::Ha2eV
         << std::setprecision(2) << std::setw( 9) << hist.getTemperature(itime) 
-        << std::setprecision(3) << std::setw( 9) << hist.getPressure(itime) * phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21
+        << std::setprecision(3) << std::setw( 9) << hist.getPressure(itime)
         << std::setprecision(3) << std::setw( 9) << stress[0] * phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21
         << std::setprecision(3) << std::setw( 9) << stress[1] * phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21
         << std::setprecision(3) << std::setw( 9) << stress[2] * phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21
@@ -127,6 +131,27 @@ int main(int argc, char** argv) {
         << std::setprecision(3) << std::setw( 9) << stress[4] * phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21
         << std::endl;
     }
+
+    double temperature;
+    std::stringstream thermo;
+    hist.printThermo(0,ntime,thermo);
+    std::string line;
+    std::getline(thermo,line);
+    std::getline(thermo,line);
+    std::getline(thermo,line);
+    std::getline(thermo,line);
+    std::getline(thermo,line);
+    thermo >> line >> line >> temperature;
+
+    meta.precision(2);
+    meta << std::setw( 9) << natom << "# natom" << std::endl;
+    meta << std::setw( 9) << ntime << "# ntime" << std::endl;
+    meta << std::setw( 9) << (hist.getTime(1)-hist.getTime(0))*phys::atu2fs << "# dtion [fs]" << std::endl;
+    meta << std::setw( 9) << temperature << "# Temperature [K]" << std::endl;
+    positions.close();
+    forces.close();
+    stat.close();
+    meta.close();
   }
   catch ( Exception& e ) {
     rvalue = e.getReturnValue();

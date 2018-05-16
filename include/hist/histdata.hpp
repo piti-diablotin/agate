@@ -124,8 +124,6 @@ class HistData {
      */
     static std::vector<double> acf(std::vector<double>::const_iterator begin, std::vector<double>::const_iterator end, const int howmany);
 
-    void waitTime(unsigned t) const;
-
     /**
      * Check if the atomes in the hist are in the same order as in this one.
      * If not, it returns a vector of how to get the order of this in hist.
@@ -172,6 +170,13 @@ class HistData {
      * @return The supposed new hist
      */
     HistData& operator = (HistData&& hist);
+
+
+    /**
+     * Wait untile hist is loaded up to t time step
+     * @param t time to reach
+     */
+    void waitTime(unsigned t) const;
 
     /**
      * Open a file and read it to fill the data

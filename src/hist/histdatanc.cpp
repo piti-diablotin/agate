@@ -369,7 +369,6 @@ void HistDataNC::readFromFile(const std::string& filename) {
         if ( nc_inq_varid(ncid, "dtion", &varid) == NC_NOERR ) {
           if ( nc_get_var1_double(ncid, varid, start, &dtion ) )
             dtion = 100;
-          std::cerr << has_dtion << " "  << dtion << std::endl;
         }
         else dtion = 100;
       }

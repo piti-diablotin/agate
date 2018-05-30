@@ -380,7 +380,7 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
     mass[iatom] = mendeleev::mass[dtset.znucl()[dtset.typat()[iatom]-1]]*phys::amu_emass; // type starts at 1
   }
 
-  double norm2_disp = 0.;
+  double norm2_qpt = 0.;
   double norm2_tot = 0.;
   double norm_final = 1;
   const double b_sqrtu2A_sqrtamu = phys::b2A/sqrt(phys::amu_emass);
@@ -390,10 +390,10 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
   if ( normalized == NORMALL ) {
     auto normq = this->amplitudes(dtset);
     for ( auto& v : normq )
-      norm2_tot += v[3];
+      norm2_tot += v[3]*v[3];
   }
-  if ( normalized == NORMALL ) norm_final = sqrt(norm2_tot)*b_sqrtu2A_sqrtamu;
-  //std::cout << "Distortion amplitude [A/sqrt(amu)]: " << sqrt(norm2_tot)*b_sqrtu2A_sqrtamu << std::endl;
+  if ( normalized == NORMALL ) norm_final = sqrt(norm2_tot);
+  //std::cout << "Distortion amplitude [A/sqrt(amu)]: " << sqrt(norm2_tot) << std::endl;
 
   // For all qpt;
   for ( auto qpt = modes.begin() ; qpt != modes.end() ; ++qpt ) {
@@ -401,15 +401,15 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
     unsigned dq = db.getQpt(qpoint);
 
     auto filtered = this->filterDisp(qpoint,displacements);
-    norm2_disp = 0.;
+    norm2_qpt = 0.;
     for ( unsigned iatomUC = 0 ; iatomUC < 3*_natom/(_dim[0]*_dim[1]*_dim[2]) ; ++iatomUC ) {
-      norm2_disp += mass[iatomUC/3]*std::norm(filtered[iatomUC]);
+      norm2_qpt += mass[iatomUC/3]*std::norm(filtered[iatomUC]);
     }
-  //std::cerr << "Norm disp " << sqrt(norm2_disp) * b_sqrtu2A_sqrtamu << std::endl;
+    //std::cerr << "Norm qpt " << sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu << std::endl;
 
     // Renormalize for projection
     for ( unsigned iatomUC = 0 ; iatomUC < 3*_natom/(_dim[0]*_dim[1]*_dim[2]) ; ++iatomUC ) {
-      filtered[iatomUC] /= std::sqrt(norm2_disp);
+      filtered[iatomUC] /= std::sqrt(norm2_qpt);
     }
 
     for ( auto& vib : qpt->second ) {
@@ -422,7 +422,7 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
         //normE += mass[iall/3]*mymode[iall].real()*mymode[iall].real();
       }
       //std::cerr << "Norme mode " << normE << std::endl;
-      results.push_back(normalized == NORMQ ? std::abs(projection) : std::abs(projection)*std::sqrt(norm2_disp)*b_sqrtu2A_sqrtamu/norm_final);
+      results.push_back(normalized == NORMQ ? std::abs(projection) : std::abs(projection)*std::sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu/norm_final);
     }
   }
   return results;

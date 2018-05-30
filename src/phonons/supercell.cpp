@@ -28,6 +28,7 @@
 #include "base/mendeleev.hpp"
 #include <cmath>
 #include <cstring>
+#include <algorithm>
 #ifdef HAVE_FFTW3
 #include "fftw3.h"
 #endif
@@ -514,6 +515,12 @@ std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset) {
       }
     }
   }
+  /*
+  std::sort(amplitudes.begin(),amplitudes.end(),[](std::array<double,4> &q1, std::array<double,4> &q2){
+      return q1[3]>q2[3];
+      }
+      );
+      */
   return amplitudes;
 }
 

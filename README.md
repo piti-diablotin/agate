@@ -34,7 +34,7 @@ Here is a small list of quantities that you can extract with **agate** from an M
   * Phonon density of states
   * Phonons band structures (if tdep from abinit is available)
 
-  Ans some phonon related capabilities:
+  And some phonon related capabilities:
 - Visualize indivual or combined mode(s)
   - Extract dominant **q** vectors
   - Extract indivual mode amplitude
@@ -64,7 +64,7 @@ Here is a small list of quantities that you can extract with **agate** from an M
   ```
 On Ubuntu >= 16.04 (15.10 not maintained anymore)
   ```
-  sudo autotools-dev automake autoconf m4 g++ libjpeg8-dev libpng-dev libnetcdf-dev libnetcdf-c++4-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig libglu1-mesa-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev git
+  sudo apt-get install autotools-dev automake autoconf m4 g++ libjpeg8-dev libpng-dev libnetcdf-dev libnetcdf-c++4-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig libglu1-mesa-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev git
   ```
   Then the procedure is the same.
   Compile abiout with

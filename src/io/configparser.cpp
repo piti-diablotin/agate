@@ -122,8 +122,10 @@ void ConfigParser::setContent(const std::string& content) _NOEXCEPT {
   _isParsed = true;
 
   size_t pos_useless;
-  while ( (pos_useless = _content.find_first_of("=;")) != std::string::npos )
+  while ( (pos_useless = _content.find_first_of("=;")) != std::string::npos ) {
     _content.replace(pos_useless,1," ");
+    _contentOrig.replace(pos_useless,1," ");
+  }
   utils::tolower(_content);
 }
 

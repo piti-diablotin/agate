@@ -62,6 +62,7 @@ class Tdep {
     unsigned                    _tend;      ///< Last time to use (excluded)
     unsigned                    _step;      ///< Step to use to advance in the Hist file
     double                      _rcut;      ///< Radius cutoff for computing shell inside tdep
+    double                      _temperature;  ///< Temperature of the simulation
     std::array<double,9>        _multiplicity; ///< Holds the multiplicity of the supercell with respect to unitcell
 
     void computeMultiplicity();
@@ -94,6 +95,8 @@ class Tdep {
     void step(unsigned istep);
 
     void rcut(double r);
+
+    void temperature(double t);
 
     void multiplicity(geometry::mat3d m);
 

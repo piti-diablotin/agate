@@ -48,6 +48,7 @@ Tdep::Tdep() :
   _tend(-1),
   _step(1),
   _rcut(-1),
+  _temperature(-1),
   _multiplicity()
 {
 #ifndef HAVE_TDEP
@@ -161,6 +162,10 @@ void Tdep::rcut(double r) {
   _rcut = r;
 }
 
+void Tdep::temperature(double t) {
+  _temperature = t;
+}
+
 void Tdep::multiplicity(geometry::mat3d m) {
   double det = geometry::det(m);
   if ( det <=0 ) 
@@ -197,16 +202,17 @@ void Tdep::tdep() {
   unsigned natomUc = _unitcell.natom();
   //unsigned natomSc = _supercell->natom();
 
-  double temperature;
-  std::stringstream thermo;
-  _supercell->printThermo(_tbegin,_tend,thermo);
-  std::string line;
-  std::getline(thermo,line);
-  std::getline(thermo,line);
-  std::getline(thermo,line);
-  std::getline(thermo,line);
-  std::getline(thermo,line);
-  thermo >> line >> line >> temperature;
+  if ( _temperature < 0 ) {
+    std::stringstream thermo;
+    _supercell->printThermo(_tbegin,_tend,thermo);
+    std::string line;
+    std::getline(thermo,line);
+    std::getline(thermo,line);
+    std::getline(thermo,line);
+    std::getline(thermo,line);
+    std::getline(thermo,line);
+    thermo >> line >> line >> _temperature;
+  }
 
   std::ofstream input("input.in",std::ios::out);
   if ( !input )
@@ -307,7 +313,7 @@ void Tdep::tdep() {
 
   input << std::setw(16) << "temperature";
   input.precision(2);
-  input << std::setw(10) << temperature << std::endl;
+  input << std::setw(10) << _temperature << std::endl;
 
   input << std::setw(16) << "# Computation details" << std::endl;
   input << std::setw(16) << "nstep_max";

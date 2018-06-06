@@ -450,6 +450,14 @@ class HistData {
      * @param z Nez z position of the atom
      */
     void moveAtom(unsigned itime, unsigned iatom, double x, double y, double z);
+
+    /**
+     * Change the type of one atom for the whole hist.
+     * The new type must be an existing type ie <_znucl.size()
+     * @param iatom The atom indice
+     * @param typat The new type of the atom
+     */
+    void typeAtom(unsigned iatom, unsigned typat);
     
     /**
      * Change the origin of the box

@@ -49,6 +49,7 @@ int main(int argc, char** argv) {
 
   Parser parser(argc,argv);
   parser.setOption("input",'i',"","Input to read to construct the dataset");
+  parser.setOption("temperature",'t',"-1","Temperature of the HIST");
   parser.setOption("version",'v',"Print the version number");
   parser.setOption("help",'h',"Print this message");
 
@@ -133,15 +134,21 @@ int main(int argc, char** argv) {
     }
 
     double temperature;
-    std::stringstream thermo;
-    hist.printThermo(0,ntime,thermo);
-    std::string line;
-    std::getline(thermo,line);
-    std::getline(thermo,line);
-    std::getline(thermo,line);
-    std::getline(thermo,line);
-    std::getline(thermo,line);
-    thermo >> line >> line >> temperature;
+    try {
+      temperature = parser.getOption<double>("temperature");
+      if ( temperature < 0 ) throw Exception();
+    }
+    catch (...) {
+      std::stringstream thermo;
+      hist.printThermo(0,ntime,thermo);
+      std::string line;
+      std::getline(thermo,line);
+      std::getline(thermo,line);
+      std::getline(thermo,line);
+      std::getline(thermo,line);
+      std::getline(thermo,line);
+      thermo >> line >> line >> temperature;
+    }
 
     meta.precision(2);
     meta << std::setw( 9) << natom << "# natom" << std::endl;

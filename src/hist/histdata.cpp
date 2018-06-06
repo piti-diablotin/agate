@@ -613,10 +613,22 @@ HistData& HistData::operator+=(HistData& hist) {
 
   _xcart.resize(_ntime*_natom*_xyz);
   _xred.resize(_ntime*_natom*_xyz);
+
   bool dofcart;
   bool dospinat;
+
+  dofcart = _fcart.empty() ^ hist._fcart.empty();
+  dospinat = hist._spinat.empty() ^ _spinat.empty();
+
+  if ( dofcart && _fcart.empty() ) _fcart.resize(_xyz*_natom*prevNtime,0);
+  if ( dofcart && hist._fcart.empty() ) hist._fcart.resize(_xyz*_natom*hist._ntimeAvail,0);
+
+  if ( dospinat && _spinat.empty() ) _spinat.resize(_xyz*_natom*prevNtime,0);
+  if ( dospinat && hist._spinat.empty() ) hist._spinat.resize(_xyz*_natom*hist._ntimeAvail,0);
+
   dofcart = !(_fcart.empty() || hist._fcart.empty());
   dospinat = !(hist._spinat.empty() || _spinat.empty());
+
   if ( !reorder ) {
     std::copy(hist._xcart.begin(), hist._xcart.end(),_xcart.begin()+prevNtime*_natom*_xyz);
     std::copy(hist._xred.begin(), hist._xred.end(),_xred.begin()+prevNtime*_natom*_xyz);
@@ -707,7 +719,7 @@ HistData& HistData::operator+=(HistData& hist) {
   }
 
 
-  if ( reorder && !_isPeriodic ) this->periodicBoundaries(-1,false);
+  if ( (!_isPeriodic) ) this->periodicBoundaries(-1,false);
 
   //std::clog << "Appending " << hist._ntime << " ionic steps from file " << hist._filename << std::endl;
 
@@ -1822,6 +1834,14 @@ void HistData::moveAtom(unsigned itime, unsigned iatom, double x, double y, doub
   _xcart[itime*3*_natom+iatom*3+1] = _rprimd[itime*9+3]*x + _rprimd[itime*9+4]*y + _rprimd[itime*9+5]*z;
   _xcart[itime*3*_natom+iatom*3+2] = _rprimd[itime*9+6]*x + _rprimd[itime*9+7]*y + _rprimd[itime*9+8]*z;
 
+}
+
+void HistData::typeAtom(unsigned iatom, unsigned typat) {
+  if ( iatom >= _natom )
+    throw EXCEPTION("Invalid atom id",ERRDIV);
+  if ( typat == 0 || typat > _znucl.size() )
+    throw EXCEPTION("Invalid type of atom",ERRDIV);
+  _typat[iatom] = typat;
 }
 
 void HistData::shiftOrigin(unsigned itime, double x, double y, double z) {

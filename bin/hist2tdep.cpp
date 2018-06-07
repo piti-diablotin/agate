@@ -150,11 +150,14 @@ int main(int argc, char** argv) {
       thermo >> line >> line >> temperature;
     }
 
+    double dtion = (hist.getTime(1)-hist.getTime(0))*phys::atu2fs;
+    if ( !std::isnumeric(dtion) || dtion < 0. ) dtion = 1.;
+
     meta.precision(2);
     meta << std::setw( 9) << natom << "# natom" << std::endl;
     meta << std::setw( 9) << ntime << "# ntime" << std::endl;
-    meta << std::setw( 9) << (hist.getTime(1)-hist.getTime(0))*phys::atu2fs << "# dtion [fs]" << std::endl;
-    meta << std::setw( 9) << temperature << "# Temperature [K]" << std::endl;
+    meta << std::setw( 9) << dtion << "# dtion [fs]" << std::endl;
+    meta << std::setw( 9) << (int)temperature << "# Temperature [K]" << std::endl;
     positions.close();
     forces.close();
     stat.close();

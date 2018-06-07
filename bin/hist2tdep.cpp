@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
     }
 
     double dtion = (hist.getTime(1)-hist.getTime(0))*phys::atu2fs;
-    if ( !std::isnumeric(dtion) || dtion < 0. ) dtion = 1.;
+    if ( !std::isnormal(dtion) || dtion < 0. ) dtion = 1.;
 
     meta.precision(2);
     meta << std::setw( 9) << natom << "# natom" << std::endl;

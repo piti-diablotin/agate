@@ -1484,6 +1484,18 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     }
 
     try {
+      tdep.order(parser.getToken<unsigned>("order"));
+    }
+    catch (...) {
+    }
+
+    try {
+      tdep.rcut3(parser.getToken<double>("rcut3"));
+    }
+    catch (...) {
+    }
+
+    try {
       tdep.rcut(parser.getToken<double>("rcut"));
     }
     catch (...) {

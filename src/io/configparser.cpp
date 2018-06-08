@@ -133,7 +133,7 @@ template<>
 std::vector<std::string> ConfigParser::getToken(const std::string& token, const unsigned size, Characteristic dim) const {
   (void)(dim);
   const std::string &content = ( _caseSensitive ? _contentOrig : _content );
-  size_t pos = _content.find(" "+token); // Add space for safety (ntypat != typat)
+  size_t pos = _content.find(" "+token+" "); // Add space for safety (ntypat != typat)
   if ( pos == std::string::npos ) {
     std::string str_tmp = "Input token \"" + token + "\" could not be found";
     throw EXCEPTION(str_tmp,ConfigParser::ERFOUND);
@@ -216,7 +216,7 @@ template<>
 std::string ConfigParser::getToken(const std::string& token, Characteristic dim) const {
   (void)(dim);
   const std::string &content = ( _caseSensitive ? _contentOrig : _content );
-  size_t pos = _content.find(token);
+  size_t pos = _content.find(" "+token+" ");
   if ( pos == std::string::npos ) {
     std::string str_tmp = "Input token \"" + token + "\" could not be found";
     throw EXCEPTION(str_tmp,ConfigParser::ERFOUND);

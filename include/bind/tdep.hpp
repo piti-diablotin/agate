@@ -61,7 +61,9 @@ class Tdep {
     unsigned                    _tbegin;    ///< First time to use
     unsigned                    _tend;      ///< Last time to use (excluded)
     unsigned                    _step;      ///< Step to use to advance in the Hist file
+    unsigned                    _order;     ///< Max order to calculate. Default is 2
     double                      _rcut;      ///< Radius cutoff for computing shell inside tdep
+    double                      _rcut3;      ///< Radius cutoff for computing shell inside tdep
     double                      _temperature;  ///< Temperature of the simulation
     std::array<double,9>        _multiplicity; ///< Holds the multiplicity of the supercell with respect to unitcell
 
@@ -94,7 +96,11 @@ class Tdep {
 
     void step(unsigned istep);
 
+    void order(unsigned order);
+
     void rcut(double r);
+
+    void rcut3(double r);
 
     void temperature(double t);
 

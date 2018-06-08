@@ -84,7 +84,7 @@ T ConfigParser::parseNumber(std::string& str) {
 template<typename T>
 std::vector<T> ConfigParser::getToken(const std::string& token, const unsigned size, Characteristic dim) const {
   const std::string &content = ( _caseSensitive ? _contentOrig : _content );
-  size_t pos = _content.find(" "+token); // Add space for safety (ntypat != typat)
+  size_t pos = _content.find(" "+token+" "); // Add space for safety (ntypat != typat)
   if ( pos == std::string::npos ) {
     std::string str_tmp = "Input token \"" + token + "\" could not be found";
     throw EXCEPTION(str_tmp,ConfigParser::ERFOUND);
@@ -188,7 +188,7 @@ std::vector<T> ConfigParser::getToken(const std::string& token, const unsigned s
 template<typename T>
 T ConfigParser::getToken(const std::string& token, Characteristic dim) const {
   const std::string &content = ( _caseSensitive ? _contentOrig : _content );
-  size_t pos = _content.find(token);
+  size_t pos = _content.find(" "+token+" ");
   if ( pos == std::string::npos ) {
     std::string str_tmp = "Input token \"" + token + "\" could not be found";
     throw EXCEPTION(str_tmp,ConfigParser::ERFOUND);

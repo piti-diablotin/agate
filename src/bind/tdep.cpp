@@ -47,7 +47,9 @@ Tdep::Tdep() :
   _tbegin(0),
   _tend(-1),
   _step(1),
+  _order(1),
   _rcut(-1),
+  _rcut3(-1),
   _temperature(-1),
   _multiplicity()
 {
@@ -158,8 +160,18 @@ void Tdep::step(unsigned istep) {
   _step = istep;
 }
 
+void Tdep::order(unsigned order) {
+  if ( order != 2 && order != 3 )
+    throw EXCEPTION("Order must be 2 or 3",ERRDIV);
+  _order = order;
+}
+
 void Tdep::rcut(double r) {
   _rcut = r;
+}
+
+void Tdep::rcut3(double r) {
+  _rcut3 = r;
 }
 
 void Tdep::temperature(double t) {
@@ -329,6 +341,13 @@ void Tdep::tdep() {
   input << std::setw(16) << "# Optional inputs" << std::endl;
   input << std::setw(16) << "Ngqpt2";
   input << std::setw(10) << "1 1 1" << std::endl;
+  
+  if ( _order == 3 ) {
+    input << std::setw(16) << "Order";
+    input << std::setw(10) << "3";
+    input << std::setw(10) << std::floor((_rcut3 > 0 ? _rcut3 : _rcut)*1000.)/1000. << std::endl;
+  }
+
   input << std::setw(16) << "TheEnd" << std::endl;
 
   input.close();

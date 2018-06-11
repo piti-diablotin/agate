@@ -64,4 +64,10 @@ src/qtgui/Makefile.in
 src/shape/Makefile.am
 src/shape/Makefile.in
 src/window/Makefile.am
+m4/libtool.m4
+m4/ltmain.sh
+m4/ltoptions.m4
+m4/ltsugar.m4
+m4/ltversion.m4
+m4/lt~obsolete.m4
 

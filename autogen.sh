@@ -27,10 +27,16 @@ then
     m4/depcomp \
     m4/install-sh \
     m4/missing \
+    src/Makefile \
+    src/Makefile.am \
+    src/Makefile.in \
     src/*/Makefile \
     src/*/Makefile.in \
     src/*/Makefile.am \
     doc/Makefile.in \
+    include/Makefile \
+    include/Makefile.in \
+    include/Makefile.am \
     include/*/Makefile \
     include/*/Makefile.in \
     include/*/Makefile.am \
@@ -57,16 +63,17 @@ then
 else
   # Generate Makefile.am in include
   cd include
+  echo "" > Makefile.am
   for lib in $(find . -type d | sed '1d')
   do
-    cd $lib
-    echo "EXTRA_DIST = \\" > Makefile.am 
-    for header in $(ls *.h*)
+    echo "${lib##*/}dir=\$(includedir)/$lib" >> Makefile.am
+    echo "${lib##*/}_HEADERS = \\" >> Makefile.am 
+    for header in $(ls $lib/*.h*)
     do
       echo "  $header \\" >> Makefile.am
     done
     sed -i -e '$s/\\//' Makefile.am
-    cd -
+    echo "" >> Makefile.am
   done
   cd ..
 
@@ -75,9 +82,9 @@ else
   for lib in $(find . -type d | sed '1d')
   do
     cd $lib
-    echo "noinst_LIBRARIES = lib${lib#./}.a
+    echo "noinst_LTLIBRARIES = lib${lib#./}.la
 " > Makefile.am 
-    echo "lib${lib#./}_a_SOURCES = \\" >> Makefile.am 
+    echo "lib${lib#./}_la_SOURCES = \\" >> Makefile.am 
     for src in $(ls *.cpp)
     do
       echo "  $src \\" >> Makefile.am
@@ -101,6 +108,7 @@ AM_CPPFLAGS = -I\$(top_srcdir)/include @AM_CPPFLAGS@  -DDATADIR=\\\"\$(datadir)\
     echo "  $src \\" >> Makefile.am
   done
   sed -i -e '$s/\\//' Makefile.am
+  echo "lib${lib#./}_a_CXXFLAGS = -fPIC" >> Makefile.am
 
 
   echo "BUILT_SOURCES = \\" >> Makefile.am 
@@ -126,21 +134,27 @@ AM_CPPFLAGS = -I\$(top_srcdir)/include @AM_CPPFLAGS@ \$(QT_CPPFLAGS)
 " >> Makefile.am
   cd ../..
 
+  # Generate libagate.so
+  cd src
+  echo "lib_LTLIBRARIES = libagate.la
+
+libagate_la_SOURCES = \"\"
+libagate_la_LIBADD = \\" > Makefile.am
+  for lib in $(find . -type d | sed '1d')
+  do
+    [[ $lib = "./qtgui" ]] && continue
+    echo "  $lib/lib${lib#./}.la \\" >> Makefile.am 
+  done
+  sed -i -e '$s/\\//' Makefile.am
+  cd ..
+
+
   # Generate Makefile.am in bin
   cd bin
   echo "include \$(top_srcdir)/m4/autotroll.mk
 LDADD = \\" > Makefile.am 
 cat >> Makefile.am << EOF
-\$(top_builddir)/src/window/libwindow.a \
-\$(top_builddir)/src/canvas/libcanvas.a \
-\$(top_builddir)/src/graphism/libgraphism.a \
-\$(top_builddir)/src/hist/libhist.a \
-\$(top_builddir)/src/phonons/libphonons.a \
-\$(top_builddir)/src/plot/libplot.a \
-\$(top_builddir)/src/shape/libshape.a \
-\$(top_builddir)/src/io/libio.a \
-\$(top_builddir)/src/bind/libbind.a \
-\$(top_builddir)/src/base/libbase.a
+\$(top_builddir)/src/libagate.la
 EOF
 #  for lib in $(find ../src -type d | sed -e '1d' -e '/qt/d')
 #  do
@@ -231,15 +245,15 @@ EOF
   # Generate Makefile.am ./
   
   echo "SUBDIRS = @AM_SPGLIB@ \\" > Makefile.am
-  for lib in $(find include -type d | sed '1d')
-  do
-    echo "  ${lib} \\" >> Makefile.am
-  done
+  #for lib in $(find include -type d | sed '1d')
+  #do
+  #  echo "  ${lib} \\" >> Makefile.am
+  #done
   for lib in $(find src -type d | sed '1d')
   do
     echo "  ${lib} \\" >> Makefile.am
   done
-  echo "  bin doc FINDSYM Win_x86" >> Makefile.am
+  echo "  include src bin doc FINDSYM Win_x86" >> Makefile.am
 
   cat >> Makefile.am << EOF
 EXTRA_DIST = autogen.sh configure1 configure2 icons icons.qrc spglib-1.9.9.tar.gz $(if test "$1" = "-t"; then echo "glfw-3.1.1.zip"; fi)
@@ -269,6 +283,7 @@ EOF
   rm configure.tmp
 
   touch config.h.in
+  libtoolize && \
   aclocal \
     && automake --add-missing \
     && autoconf \

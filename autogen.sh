@@ -142,7 +142,7 @@ libagate_la_SOURCES = \"\"
 libagate_la_LIBADD = \\" > Makefile.am
   for lib in $(find . -type d | sed '1d')
   do
-    [[ $lib = "./qtgui" ]] && continue
+    [ $lib = "./qtgui" ] && continue
     echo "  $lib/lib${lib#./}.la \\" >> Makefile.am 
   done
   sed -i -e '$s/\\//' Makefile.am

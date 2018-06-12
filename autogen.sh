@@ -138,7 +138,7 @@ AM_CPPFLAGS = -I\$(top_srcdir)/include @AM_CPPFLAGS@ \$(QT_CPPFLAGS)
   cd src
   echo "lib_LTLIBRARIES = libagate.la
 
-libagate_la_SOURCES = \"\"
+libagate_la_SOURCES = 
 libagate_la_LIBADD = \\" > Makefile.am
   for lib in $(find . -type d | sed '1d')
   do
@@ -244,7 +244,8 @@ EOF
 
   # Generate Makefile.am ./
   
-  echo "SUBDIRS = @AM_SPGLIB@ \\" > Makefile.am
+  echo "ACLOCAL_AMFLAGS=-I m4
+SUBDIRS = @AM_SPGLIB@ \\" > Makefile.am
   #for lib in $(find include -type d | sed '1d')
   #do
   #  echo "  ${lib} \\" >> Makefile.am

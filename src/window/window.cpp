@@ -56,6 +56,8 @@
 
 using std::abs;
 
+int runSnake();
+
 std::queue<unsigned int> Window::_inputChar; ///< Store all character dropped by the glfw callback function.
 
 Window::Window(pCanvas &canvas, const int width, const int height) :
@@ -96,6 +98,9 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _optionb(),
   _optionf(),
   _optioni(),
+#ifdef HAVE_CPPTHREAD
+  _snake(nullptr),
+#endif
   _canvas(canvas),
   _arrow(nullptr)
 {
@@ -687,6 +692,13 @@ bool Window::userInput(std::stringstream& info) {
             }
             else 
               throw EXCEPTION("zoom should be followed by a positive float",ERRDIV);
+          }
+          else if ( token == "SnAkE" ) {
+#ifdef HAVE_CPPTHREAD
+            _snake.reset(new std::thread(runSnake));
+#else
+            runSnake();
+#endif
           }
           else {
             _canvas->alter(token,cin);

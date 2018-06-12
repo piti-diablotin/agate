@@ -110,6 +110,9 @@ class Window {
     std::map<std::string,bool> _optionb;
     std::map<std::string,float> _optionf;
     std::map<std::string,int> _optioni;
+#ifdef HAVE_CPPTHREAD
+    std::unique_ptr<std::thread> _snake;
+#endif
 
     pCanvas& _canvas; ///< Canvas to use
     std::unique_ptr<TriArrow> _arrow;

@@ -659,6 +659,15 @@ echo "==========================================================================
 echo "===  Libraries                                                                  " 
 echo "================================================================================"
 
+# check for ncurses library headers   
+AC_CHECK_HEADER([ncurses.h],[ncurses_check_h=yes],[ncurses_check_h=no])
+AC_CHECK_LIB([ncurses],[initscr],[ncurses_check_lib=yes],[ncurses_check_lib=no])
+if test x"$ncurses_check_h" == x"yes" && test x"$ncurses_check_lib" == x"yes"
+then
+  LIBS="$LIBS -lncurses"
+  AC_DEFINE([HAVE_NCURSES],[1],[Define to 1 if ncurses is usable.])
+fi
+
 #=========================================================================
 # cURL
 #=========================================================================
@@ -1675,9 +1684,8 @@ if test x"$AM_SPGLIB" != x""
 then
   AM_CPPFLAGS="$AM_CPPFLAGS -I\$(top_srcdir)/spglib-1.9.9/src"
   AC_SUBST(AM_CPPFLAGS)
-  AM_LDFLAGS="$AM_LDFLAGS -L\$(top_builddir)/spglib-1.9.9/src/.libs/"
-  AC_SUBST(AM_LDFLAGS)
-  LIBS="$LIBS -lsymspg"
+  SPGLIB_LDFLAGS="$AM_LDFLAGS \$(top_builddir)/spglib-1.9.9/src/libsymspg.la"
+  AC_SUBST(SPGLIB_LDFLAGS)
 fi
 
 AC_DEFINE_UNQUOTED(COMPILE_CPPFLAGS,"$CPPFLAGS",[Flags used for preprocessor compilation])

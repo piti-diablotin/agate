@@ -154,7 +154,7 @@ libagate_la_LIBADD = \\" > Makefile.am
   echo "include \$(top_srcdir)/m4/autotroll.mk
 LDADD = \\" > Makefile.am 
 cat >> Makefile.am << EOF
-\$(top_builddir)/src/libagate.la
+\$(top_builddir)/src/libagate.la @SPGLIB_LDFLAGS@
 EOF
 #  for lib in $(find ../src -type d | sed -e '1d' -e '/qt/d')
 #  do

@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <ncurses.h>
 /*#include <sys/time.h>*/
 #include <chrono>
 #include <ctime>
@@ -17,6 +16,7 @@
 #endif
 
 #ifdef HAVE_NCURSES
+#include <ncurses.h>
 
 typedef struct win{
   WINDOW* pwin;

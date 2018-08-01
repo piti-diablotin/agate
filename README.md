@@ -5,7 +5,7 @@ The first one is **agate** which a `glfw` based UI and **qagate** which offers t
 ## What you can do with **(q)agate**
 Agate is mainly designed to work with the [Abinit](www.abinit.org "Abinit website") DFT code. However, it can perfectly read some [VASP](www.vasp.at "VASP website") files and other commonly used format. 
 
-Agate should help you to visualize in a glance any input file to make sure the structure your simulating is the one you want.
+Agate should help you to visualize in a glance any input file to make sure the structure you're simulating is the one you want.
 You can in some ways modify the structure and save it into a new file with the format you want.
 
 At the moment the most remarkable functionnalities are for molecular dynamics (MD) simulations and phonon analysis. Agate allows you to extract information of a trajectory to interpret the physics on the system. Several tools are included to make life easier.

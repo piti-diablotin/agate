@@ -223,6 +223,17 @@ namespace utils {
    * @return The filename without its extension if it has one.
    */
   std::string noSuffix(std::string filename);
+
+  /**
+   * List all the files (directories included) in the current path.
+   * The first element of the pair is the timestamp of the file (last modificiation)
+   * The second is the filename
+   * Files ares sorted. First is oldest, last is newest.
+   * @pattern Regex expression to find files.
+   * @return A vector containing a pair of timestamp (modification time) and file name
+   */
+  std::vector<std::pair<long int, std::string>> ls(std::string pattern=".*");
+
 }
 
 #endif  // UTILS_HPP

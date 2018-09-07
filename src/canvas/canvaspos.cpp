@@ -53,6 +53,7 @@
 #include "bind/tdep.hpp"
 #include "hist/histdatadtset.hpp"
 #include "graphism/tricloud.hpp"
+#include "base/utils.hpp"
 
 //
 CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
@@ -1524,12 +1525,13 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     std::clog << std::endl << "Running TDEP, this can take some time." << std::endl;
     tdep.tdep();
     std::clog << std::endl << "OK." << std::endl;
+    auto phononBands = utils::ls(".*phonon-bands.yaml");
 
     auto save = _info;
     HistDataDtset *uc = new HistDataDtset(tdep.unitcell());
     this->setHist(*uc);
     _info = save;
-    std::stringstream info("band phonon-bands.yaml "+line);
+    std::stringstream info("band "+phononBands.back().second+" "+line);
     try {
       if ( _gplot == nullptr ) 
         _gplot.reset(new Gnuplot);

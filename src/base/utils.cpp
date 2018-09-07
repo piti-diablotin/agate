@@ -29,6 +29,15 @@
 #include <utility>
 #include <locale>
 #include <iomanip>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <iostream>
+#include <string>
+#include <cstring>
+#include <regex>
+#include <ctime>
+#include <vector>
 #include "base/exception.hpp"
 
 namespace utils {
@@ -332,5 +341,32 @@ namespace utils {
     auto pos = filename.find_last_of(".");
     return ( pos != std::string::npos ) ? filename.substr(0,pos) : filename;
   }
-}
 
+#ifndef _WIN32
+  std::vector<std::pair<long int, std::string>> ls(std::string pattern) {
+
+    DIR *dp;
+    dirent *d;
+
+    std::regex search(pattern);
+    std::vector<std::pair<long int, std::string>> files;
+
+    if((dp = opendir(".")) == NULL)
+      throw EXCEPTION("Unable to open current directory", ERRABT);
+
+    struct stat fordate;
+    while((d = readdir(dp)) != NULL)
+    {
+      if(!strcmp(d->d_name,".") || !strcmp(d->d_name,".."))
+        continue;
+      if ( regex_match(std::string(d->d_name),search) ) {
+        stat(d->d_name,&fordate);
+        files.push_back(std::pair<long int,std::string>(fordate.st_mtime,d->d_name));
+      }
+    }
+    std::sort(files.begin(),files.end(),[](std::pair<long int, std::string> it1,std::pair<long int,std::string> it2){return it1.first < it2.first;});
+    return files;
+  }
+#endif
+
+}

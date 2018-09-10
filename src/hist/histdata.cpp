@@ -565,7 +565,7 @@ HistData* HistData::getHist(const std::string& file, bool wait){
 }
 
 HistData& HistData::operator+=(HistData& hist) {
-  if ( _nimage != hist._nimage )
+  if ( _nimage > 1 && hist._nimage > 1 && _nimage != hist._nimage )
     throw EXCEPTION("HistData have a different number of images",ERRABT);
   if ( _natom != hist._natom )
     throw EXCEPTION("HistData have a different number of atoms",ERRABT);
@@ -573,6 +573,7 @@ HistData& HistData::operator+=(HistData& hist) {
     throw EXCEPTION("HistData have a different number of znucl",ERRABT);
   if ( _typat.size() != hist._typat.size() )
     throw EXCEPTION("HistData have a different number of typat",ERRABT);
+
 
   for ( unsigned z = 0 ; z < _znucl.size() ; ++z ) {
     bool found = false;
@@ -704,7 +705,38 @@ HistData& HistData::operator+=(HistData& hist) {
   _stress.resize(_ntime*6);
   std::copy(hist._stress.begin(), hist._stress.end(),_stress.begin()+prevNtime*6);
 
-  if ( _nimage > 0 ) {
+  if ( _nimage > 0 || hist._nimage > 0) {
+    if ( _nimage == 0 && hist._nimage == 1 ) {
+      _imgdata._acell.resize(_ntime*_xyz);//resize to _ntime to avoid resizing after the if 
+      std::copy(_acell.begin(), _acell.begin()+prevNtime*_xyz,_imgdata._acell.begin());
+
+      _imgdata._rprimd.resize(_ntime*9);
+      std::copy(_rprimd.begin(), _rprimd.begin()+prevNtime,_imgdata._rprimd.begin());
+
+      _imgdata._etotal.resize(_ntime);
+      std::copy(_etotal.begin(), _etotal.begin()+prevNtime,_imgdata._etotal.begin());
+
+      _imgdata._stress.resize(_ntime*6);
+      std::copy(_stress.begin(), _stress.begin()+prevNtime,_imgdata._stress.begin());
+      _nimage = 1;
+      _imgdata._imgmov = hist._imgdata._imgmov;
+    }
+    else if ( _nimage == 1 && hist._nimage == 0 ) {
+      hist._imgdata._acell.resize(hist._ntime*_xyz);
+      std::copy(hist._acell.begin(), hist._acell.begin()+hist._ntime*_xyz,hist._imgdata._acell.begin());
+
+      hist._imgdata._rprimd.resize(hist._ntime*9);
+      std::copy(hist._rprimd.begin(), hist._rprimd.begin()+hist._ntime,hist._imgdata._rprimd.begin());
+
+      hist._imgdata._etotal.resize(hist._ntime);
+      std::copy(hist._etotal.begin(), hist._etotal.begin()+hist._ntime,hist._imgdata._etotal.begin());
+
+      hist._imgdata._stress.resize(hist._ntime*6);
+      std::copy(hist._stress.begin(), hist._stress.begin()+hist._ntime,hist._imgdata._stress.begin());
+    }
+    else if ( _nimage != hist._nimage )
+      throw EXCEPTION("You should get this bug",ERRABT);
+
     _imgdata._acell.resize(_ntime*_nimage*_xyz);
     std::copy(hist._imgdata._acell.begin(), hist._imgdata._acell.end(),_imgdata._acell.begin()+prevNtime*_nimage*_xyz);
 

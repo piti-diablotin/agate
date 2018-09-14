@@ -317,6 +317,21 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
     bonds = this->buildBonds();
   }
 
+  /*
+   * Temporary for memory on how to use TriMap
+  double orig[] = {0,0,0};
+  double udir[] = {rprimd[0], rprimd[3], rprimd[6]};
+  double vdir[] = {rprimd[1], rprimd[4], rprimd[7]};
+  TriMap map(_opengl);
+  map.genUnit(orig,udir,vdir,100,100);
+  std::vector<double> values;
+  for ( int i = 0 ; i < 100 ; ++i ) {
+    for ( int j = 0 ; j < 100 ; ++j ) {
+      values.push_back(0.5*(cos(i*2*3.14/100)+sin(j*2*3.14/100)));
+    }
+  }
+  map.draw(values,_octacolor,_up,_down,true);
+  */
 
   _sphere->push();
   for ( int i = 0 ; i < _translate[0] ; ++i) {
@@ -1176,8 +1191,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     }
   }
   else if ( token == "typat" ){
-    unsigned typat;
-    unsigned iatom;
+    int typat;
+    int iatom;
     stream >> iatom;
     --iatom;
     if ( stream.fail() || iatom >= _natom )

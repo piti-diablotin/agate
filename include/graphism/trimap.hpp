@@ -36,7 +36,8 @@
 #undef HAVE_CONFIG_H
 #endif
 
-#include "graphism/trisphere.hpp"
+#include "graphism/triobj.hpp"
+#include <vector>
 
 /** 
  *
@@ -47,7 +48,10 @@ class TriMap : public TriObj {
 
   protected :
     _float  *_unitColor;     ///< Unit object indices
-    _uint    _vboColor;       ///< VBO for vertex[0] and indices[1]
+    _uint    _vboColor;      ///< VBO for vertex[0] and indices[1]
+    int _currentUpoint;      ///< Current number of points along u direction 
+    int _currentVpoint;      ///< Current number of points along v direction 
+    bool _refresh;           ///< Things must be updated or VBOs are ok ?
 
   public :
 
@@ -59,7 +63,7 @@ class TriMap : public TriObj {
     /**
      * Copy
      */
-    TriMap(const TriMap& cloud) = delete;
+    TriMap(const TriMap& map) = delete;
 
     /**
      * Move
@@ -81,6 +85,23 @@ class TriMap : public TriObj {
     virtual ~TriMap();
 
     void genUnit(double *origin, double *udir, double *vdir, int upoint, int vpoint);
+
+    /**
+     * Draw a map on the screen
+     * The grid must have been set up before with genUnit.
+     * The values in the values array must be between -1 and 1.
+     * @param values The values for each point of the grid. 
+     * Values are row ordering if udir is the row direction and vdir the colomn direction.
+     * iteration over vdir is the inner loop.
+     * @param zero A color for the 0 value, each component is between 0 and 1
+     * @param plus A color for the +1 value, each component is between 0 and 1
+     * @param minus A color for the -1 value, each component is between 0 and 1
+     * @param refresh If true, the color buffer is updated with values.
+     */
+    void draw(std::vector<double> &values, float zero[3], float plus[3], float minus[3],bool refresh);
+
+    void pop(){;}
+    void push(){;}
 };
 
 #endif  // TRIMAP_HPP

@@ -28,6 +28,7 @@
 #include "base/exception.hpp"
 #include "io/dtset.hpp"
 #include "io/poscar.hpp"
+#include "io/abibin.hpp"
 #include "io/configparser.hpp"
 #include <fstream>
 
@@ -57,6 +58,7 @@ void HistDataDtset::readFromFile(const std::string& filename) {
     unsigned imgmov = 0;
     try {
       parser.parse();
+      dtset->readConfig(parser);
       try {
         nimage = parser.getToken<unsigned>(" nimage");
       }
@@ -73,7 +75,6 @@ void HistDataDtset::readFromFile(const std::string& filename) {
           (void)e;
         }
       }
-      dtset->readConfig(parser);
     }
     catch( Exception& e ) {
       ec+= e;
@@ -100,7 +101,21 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         ec += e;
         ec.ADD("Not a POSCAR file",e.getReturnValue());
         delete dtset;
-        throw ec;
+        dtset = nullptr;
+        if ( e.getReturnValue() == ERRABT ) throw ec;
+      }
+    }
+    if ( dtset == nullptr ) {
+      dtset = new AbiBin;
+      try {
+        dtset->readFromFile(filename);
+      }
+      catch( Exception& e ) {
+        ec += e;
+        ec.ADD("Not a Abinit Binary file",e.getReturnValue());
+        delete dtset;
+        dtset = nullptr;
+        if ( e.getReturnValue() == ERRABT ) throw ec;
       }
     }
 

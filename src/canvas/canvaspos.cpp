@@ -1096,7 +1096,10 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       _histdata->periodicBoundaries((all=="all"?-1:_itime),toPeriodic);
       if ( !toPeriodic)
         this->buildBorders(_itime,true);
-      for ( auto z : _octahedra_z )
+      auto tmp = _octahedra_z;
+      for ( auto z : tmp )
+        this->updateOctahedra(-z);
+      for ( auto z : tmp )
         this->updateOctahedra(z);
     }
     else

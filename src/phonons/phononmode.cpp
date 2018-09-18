@@ -136,6 +136,9 @@ void PhononMode::computeForceCst(const geometry::vec3d& qpt, const Ddb& ddb) {
 const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qpt, const Ddb& ddb1, const std::vector<Ddb::d2der>& ddb2) {
 #ifndef HAVE_EIGEN
   throw EXCEPTION("To use this functionnality you need to compile with EIGEN support",ERRABT);
+  (void) qpt;
+  (void) ddb1;
+  (void) ddb2;
 #else
 	this->resize(ddb1.natom());	/// resize variables
 	_natom = ddb1.natom();		/// get number of atoms
@@ -187,6 +190,10 @@ const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qp
 std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::vec3d &E_vec, double E_Amp, const Ddb& ddb) {
 #ifndef HAVE_EIGEN
   throw EXCEPTION("To use this functionnality you need to compile with EIGEN support",ERRABT);
+  (void) _qpt;
+  (void) E_vec;
+  (void) E_Amp;
+  (void) ddb;
 #else
 	/*---- Get necessary Data ---*/
 	

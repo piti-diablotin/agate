@@ -285,14 +285,14 @@ class Canvas {
     /**
      * Go to next time step if available
      */
-    inline void nextStep() {
+    virtual void nextStep() {
       if ( ++_itime >= _tend ) --_itime;
     }
 
     /**
      * Go to next time step if available
      */
-    inline void step(const int istep) {
+    virtual void step(const int istep) {
       if ( (_itime=istep) >= _tend ) _itime=_tend-1;
       if ( _itime < _tbegin ) _itime=_tbegin;
     }
@@ -300,7 +300,7 @@ class Canvas {
     /**
      * Go to previous time step if available
      */
-    inline void previousStep() {
+    virtual void previousStep() {
       if ( --_itime == -1 || _itime < _tbegin) _itime = _tbegin;
     }
 
@@ -340,17 +340,17 @@ class Canvas {
      * Get the time step
      * @return itime
      */
-    int itime() const { return _itime; }
+    virtual int itime() const { return _itime; }
 
     /**
      * Get the number of time step
      * @return ntime
      */
-    int ntime() const { return _ntime; }
+    virtual int ntime() const { return _ntime; }
 
-    int tbegin() const { return _tbegin; }
+    virtual int tbegin() const { return _tbegin; }
 
-    int tend() const { return _tend-1; }
+    virtual int tend() const { return _tend-1; }
 
     /**
      * Get the HistData pointer

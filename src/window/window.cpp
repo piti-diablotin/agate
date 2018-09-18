@@ -51,6 +51,7 @@
 #endif
 
 #include "canvas/canvaspos.hpp"
+#include "canvas/canvasdensity.hpp"
 #include "canvas/canvaslocal.hpp"
 #include "canvas/canvasphonons.hpp"
 
@@ -660,6 +661,9 @@ bool Window::userInput(std::stringstream& info) {
             }
             else if ( cmode == "ph" || cmode == "phonons" ) {
               _canvas.reset(new CanvasPhonons(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
+            }
+            else if ( cmode == "den" || cmode == "density" ) {
+              _canvas.reset(new CanvasDensity(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
             }
             else throw EXCEPTION("Bad mode "+cmode,ERRDIV);
           }

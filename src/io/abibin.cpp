@@ -35,7 +35,7 @@ const std::vector<int> AbiBin::potentialFform({102,103,104,105,106,107,108,109,1
 
 //
 AbiBin::AbiBin() : Dtset(),
-  _nsppol(0),
+  _nspden(0),
   _ngfft{0,0,0},
   _fftData()
 {
@@ -127,19 +127,18 @@ void AbiBin::readFromFile(const std::string& filename) {
   dsize = {16,3};
   checkMarker(2);
 
-  int bandtot, nkpt, nsym, npsp, nshiftk_orig, nshiftk, mband;
+  int nkpt, nsppol, nsym, npsp, nshiftk_orig, nshiftk, mband;
   file.read((char*)(&idummy[0]),4*sizeof(int));
-  bandtot = idummy[0];
   file.read((char*)(&_natom),sizeof(int));
   file.read((char*)(_ngfft),3*sizeof(int));
 
-  file.read((char*)(&idummy[0]),3*sizeof(int));
+  file.read((char*)(&idummy[0]),9*sizeof(int));
   nkpt = idummy[0];
-  file.read((char*)(&_nsppol),sizeof(int));
-  file.read((char*)(&idummy[0]),5*sizeof(int));
-  nsym = idummy[0];
-  npsp = idummy[1];
-  _ntypat = idummy[2];
+  _nspden = idummy[1];
+  nsppol = idummy[3];
+  nsym = idummy[4];
+  npsp = idummy[5];
+  _ntypat = idummy[6];
 
   file.read((char*)(&idummy[0]),1*sizeof(int));
   file.read((char*)(&ddummy[0]),16*sizeof(double));
@@ -190,8 +189,8 @@ void AbiBin::readFromFile(const std::string& filename) {
    * & hdr%tnons(:,:), hdr%znucltypat(:), hdr%wtk(:)
    */
 
-  isize = {nkpt,nkpt*_nsppol,nkpt,npsp,nsym,3*3*nsym,(int)_natom}; 
-  dsize = {3*nkpt,mband*nkpt*_nsppol,3*nsym,(int)_ntypat,nkpt};
+  isize = {nkpt,nkpt*nsppol,nkpt,npsp,nsym,3*3*nsym,(int)_natom}; 
+  dsize = {3*nkpt,mband*nkpt*nsppol,3*nsym,(int)_ntypat,nkpt};
   checkMarker(3);
 
   for ( int v = 0 ; v < 6 ; ++v )
@@ -222,8 +221,8 @@ void AbiBin::readFromFile(const std::string& filename) {
 
   file.read((char*)(&ddummy[0]),dsize[0]*sizeof(double));
   file.read((char*)(&ddummy[0]),dsize[1]*sizeof(double));
-  for ( int a = 0 ; a < _natom ; ++a )
-    for(int d = 0 ; d < 3 ; ++d )
+  for ( unsigned a = 0 ; a < _natom ; ++a )
+    for( unsigned d = 0 ; d < 3 ; ++d )
       _xred[a][d]=ddummy[a*3+d];
   geometry::changeBasis(_rprim, _xcart, _xred, false);
 
@@ -241,9 +240,9 @@ void AbiBin::readFromFile(const std::string& filename) {
   isize = {1,1,1,9,9};
   dsize = {1,1,3*nshiftk_orig,3*nshiftk};
   checkMarker(5);
-  for ( int v = 0 ; v < isize.size() ; ++v )
+  for ( unsigned v = 0 ; v < isize.size() ; ++v )
     file.read((char*)(&idummy[0]),isize[v]*sizeof(int));
-  for ( int v = 0 ; v < dsize.size() ; ++v )
+  for ( unsigned v = 0 ; v < dsize.size() ; ++v )
     file.read((char*)(&ddummy[0]),dsize[v]*sizeof(double));
   checkMarker(-5);
 
@@ -262,20 +261,114 @@ void AbiBin::readFromFile(const std::string& filename) {
     checkMarker(6*10+ipsp,132+32);
     char tmp[132];
     file.read(tmp,132*sizeof(char));
-    for ( int v = 0 ; v < isize.size() ; ++v )
+    for ( unsigned v = 0 ; v < isize.size() ; ++v )
       file.read((char*)(&idummy[0]),isize[v]*sizeof(int));
-    for ( int v = 0 ; v < dsize.size() ; ++v )
+    for ( unsigned v = 0 ; v < dsize.size() ; ++v )
       file.read((char*)(&ddummy[0]),isize[v]*sizeof(double));
     file.read(tmp,32*sizeof(char));
     checkMarker(-(6*10+ipsp),132+32);
   }
 
 
-  /*
-     if (hdr%usepaw==1) then ! Reading the Rhoij tab if the PAW method was used.
-     call pawrhoij_io(hdr%pawrhoij,unit,hdr%nsppol,hdr%nspinor,hdr%nspden,hdr%lmn_size,hdr%typat,hdr%headform,"Read")
-     end if
-     */
+  /**
+   * Ignore all records before te one we want.
+   * if (hdr%usepaw==1) then ! Reading the Rhoij tab if the PAW method was used.
+   * call pawrhoij_io(hdr%pawrhoij,unit,hdr%nsppol,hdr%nspinor,hdr%nspden,hdr%lmn_size,hdr%typat,hdr%headform,"Read")
+   * end if
+   */
+  if ( usepaw ) {
+    bool found = false;
+    unsigned startmarker = _ngfft[0]*_ngfft[1]*_ngfft[2]*sizeof(double);
+    while ( file ) {
+      file.read((char*)&marker,sizeof(int));
+      int start = file.tellg();
+      if ( marker != startmarker ) {
+        file.seekg(start+(int)marker);
+        unsigned check;
+        file.read((char*)&check,sizeof(int));
+        if ( check != marker ) throw EXCEPTION("BUG!!!!",ERRABT);
+      }
+      else {
+        file.seekg(start-(int)sizeof(int));
+        found = true;
+        break;
+      }
+    }
+    if ( !found )
+      throw EXCEPTION("Could not find the density record",ERRABT);
+  }
 
+  _fftData.resize(_ngfft[0]*_ngfft[1]*_ngfft[2]*_nspden);
+  isize = {};
+  dsize = {_ngfft[0]*_ngfft[1]*_ngfft[2]};
+  for ( int ispden = 0 ; ispden < _nspden ; ++ ispden ) {
+    checkMarker(70+ispden);
+    file.read((char*)&_fftData[ispden*dsize[0]],marker);
+    checkMarker(-(70+ispden));
+  }
+}
 
+int AbiBin::getPoints(gridDirection dir) {
+  switch (dir) {
+    case A: return _ngfft[0]; break;
+    case B: return _ngfft[1]; break;
+    case C: return _ngfft[2]; break;
+    default : throw EXCEPTION("This direction does not exist",ERRDIV);
+  }
+}
+
+geometry::vec3d AbiBin::getVector(gridDirection dir) {
+  switch (dir) {
+    case A: return { _rprim[0], _rprim[3], _rprim[6] } ; break;
+    case B: return { _rprim[1], _rprim[4], _rprim[7] } ; break;
+    case C: return { _rprim[2], _rprim[5], _rprim[8] } ; break;
+    default : throw EXCEPTION("This direction does not exist",ERRDIV);
+  }
+}
+
+void AbiBin::getData(int origin, gridDirection dir, std::vector<double> &data) {
+  if ( origin < 0 )
+    throw EXCEPTION("Origin cannot be negative",ERRDIV);
+  if ( _fftData.size() == 0 ) {
+    data.clear();
+  }
+
+  double max = *std::max_element(_fftData.begin(),_fftData.end());
+
+  switch(dir) {
+    case A: {
+              if ( origin >= _ngfft[0] )
+                throw EXCEPTION("Origin is too large",ERRDIV);
+              int planSize = _ngfft[1]*_ngfft[2];
+              data.resize(planSize);
+              std::copy(&_fftData[origin*planSize],&_fftData[(origin+1)*planSize],&data[0]);
+              break;
+            }
+    case B: {
+              if ( origin >= _ngfft[1] )
+                throw EXCEPTION("Origin is too large",ERRDIV);
+              int planSize = _ngfft[0]*_ngfft[2];
+              data.resize(planSize);
+              for ( int u = 0 ; u < _ngfft[0] ; ++u ) {
+                for ( int j = 0 ; u < _ngfft[2] ; ++u ) {
+                  data[u*_ngfft[2]+j] = _fftData[u*_ngfft[1]*_ngfft[2]+origin*_ngfft[2]+j]/max;
+                }
+              }
+              break;
+            }
+    case C:
+            {
+              if ( origin >= _ngfft[2] )
+                throw EXCEPTION("Origin is too large",ERRDIV);
+              int planSize = _ngfft[0]*_ngfft[1];
+              data.resize(planSize);
+              for ( int u = 0 ; u < _ngfft[0] ; ++u ) {
+                for ( int j = 0 ; u < _ngfft[1] ; ++u ) {
+                  data[u*_ngfft[1]+j] = _fftData[u*_ngfft[1]*_ngfft[2]+j*_ngfft[2]+origin]/max;
+                }
+              }
+              break;
+            }
+    default: throw EXCEPTION("Unknown direction",ERRDIV);
+  }
 }

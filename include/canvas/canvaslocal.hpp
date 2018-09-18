@@ -61,7 +61,7 @@ class CanvasLocal : public CanvasPos {
      * @param token keyword to know what to do
      * @param stream the stream with the other data to be parsed.
      */
-    void my_alter(std::string token, std::istringstream &stream);
+    virtual void my_alter(std::string token, std::istringstream &stream);
 
     
     /**

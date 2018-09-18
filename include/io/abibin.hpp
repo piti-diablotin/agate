@@ -37,6 +37,7 @@
 #endif
 
 #include "io/dtset.hpp"
+#include "base/geometry.hpp"
 
 /** 
  *
@@ -48,11 +49,13 @@ class AbiBin : public Dtset {
   protected :
     static const std::vector<int> densityFform;   ///< fform positive integer values corresponding to abinit "density" class files
     static const std::vector<int> potentialFform; ///< fform posiotive integer values corresponding to abinit "potential" class files
-    int _nsppol;                                  ///< Number of polarisation to read in the file
+    int _nspden;                                  ///< Number of densities to read in the file
     int _ngfft[3];                                ///< Grid for FFT along a, b and c
     std::vector<double> _fftData;                 ///< Data point along a, b and c directions.
 
   public :
+
+    enum getDen { UP, DOWN, SUM, DIFF };
 
     /**
      * Constructor.
@@ -69,6 +72,38 @@ class AbiBin : public Dtset {
      * @param filename File of a unformatted fortran  binary file written by Abinit
      */
     virtual void readFromFile(const std::string& filename);
+
+    enum gridDirection { A, B, C };
+
+    /**
+     * Get grid dimension
+     * @param axis The direction to get the number of points
+     * @result the number of point along the axis direction.
+     */
+    int getPoints(gridDirection dir);
+
+    /**
+     * Get grid vector
+     * @param axis The direction to get the vector
+     * @result the cartesian coordinates of the vector.
+     */
+    geometry::vec3d  getVector(gridDirection dir);
+
+    /**
+     * Get data for a plan at position i normal to the given direction
+     * @param origin origin of the plan
+     * @param dir normal to the plan
+     * @param data container with the correct size and data.
+     * Data is represented rowwise a then b then c
+     */
+    void getData(int origin, gridDirection dir, std::vector<double> &data);
+
+    /**
+     * Getter to get the number of density we have
+     * @return the number of density. Can be 1 2 or 4 in case of spin orbit coupling
+     */
+    int getNspden() { return _nspden; };
+
 };
 
 #endif  // ABIBIN_HPP

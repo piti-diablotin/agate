@@ -53,7 +53,9 @@
 #include "bind/tdep.hpp"
 #include "hist/histdatadtset.hpp"
 #include "graphism/tricloud.hpp"
+#include "graphism/trimap.hpp"
 #include "base/utils.hpp"
+#include "io/abibin.hpp"
 
 //
 CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
@@ -66,7 +68,7 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _octahedra_z(),
   _octahedra(),
   _hasTranslations(false),
-  _display(DISP_BORDER),
+  _display(DISP_BORDER|DISP_ATOM),
   _bond(2.00), 
   _bondRadius(0.15), 
   _sphere(nullptr),
@@ -106,7 +108,7 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _octahedra_z(canvas._octahedra_z),
   _octahedra(std::move(canvas._octahedra)),
   _hasTranslations(canvas._hasTranslations),
-  _display(DISP_BORDER),
+  _display(canvas._display),
   _bond(canvas._bond), 
   _bondRadius(canvas._bondRadius), 
   _sphere(canvas._sphere),
@@ -182,7 +184,7 @@ void CanvasPos::setHist(HistData& hist) {
     _typat = hist.typat();
     if ( _ntime == _tend ) _tend = -1;
     _tbegin = 0;
-    Canvas::setNTime(ntime);
+    this->setNTime(ntime);
 
     std::clog << "Using file " << hist.filename() << std::endl;
     std::clog << "Number of atoms: " << _natom << std::endl;
@@ -223,7 +225,7 @@ void CanvasPos::setHist(HistData& hist) {
 void CanvasPos::updateHist() {
   unsigned ntimeAvail = _histdata->ntimeAvail();
   if ( _tend == _ntime ) _tend = -1;
-  Canvas::setNTime(ntimeAvail);
+  this->setNTime(ntimeAvail);
 }
 
 //
@@ -316,22 +318,6 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
   if ( _display & DISP_BOND ) {
     bonds = this->buildBonds();
   }
-
-  /*
-   * Temporary for memory on how to use TriMap
-  double orig[] = {0,0,0};
-  double udir[] = {rprimd[0], rprimd[3], rprimd[6]};
-  double vdir[] = {rprimd[1], rprimd[4], rprimd[7]};
-  TriMap map(_opengl);
-  map.genUnit(orig,udir,vdir,100,100);
-  std::vector<double> values;
-  for ( int i = 0 ; i < 100 ; ++i ) {
-    for ( int j = 0 ; j < 100 ; ++j ) {
-      values.push_back(0.5*(cos(i*2*3.14/100)+sin(j*2*3.14/100)));
-    }
-  }
-  map.draw(values,_octacolor,_up,_down,true);
-  */
 
   _sphere->push();
   for ( int i = 0 ; i < _translate[0] ; ++i) {
@@ -558,6 +544,7 @@ void CanvasPos::nextFrame(const int count) {
 
 //
 void CanvasPos::drawAtom(const int znucl, GLfloat posX, GLfloat posY, GLfloat posZ) {
+  if ( !(_display & DISP_ATOM) ) return;
   GLfloat pos[3]={posX,posY,posZ};
   _sphere->draw(pos,mendeleev::color[znucl],(float)mendeleev::radius[znucl]);
 }
@@ -948,6 +935,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display = (_display&~(DISP_ZNUCL | DISP_NAME))|DISP_ID;
       else if ( what == "bond" )
         _display |= DISP_BOND;
+      else if ( what == "atom" )
+        _display |= DISP_ATOM;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }
@@ -966,6 +955,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display &= ~DISP_ID;
       else if ( what == "bond" )
         _display &= ~DISP_BOND;
+      else if ( what == "atom" )
+        _display &= ~DISP_ATOM;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }
@@ -1732,7 +1723,7 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":div or :division number" << setw(59) << "Number of division to draw spheres (>1)." << endl;
   out << setw(40) << ":dist or :distance id1 id2" << setw(59) << "Compute the distance between atom id1 and atom id2." << endl;
   out << setw(40) << ":bond factor " << setw(59) << "Factor to find the bonded atoms." << endl;
-  out << setw(40) << ":hide WHAT" << setw(59) << "Hide WHAT=(border|name|znucl|id)" << endl;
+  out << setw(40) << ":hide WHAT" << setw(59) << "Hide WHAT=(atom|border|name|znucl|id)" << endl;
   out << setw(40) << ":mv or :move iatom X Y Z" << setw(59) << "Move the atom iatom at the new REDUCED coordinate (X,Y,Z)" << endl;
   out << setw(40) << ":octa_z or :octahedra_z Z A" << setw(59) << "To draw an octahedron around the atoms Z (atomic numbers or name) A=(0|1) to draw the atoms at the tops." << endl;
   out << setw(40) << ":periodic (0|1)" << setw(59) << "Move all the atoms inside the celle (1) or make a continuous trajectory (0)" << endl;
@@ -1740,7 +1731,7 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":rcov S R" << setw(59) << "Set the covalent radius of atom S (atomic number or name) to R bohr (used for bonds)." << endl;
   out << setw(40) << ":s or :speed factor" << setw(59) << "Velocity scaling factor to change the animation speed." << endl;
   out << setw(40) << ":shift X Y Z [all]" << setw(59) << "Shift the origin to the new REDUCED coordinate (X,Y,Z)" << endl;
-  out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(border|name|znucl|id)" << endl;
+  out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(atom|border|name|znucl|id)" << endl;
   out << setw(40) << ":spin COMPONENTS" << setw(59) << "Specify what component of the spin to draw (x,y,z,xy,yz,xz,xyz)" << endl;
   out << setw(40) << ":spg or :spacegroup [tol]" << setw(59) << "Get the space group number and name. Tol is the tolerance for the symmetry finder." << endl;
   out << setw(40) << ":thermo or thermodynamics" << setw(59) << "Print total energy, volume, temperature, pressure averages (Only available for _HIST files)." << endl;

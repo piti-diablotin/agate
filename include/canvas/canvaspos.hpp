@@ -162,6 +162,7 @@ class CanvasPos : public Canvas {
     static const unsigned                DISP_NAME  = 1 << 2; ///< Parameter to construct _display : Here display the atomic name (wrt input file)
     static const unsigned                DISP_BORDER= 1 << 3; ///< Parameter to construct _display : Here display the atomic name (wrt input file)
     static const unsigned                DISP_BOND  = 1 << 4; ///< Parameter to construct _display : Here display the atomic name (wrt input file)
+    static const unsigned                DISP_ATOM  = 1 << 5; ///< Parameter to construct _display : Here display the atomic name (wrt input file)
 
     /**
      * Constructor.
@@ -197,7 +198,7 @@ class CanvasPos : public Canvas {
      * Set some data from a histdata
      * @param hist History of some parameters.
      */
-    void setHist(HistData& hist);
+    virtual void setHist(HistData& hist);
 
     /**
      * Update internal variable to get new data form our histdata

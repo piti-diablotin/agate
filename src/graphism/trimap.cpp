@@ -86,6 +86,7 @@ void TriMap::genUnit(double *origin, double *udir, double *vdir, int upoint, int
       _unitVertex[ivertex+2] = origin[2]+uvec[2]*i+vvec[2]*j;
     }
   }
+  _refresh = true;
 
   // Generate quads
   if ( upoint != _currentUpoint || vpoint != _currentVpoint ) {
@@ -103,7 +104,6 @@ void TriMap::genUnit(double *origin, double *udir, double *vdir, int upoint, int
     }
     _currentUpoint = upoint;
     _currentVpoint = vpoint;
-    _refresh = true;
 #if defined(HAVE_GL) && defined(HAVE_GLEXT)
     if ( _mode == VBO ) {
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_vbos[1]);

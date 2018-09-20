@@ -37,7 +37,8 @@ CanvasDensity::CanvasDensity(bool drawing) : CanvasPos(drawing),
   _density(),
   _map(_opengl),
   _colors{ {0.,0.,1}, {1.,1.,1}, {1.,0.,0.} },
-  _dispDen(AbiBin::getDen::SUM)
+  _dispDen(AbiBin::getDen::UP),
+  _scaleFunction(sqrt)
 {
   _nLoop = -2;
 }
@@ -52,7 +53,8 @@ CanvasDensity::CanvasDensity(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _density(),
   _map(_opengl),
   _colors{ {0.,0.,1}, {1.,1.,1}, {1.,0.,0.} },
-  _dispDen(AbiBin::getDen::SUM)
+  _dispDen(AbiBin::getDen::UP),
+  _scaleFunction(sqrt)
 {
   _nLoop = -2;
   if ( _histdata == nullptr ) return;
@@ -124,15 +126,27 @@ void CanvasDensity::refresh(const geometry::vec3d &cam, TextRender &render) {
   std::vector<double> values;
   auto normal = _density.getVector(_normal);
   if ( _status != PAUSE ) {
-    _density.getData(_ipoint,_normal,values);
+    _density.getData(_ipoint,_normal,_dispDen,values);
     if ( values.size() > 0 ) {
-      for ( auto& v : values ) v=(v<0.?-1.:1.)*std::sqrt(std::abs(v));
+      switch (_scaleFunction) {
+        case linear : {
+                        break;
+                      }
+        case log: {
+                        for ( auto& v : values ) v=(v<0.?-1.:1.)*std::log(1+std::abs(v));
+                        break;
+                      }
+        case sqrt: {
+                        for ( auto& v : values ) v=(v<0.?-1.:1.)*std::sqrt(std::abs(v));
+                        break;
+                      }
+      }
     }
   }
   GLfloat scale = ((GLfloat)_ipoint/(GLfloat)_npoints);
   glTranslatef((GLfloat)normal[0]*scale,(GLfloat)normal[1]*scale,(GLfloat)normal[2]*scale);
   try {
-    _map.draw(values,_colors[1],_colors[0],_colors[2],_status!=PAUSE);
+    _map.draw(values,_colors[1],_colors[2],_colors[0],_status!=PAUSE);
   }
   catch ( Exception &e ) {
     std::cerr << e.fullWhat() << std::endl;
@@ -207,23 +221,30 @@ int CanvasDensity::tbegin() const { return _ibegin; }
 int CanvasDensity::tend() const { return _iend-1; }
 
 void CanvasDensity::my_alter(std::string token, std::istringstream &stream) {
+  bool update = false;
   if ( token == "c" || token == "color" ){
     unsigned c[3];
     float *tomodify = nullptr;
+    int tag = stream.tellg();
     std::string name;
     stream >> name;
     if ( name == "up" ) tomodify = _colors[2];
     else if ( name == "down" ) tomodify = _colors[0];
     else if ( name == "zero" ) tomodify = _colors[1];
-    else throw EXCEPTION("Don't know what to do",ERRDIV);
-    stream >> c[0] >> c[1] >> c[2];
-    if ( !stream.fail() && c[0] < 256 && c[1] < 256 && c[2] < 256 ) {
-      tomodify[0] = (float)c[0]/255.f;
-      tomodify[1] = (float)c[1]/255.f;
-      tomodify[2] = (float)c[2]/255.f;
+    else {
+      stream.seekg(tag);
+      CanvasPos::my_alter(token,stream);
     }
-    else throw EXCEPTION("Bad color numbers",ERRDIV);
-    if ( _status == PAUSE ) _status = UPDATE;
+    if ( tomodify != nullptr ) {
+      stream >> c[0] >> c[1] >> c[2];
+      if ( !stream.fail() && c[0] < 256 && c[1] < 256 && c[2] < 256 ) {
+        tomodify[0] = (float)c[0]/255.f;
+        tomodify[1] = (float)c[1]/255.f;
+        tomodify[2] = (float)c[2]/255.f;
+      }
+      else throw EXCEPTION("Bad color numbers",ERRDIV);
+      update = true;
+    }
   }
   else if ( token == "n" || token == "normal" ){
     char c;
@@ -234,6 +255,32 @@ void CanvasDensity::my_alter(std::string token, std::istringstream &stream) {
     else throw EXCEPTION("Don't know what to do",ERRDIV);
     this->setData();
   }
+  else if ( token == "density" ){
+    std::string den;
+    stream >> den;
+    if ( den == "up" ) _dispDen = AbiBin::getDen::UP;
+    else if ( den == "down" ) _dispDen = AbiBin::getDen::DOWN;
+    else if ( den == "sum" ) _dispDen = AbiBin::getDen::SUM;
+    else if ( den == "diff" ) _dispDen = AbiBin::getDen::DIFF;
+    else throw EXCEPTION("density unknown",ERRDIV);
+    if ( _density.getNspden() == 1 && ( den == "sum" || den == "diff" || den == "down" ) ) {
+      _dispDen = AbiBin::getDen::UP;
+      throw EXCEPTION("Only one density available!",ERRDIV);
+    }
+  }
+  else if ( token == "scale" ){
+    std::string func;
+    stream >> func;
+    if ( func == "linear" ) _scaleFunction = linear;
+    else if ( func == "log" ) _scaleFunction = log;
+    else if ( func == "sqrt" ) _scaleFunction = sqrt;
+    else throw EXCEPTION("unknow function "+func,ERRDIV);
+    update = true;
+  }
+  else if ( token == "show" || token == "hide" ) {
+    CanvasPos::my_alter(token,stream);
+  }
+  if ( update && _status == PAUSE ) _status = UPDATE;
 }
 
 void CanvasDensity::help(std::ostream &out) {
@@ -241,6 +288,8 @@ void CanvasDensity::help(std::ostream &out) {
   using std::setw;
   out << endl << "-- Here are the commands related to local mode --" << endl;
   out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
-  out << setw(40) << ":c or :color (plus|minus)" << setw(59) << "Set the color in RGB for plus or minus rotations." << endl;
-  out << "Commands from positions mode are also available." << endl;
+  out << setw(40) << ":c or :color (zero|plus|minus)" << setw(59) << "Set the color in RGB for zero plus(max) or minus(negative min) numbers." << endl;
+  out << setw(40) << ":n or :normal (x|y|z)" << setw(59) << "Set the normal to the displayed density plan." << endl;
+  out << setw(40) << ":density (up|down|sum|diff)" << setw(59) << "Display up or down density or alternatively the sum or difference" << endl;
+  out << "Commands from positions mode also available : show, hide, color" << endl;
 }

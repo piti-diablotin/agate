@@ -1016,4 +1016,5 @@ void Window::help(){
   CanvasPos::help(cout);
   CanvasPhonons::help(cout);
   CanvasLocal::help(cout);
+  CanvasDensity::help(cout);
 }

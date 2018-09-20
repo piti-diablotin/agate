@@ -47,6 +47,7 @@ class AbiBin : public Dtset {
   private :
 
   protected :
+
     static const std::vector<int> densityFform;   ///< fform positive integer values corresponding to abinit "density" class files
     static const std::vector<int> potentialFform; ///< fform posiotive integer values corresponding to abinit "potential" class files
     int _nspden;                                  ///< Number of densities to read in the file
@@ -96,7 +97,7 @@ class AbiBin : public Dtset {
      * @param data container with the correct size and data.
      * Data is represented rowwise a then b then c
      */
-    void getData(int origin, gridDirection dir, std::vector<double> &data);
+    void getData(int origin, gridDirection dir, getDen function, std::vector<double> &data);
 
     /**
      * Getter to get the number of density we have

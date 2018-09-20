@@ -47,6 +47,8 @@ class CanvasDensity :public CanvasPos {
 
   private :
 
+    enum scaleFunc { linear, sqrt, log }; ///< How to scale the values when displaying. Apply none, sqrt or log function.
+
     int _origin;           ///< indice of the origin along the normal.
     int _npoints;          ///< number of points along the normal.
     int _ipoint;           ///< Current point along the normal.
@@ -57,6 +59,7 @@ class CanvasDensity :public CanvasPos {
     TriMap _map;           ///< map rendering with opengl
     float _colors[3][3];   ///< colors for maps for -1;0;1
     AbiBin::getDen _dispDen;
+    scaleFunc _scaleFunction;                     ///< Scale function to apply to data before plotting
 
     
 

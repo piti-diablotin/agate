@@ -303,7 +303,14 @@ void AbiBin::readFromFile(const std::string& filename) {
   dsize = {_ngfft[0]*_ngfft[1]*_ngfft[2]};
   for ( int ispden = 0 ; ispden < _nspden ; ++ ispden ) {
     checkMarker(70+ispden);
-    file.read((char*)&_fftData[ispden*dsize[0]],marker);
+    file.read((char*)&ddummy[0],marker);
+    for ( int z = 0 ; z < _ngfft[2] ; ++z ) {
+      for ( int y = 0 ; y < _ngfft[1] ; ++y ) {
+        for ( int x = 0 ; x < _ngfft[0] ; ++x ) {
+          _fftData[ispden*dsize[0]+(x*_ngfft[1]+y)*_ngfft[2]+z] = ddummy[(z*_ngfft[1]+y)*_ngfft[0]+x];
+        }
+      }
+    }
     checkMarker(-(70+ispden));
   }
 }
@@ -326,14 +333,26 @@ geometry::vec3d AbiBin::getVector(gridDirection dir) {
   }
 }
 
-void AbiBin::getData(int origin, gridDirection dir, std::vector<double> &data) {
+void AbiBin::getData(int origin, gridDirection dir, getDen function, std::vector<double> &data) {
   if ( origin < 0 )
     throw EXCEPTION("Origin cannot be negative",ERRDIV);
   if ( _fftData.size() == 0 ) {
     data.clear();
   }
+  const int npoints = _ngfft[0]*_ngfft[1]*_ngfft[2];
+  if ( (function == SUM || function == DIFF) && _nspden == 1 )
+    throw EXCEPTION("There is only one density",ERRDIV);
 
-  double max = *std::max_element(_fftData.begin(),_fftData.end());
+  int downDensity;
+  switch (_nspden) {
+    case 1: downDensity = 0; break;
+    case 2: downDensity = 1; break;
+    case 4: downDensity = 4; break;
+  }
+  double inv_max = 1./(*std::max_element(_fftData.begin(),_fftData.end()));
+  if ( function == SUM ) inv_max*=0.5;
+  int startData = (function == DOWN ? downDensity : 0)*npoints;
+
 
   switch(dir) {
     case A: {
@@ -341,7 +360,29 @@ void AbiBin::getData(int origin, gridDirection dir, std::vector<double> &data) {
                 throw EXCEPTION("Origin is too large",ERRDIV);
               int planSize = _ngfft[1]*_ngfft[2];
               data.resize(planSize);
-              std::copy(&_fftData[origin*planSize],&_fftData[(origin+1)*planSize],&data[0]);
+              //std::copy(&_fftData[origin*planSize],&_fftData[(origin+1)*planSize],&data[0]);
+              for ( int u = 0 ; u < _ngfft[1] ; ++u ) {
+                for ( int v = 0 ; v < _ngfft[2] ; ++v ) {
+                  data[u*_ngfft[2]+v] = _fftData[startData+((origin*_ngfft[1]+u)*_ngfft[2])+v]*inv_max;
+                }
+              }
+              if ( function == SUM || function == DIFF ) {
+                startData = downDensity*npoints;
+                if ( function == SUM ) {
+                  for ( int u = 0 ; u < _ngfft[1] ; ++u ) {
+                    for ( int v = 0 ; v < _ngfft[2] ; ++v ) {
+                      data[u*_ngfft[2]+v] += _fftData[startData+((origin*_ngfft[1]+u)*_ngfft[2])+v]*inv_max;
+                    }
+                  }
+                }
+                else {
+                  for ( int u = 0 ; u < _ngfft[1] ; ++u ) {
+                    for ( int v = 0 ; v < _ngfft[2] ; ++v ) {
+                      data[u*_ngfft[2]+v] -= _fftData[startData+((origin*_ngfft[1]+u)*_ngfft[2])+v]*inv_max;
+                    }
+                  }
+                }
+              }
               break;
             }
     case B: {
@@ -349,22 +390,55 @@ void AbiBin::getData(int origin, gridDirection dir, std::vector<double> &data) {
                 throw EXCEPTION("Origin is too large",ERRDIV);
               int planSize = _ngfft[0]*_ngfft[2];
               data.resize(planSize);
-              for ( int u = 0 ; u < _ngfft[0] ; ++u ) {
-                for ( int j = 0 ; u < _ngfft[2] ; ++u ) {
-                  data[u*_ngfft[2]+j] = _fftData[u*_ngfft[1]*_ngfft[2]+origin*_ngfft[2]+j]/max;
+              for ( int u = 0 ; u < _ngfft[2] ; ++u ) {
+                for ( int v = 0 ; v < _ngfft[0] ; ++v ) {
+                  data[u*_ngfft[0]+v] = _fftData[startData+((v*_ngfft[1]+origin)*_ngfft[2])+u]*inv_max;
+                }
+              }
+              if ( function == SUM || function == DIFF ) {
+                startData = downDensity*npoints;
+                if ( function == SUM ) {
+                  for ( int u = 0 ; u < _ngfft[2] ; ++u ) {
+                    for ( int v = 0 ; v < _ngfft[0] ; ++v ) {
+                      data[u*_ngfft[0]+v] += _fftData[startData+((v*_ngfft[1]+origin)*_ngfft[2])+u]*inv_max;
+                    }
+                  }
+                }
+                else {
+                  for ( int u = 0 ; u < _ngfft[2] ; ++u ) {
+                    for ( int v = 0 ; v < _ngfft[0] ; ++v ) {
+                      data[u*_ngfft[0]+v] -= _fftData[startData+((v*_ngfft[1]+origin)*_ngfft[2])+u]*inv_max;
+                    }
+                  }
                 }
               }
               break;
             }
-    case C:
-            {
+    case C: {
               if ( origin >= _ngfft[2] )
                 throw EXCEPTION("Origin is too large",ERRDIV);
               int planSize = _ngfft[0]*_ngfft[1];
               data.resize(planSize);
               for ( int u = 0 ; u < _ngfft[0] ; ++u ) {
-                for ( int j = 0 ; u < _ngfft[1] ; ++u ) {
-                  data[u*_ngfft[1]+j] = _fftData[u*_ngfft[1]*_ngfft[2]+j*_ngfft[2]+origin]/max;
+                for ( int v = 0 ; v < _ngfft[1] ; ++v ) {
+                  data[u*_ngfft[0]+v] = _fftData[startData+((u*_ngfft[1]+v)*_ngfft[2])+origin]*inv_max;
+                }
+              }
+              if ( function == SUM || function == DIFF ) {
+                startData = downDensity*npoints;
+                if ( function == SUM ) {
+                  for ( int u = 0 ; u < _ngfft[0] ; ++u ) {
+                    for ( int v = 0 ; v < _ngfft[1] ; ++v ) {
+                      data[u*_ngfft[0]+v] += _fftData[startData+((u*_ngfft[1]+v)*_ngfft[2])+origin]*inv_max;
+                    }
+                  }
+                }
+                else {
+                  for ( int u = 0 ; u < _ngfft[0] ; ++u ) {
+                    for ( int v = 0 ; v < _ngfft[1] ; ++v ) {
+                      data[u*_ngfft[0]+v] -= _fftData[startData+((u*_ngfft[1]+v)*_ngfft[2])+origin]*inv_max;
+                    }
+                  }
                 }
               }
               break;

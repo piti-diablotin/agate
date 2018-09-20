@@ -340,109 +340,67 @@ void AbiBin::getData(int origin, gridDirection dir, getDen function, std::vector
     data.clear();
   }
   const int npoints = _ngfft[0]*_ngfft[1]*_ngfft[2];
-  if ( (function == SUM || function == DIFF) && _nspden == 1 )
-    throw EXCEPTION("There is only one density",ERRDIV);
 
-  int downDensity;
-  switch (_nspden) {
-    case 1: downDensity = 0; break;
-    case 2: downDensity = 1; break;
-    case 4: downDensity = 4; break;
+  switch(_nspden) {
+    case 1: {
+              if ( function != SUM ) 
+                throw EXCEPTION("Only one (the total #sum) density to display",ERRDIV);
+              break;
+            }
+    case 2: 
+            if ( function == X || function == Y || function == Z ) 
+              throw EXCEPTION("Only collinear densities (#sum #diff #up #down) to display",ERRDIV);
+    case 4: {
+              if ( function == DIFF || function == UP || function == DOWN ) 
+                throw EXCEPTION("Only total and projected densities (#sum #x #y #z) to display",ERRDIV);
+              break;
+            }
   }
-  double inv_max = 1./(*std::max_element(_fftData.begin(),_fftData.end()));
-  if ( function == SUM ) inv_max*=0.5;
-  int startData = (function == DOWN ? downDensity : 0)*npoints;
 
+  double inv_max = 1./(*std::max_element(_fftData.begin(),_fftData.end()));
+
+  int planSize;
+  int dimV;
+  int coord[3];
+  int indU, indV, indNormal;
 
   switch(dir) {
     case A: {
-              if ( origin >= _ngfft[0] )
-                throw EXCEPTION("Origin is too large",ERRDIV);
-              int planSize = _ngfft[1]*_ngfft[2];
-              data.resize(planSize);
-              //std::copy(&_fftData[origin*planSize],&_fftData[(origin+1)*planSize],&data[0]);
-              for ( int u = 0 ; u < _ngfft[1] ; ++u ) {
-                for ( int v = 0 ; v < _ngfft[2] ; ++v ) {
-                  data[u*_ngfft[2]+v] = _fftData[startData+((origin*_ngfft[1]+u)*_ngfft[2])+v]*inv_max;
-                }
-              }
-              if ( function == SUM || function == DIFF ) {
-                startData = downDensity*npoints;
-                if ( function == SUM ) {
-                  for ( int u = 0 ; u < _ngfft[1] ; ++u ) {
-                    for ( int v = 0 ; v < _ngfft[2] ; ++v ) {
-                      data[u*_ngfft[2]+v] += _fftData[startData+((origin*_ngfft[1]+u)*_ngfft[2])+v]*inv_max;
-                    }
-                  }
-                }
-                else {
-                  for ( int u = 0 ; u < _ngfft[1] ; ++u ) {
-                    for ( int v = 0 ; v < _ngfft[2] ; ++v ) {
-                      data[u*_ngfft[2]+v] -= _fftData[startData+((origin*_ngfft[1]+u)*_ngfft[2])+v]*inv_max;
-                    }
-                  }
-                }
-              }
+              indNormal = 0;
+              planSize = _ngfft[1]*_ngfft[2];
+              dimV=_ngfft[2];
+              indU = 1;
+              indV = 2;
               break;
             }
     case B: {
-              if ( origin >= _ngfft[1] )
-                throw EXCEPTION("Origin is too large",ERRDIV);
-              int planSize = _ngfft[0]*_ngfft[2];
-              data.resize(planSize);
-              for ( int u = 0 ; u < _ngfft[2] ; ++u ) {
-                for ( int v = 0 ; v < _ngfft[0] ; ++v ) {
-                  data[u*_ngfft[0]+v] = _fftData[startData+((v*_ngfft[1]+origin)*_ngfft[2])+u]*inv_max;
-                }
-              }
-              if ( function == SUM || function == DIFF ) {
-                startData = downDensity*npoints;
-                if ( function == SUM ) {
-                  for ( int u = 0 ; u < _ngfft[2] ; ++u ) {
-                    for ( int v = 0 ; v < _ngfft[0] ; ++v ) {
-                      data[u*_ngfft[0]+v] += _fftData[startData+((v*_ngfft[1]+origin)*_ngfft[2])+u]*inv_max;
-                    }
-                  }
-                }
-                else {
-                  for ( int u = 0 ; u < _ngfft[2] ; ++u ) {
-                    for ( int v = 0 ; v < _ngfft[0] ; ++v ) {
-                      data[u*_ngfft[0]+v] -= _fftData[startData+((v*_ngfft[1]+origin)*_ngfft[2])+u]*inv_max;
-                    }
-                  }
-                }
-              }
+              indNormal = 1;
+              planSize = _ngfft[2]*_ngfft[0];
+              dimV=_ngfft[0];
+              indU = 2;
+              indV = 0;
               break;
             }
     case C: {
-              if ( origin >= _ngfft[2] )
-                throw EXCEPTION("Origin is too large",ERRDIV);
-              int planSize = _ngfft[0]*_ngfft[1];
-              data.resize(planSize);
-              for ( int u = 0 ; u < _ngfft[0] ; ++u ) {
-                for ( int v = 0 ; v < _ngfft[1] ; ++v ) {
-                  data[u*_ngfft[0]+v] = _fftData[startData+((u*_ngfft[1]+v)*_ngfft[2])+origin]*inv_max;
-                }
-              }
-              if ( function == SUM || function == DIFF ) {
-                startData = downDensity*npoints;
-                if ( function == SUM ) {
-                  for ( int u = 0 ; u < _ngfft[0] ; ++u ) {
-                    for ( int v = 0 ; v < _ngfft[1] ; ++v ) {
-                      data[u*_ngfft[0]+v] += _fftData[startData+((u*_ngfft[1]+v)*_ngfft[2])+origin]*inv_max;
-                    }
-                  }
-                }
-                else {
-                  for ( int u = 0 ; u < _ngfft[0] ; ++u ) {
-                    for ( int v = 0 ; v < _ngfft[1] ; ++v ) {
-                      data[u*_ngfft[0]+v] -= _fftData[startData+((u*_ngfft[1]+v)*_ngfft[2])+origin]*inv_max;
-                    }
-                  }
-                }
-              }
+              indNormal = 2;
+              planSize = _ngfft[0]*_ngfft[1];
+              dimV=_ngfft[1];
+              indU = 0;
+              indV = 1;
               break;
             }
     default: throw EXCEPTION("Unknown direction",ERRDIV);
+  }
+  if ( origin >= _ngfft[indNormal] )
+    throw EXCEPTION("Origin is too large",ERRDIV);
+
+  coord[indNormal]=origin;
+  data.resize(planSize);
+  for ( int u = 0 ; u < _ngfft[indU] ; ++u ) {
+    for ( int v = 0 ; v < _ngfft[indV] ; ++v ) {
+      coord[indU] = u;
+      coord[indV] = v;
+      data[u*dimV+v] = _fftData[0+((coord[0]*_ngfft[1]+coord[1])*_ngfft[2])+coord[2]]*inv_max;
+    }
   }
 }

@@ -56,7 +56,7 @@ class AbiBin : public Dtset {
 
   public :
 
-    enum getDen { UP, DOWN, SUM, DIFF };
+    enum getDen { UP, DOWN, SUM, DIFF, X, Y, Z };
 
     /**
      * Constructor.

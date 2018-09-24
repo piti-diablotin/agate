@@ -33,11 +33,12 @@ CanvasDensity::CanvasDensity(bool drawing) : CanvasPos(drawing),
   _ipoint(0),
   _ibegin(0),
   _iend(-1),
+  _scaleValues(1.),
   _normal(AbiBin::gridDirection::A),
   _density(),
   _map(_opengl),
   _colors{ {0.,0.,1}, {1.,1.,1}, {1.,0.,0.} },
-  _dispDen(AbiBin::getDen::UP),
+  _dispDen(AbiBin::getDen::SUM),
   _scaleFunction(sqrt)
 {
   _nLoop = -2;
@@ -49,11 +50,12 @@ CanvasDensity::CanvasDensity(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _ipoint(0),
   _ibegin(0),
   _iend(-1),
+  _scaleValues(1.),
   _normal(AbiBin::gridDirection::A),
   _density(),
   _map(_opengl),
   _colors{ {0.,0.,1}, {1.,1.,1}, {1.,0.,0.} },
-  _dispDen(AbiBin::getDen::UP),
+  _dispDen(AbiBin::getDen::SUM),
   _scaleFunction(sqrt)
 {
   _nLoop = -2;
@@ -130,21 +132,24 @@ void CanvasDensity::refresh(const geometry::vec3d &cam, TextRender &render) {
     if ( values.size() > 0 ) {
       switch (_scaleFunction) {
         case linear : {
+                        for ( auto& v : values ) v *= _scaleValues;
                         break;
                       }
         case log: {
-                        for ( auto& v : values ) v=(v<0.?-1.:1.)*std::log(1+std::abs(v));
+                        for ( auto& v : values ) v= _scaleValues*(v<0.?-1.:1.)*std::log(1+10*std::abs(v))/std::log(11);
                         break;
                       }
         case sqrt: {
-                        for ( auto& v : values ) v=(v<0.?-1.:1.)*std::sqrt(std::abs(v));
+                        for ( auto& v : values ) v=_scaleValues*(v<0.?-1.:1.)*std::sqrt(std::abs(v));
                         break;
                       }
       }
     }
   }
+#ifdef HAVE_GL
   GLfloat scale = ((GLfloat)_ipoint/(GLfloat)_npoints);
   glTranslatef((GLfloat)normal[0]*scale,(GLfloat)normal[1]*scale,(GLfloat)normal[2]*scale);
+#endif
   try {
     _map.draw(values,_colors[1],_colors[2],_colors[0],_status!=PAUSE);
   }
@@ -222,6 +227,16 @@ int CanvasDensity::tend() const { return _iend-1; }
 
 void CanvasDensity::my_alter(std::string token, std::istringstream &stream) {
   bool update = false;
+
+  std::string line;
+  size_t pos = stream.tellg();
+  std::getline(stream,line);
+  stream.clear();
+  stream.seekg(pos);
+  ConfigParser parser;
+  parser.setSensitive(true);
+  parser.setContent(line);
+
   if ( token == "c" || token == "color" ){
     unsigned c[3];
     float *tomodify = nullptr;
@@ -249,33 +264,70 @@ void CanvasDensity::my_alter(std::string token, std::istringstream &stream) {
   else if ( token == "n" || token == "normal" ){
     char c;
     stream >> c;
-    if ( c == 'x' ) _normal = AbiBin::gridDirection::A;
-    else if ( c == 'y' ) _normal = AbiBin::gridDirection::B;
-    else if ( c == 'z' ) _normal = AbiBin::gridDirection::C;
+    if ( c == 'a' ) _normal = AbiBin::gridDirection::A;
+    else if ( c == 'b' ) _normal = AbiBin::gridDirection::B;
+    else if ( c == 'c' ) _normal = AbiBin::gridDirection::C;
     else throw EXCEPTION("Don't know what to do",ERRDIV);
     this->setData();
   }
   else if ( token == "density" ){
     std::string den;
     stream >> den;
+    auto backup = _dispDen;
     if ( den == "up" ) _dispDen = AbiBin::getDen::UP;
     else if ( den == "down" ) _dispDen = AbiBin::getDen::DOWN;
     else if ( den == "sum" ) _dispDen = AbiBin::getDen::SUM;
     else if ( den == "diff" ) _dispDen = AbiBin::getDen::DIFF;
+    else if ( den == "x" ) _dispDen = AbiBin::getDen::X;
+    else if ( den == "y" ) _dispDen = AbiBin::getDen::Y;
+    else if ( den == "z" ) _dispDen = AbiBin::getDen::Z;
     else throw EXCEPTION("density unknown",ERRDIV);
-    if ( _density.getNspden() == 1 && ( den == "sum" || den == "diff" || den == "down" ) ) {
-      _dispDen = AbiBin::getDen::UP;
-      throw EXCEPTION("Only one density available!",ERRDIV);
+    switch(_density.getNspden()) {
+      case 1: {
+                if ( _dispDen!= AbiBin::getDen::SUM )  {
+                  _dispDen = backup;
+                  throw EXCEPTION("Only one (the total #sum) density to display",ERRDIV);
+                }
+                break;
+              }
+      case 2: {
+                if ( _dispDen == AbiBin::getDen::X || _dispDen == AbiBin::getDen::Y || _dispDen == AbiBin::getDen::Z )  {
+                  _dispDen = backup;
+                  throw EXCEPTION("Only collinear densities (#sum #diff #up #down) to display",ERRDIV);
+                }
+                break;
+              }
+      case 4: {
+                if ( _dispDen == AbiBin::getDen::DIFF || _dispDen == AbiBin::getDen::UP || _dispDen == AbiBin::getDen::DOWN ) {
+                  _dispDen = backup;
+                  throw EXCEPTION("Only total and projected densities (#sum #x #y #z) to display",ERRDIV);
+                }
+                break;
+              }
     }
+    update = true;
   }
   else if ( token == "scale" ){
-    std::string func;
-    stream >> func;
-    if ( func == "linear" ) _scaleFunction = linear;
-    else if ( func == "log" ) _scaleFunction = log;
-    else if ( func == "sqrt" ) _scaleFunction = sqrt;
-    else throw EXCEPTION("unknow function "+func,ERRDIV);
-    update = true;
+    try {
+      std::string func = parser.getToken<std::string>("function");
+      if ( func == "linear" ) _scaleFunction = linear;
+      else if ( func == "log" ) _scaleFunction = log;
+      else if ( func == "sqrt" ) _scaleFunction = sqrt;
+      else throw EXCEPTION("unknow function "+func,ERRDIV);
+      update = true;
+    }
+    catch ( Exception &e ) {
+      if ( e.getReturnValue() != ConfigParser::ERFOUND )
+        throw e;
+    }
+    try {
+      _scaleValues = parser.getToken<double>("factor");
+      update = true;
+    }
+    catch ( Exception &e ) {
+      if ( e.getReturnValue() != ConfigParser::ERFOUND )
+        throw e;
+    }
   }
   else if ( token == "show" || token == "hide" ) {
     CanvasPos::my_alter(token,stream);
@@ -286,10 +338,11 @@ void CanvasDensity::my_alter(std::string token, std::istringstream &stream) {
 void CanvasDensity::help(std::ostream &out) {
   using std::endl;
   using std::setw;
-  out << endl << "-- Here are the commands related to local mode --" << endl;
+  out << endl << "-- Here are the commands related to density mode --" << endl;
   out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
-  out << setw(40) << ":c or :color (zero|plus|minus)" << setw(59) << "Set the color in RGB for zero plus(max) or minus(negative min) numbers." << endl;
-  out << setw(40) << ":n or :normal (x|y|z)" << setw(59) << "Set the normal to the displayed density plan." << endl;
-  out << setw(40) << ":density (up|down|sum|diff)" << setw(59) << "Display up or down density or alternatively the sum or difference" << endl;
+  out << setw(40) << ":c or :color (zero|up|down)" << setw(59) << "Set the color in RGB for zero plus(max) or minus(negative min) numbers." << endl;
+  out << setw(40) << ":n or :normal (a|b|c)" << setw(59) << "Set the normal to the displayed density plan." << endl;
+  out << setw(40) << ":density (up|down|sum|diff|x|y|z)" << setw(59) << "Display up or down density or alternatively the sum or difference or projected density (non collinera)" << endl;
+  out << setw(40) << ":scale function (linear|log|sqrt) factor F" << setw(59) << "Use a function for the color scale and eventually scales the result by a factor F to improve contrast" << endl;
   out << "Commands from positions mode also available : show, hide, color" << endl;
 }

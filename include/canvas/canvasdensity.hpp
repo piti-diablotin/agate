@@ -54,6 +54,7 @@ class CanvasDensity :public CanvasPos {
     int _ipoint;           ///< Current point along the normal.
     int _ibegin;           ///< Starting point for the animation
     int _iend;             ///< Last point for the animation.
+    double _scaleValues;   ///< Scale values of density by this factor;
     AbiBin::gridDirection _normal; ///< Normal direction of the map.
     AbiBin _density;       ///< File containin density information.
     TriMap _map;           ///< map rendering with opengl

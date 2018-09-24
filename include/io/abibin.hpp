@@ -96,8 +96,9 @@ class AbiBin : public Dtset {
      * @param dir normal to the plan
      * @param data container with the correct size and data.
      * Data is represented rowwise a then b then c
+     * @return scaling parameter (max value used to rescale data)
      */
-    void getData(int origin, gridDirection dir, getDen function, std::vector<double> &data);
+    double getData(int origin, gridDirection dir, getDen function, std::vector<double> &data);
 
     /**
      * Getter to get the number of density we have

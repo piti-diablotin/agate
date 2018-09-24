@@ -27,6 +27,7 @@
 #include "graphism/trimap.hpp"
 #include "base/exception.hpp"
 #include <cmath>
+#include <algorithm>
 
 //
 TriMap::TriMap(bool opengl) : TriObj(opengl),
@@ -121,8 +122,11 @@ void TriMap::draw(std::vector<double> &values, float zero[3], float plus[3], flo
   if ( refresh || _refresh ) {
     if ( values.size() != _nvertex )
       throw EXCEPTION("Array size is not the same as the map grid",ERRABT);
+    //double inv_max = 1./(*std::max_element(values.begin(),values.end()));
+    //double inv_min = 1./(*std::min_element(values.begin(),values.end()));
+    //inv_max = std::min(std::abs(inv_max),std::abs(inv_min));
     for ( unsigned ivertex = 0 ; ivertex < _nvertex ; ++ivertex ) {
-      double value = values[ivertex];
+      double value = values[ivertex];//*inv_max;
       if ( value >= 0 ) {
         _unitColor[3*ivertex+0] = zero[0] + (plus[0]-zero[0])*value;
         _unitColor[3*ivertex+1] = zero[1] + (plus[1]-zero[1])*value;

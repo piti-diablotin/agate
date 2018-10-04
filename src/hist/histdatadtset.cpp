@@ -118,6 +118,8 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         if ( e.getReturnValue() == ERRABT ) throw ec;
       }
     }
+    if ( dtset == nullptr )
+      throw ec;
 
     this->buildFromDtset(*dtset);
     delete dtset;

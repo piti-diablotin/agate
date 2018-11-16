@@ -479,9 +479,9 @@ bool Window::userInput(std::stringstream& info) {
                          break;
                        }
 #endif
-            case 'x' : {campsi = 0      ; camtheta =  0     ; camphi = 0.    ;_mode = mode_static;break;}
-            case 'y' : {campsi = 0      ; camtheta =  0     ; camphi = pi*0.5;_mode = mode_static;break;}
-            case 'z' : {campsi = 0      ; camtheta = pi*0.5 ; camphi = pi    ;_mode = mode_static;break;}
+            case 'x' : {campsi = 0      ; camtheta =  0     ; camphi = 0.     ;_mode = mode_static;break;}
+            case 'y' : {campsi = 0      ; camtheta =  0     ; camphi = pi*0.5 ;_mode = mode_static;break;}
+            case 'z' : {campsi = -pi*0.5; camtheta =  0     ; camphi = -pi*0.5;_mode = mode_static;break;}
             case '+' : {_mode = mode_add;break;}
             case '-' : {_mode = mode_remove;break;}
             case '*' : {_optionf["speed"] *= 2.0f;break;}

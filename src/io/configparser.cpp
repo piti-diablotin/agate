@@ -73,9 +73,9 @@ void ConfigParser::parse() {
     size_t pos_useless;
     while ( (pos_useless = line.find_first_of("=;")) != std::string::npos )
       line.replace(pos_useless,1," ");
-    _contentOrig += " " + line;
+    _contentOrig += " " + line + " ";
     utils::tolower(line);
-    _content += " " + line;
+    _content += " " + line + " ";
     ++nbLines;
   }
   std::clog << nbLines << " lines have been read from file " << _filename << std::endl;
@@ -127,6 +127,8 @@ void ConfigParser::setContent(const std::string& content) _NOEXCEPT {
     _contentOrig.replace(pos_useless,1," ");
   }
   utils::tolower(_content);
+  _content += " ";
+  _contentOrig += " ";
 }
 
 template<>
@@ -241,4 +243,10 @@ std::string ConfigParser::getToken(const std::string& token, Characteristic dim)
      }
      */
   return rvector;
+}
+
+bool ConfigParser::hasToken(const std::string& token) const {
+  const std::string &content = ( _caseSensitive ? _contentOrig : _content );
+  size_t pos = _content.find(" "+token+" ");
+  return  pos != std::string::npos;
 }

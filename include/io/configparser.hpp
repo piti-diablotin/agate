@@ -145,6 +145,13 @@ class ConfigParser {
      */
     template<class T>
     T getToken(const std::string& token, Characteristic dim = NONE) const;
+
+    /**
+     * Check if the token can be found in the data
+     * Usefull for optional token
+     * return true if the toekn is found, false otherwise
+     */
+    bool hasToken(const std::string& token) const;
 };
 
 template<>

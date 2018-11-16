@@ -261,14 +261,23 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
           )
         );
 
-    unsigned vib;
-    while ( !stream.eof() ) {
-      stream >> vib;
-      if ( stream.fail() ) break;
-      --vib;
-      if ( vib >= (unsigned) _natom*3 ) {
-        throw EXCEPTION("The mode number is wrong",ERRDIV);
+    std::vector<unsigned> inputModes;
+    if ( parser.hasToken("all") )
+      for ( unsigned i = 0 ; i < 3*_natom ; ++ i) inputModes.push_back(i);
+    else {
+      unsigned vib;
+      while ( !stream.eof() ) {
+        stream >> vib;
+        if ( stream.fail() ) break;
+        --vib;
+        if ( vib >= (unsigned) _natom*3 ) {
+          throw EXCEPTION("The mode number is wrong",ERRDIV);
+        }
       }
+    }
+    stream.clear();
+
+    for ( unsigned vib : inputModes ) {
       double nrj = _displacements.getEnergyMode(vib);
       DispDB::qMode vibnrj = {vib,_amplitudeDisplacement,nrj};
       auto it = _condensedModes.insert(
@@ -284,7 +293,6 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
           _qptModes->second.push_back(vibnrj);
       }
     }
-    stream.clear();
     rebuild = true;
     if ( !this->selectQpt(qpt) )
       throw EXCEPTION("Something unexpected happened",ERRDIV);
@@ -311,21 +319,29 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     _displacements.setQpt(_qptModes->first);
     auto &myqptmodes = _qptModes->second;
 
-    while ( !stream.eof() ) {
+    std::vector<unsigned> inputModes;
+    if ( parser.hasToken("all") )
+      for ( unsigned i = 0 ; i < 3*_natom ; ++ i) inputModes.push_back(i);
+    else {
       unsigned vib;
-      stream >> vib;
-      if ( stream.fail() ) break;
-      --vib;
-      if ( vib >= (unsigned)_natom*3 ) {
-        throw EXCEPTION("The mode number is wrong",ERRDIV);
+      while ( !stream.eof() ) {
+        stream >> vib;
+        if ( stream.fail() ) break;
+        --vib;
+        if ( vib >= (unsigned) _natom*3 ) {
+          throw EXCEPTION("The mode number is wrong",ERRDIV);
+        }
       }
+    }
+    stream.clear();
+
+    for ( unsigned vib : inputModes ) {
       double nrj = _displacements.getEnergyMode(vib);
       DispDB::qMode vibnrj {vib,_amplitudeDisplacement,nrj};
       auto it = std::find(myqptmodes.begin(),myqptmodes.end(),vibnrj);
       if ( it == myqptmodes.end() )
         myqptmodes.push_back(vibnrj);
     }
-    stream.clear();
     rebuild = true;
   }
   else if ( token == "mremove" || token == "mrm" ) {
@@ -353,6 +369,25 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     rebuild = true;
   }
   else if ( token == "list" ) {
+    using namespace phys;
+    double factor = 1.0;
+    if ( parser.hasToken("eunit") ) {
+      parser.setSensitive(false);
+      std::string unit = parser.getToken<std::string>("eunit");
+      if ( unit == "ev" ) {
+        factor = Ha2eV;
+      }
+      else if ( unit == "thz" ) {
+        factor /= (1e12 * Hz2eV / Ha2eV);
+      }
+      else if ( unit == "cm-1" ) {
+        factor /= (1e2 * m2eV / Ha2eV);
+      }
+      else {
+        throw EXCEPTION("Bad unit",ERRDIV);
+      }
+    }
+      
     for ( auto iqpt = _condensedModes.begin() ; iqpt != _condensedModes.end() ; ++iqpt ) {
       std::sort(iqpt->second.begin(),iqpt->second.end(),
           [](DispDB::qMode v1,DispDB::qMode v2) { return v1.imode < v2.imode; }
@@ -368,7 +403,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       std::cout << std::endl;
       std::cout << "  Energies   : ";
       for ( auto imode : iqpt->second ) 
-        std::cout << std::setw(12) << imode.energy << "  ";
+        std::cout << std::setw(12) << imode.energy*factor << "  ";
       std::cout << std::endl;
     }
     return;

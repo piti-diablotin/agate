@@ -110,6 +110,15 @@ class QPlot : public QMainWindow, public Graph {
      */
     virtual void plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<short> &colors);
 
+    /** 
+     * Plot several quantities on the screen
+     * @param x The x quantity
+     * @param y A vector with several y quantites to plot
+     * @param c A vector with colors for each x coordinate
+     * @param labels The labels corresponding to the y quantities.
+     */
+    virtual void plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::vector<unsigned>> &c, const std::list<std::string> &labels);
+
     /**
      * Save the graph
      * @param filename Save to filename

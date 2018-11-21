@@ -102,7 +102,7 @@ class Dtset {
      * Fill a Dtset from an input file.
      * @param parser The ConfigParser to use to get the parameters
      */
-    void readConfig(ConfigParser& parser, unsigned img = 0);
+    virtual void readConfig(ConfigParser& parser, unsigned img = 0);
 
     /**
      * Creat an input file with the current Dtset.
@@ -122,98 +122,98 @@ class Dtset {
      * @param out Output stream to write the CIF file
      * @param tolerance Tolerance factor for findsym (in bohr)
      */
-    void cif(std::ostream& out, const double tolerance=0.0001);
+    virtual void cif(std::ostream& out, const double tolerance=0.0001);
 
     /**
      * Creat a CIF file using FINDSYM utility
      * @param filename Name of the file to write the cif file
      * @param tolerance Tolerance factor for findsym (in bohr)
      */
-    void cif(const std::string& filename, const double tolerance=0.0001);
+    virtual void cif(const std::string& filename, const double tolerance=0.0001);
 
     /**
      * Creat a Dtset from a CIF file (supposed to be created by findsym
      * @param cifFile The CIF file containing the information
      */
-    void setCif(const std::string& cifFile);
+    virtual void setCif(const std::string& cifFile);
 
     /**
      * Regenerate the structure using findsym analysis
      * @param tolerance Tolerance factor for findsym (in bohr)
      * @param prtcif Print the cif file in stdout
      */
-    void reBuildStructure(const double tolerance, const bool prtcif=false);
+    virtual void reBuildStructure(const double tolerance, const bool prtcif=false);
     
     /**
      * Get the number of atoms.
      * @return _natom.
      */
-    inline unsigned natom() const { return _natom; }
+    virtual unsigned natom() const { return _natom; }
 
     /**
      * Get ntypat
      * @return _ntypat.
      */
-    inline unsigned ntypat() const { return _ntypat; }
+    virtual unsigned ntypat() const { return _ntypat; }
 
     /**
      * Get type of each atom.
      * @return _typat.
      */
-    inline const std::vector<int>& typat() const { return _typat; }
+    virtual const std::vector<int>& typat() const { return _typat; }
 
     /**
      * Get the znucl 
      * @return _znucl
      */
-    inline const std::vector<int>& znucl() const { return _znucl; }
+    virtual const std::vector<int>& znucl() const { return _znucl; }
 
     /**
      * Get _acell
      * @return _acell.
      */
-    inline const geometry::vec3d& acell() const { return _acell; }
+    virtual const geometry::vec3d& acell() const { return _acell; }
 
     /**
      * Get the primitive vectors.
      * @return _prim.
      */
-    inline const geometry::mat3d& rprim() const { return _rprim; }
+    virtual const geometry::mat3d& rprim() const { return _rprim; }
 
     /**
      * Get the reciprocal primitive vectors.
      * @return _gprim.
      */
-    inline const geometry::mat3d& gprim() const { return _gprim; }
+    virtual const geometry::mat3d& gprim() const { return _gprim; }
 
     /**
      * Get the cartesian coordinates.
      * @return _xcart.
      */
-    inline const std::vector<geometry::vec3d>& xcart() const { return _xcart; }
+    virtual const std::vector<geometry::vec3d>& xcart() const { return _xcart; }
 
     /**
      * Get the reduced coordinates.
      * @return _xred.
      */
-    inline const std::vector<geometry::vec3d>& xred() const { return _xred; }
+    virtual const std::vector<geometry::vec3d>& xred() const { return _xred; }
 
     /**
      * Get the spin of each atom 
      * @return _spinat
      */
-    inline const std::vector<geometry::vec3d>& spinat() const { return _spinat; }
+    virtual const std::vector<geometry::vec3d>& spinat() const { return _spinat; }
 
     /**
      * Get the findsym result
      * @return _findsym.
      */
-    inline const std::string& findsym() const { return _findsym; }
+    virtual const std::string& findsym() const { return _findsym; }
 
     /**
      * Try to build the primitive cell of the current dtset
      */
-    void standardizeCell(const bool primitive, const double tolerance);
+    virtual void standardizeCell(const bool primitive, const double tolerance);
 
 };
 

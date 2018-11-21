@@ -247,6 +247,6 @@ std::string ConfigParser::getToken(const std::string& token, Characteristic dim)
 
 bool ConfigParser::hasToken(const std::string& token) const {
   const std::string &content = ( _caseSensitive ? _contentOrig : _content );
-  size_t pos = _content.find(" "+token+" ");
+  size_t pos = content.find(" "+token+" ");
   return  pos != std::string::npos;
 }

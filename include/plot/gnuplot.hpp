@@ -77,8 +77,18 @@ class Gnuplot : public Graph {
      * @param x The x quantity
      * @param y A vector with several y quantites to plot
      * @param labels The labels corresponding to the y quantities.
+     * @param colors a vector containing the color number for each vector y
      */
     virtual void plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<short> &colors);
+    
+    /** 
+     * Plot several quantities on the screen
+     * @param x The x quantity
+     * @param y A vector with several y quantites to plot
+     * @param c A vector with colors for each x coordinate
+     * @param labels The labels corresponding to the y quantities.
+     */
+    virtual void plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::vector<unsigned>> &c, const std::list<std::string> &labels);
 
     /** 
      * Plot several quantities on the screen

@@ -516,5 +516,5 @@ void snakeDestruct(snake* localSnake){
 }
 
 #else
-int runSnake() {;}
+int runSnake() {return 0;}
 #endif

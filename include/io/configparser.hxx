@@ -208,7 +208,7 @@ T ConfigParser::getToken(const std::string& token, Characteristic dim) const {
   /* Try to read characteristic */
   if ( dim != NONE && std::is_arithmetic<T>::value ) {
     str_data >> readToken;
-    if ( !str_data.fail() ) {
+    if ( !str_data.fail() && !std::is_same<T,bool>::value ) {
       double conversion = 1.;
       switch( dim ) {
         case LENGTH :

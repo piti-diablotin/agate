@@ -37,11 +37,12 @@
 #endif
 
 #include "io/eigparser.hpp"
+#include "io/etsfnc.hpp"
 
 /** 
  *
  */
-class EigParserPHBST : public EigParser {
+class EigParserPHBST : public EigParser, public EtsfNC {
 
   private :
 

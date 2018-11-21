@@ -87,7 +87,12 @@ void Graph::plot(const Config &conf, Graph* gplot) {
     if ( conf.xy.size() > 0 )
       gplot->plot(conf.xy,conf.labels,conf.colors);
     else
-      gplot->plot(conf.x,conf.y,conf.labels,conf.colors);
+      if ( conf.rgb.size() == 0 ) {
+        gplot->plot(conf.x,conf.y,conf.labels,conf.colors);
+      }
+      else {
+        gplot->plot(conf.x,conf.y,conf.rgb,conf.labels);
+      }
   }
   else
     localSave = DATA;

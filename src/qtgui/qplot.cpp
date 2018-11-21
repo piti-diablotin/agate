@@ -123,6 +123,49 @@ void QPlot::plot(const std::vector<double> &x, const std::list<std::vector<doubl
   _plot->replot();
 }
 
+void QPlot::plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::vector<unsigned> &c, const std::list<std::string> &labels){
+  this->clean();
+  this->show();
+  auto label = labels.begin();
+  auto yp = y.begin();
+  int autocolor = 1;
+  bool addedLabel = false;
+  for ( unsigned p = 0 ; p < y.size() ; ++p) {
+    _plot->addGraph();
+    auto graph = _plot->graph(p);
+    if ( p < colors.size() ) {
+      graph->setPen(QPen(qcolor[colors[p] < 8 ? colors[p] : autocolor++]));
+    }
+    else {
+      graph->setPen(QPen(qcolor[autocolor++]));
+    }
+    if ( autocolor >= 8 ) autocolor = 0;
+
+
+    if ( p < labels.size() ) {
+      if ( !label->empty() ) {
+        graph->setName(translateToUnicode(QString::fromStdString(*label)));
+        graph->addToLegend();
+        addedLabel = true;
+      }
+      ++label;
+    }
+    graph->setData(QVector<double>::fromStdVector(x),QVector<double>::fromStdVector(*yp));
+    ++yp;
+  }
+  _plot->rescaleAxes(true);
+  _plot->xAxis2->setVisible(true);
+  _plot->xAxis2->setTickLabels(false);
+  _plot->yAxis2->setVisible(true);
+  _plot->yAxis2->setTickLabels(false);
+  _plot->xAxis->setLabel(translateToUnicode(QString::fromStdString(_xlabel)));
+  _plot->yAxis->setLabel(translateToUnicode(QString::fromStdString(_ylabel)));
+  _plot->legend->setVisible(addedLabel);
+  _titleElement->setText(QString::fromStdString(_title));
+  this->addCustom();
+  _plot->replot();
+}
+
 void QPlot::plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<short> &colors) {
   this->clean();
   this->show();

@@ -62,8 +62,10 @@ Exception::Exception(const std::string func, const std::string message, int valu
   switch (Exception::_verbose) {
     case 2 :
       _line[0] = func;
+      break;
     case 3 :
       _func[0] = func;
+      break;
   }
 }
 
@@ -131,8 +133,10 @@ void Exception::add(const std::string func, const std::string message, int value
   switch (Exception::_verbose) {
     case 2 :
       _line.back() = func;
+      break;
     case 3 :
       _func.back() = func;
+      break;
   }
   _text.push_back(message);
   _activeStack = _text.size()-1;

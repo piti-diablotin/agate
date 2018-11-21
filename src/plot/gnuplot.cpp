@@ -105,6 +105,53 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
   }
 }
 
+void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::vector<unsigned>> &c, const std::list<std::string> &labels) {
+  using namespace std;
+  std::stringstream total;
+  _buffer.clear();
+  _buffer.seekp(0);
+  _buffer.str("");
+  _buffer << "plot ";
+  auto it = labels.begin();
+  for( unsigned p = 0 ; p < y.size() ; ++p ){
+    if ( p < labels.size() ) {
+      _buffer << "\"-\" t '" << *it << "'";
+      ++it;
+    }
+    else {
+      _buffer <<  "\"-\" t ''";
+    }
+    if ( p < c.size() )
+      _buffer << " lc rgb variable";
+    _buffer << ", ";
+  }
+
+  _buffer.seekp(-2,ios_base::end);
+  _buffer << std::endl;
+
+  _buffer.setf(std::ios::scientific,std::ios::floatfield);
+  _buffer.precision(14);
+  auto color = c.begin();
+  for( auto p = y.begin() ; p != y.end() ; ++p, ++color ){
+    for ( unsigned i = 0 ; i < min(x.size(),p->size()) ; ++i )
+      _buffer << x[i] << " " << (*p)[i] << " " << (*color)[i] << std::endl;
+    _buffer << "e" << std::endl;
+  }
+
+  total << _header.str();
+  this->addCustom();
+  total << _custom.str();
+  total << "set xlabel '" << _xlabel << "'" << std::endl;
+  total << "set ylabel '" << _ylabel << "'" << std::endl;
+  total << "set title '" << _title << "'" << std::endl;
+  total << _buffer.str();
+
+  if ( _gp.get() != nullptr ) {
+    fprintf(_gp.get(),"%s\n",total.str().c_str());
+    fflush(_gp.get());
+  }
+}
+
 void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<double>>> &xy, const std::list<std::string> &labels, const std::vector<short> &colors) {
   using namespace std;
   std::stringstream total;

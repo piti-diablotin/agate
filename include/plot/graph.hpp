@@ -99,6 +99,7 @@ class Graph {
     typedef struct Config {
       std::vector<double> x;
       std::list<std::vector<double>> y;
+      std::list<std::vector<unsigned>> rgb;
       std::list<std::pair<std::vector<double>,std::vector<double>>> xy;
       std::list<std::string> labels;
       std::vector<short> colors;
@@ -112,6 +113,7 @@ class Graph {
       Config() :
         x(),
         y(),
+        rgb(),
         xy(),
         labels(),
         colors(),
@@ -148,6 +150,15 @@ class Graph {
      * @param labels The labels corresponding to the y quantities.
      */
     virtual void plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<short> &colors) = 0;
+
+    /** 
+     * Plot several quantities on the screen
+     * @param x The x quantity
+     * @param y A vector with several y quantites to plot
+     * @param c A vector with colors for each x coordinate
+     * @param labels The labels corresponding to the y quantities.
+     */
+    virtual void plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::vector<unsigned>> &c, const std::list<std::string> &labels) = 0;
 
     /**
      * Save the graph

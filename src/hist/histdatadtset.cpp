@@ -28,6 +28,7 @@
 #include "base/exception.hpp"
 #include "io/dtset.hpp"
 #include "io/poscar.hpp"
+#include "io/etsfnc.hpp"
 #include "io/abibin.hpp"
 #include "io/configparser.hpp"
 #include <fstream>
@@ -113,6 +114,19 @@ void HistDataDtset::readFromFile(const std::string& filename) {
       catch( Exception& e ) {
         ec += e;
         ec.ADD("Not a Abinit Binary file",e.getReturnValue());
+        delete dtset;
+        dtset = nullptr;
+        if ( e.getReturnValue() == ERRABT ) throw ec;
+      }
+    }
+    if ( dtset == nullptr ) {
+      dtset = new EtsfNC;
+      try {
+        dtset->readFromFile(filename);
+      }
+      catch( Exception& e ) {
+        ec += e;
+        ec.ADD("Not a ETSF file",e.getReturnValue());
         delete dtset;
         dtset = nullptr;
         if ( e.getReturnValue() == ERRABT ) throw ec;

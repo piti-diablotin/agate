@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <typeinfo>
 #include <iomanip>
+#include <sstream>
 
 #ifdef HAVE_CPPTHREAD
 #include <thread>
@@ -1399,9 +1400,34 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
       default:
         ylabel = "Energy";
     }
+
+    std::vector<unsigned> projectionUMask;
+    bool projection = false;
+    if ( parser.hasToken("fatband") ) {
+      projection = true;
+      try {
+        projectionUMask = parser.getToken<unsigned>("fatband",eigparser->getNband());
+      }
+      catch ( Exception &e ) { 
+        if ( e.getReturnValue() & ConfigParser::ERDIM ) {
+          auto blabla = e.what("",true);
+          auto pos = blabla.find("Could only read ");
+          int maxToRead = 0;
+          if ( pos != std::string::npos ) {
+            std::istringstream sub(blabla.substr(pos+16));
+            sub >> maxToRead;
+            projectionUMask = parser.getToken<unsigned>("fatband",maxToRead);
+          }
+        }
+      }
+    }
+
     x = eigparser->getPath();
+    std::list<std::vector<unsigned>> &projectionsColor = config.rgb;
     for ( unsigned iband = ignore ; iband < eigparser->getNband() ; ++iband ) {
       y.push_back(std::move(eigparser->getBand(iband,fermi,1)));
+      if ( projection )
+        projectionsColor.push_back(std::move(eigparser->getBandColor(iband,1,projectionUMask)));
       colors.push_back(0);
       labels.push_back("");
     }
@@ -1410,6 +1436,8 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
       labels.push_back("Spin 2");
       for ( unsigned iband = ignore ; iband < eigparser->getNband() ; ++iband ) {
         y.push_back(std::move(eigparser->getBand(iband,fermi,2)));
+        if ( projection )
+          projectionsColor.push_back(std::move(eigparser->getBandColor(iband,2,projectionUMask)));
         colors.push_back(1);
         labels.push_back("");
       }
@@ -1448,7 +1476,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
       }
     }
     if ( save == Graph::GraphSave::DATA ) { 
-      eigparser->dump(filename+".dat",EigParser::PRTKPT|EigParser::PRTIKPT);
+      eigparser->dump(filename+".dat",EigParser::PRTKPT|EigParser::PRTIKPT|(EigParser::PRTPROJ&&projection));
       save = Graph::GraphSave::NONE;
     }
   }
@@ -1475,7 +1503,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
       throw EXCEPTION("Not a valid Hist file",ERRDIV);
 
     try {
-      ( parser.getToken<bool>("debug") ) ? tdep.mode(Tdep::Mode::Debug) : tdep.mode(Tdep::Mode::Normal);
+      ( parser.hasToken("debug") ) ? tdep.mode(Tdep::Mode::Debug) : tdep.mode(Tdep::Mode::Normal);
     }
     catch (...) {
       tdep.mode(Tdep::Mode::Normal);

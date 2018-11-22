@@ -69,11 +69,11 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
   auto it = labels.begin();
   for( unsigned p = 0 ; p < y.size() ; ++p ){
     if ( p < labels.size() ) {
-      _buffer << "\"-\" t '" << *it << "'";
+      _buffer << "\"-\" lw 3 t '" << *it << "'";
       ++it;
     }
     else {
-      _buffer <<  "\"-\" t ''";
+      _buffer <<  "\"-\" lw 3 t ''";
     }
     if ( p < colors.size() )
       _buffer << " lc " << colors[p];
@@ -122,7 +122,7 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
       _buffer <<  "\"-\" t ''";
     }
     if ( p < c.size() )
-      _buffer << " lc rgb variable";
+      _buffer << " lc rgb variable lw 3";
     _buffer << ", ";
   }
 
@@ -162,11 +162,11 @@ void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<dou
   auto it = labels.begin();
   for( unsigned p = 0 ; p < xy.size() ; ++p ){
     if ( p < labels.size() ) {
-      _buffer << "\"-\" t '" << *it << "'";
+      _buffer << "\"-\" t '" << *it << "' lw 3";
       ++it;
     }
     else {
-      _buffer <<  "\"-\" t ''";
+      _buffer <<  "\"-\" t '' lw 3";
     }
     if ( p < colors.size() )
       _buffer << " lc " << colors[p];

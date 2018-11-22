@@ -123,35 +123,30 @@ void QPlot::plot(const std::vector<double> &x, const std::list<std::vector<doubl
   _plot->replot();
 }
 
-void QPlot::plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::vector<unsigned> &c, const std::list<std::string> &labels){
+void QPlot::plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::vector<unsigned>> &c, const std::list<std::string> &labels) {
   this->clean();
   this->show();
   auto label = labels.begin();
   auto yp = y.begin();
-  int autocolor = 1;
+  auto cp = c.begin();
   bool addedLabel = false;
   for ( unsigned p = 0 ; p < y.size() ; ++p) {
-    _plot->addGraph();
-    auto graph = _plot->graph(p);
-    if ( p < colors.size() ) {
-      graph->setPen(QPen(qcolor[colors[p] < 8 ? colors[p] : autocolor++]));
-    }
-    else {
-      graph->setPen(QPen(qcolor[autocolor++]));
-    }
-    if ( autocolor >= 8 ) autocolor = 0;
+    for ( unsigned data = 0 ; data < x.size() ; ++data ) {
+      _plot->addGraph();
+      unsigned int color = cp->at(data);
+      auto graph = _plot->graph(p*x.size()+data);
+      graph->setLineStyle(QCPGraph::LineStyle::lsNone);
+      QCPScatterStyle myScatter;
+      myScatter.setShape(QCPScatterStyle::ssDisc);
+      myScatter.setPen(QPen(QColor(0xFF000000|color)));
+      myScatter.setBrush(QColor(0xFF000000|color));
+      myScatter.setSize(2);
+      graph->setScatterStyle(myScatter);
 
-
-    if ( p < labels.size() ) {
-      if ( !label->empty() ) {
-        graph->setName(translateToUnicode(QString::fromStdString(*label)));
-        graph->addToLegend();
-        addedLabel = true;
-      }
-      ++label;
+      graph->addData(x[data],yp->at(data));
     }
-    graph->setData(QVector<double>::fromStdVector(x),QVector<double>::fromStdVector(*yp));
     ++yp;
+    ++cp;
   }
   _plot->rescaleAxes(true);
   _plot->xAxis2->setVisible(true);

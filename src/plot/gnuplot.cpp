@@ -69,11 +69,11 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
   auto it = labels.begin();
   for( unsigned p = 0 ; p < y.size() ; ++p ){
     if ( p < labels.size() ) {
-      _buffer << "\"-\" lw 3 t '" << *it << "'";
+      _buffer << "\"-\" t '" << *it << "' lw 3";
       ++it;
     }
     else {
-      _buffer <<  "\"-\" lw 3 t ''";
+      _buffer <<  "\"-\" t '' lw 3";
     }
     if ( p < colors.size() )
       _buffer << " lc " << colors[p];

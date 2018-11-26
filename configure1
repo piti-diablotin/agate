@@ -1061,7 +1061,7 @@ AC_ARG_WITH([fftw3],
                               [prefix used for include and lib directories]
                              )
               ],
-              [fftw3_prefix="$with_fftw3_cpp";resultfftw3=yes],
+              [fftw3_prefix="$with_fftw3";resultfftw3=yes],
               [fftw3_prefix=$default_prefix;resultfftw3=no]
              )
 AC_MSG_RESULT([$resultfftw3])

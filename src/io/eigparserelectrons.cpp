@@ -1,11 +1,11 @@
 /**
- * @file include/eigparserphfrq.hpp
+ * @file src/./eigparserelectrons.cpp
  *
  * @brief 
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
- * @copyright Copyright 2014 Jordan Bieder
+ * @copyright Copyright 2018 Jordan Bieder
  *
  * This file is part of AbiOut.
  *
@@ -24,46 +24,22 @@
  */
 
 
-#ifndef EIGPARSERPHFRQ_HPP
-#define EIGPARSERPHFRQ_HPP
+#include "io/eigparserelectrons.hpp"
 
-#ifdef _WIN32
-#include "base/win32.hpp"
-#endif
+//
+EigParserElectrons::EigParserElectrons() :EigParser() {
+  ;
+}
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#undef HAVE_CONFIG_H
-#endif
+//
+EigParserElectrons::~EigParserElectrons() {
+  ;
+}
 
-#include "io/eigparserphonons.hpp"
+std::vector<std::vector<double>> EigParserElectrons::getBandProjection(const unsigned iband, const unsigned ispin) const {
+  ;
+}
 
-/** 
- *
- */
-class EigParserPHFRQ : public EigParserPhonons {
-
-  private :
-
-  protected :
-
-  public :
-
-    /**
-     * Constructor.
-     */
-    EigParserPHFRQ();
-
-    /**
-     * Destructor.
-     */
-    virtual ~EigParserPHFRQ();
-
-    /**
-     * File to read to get the eigen value (_EIG file from abinit)
-     * @param filename Name of the _EIG file
-     */
-    virtual void readFromFile(const std::string& filename);
-};
-
-#endif  // EIGPARSERPHFRQ_HPP
+std::vector<unsigned> EigParserElectrons::getBandColor(const unsigned iband, const unsigned ispin, const std::vector<unsigned> umask) const { 
+  ;
+}

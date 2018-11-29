@@ -30,7 +30,7 @@
 #include <sstream>
 
 //
-EigParserPHFRQ::EigParserPHFRQ() : EigParser() {
+EigParserPHFRQ::EigParserPHFRQ() : EigParserPhonons() {
   ;
 }
 

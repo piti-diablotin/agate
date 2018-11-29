@@ -36,13 +36,13 @@
 #undef HAVE_CONFIG_H
 #endif
 
-#include "io/eigparser.hpp"
+#include "io/eigparserphonons.hpp"
 #include "io/etsfnc.hpp"
 
 /** 
  *
  */
-class EigParserPHBST : public EigParser, public EtsfNC {
+class EigParserPHBST : public EigParserPhonons {
 
   private :
 

@@ -49,6 +49,31 @@
 
 #include <yaml-cpp/yaml.h>
 
+namespace YAML {
+  using geometry::vec3d;
+  template<>
+    struct convert<vec3d> {
+      static Node encode(const vec3d& vec) {
+        Node node;
+        node.push_back(vec[0]);
+        node.push_back(vec[1]);
+        node.push_back(vec[2]);
+        return node;
+      }
+
+      static bool decode(const Node& node, vec3d& vec) {
+        if(!node.IsSequence() || node.size() != 3) {
+          return false;
+        }
+
+        vec[0] = node[0].as<double>();
+        vec[1] = node[1].as<double>();
+        vec[2] = node[2].as<double>();
+        return true;
+      }
+    };
+}
+
 #  ifdef __GNUC__
 #    if __GNUC__ >= 4
 #      if __GNUC_MINOR__ >= 6

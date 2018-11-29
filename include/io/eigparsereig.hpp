@@ -36,12 +36,12 @@
 #undef HAVE_CONFIG_H
 #endif
 
-#include "io/eigparser.hpp"
+#include "io/eigparserelectrons.hpp"
 
 /** 
  *
  */
-class EigParserEIG : public EigParser {
+class EigParserEIG : public EigParserElectrons {
 
   private :
 

@@ -48,7 +48,6 @@ EigParser::EigParser() :
   _kpts(),
   _lengths(),
   _eigens(),
-  _eigenDisp(),
   _nband(-1),
   _eunit(Ha),
   _conversion(1.0),
@@ -116,56 +115,6 @@ std::vector<double> EigParser::getBand(const unsigned iband, const double fermi,
   else
     throw EXCEPTION("Out of range",ERRDIV);
   return eigen;
-}
-
-std::vector<unsigned> EigParser::getBandColor(const unsigned iband, const unsigned ispin, const std::vector<unsigned> umask) const { 
-  unsigned spin = _hasSpin ? 2 : 1 ;
-  unsigned nkpt = _kpts.size()/spin;
-  std::vector<unsigned> color(nkpt,0);
-  if ( (ispin != 1 && ispin != 2) || ispin > spin ) throw EXCEPTION("Bad value for ispin",ERRABT);
-  if ( iband < _nband ) {
-    auto typat = this->typat();
-    auto znucl = this->znucl();
-    unsigned ntypat = znucl.size();
-    if ( umask.size() > 0 ) {
-      for ( unsigned iatom = 0 ; iatom < this->natom() ; ++iatom ) {
-        if ( std::find( umask.begin(), umask.end(), iatom+1 ) == umask.end() ) {
-          typat[iatom]=0;
-        }
-      }
-    }
-
-    std::vector<unsigned> colors(ntypat+1,0x666666);
-    for ( unsigned itypat = 0 ; itypat < ntypat ; ++itypat ) {
-      unsigned r = 255*mendeleev::color[znucl[itypat]][0];
-      unsigned g = 255*mendeleev::color[znucl[itypat]][1];
-      unsigned b = 255*mendeleev::color[znucl[itypat]][2];
-      colors[itypat+1] = (r<<16)|(g<<8)|b;
-    }
-
-    try {
-      auto projection(std::move(this->getBandProjection(iband,ispin)));
-      for ( unsigned ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
-        unsigned r = 0,g = 0,b = 0;
-        for ( unsigned iatom = 0 ; iatom < this->natom() ; ++iatom ) {
-          unsigned cr = (colors[typat[iatom]] & 0xFF0000) >> 16;
-          unsigned cg = (colors[typat[iatom]] & 0x00FF00) >> 8;
-          unsigned cb = (colors[typat[iatom]] & 0x0000FF);
-          r+= (projection[ikpt][iatom]*cr);
-          g+= (projection[ikpt][iatom]*cg);
-          b+= (projection[ikpt][iatom]*cb);
-        }
-        color[ikpt] = ((r<<16)|(g<<8)|b);
-      }
-    }
-    catch ( Exception &e ) {
-      e.ADD("Not able to get projection",ERRDIV);
-      throw e;
-    }
-  }
-  else
-    throw EXCEPTION("Out of range",ERRDIV);
-  return color;
 }
 
 //
@@ -338,57 +287,3 @@ std::string EigParser::dump(unsigned options, std::vector<unsigned> umask) const
 }
 
 
-std::vector<std::vector<double>> EigParser::getBandProjection(const unsigned iband, const unsigned ispin) const {
-  if ( _eigenDisp.empty() )
-    throw EXCEPTION("Eigen displacements are not known",ERRABT);
-
-  if ( _hasSpin )
-    throw EXCEPTION("Not yet available with electrons and spins",ERRABT);
-
-  if ( ispin != 1 ) throw EXCEPTION("Bad value for ispin",ERRABT);
-
-  unsigned natom = this->natom();
-  unsigned nkpt= _kpts.size();
-
-  if ( _eigenDisp.size() != nkpt )
-    throw EXCEPTION("Eigen displacements size for kpts is wrong",ERRABT);
-
-  if ( _eigenDisp[0].size() != _nband*_nband*2 )
-    throw EXCEPTION("Eigen displacements size for modes is wrong",ERRABT);
-
-  std::vector<std::vector<double>> projections(nkpt,std::vector<double>(natom,0));
-
-  if ( iband < _nband ) {
-    for ( unsigned ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
-      auto myband = _eigenDisp[ikpt].begin();
-      std::advance(myband,2*_nband*iband);
-      // Compute weigth for each atom which is the sum over x y and z
-      for ( unsigned iatom = 0 ; iatom < natom ; ++iatom ) {
-        double mass = mendeleev::mass[_znucl[_typat[iatom]-1]]*phys::amu_emass;
-        for ( unsigned idir = 0 ; idir < 3 ; ++ idir ) {
-          double re = *myband;
-          ++myband;
-          double im = *myband;
-          ++myband;
-          projections[ikpt][iatom] += (re*re+im*im)*mass;
-        }
-      }
-    }
-    // Renormalize so the sum of projections[ikpt][natom] = 1
-    // This is already the case but just in case.
-    for ( unsigned ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
-      double norm = 0.;
-      for ( unsigned iatom = 0 ; iatom < natom ; ++iatom ) {
-        norm += projections[ikpt][iatom];
-      }
-      for ( unsigned iatom = 0 ; iatom < natom ; ++iatom ) {
-        projections[ikpt][iatom] /= norm;
-      }
-    }
-  }
-  else
-    throw EXCEPTION("Out of range",ERRDIV);
-
-  return projections;
-
-}

@@ -1,11 +1,11 @@
 /**
- * @file include/eigparserphfrq.hpp
+ * @file include/./phonopydtset.hpp
  *
  * @brief 
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
- * @copyright Copyright 2014 Jordan Bieder
+ * @copyright Copyright 2018 Jordan Bieder
  *
  * This file is part of AbiOut.
  *
@@ -24,8 +24,8 @@
  */
 
 
-#ifndef EIGPARSERPHFRQ_HPP
-#define EIGPARSERPHFRQ_HPP
+#ifndef PHONOPYDTSET_HPP
+#define PHONOPYDTSET_HPP
 
 #ifdef _WIN32
 #include "base/win32.hpp"
@@ -36,12 +36,15 @@
 #undef HAVE_CONFIG_H
 #endif
 
-#include "io/eigparserphonons.hpp"
+#include "io/dtset.hpp"
+#ifdef HAVE_YAMLCPP
+#include "io/yaml.hpp"
+#endif
 
 /** 
  *
  */
-class EigParserPHFRQ : public EigParserPhonons {
+class PhonopyDtset : public Dtset {
 
   private :
 
@@ -52,18 +55,24 @@ class EigParserPHFRQ : public EigParserPhonons {
     /**
      * Constructor.
      */
-    EigParserPHFRQ();
+    PhonopyDtset();
 
     /**
      * Destructor.
      */
-    virtual ~EigParserPHFRQ();
+    virtual ~PhonopyDtset();
 
     /**
-     * File to read to get the eigen value (_EIG file from abinit)
-     * @param filename Name of the _EIG file
+     * Fill a Dtset from an input file.
+     * @param filename The name of the input file to read.
      */
     virtual void readFromFile(const std::string& filename);
+
+    /**
+     * Fill a Dtset from an input file.
+     * @param filename The name of the input file to read.
+     */
+    virtual void readFromYAML(const YAML::Node &doc);
 };
 
-#endif  // EIGPARSERPHFRQ_HPP
+#endif  // PHONOPYDTSET_HPP

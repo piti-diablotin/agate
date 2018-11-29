@@ -37,7 +37,7 @@
 #endif
 
 //
-EigParserEIG::EigParserEIG() : EigParser() {
+EigParserEIG::EigParserEIG() : EigParserElectrons() {
   ;
 }
 

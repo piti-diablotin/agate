@@ -38,7 +38,7 @@
 #endif
 
 //
-EigParserPHBST::EigParserPHBST() {
+EigParserPHBST::EigParserPHBST() : EigParserPhonons() {
   ;
 }
 
@@ -49,7 +49,8 @@ EigParserPHBST::~EigParserPHBST() {
 
 //
 void EigParserPHBST::readFromFile(const std::string& filename) {
-  EtsfNC::readFromFile(filename);
+  _dtset.reset(new EtsfNC);
+  _dtset->readFromFile(filename);
 #ifdef HAVE_NETCDF
   unsigned kpts;
   unsigned nband;
@@ -99,7 +100,7 @@ void EigParserPHBST::readFromFile(const std::string& filename) {
       throw EXCEPTION(std::string("Error while reading qpoints var in ")+filename,ERRDIV);
     }
     std::vector<double> values(nband,0);
-    std::vector<double> disp(nband*nband*2,15);
+    std::vector<double> disp(nband*nband*2,0);
     status = nc_inq_varid(ncid, "phfreqs", &varid);
     size_t start3[] = {ikpt,0};
     size_t count3[] = {1,nband};
@@ -120,10 +121,12 @@ void EigParserPHBST::readFromFile(const std::string& filename) {
     }
 
     // Renormalize
+    auto znucl = _dtset->znucl();
+    auto typat = _dtset->typat();
     for ( unsigned imode = 0 ; imode < _nband ; ++imode ) {
       double norm = 0.;
-      for ( unsigned iatom = 0 ; iatom < this->natom() ; ++iatom ) {
-        double mass = mendeleev::mass[_znucl[_typat[iatom]-1]]*phys::amu_emass;
+      for ( unsigned iatom = 0 ; iatom < _dtset->natom() ; ++iatom ) {
+        double mass = mendeleev::mass[znucl[typat[iatom]-1]]*phys::amu_emass;
         for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
           double re = disp[2*_nband*imode+3*2*iatom+idir*2];
           double im = disp[2*_nband*imode+3*2*iatom+idir*2+1];
@@ -131,7 +134,7 @@ void EigParserPHBST::readFromFile(const std::string& filename) {
         }
       }
       norm = std::sqrt(norm);
-      for ( unsigned iatom = 0 ; iatom < this->natom() ; ++iatom ) {
+      for ( unsigned iatom = 0 ; iatom < _dtset->natom() ; ++iatom ) {
         for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
           disp[2*_nband*imode+3*2*iatom+idir*2] /= norm;
           disp[2*_nband*imode+3*2*iatom+idir*2+1] /= norm;

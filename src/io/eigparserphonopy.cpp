@@ -30,36 +30,10 @@
 #endif
 #include "base/exception.hpp"
 #include "base/geometry.hpp"
-
-#ifdef HAVE_YAMLCPP
-namespace YAML {
-  using geometry::vec3d;
-  template<>
-    struct convert<vec3d> {
-      static Node encode(const vec3d& vec) {
-        Node node;
-        node.push_back(vec[0]);
-        node.push_back(vec[1]);
-        node.push_back(vec[2]);
-        return node;
-      }
-
-      static bool decode(const Node& node, vec3d& vec) {
-        if(!node.IsSequence() || node.size() != 3) {
-          return false;
-        }
-
-        vec[0] = node[0].as<double>();
-        vec[1] = node[1].as<double>();
-        vec[2] = node[2].as<double>();
-        return true;
-      }
-    };
-}
-#endif
+#include "io/phonopydtset.hpp"
 
 //
-EigParserPhonopy::EigParserPhonopy() : EigParser() {
+EigParserPhonopy::EigParserPhonopy() : EigParserPhonons() {
 }
 
 //
@@ -82,7 +56,11 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
     throw EXCEPTION("Cannot read file",ERRABT);
   }
   try {
-    unsigned nband = 3*fulldoc["natom"].as<unsigned>();
+    PhonopyDtset *tmp = new PhonopyDtset;
+    tmp->readFromYAML(fulldoc);
+    _dtset.reset(tmp);
+    unsigned natom = fulldoc["natom"].as<unsigned>();
+    unsigned nband = 3*natom;
     unsigned npath = fulldoc["npath"].as<unsigned>();
     auto qpoints = fulldoc["phonon"];
     //unsigned nqpoints = fulldoc["nqpoint"].as<unsigned>();
@@ -108,9 +86,23 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
       auto nodeBand = qpoints[iqpt]["band"];
       if ( !nodeBand.IsSequence() || nodeBand.size() != nband ) throw EXCEPTION("Bad formatted file",ERRDIV);
       std::vector<double> values(nband,0);
-      for ( unsigned i = 0 ; i < nodeBand.size() ; ++i )
+      std::vector<double> disp(2*nband*nband,0);
+      bool hasVector = false;
+      for ( unsigned i = 0 ; i < nodeBand.size() ; ++i ) {
         values[i] = nodeBand[i]["frequency"].as<double>();
+        if ( nodeBand[i]["eigenvector"] ) {
+          hasVector = true;
+          auto vectors = nodeBand[i]["eigenvector"];
+          for ( unsigned iatom = 0 ; iatom < natom ; ++iatom ) {
+            for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
+              disp[2*nband*i+3*2*iatom+idir*2] = vectors[iatom][idir][0].as<double>();
+              disp[2*nband*i+3*2*iatom+idir*2+1] = vectors[iatom][idir][1].as<double>();
+            }
+          }
+        }
+      }
       _eigens.push_back(std::move(values));
+      if ( hasVector ) _eigenDisp.push_back(std::move(disp));
       _kpts.push_back(qpt);
       _lengths.push_back(length);
     }

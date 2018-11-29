@@ -270,6 +270,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         stream >> vib;
         if ( stream.fail() ) break;
         --vib;
+        inputModes.push_back(vib);
         if ( vib >= (unsigned) _natom*3 ) {
           throw EXCEPTION("The mode number is wrong",ERRDIV);
         }
@@ -328,6 +329,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         stream >> vib;
         if ( stream.fail() ) break;
         --vib;
+        inputModes.push_back(vib);
         if ( vib >= (unsigned) _natom*3 ) {
           throw EXCEPTION("The mode number is wrong",ERRDIV);
         }

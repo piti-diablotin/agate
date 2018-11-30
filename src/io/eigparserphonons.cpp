@@ -102,6 +102,7 @@ std::vector<std::vector<double>> EigParserPhonons::getBandProjection(const unsig
 
 //
 std::vector<unsigned> EigParserPhonons::getBandColor(const unsigned iband, const unsigned ispin, const std::vector<unsigned> umask) const { 
+  (void) ispin;
   unsigned nkpt = _kpts.size();
   std::vector<unsigned> color(nkpt,0);
   if ( _dtset.get() == nullptr ) throw EXCEPTION("Need a dtset",ERRDIV);
@@ -151,3 +152,30 @@ std::vector<unsigned> EigParserPhonons::getBandColor(const unsigned iband, const
   return color;
 }
 
+void EigParserPhonons::renormalizeEigenDisp() {
+  if ( _dtset.get() == nullptr ) throw EXCEPTION("Need a dtset",ERRDIV);
+  // Renormalize
+  auto znucl = _dtset->znucl();
+  auto typat = _dtset->typat();
+  unsigned i = 0;
+  for ( auto &disp : _eigenDisp ) {
+    for ( unsigned imode = 0 ; imode < _nband ; ++imode ) {
+      double norm = 0.;
+      for ( unsigned iatom = 0 ; iatom < _dtset->natom() ; ++iatom ) {
+        double mass = mendeleev::mass[znucl[typat[iatom]-1]]*phys::amu_emass;
+        for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
+          double re = disp[2*_nband*imode+3*2*iatom+idir*2];
+          double im = disp[2*_nband*imode+3*2*iatom+idir*2+1];
+          norm += mass*(re*re+im*im);
+        }
+      }
+      norm = std::sqrt(norm);
+      for ( unsigned iatom = 0 ; iatom < _dtset->natom() ; ++iatom ) {
+        for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
+          disp[2*_nband*imode+3*2*iatom+idir*2] /= norm;
+          disp[2*_nband*imode+3*2*iatom+idir*2+1] /= norm;
+        }
+      }
+    }
+  }
+}

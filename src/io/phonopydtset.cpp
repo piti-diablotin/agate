@@ -65,13 +65,6 @@ void PhonopyDtset::readFromYAML(const YAML::Node &doc) {
 
   try {
     _natom = doc["natom"].as<unsigned>();
-    _typat;
-    _znucl;
-    _ntypat;
-    _rprim;
-    _gprim;
-    _xred;
-    _xcart;
     _spinat.clear();
 
     auto lattice = doc["lattice"];

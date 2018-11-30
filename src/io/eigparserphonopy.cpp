@@ -61,6 +61,7 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
     _dtset.reset(tmp);
     unsigned natom = fulldoc["natom"].as<unsigned>();
     unsigned nband = 3*natom;
+    _nband = nband;
     unsigned npath = fulldoc["npath"].as<unsigned>();
     auto qpoints = fulldoc["phonon"];
     //unsigned nqpoints = fulldoc["nqpoint"].as<unsigned>();
@@ -107,9 +108,9 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
       _lengths.push_back(length);
     }
     _filename = filename;
-    _nband = nband;
     _eunit = THz;
     _hasSpin = false;
+    this->renormalizeEigenDisp();
   }
   catch (YAML::BadSubscript &e) {
     throw EXCEPTION("Bad subscript",ERRABT);

@@ -47,9 +47,11 @@ class EigParserPhonons : public EigParser {
 
   private :
 
+
   protected :
     std::unique_ptr<Dtset>             _dtset;
     std::vector< std::vector<double> > _eigenDisp;///< eigen displacement for each kpt.
+    void renormalizeEigenDisp();
 
   public :
 

@@ -37,9 +37,9 @@ EigParserElectrons::~EigParserElectrons() {
 }
 
 std::vector<std::vector<double>> EigParserElectrons::getBandProjection(const unsigned iband, const unsigned ispin) const {
-  ;
+  return std::vector<std::vector<double>>();
 }
 
 std::vector<unsigned> EigParserElectrons::getBandColor(const unsigned iband, const unsigned ispin, const std::vector<unsigned> umask) const { 
-  ;
+  return std::vector<unsigned>();
 }

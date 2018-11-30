@@ -120,28 +120,6 @@ void EigParserPHBST::readFromFile(const std::string& filename) {
       throw EXCEPTION(std::string("Error while reading phdisp_cart var in ")+filename,ERRDIV);
     }
 
-    // Renormalize
-    auto znucl = _dtset->znucl();
-    auto typat = _dtset->typat();
-    for ( unsigned imode = 0 ; imode < _nband ; ++imode ) {
-      double norm = 0.;
-      for ( unsigned iatom = 0 ; iatom < _dtset->natom() ; ++iatom ) {
-        double mass = mendeleev::mass[znucl[typat[iatom]-1]]*phys::amu_emass;
-        for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
-          double re = disp[2*_nband*imode+3*2*iatom+idir*2];
-          double im = disp[2*_nband*imode+3*2*iatom+idir*2+1];
-          norm += mass*(re*re+im*im);
-        }
-      }
-      norm = std::sqrt(norm);
-      for ( unsigned iatom = 0 ; iatom < _dtset->natom() ; ++iatom ) {
-        for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
-          disp[2*_nband*imode+3*2*iatom+idir*2] /= norm;
-          disp[2*_nband*imode+3*2*iatom+idir*2+1] /= norm;
-        }
-      }
-    }
-
     _eigenDisp.push_back(std::move(disp));
     if ( ikpt == 0 ) prev_kpt = kpt;
     length += geometry::norm(geometry::operator-(kpt,prev_kpt));
@@ -149,6 +127,7 @@ void EigParserPHBST::readFromFile(const std::string& filename) {
     _lengths.push_back(length);
     prev_kpt = kpt;
   }
+  this->renormalizeEigenDisp();
 
 #else
   throw EXCEPTION("NetCDF support is off",ERRDIV);

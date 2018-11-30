@@ -239,7 +239,14 @@ void Supercell::findReference(const Dtset& dtset) {
             const double fk = (double) k;
             const vec3d ztrans = {{ fk*ref_rprim[2]+ytrans[0], fk*ref_rprim[5]+ytrans[1], fk*ref_rprim[8]+ytrans[2] }};
             vec3d cell = {{ fi, fj, fk }};
-            double distance = norm(ref_xcart[ref_iatom]+ztrans-pos);
+            vec3d vecdiff = ref_xcart[ref_iatom]+ztrans-pos;
+            vec3d vecxreddiff = invert(ref_rprim) * vecdiff;
+            for ( auto& v : vecxreddiff ) {
+              while ( v < 0.5 ) ++v;
+              while ( v >= 0.5 ) --v;
+            }
+            vecdiff = ref_rprim * vecxreddiff;
+            double distance = norm(vecdiff);
             if ( distance < closest ) {
               match = ref_iatom;
               R = cell;
@@ -258,7 +265,7 @@ void Supercell::findReference(const Dtset& dtset) {
   std::vector<unsigned> check(dtset.natom(),0);
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     ++check[_baseAtom[iatom]];
-    //std::cerr << "Atom " << iatom << ":\t" << _baseAtom[iatom] << "\t";
+    //std::cerr << "Atom " << iatom << ":\t" << _baseAtom[iatom] << "\t" << std::endl;
     //print(_cellCoord[iatom]);
   }
   for ( auto k : check ) {

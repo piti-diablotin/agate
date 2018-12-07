@@ -582,6 +582,17 @@ bool Window::userInput(std::stringstream& info) {
               _render._color[2] = f[2];
             }
           }
+          else if ( token == "font" ) {
+            std::string ext;
+            cin >> ext;
+            _render._render.setFont(ext);
+          }
+          else if ( token == "fs" || token == "fontsize" ) {
+            int pixel;
+            cin >> pixel;
+            _render._render.setSize(pixel);
+          }
+
           else if ( token == "img_fmt" || token == "image_format" ) {
             std::string ext;
             cin >> ext;
@@ -993,6 +1004,8 @@ void Window::help(){
   cout << setw(40) << ":axis" << setw(59) << "Display/Hide the cartesian axis." << endl;
   cout << setw(40) << ":bg or :background X Y Z" << setw(59) << "Set the background color in RGB." << endl;
   cout << setw(40) << ":fg or :forground X Y Z" << setw(59) << "Set the foreground color in RGB." << endl;
+  cout << setw(40) << ":font path/to/font.ttf" << setw(59) << "Change the font to use." << endl;
+  cout << setw(40) << ":fs or :fontsize" << setw(59) << "Set the fontsize in pixel." << endl;
   cout << setw(40) << ":h or :help" << setw(59) << "Display this message." << endl;
   cout << setw(40) << ":img_fmt or :image_format (jpeg|png|ppm)" << setw(59) << "Chose the format to take snapshot." << endl;
   cout << setw(40) << ":img_qlt or :image_quality X" << setw(59) << "Set the quality to export image (between 1 and 100)." << endl;

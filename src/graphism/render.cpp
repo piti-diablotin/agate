@@ -236,6 +236,7 @@ void Render::free() {
 
 //
 void Render::setFont(const std::string& filename) {
+  std::string backup = _fontfile;
   _fontfile = filename;
   try{
 #ifdef HAVE_FREETYPE
@@ -255,6 +256,7 @@ void Render::setFont(const std::string& filename) {
 #endif
   }
   catch ( Exception& e ) {
+    _fontfile = filename;
     e.ADD("Unable to generate font bitmaps.",ERRDIV);
     throw e;
   }
@@ -265,6 +267,7 @@ void Render::setFont(const std::string& filename) {
 //
 void Render::setSize(const size_t size) {
 #ifdef HAVE_FREETYPE
+  FT_Int backup = _size;
   _size = size;
   // Set pixel size
   try{
@@ -286,6 +289,7 @@ void Render::setSize(const size_t size) {
     }
   }
   catch ( Exception& e ) {
+    _size = backup;
     e.ADD("Impossible to generate characters.",ERRDIV);
     throw e;
   }

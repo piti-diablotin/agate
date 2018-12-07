@@ -46,6 +46,7 @@ extern "C" {
 }
 #  endif
 #endif
+#include "phonons/supercell.hpp"
 
 
 //
@@ -373,6 +374,22 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
     catch (Exception& e) {
       if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
         e.ADD("Bad spinat parameter",ERRABT);
+        throw e;
+      }
+    }
+    ++step;
+
+    token = "supercell_latt";
+    try { 
+      tokenVectorCheck = parser.getToken<double>(token,9);
+      if ( tokenVectorCheck[0] < 1. || tokenVectorCheck[4] < 1. || tokenVectorCheck[8] < 1. )
+        throw EXCEPTION("Supercell can only be built with diagonal part",ERRABT);
+      Supercell supercell(*this,(unsigned)tokenVectorCheck[0],(unsigned)tokenVectorCheck[4],(unsigned)tokenVectorCheck[8]);
+      *this = supercell;
+    }
+    catch (Exception& e) {
+      if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+        e.ADD("Bad supercell_latt parameter",ERRABT);
         throw e;
       }
     }

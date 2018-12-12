@@ -1476,7 +1476,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
       }
     }
     if ( save == Graph::GraphSave::DATA ) { 
-      eigparser->dump(filename+".dat",EigParser::PRTKPT|EigParser::PRTIKPT|(EigParser::PRTPROJ&&projection));
+      eigparser->dump(filename+".dat",EigParser::PRTKPT|EigParser::PRTIKPT|(projection ? EigParser::PRTPROJ : 0));
       save = Graph::GraphSave::NONE;
     }
   }

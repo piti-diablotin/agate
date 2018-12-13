@@ -157,7 +157,6 @@ void EigParserPhonons::renormalizeEigenDisp() {
   // Renormalize
   auto znucl = _dtset->znucl();
   auto typat = _dtset->typat();
-  unsigned i = 0;
   for ( auto &disp : _eigenDisp ) {
     for ( unsigned imode = 0 ; imode < _nband ; ++imode ) {
       double norm = 0.;

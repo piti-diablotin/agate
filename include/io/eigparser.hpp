@@ -171,15 +171,6 @@ class EigParser {
     virtual std::vector<unsigned> getBandColor(const unsigned iband, const unsigned ispin, std::vector<unsigned> mask = std::vector<unsigned>()) const = 0;
 
     /**
-     * Getter proportion of the band for each atom and each kpt.
-     * @param iband The band for which we want the projection
-     * @param ispin Spin of the band we want can only be 1 for the moment
-     * @return a vector for each kpt with the percentage of component for each atom
-     * vector[nkpt][natom] is basically the result and between 0 and 1.
-     */
-    virtual std::vector<std::vector<double>> getBandProjection(const unsigned iband, const unsigned ispin) const = 0;
-
-    /**
      * Getter the kpt-path
      * @return the kpt list
      */

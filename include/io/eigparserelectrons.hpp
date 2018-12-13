@@ -48,6 +48,10 @@ class EigParserElectrons : public EigParser {
   private :
 
   protected :
+    int                              _lmax;
+    std::vector<std::vector<double>> _fractions;
+    std::vector<unsigned>            _lmMask;
+    std::unique_ptr<Dtset>           _dtset;
 
   public :
 
@@ -62,6 +66,13 @@ class EigParserElectrons : public EigParser {
     virtual ~EigParserElectrons();
 
     /**
+     * Use this function to only display l and m value given in arguement
+     * @param umaskl umask for l number 0 -> _lmax-1
+     * @param umaskm umask for m number -l -> l
+     */
+    void selectLM(int l, std::vector<int> &umaskm);
+
+    /**
      * Getter color which represent the atom decomposition of the ith band
      * @param iband The band for which we want the eigen values;
      * @param ispin Spin of the band we want can only be 1 or 2
@@ -70,14 +81,6 @@ class EigParserElectrons : public EigParser {
      */
     std::vector<unsigned> getBandColor(const unsigned iband, const unsigned ispin, std::vector<unsigned> mask = std::vector<unsigned>()) const;
 
-    /**
-     * Getter proportion of the band for each atom and each kpt.
-     * @param iband The band for which we want the projection
-     * @param ispin Spin of the band we want can only be 1 for the moment
-     * @return a vector for each kpt with the percentage of component for each atom
-     * vector[nkpt][natom] is basically the result and between 0 and 1.
-     */
-    std::vector<std::vector<double>> getBandProjection(const unsigned iband, const unsigned ispin) const;
 };
 
 #endif  // EIGPARSERELECTRONS_HPP

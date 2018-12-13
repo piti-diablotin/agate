@@ -29,6 +29,7 @@
 #include "io/eigparserphfrq.hpp"
 #include "io/eigparserphonopy.hpp"
 #include "io/eigparserphbst.hpp"
+#include "io/eigparserfatbands.hpp"
 #include "base/exception.hpp"
 #include "base/utils.hpp"
 #include "base/phys.hpp"
@@ -172,10 +173,12 @@ EigParser* EigParser::getEigParser(const std::string& file){
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserPHFRQ),"Abinit PHFRQ"));   //1
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserPhonopy),"Phonopy band YAML"));   //2
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserPHBST),"Abinit _PHBST")); //3
+  allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserFatbands),"Abinit _FATBANDS")); //4
 
   if ( file.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[2]);
   if ( file.find("PHFRQ") != std::string::npos ) allFormat[0].swap(allFormat[1]);
   if ( file.find("_PHBST") != std::string::npos ) allFormat[0].swap(allFormat[3]);
+  if ( file.find("_FATBANDS") != std::string::npos ) allFormat[0].swap(allFormat[4]);
 
   for ( auto& p : allFormat ) {
     try {
@@ -251,7 +254,7 @@ std::string EigParser::dump(unsigned options, std::vector<unsigned> umask) const
     for ( unsigned i = 1; i <= _nband ; ++i ) 
       str << std::setw(w) << prefix+utils::to_string(i);
   }
-  if ( options & PRTIKPT ) {
+  if ( options & PRTPROJ ) {
     for ( unsigned ispin = 0 ; ispin < nspin ; ++ispin ) {
       std::string prefix = ( _hasSpin ? ( ispin == 0 ? "color-up " : "color-down " ) : "color " );
       for ( unsigned i = 1; i <= _nband ; ++i ) 

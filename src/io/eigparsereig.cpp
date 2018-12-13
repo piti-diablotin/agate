@@ -65,17 +65,17 @@ void EigParserEIG::readFromFile(const std::string& filename) {
     if ( nc_open(filename.c_str(), NC_NOWRITE, &ncid)) 
       throw EXCEPTION(std::string("File ")+filename+" could not be correctly opened",ERRDIV);
 
-    if (  nc_inq_ndims(ncid, &dimid) || dimid != 4 ) {
-      nc_close(ncid);
-      throw EXCEPTION(std::string("Bad number of dimension: ")+utils::to_string(dimid)+
-          std::string(" instead of being 4"),ERRDIV);
-    }
+//    if (  nc_inq_ndims(ncid, &dimid) || dimid != 4 ) {
+//      nc_close(ncid);
+//      throw EXCEPTION(std::string("Bad number of dimension: ")+utils::to_string(dimid)+
+//          std::string(" instead of being 4"),ERRDIV);
+//    }
 
-    if ( nc_inq_nvars(ncid, &varid) || varid != 3 ) {
-      nc_close(ncid);
-      throw EXCEPTION(std::string("Bad number of variables: ")+utils::to_string(varid)+
-          std::string(" instead of being 3"),ERRABT);
-    }
+//    if ( nc_inq_nvars(ncid, &varid) || varid != 3 ) {
+//      nc_close(ncid);
+//      throw EXCEPTION(std::string("Bad number of variables: ")+utils::to_string(varid)+
+//          std::string(" instead of being 3"),ERRABT);
+//    }
 
     size_t dimval;
     nc_inq_dimid(ncid, "mband", &dimid);

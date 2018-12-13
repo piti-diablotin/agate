@@ -57,6 +57,7 @@
 #include "graphism/trimap.hpp"
 #include "base/utils.hpp"
 #include "io/abibin.hpp"
+#include "io/eigparserelectrons.hpp"
 
 //
 CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
@@ -1420,6 +1421,45 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
           }
         }
       }
+    }
+
+    EigParserElectrons* eeig = nullptr;
+    if ( (eeig = dynamic_cast<EigParserElectrons*>(eigparser)) ) {
+      std::vector<int> m;
+      int lang;
+      if ( parser.hasToken("angular") ) {
+        lang = parser.getToken<int>("angular");
+        if ( parser.hasToken("magnetic") ) {
+          try {
+            m = parser.getToken<int>("magnetic",2*lang+1);
+          }
+          catch ( Exception &e ) { 
+            if ( e.getReturnValue() & ConfigParser::ERDIM ) {
+              auto blabla = e.what("",true);
+              auto pos = blabla.find("Could only read ");
+              int maxToRead = 0;
+              if ( pos != std::string::npos ) {
+                std::istringstream sub(blabla.substr(pos+16));
+                sub >> maxToRead;
+                m = parser.getToken<int>("magnetic",maxToRead);
+              }
+            }
+          }
+        }
+        else {
+          m.resize(2*lang+1);
+          int i = -lang;
+          for(auto& mm : m )
+            mm = (i++);
+        }
+        eeig->selectLM(lang,m);
+      }
+      else {
+        if ( parser.hasToken("magnetic") ) {
+          throw EXCEPTION("You need to specify the angular quantum number first",ERRDIV);
+        }
+      }
+      eeig = nullptr;
     }
 
     x = eigparser->getPath();

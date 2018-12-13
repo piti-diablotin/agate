@@ -473,7 +473,7 @@ void Canvas::help(std::ostream &out) {
   out << setw(45) << "" << setw(59) << "pacf: Position AutoCorrelation Function" << endl;
   out << setw(45) << "" << setw(59) << "vacf: Velocity AutoCorrelation Function" << endl;
   out << setw(45) << "" << setw(59) << "pdos: Phonon density of States" << endl;
-  out << setw(45) << "" << setw(59) << "band filename [fermi FERMI] [ignore I] [ndiv X:X:X...] [labels G:M:R...] [eunit Ha|eV|THz|cm-1]: A band structure FERMI is the fermi energy, I is the number of bands to ignore, X number of point on the first segment labels are the special points and eunit the desired output unit." << endl;
+  out << setw(45) << "" << setw(59) << "band filename [fermi FERMI] [ignore I] [ndiv X:X:X...] [labels G:M:R...] [eunit Ha|eV|THz|cm-1] [fatband [iatom1 iatom2 ...] angular [0|1|2|3|4] magnetic [-l...l]: A band structure FERMI is the fermi energy, I is the number of bands to ignore, X number of point on the first segment labels are the special points and eunit the desired output unit." << endl;
   out << setw(40) << ":r or : repeat number" << setw(59) << "Number of times the animation is display (-1 or 0 for infinite, -2 palindrome)." << endl;
   out << setw(40) << ":supercell x y z" << setw(59) << "Build a diagonal supercell of size x y z" << endl;
   out << setw(40) << ":tbegin or :time_begin" << setw(59) << "Set the initial time step to use." << endl;

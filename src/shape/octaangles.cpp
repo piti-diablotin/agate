@@ -32,28 +32,34 @@
 //
 OctaAngles::OctaAngles(int iatom, int natom, const double *xred, const double *xcart, const double *rprim, bool opengl) :
   Octahedra(iatom, natom, xred, xcart, rprim, opengl),
-  _angles({{0.,0.,0.}})
+  _angles({{0.,0.,0.}}),
+  _savedBasis(_basis)
 {
 }
 
 OctaAngles::OctaAngles(const OctaAngles& octa) : Octahedra(octa),
-  _angles({{0.,0.,0.}})
+  _angles({{0.,0.,0.}}),
+  _savedBasis(octa._savedBasis)
 {
 }
 
 OctaAngles::OctaAngles(OctaAngles&& octa) : Octahedra(std::move(octa)),
-  _angles({{0.,0.,0.}})
+  _angles({{0.,0.,0.}}),
+  _savedBasis(octa._savedBasis)
 {
 }
 
 OctaAngles::OctaAngles(const Octahedra& octa) : Octahedra(octa),
-  _angles({{0.,0.,0.}})
+  _angles({{0.,0.,0.}}),
+  _savedBasis(_basis)
 {
 }
 
 OctaAngles::OctaAngles(Octahedra&& octa) : Octahedra(std::move(octa)),
-  _angles({{0.,0.,0.}})
+  _angles({{0.,0.,0.}}),
+  _savedBasis()
 {
+  _savedBasis = _basis;
 }
 
 
@@ -123,11 +129,12 @@ void OctaAngles::build(const double *rprim, const double *xcart, u3f &new_atoms 
   new_atoms.push_back(std::make_pair(_center,tmp));
 }
 
-void OctaAngles::buildCart(const double *rprim, const double *xcart, u3f &new_atoms ) {
-  std::array<geometry::vec3d,3> save(_basis);
+void OctaAngles::buildCart(const double *rprim, const double *xcart, u3f &new_atoms, bool cartBasis ) {
+  //std::array<geometry::vec3d,3> save(_basis);
   _basis[0] = {{ 1,0,0}};
   _basis[1] = {{ 0,1,0}};
   _basis[2] = {{ 0,0,1}};
   this->build(rprim,xcart,new_atoms);
-  _basis = save;
+  if ( !cartBasis )
+    _basis = _savedBasis;
 }

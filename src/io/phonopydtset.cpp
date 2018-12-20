@@ -57,12 +57,8 @@ void PhonopyDtset::readFromFile(const std::string& filename) {
 #endif
 }
 
+#ifdef HAVE_YAMLCPP
 void PhonopyDtset::readFromYAML(const YAML::Node &doc) {
-#ifndef HAVE_YAMLCPP
-  (void) (filename);
-  throw EXCEPTION("You need the yaml-cpp library to read a yaml file",ERRDIV);
-#else
-
   try {
     _natom = doc["natom"].as<unsigned>();
     _spinat.clear();
@@ -109,5 +105,5 @@ void PhonopyDtset::readFromYAML(const YAML::Node &doc) {
   catch ( ... ) {
     throw EXCEPTION("Yaml error happend",ERRABT);
   }
-#endif 
 }
+#endif 

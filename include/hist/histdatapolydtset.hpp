@@ -1,5 +1,5 @@
 /**
- * @file include/./phonopydtset.hpp
+ * @file include/./histdatapolydtset.hpp
  *
  * @brief 
  *
@@ -24,8 +24,8 @@
  */
 
 
-#ifndef PHONOPYDTSET_HPP
-#define PHONOPYDTSET_HPP
+#ifndef HISTDATAPOLYDTSET_HPP
+#define HISTDATAPOLYDTSET_HPP
 
 #ifdef _WIN32
 #include "base/win32.hpp"
@@ -36,15 +36,12 @@
 #undef HAVE_CONFIG_H
 #endif
 
-#include "io/dtset.hpp"
-#ifdef HAVE_YAMLCPP
-#include "io/yaml.hpp"
-#endif
+#include "hist/histdatadtset.hpp"
 
 /** 
  *
  */
-class PhonopyDtset : public Dtset {
+class HistDataPolyDtset : public HistDataDtset {
 
   private :
 
@@ -55,26 +52,19 @@ class PhonopyDtset : public Dtset {
     /**
      * Constructor.
      */
-    PhonopyDtset();
+    HistDataPolyDtset();
 
     /**
      * Destructor.
      */
-    virtual ~PhonopyDtset();
+    virtual ~HistDataPolyDtset();
 
     /**
-     * Fill a Dtset from an input file.
-     * @param filename The name of the input file to read.
+     * Open a file and read it to fill the data
+     * @param filename Name of the file
      */
     virtual void readFromFile(const std::string& filename);
 
-#ifdef HAVE_YAMLCPP
-    /**
-     * Fill a Dtset from an input file.
-     * @param filename The name of the input file to read.
-     */
-    virtual void readFromYAML(const YAML::Node &doc);
-#endif
 };
 
-#endif  // PHONOPYDTSET_HPP
+#endif  // HISTDATAPOLYDTSET_HPP

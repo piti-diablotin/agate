@@ -49,10 +49,16 @@ class CanvasLocal : public CanvasPos {
   private :
     enum LocalView { ANGLES, LENGTHS };
 
+    bool                    _baseCart;     ///< Set to true if octahedra are in the cart basis, false if in the basis defined by the octahedra set by the first time step
     float                   _octacolor[6]; ///< Store the two colors for plotting the cubes representing the rotations.
     TriCube                 _cube;         ///< A cube to visualize the rotations.
     LocalView               _view;
     std::vector<std::array<float,3>> _orientations; ///< Orientation of the octahedra with respect to cartesian axis.
+
+    /**
+     * Update octahedra in the cartesian basis or the reference basis (time step 0)
+     */
+    void resetBase();
 
   protected :
 

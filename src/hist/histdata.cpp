@@ -33,6 +33,7 @@
 #include "hist/histdatanc.hpp"
 #include "hist/histdataoutnc.hpp"
 #include "hist/histdatadtset.hpp"
+#include "hist/histdatapolydtset.hpp"
 #include "hist/histdataheff.hpp"
 #include "hist/vaspxml.hpp"
 #include "hist/multibinit.hpp"
@@ -525,6 +526,7 @@ HistData* HistData::getHist(const std::string& file, bool wait){
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataXYZ),"XYZ"));     //5
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataOutNC),"Abinit _OUT.nc"));   //6
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataGSR),"Abinit _GSR.nc"));   //7
+  allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataPolyDtset),""));   //8
 
   if ( file.find("_HIST") != std::string::npos || file.find("_HIST.nc") != std::string::npos ) allFormat[0].swap(allFormat[1]);
   else if ( file.find("_OUT.nc") != std::string::npos ) allFormat[0].swap(allFormat[6]);
@@ -533,6 +535,10 @@ HistData* HistData::getHist(const std::string& file, bool wait){
   else if ( file.find(".xyz") != std::string::npos ) allFormat[0].swap(allFormat[5]);
   else if ( file.find(".dsp") != std::string::npos ) allFormat[0].swap(allFormat[2]);
   else if ( file.find("_GSR.nc") != std::string::npos ) allFormat[0].swap(allFormat[7]);
+  else if ( file.find(".nc") != std::string::npos ) allFormat[0].swap(allFormat[8]);
+  else if ( file.find("POSCAR") != std::string::npos ) allFormat[0].swap(allFormat[8]);
+  else if ( file.find("_DEN") != std::string::npos ) allFormat[0].swap(allFormat[8]);
+  else if ( file.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[8]);
 
   for ( auto& p : allFormat ) {
     try {
@@ -549,7 +555,8 @@ HistData* HistData::getHist(const std::string& file, bool wait){
       eloc.ADD("Format is not "+p.second,ERRDIV);
     }
     if ( hist != nullptr ) {
-      std::clog << "Format is "+p.second << std::endl;
+      if ( ! p.second.empty() )
+        std::clog << "Format is "+p.second << std::endl;
 #ifdef HAVE_CPPTHREAD
       if ( wait ) {
         hist->waitTime(hist->_ntime);

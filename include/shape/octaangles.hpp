@@ -50,6 +50,7 @@ class OctaAngles : public Octahedra {
   private :
     
     std::array<float,3> _angles; ///< The angles around the three axis.
+    std::array<geometry::vec3d,3> _savedBasis; ///< Saved reference basis of the octahedra
 
   protected :
 
@@ -107,8 +108,9 @@ class OctaAngles : public Octahedra {
      * @param rprim The primitive vectors used for translation.
      * @param xcart The full set of coordinates of all atoms.
      * @param new_atoms A set of the center atom id and 3 floats giving the angles around x,y and z
+     * @param cartBasis Do we keep the cartesian basis or not ?
      */
-    virtual void buildCart(const double *rprim, const double *xcart, u3f &new_atoms) ;
+    virtual void buildCart(const double *rprim, const double *xcart, u3f &new_atoms, bool cartBasis) ;
 
     /**
      * Access the value of the rotation around x

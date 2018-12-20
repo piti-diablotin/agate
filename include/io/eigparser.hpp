@@ -185,6 +185,12 @@ class EigParser {
           _lengths.begin(),
           (_hasSpin ? _lengths.begin()+_lengths.size()/2 : _lengths.end())
           ); }
+
+    /**
+     * Getter for the filename\
+     * @return the name of the file read for generating this structure
+     */
+    std::string getFilename() { return _filename; }
     
     /**
      * Try to read a band structure file

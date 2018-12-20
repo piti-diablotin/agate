@@ -70,7 +70,6 @@ std::vector<unsigned> EigParserElectrons::getBandColor(const unsigned iband, con
   unsigned nkpt = _kpts.size()/spin;
 
   if ( _hasSpin ) {
-    nkpt /= 2;
     if ( nkpt*2 != _kpts.size() )
       throw EXCEPTION("Non-consistent data : bad number of k-points",ERRABT);
     if ( ispin != 1 && ispin != 2 )

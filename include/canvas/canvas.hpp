@@ -40,6 +40,7 @@
 #include "hist/histdata.hpp"
 #include "base/geometry.hpp"
 #include "io/configparser.hpp"
+#include "io/eigparser.hpp"
 #include "hist/histdata.hpp"
 #include "graphism/triobj.hpp"
 #include "graphism/textrender.hpp"
@@ -73,6 +74,7 @@ class Canvas {
     std::unique_ptr<HistData> _histdata; ///< HistData saved in case need to output something
 
     std::unique_ptr<Graph> _gplot; ///< Handle to plot things if necessary;
+    std::unique_ptr<EigParser> _eigparser; ///< Handle to plot things if necessary;
 
     /**
      * Alter/modify a canvas with respect to a keyword and stream containing data.
@@ -402,6 +404,14 @@ class Canvas {
      * @param plot a Graph pointer 
      */
     void setGraph(Graph *plot) { _gplot.reset(plot); }
+
+    /**
+     * Function to plot a band structure
+     * @param eigenparser An EigParser object to plot
+     * @param parser A ConfigParser to get the parameters for the plot
+     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
+     */
+    void plotBand(EigParser &eigparser, ConfigParser &config, Graph::GraphSave save);
 
     /**
      * Display help message with all command that are use in this class

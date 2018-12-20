@@ -32,6 +32,7 @@
 
 //
 CanvasLocal::CanvasLocal(bool drawing) : CanvasPos(drawing),
+  _baseCart(false),
   _octacolor(),
   _cube(_opengl),
   _view(ANGLES),
@@ -48,6 +49,7 @@ CanvasLocal::CanvasLocal(bool drawing) : CanvasPos(drawing),
 
 //
 CanvasLocal::CanvasLocal(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
+  _baseCart(false),
   _octacolor(),
   _cube(_opengl),
   _view(ANGLES),
@@ -60,23 +62,26 @@ CanvasLocal::CanvasLocal(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _octacolor[4] = 0.f;
   _octacolor[5] = 0.f;
 
+  if ( _histdata == nullptr ) return;
+
   const double *rprimd = _histdata->getRprimd(0);
   const double *xcart = _histdata->getXcart(0);
   Octahedra::u3f angles;
 
   if ( !_octahedra.empty() && typeid(_octahedra[0].get()) != typeid(OctaAngles*) ) {
+    std::cerr << "fine" << std::endl;
     switch ( _view ) {
       case ANGLES :
         for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
           OctaAngles *tmpocta = new OctaAngles(std::move(*_octahedra[i].get()));
-          tmpocta->buildCart(rprimd,xcart,angles);
+          tmpocta->buildCart(rprimd,xcart,angles,_baseCart);
           _octahedra[i].reset(tmpocta);
         }
         break;
       case LENGTHS :
         for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
           OctaAngles *tmpocta = new OctaAngles(std::move(*_octahedra[i].get()));
-          tmpocta->buildCart(rprimd,xcart,angles);
+          tmpocta->buildCart(rprimd,xcart,angles,false);
           OctaLengths *pushocta = new OctaLengths(std::move(*tmpocta));
           delete tmpocta;
           _octahedra[i].reset(pushocta);
@@ -216,7 +221,7 @@ void CanvasLocal::updateOctahedra(int z) {
           for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom ){
             if ( _typat[iatom] == typat ) {
               OctaAngles *tmpocta = new OctaAngles(iatom,_natom,xred,&xcartTotal[0],rprimd,_opengl); //Construct octahedra based on xcart at time 0
-              tmpocta->buildCart(rprimd,histXcart,angles);
+              tmpocta->buildCart(rprimd,histXcart,angles,_baseCart);
               _octahedra.push_back(std::unique_ptr<Octahedra>(tmpocta));
             }
           }
@@ -225,7 +230,7 @@ void CanvasLocal::updateOctahedra(int z) {
           for ( unsigned iatom = 0 ; iatom < _natom+_onBorders.size() ; ++iatom ){
             if ( _typat[iatom] == typat ) {
               OctaAngles *tmpocta = new OctaAngles(iatom,_natom,xred,&xcartTotal[0],rprimd,_opengl); //Construct octahedra based on xcart at time 0
-              tmpocta->buildCart(rprimd,histXcart,angles);
+              tmpocta->buildCart(rprimd,histXcart,angles,false);
               OctaLengths *pushocta = new OctaLengths(std::move(*tmpocta));
               _octahedra.push_back(std::unique_ptr<Octahedra>(pushocta));
             }
@@ -275,6 +280,16 @@ void CanvasLocal::updateOctahedra(int z) {
 
 //
 void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
+
+  std::string line;
+  size_t pos = stream.tellg();
+  std::getline(stream,line);
+  stream.clear();
+  stream.seekg(pos);
+  ConfigParser parser;
+  parser.setSensitive(true);
+  parser.setContent(line);
+
   if ( token == "c" || token == "color" ){
     unsigned c[3];
     float *tomodify = nullptr;
@@ -299,6 +314,24 @@ void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
       _cube.genUnit();
     }
   }
+  else if ( token == "basis" ) {
+    std::string base;
+    stream >> base;
+    if ( !stream.fail() && _histdata != nullptr ) { 
+      if ( base == "cart" ) {
+        _baseCart = true;
+        this->resetBase();
+      }
+      else if ( base == "rel" ) {
+        _baseCart = false;
+        this->resetBase();
+      }
+      else
+        throw EXCEPTION("Unknown basis "+base,ERRABT);
+    }
+    else
+      throw EXCEPTION("Stream error: specify either cart or rel",ERRABT);
+  } 
   else if ( token == "rot" ) {
     std::string ext;
     try {
@@ -309,29 +342,34 @@ void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
       // Write header
       file << "# " << std::setw(20) << "Time step";
       for ( unsigned i = 0 ; i < _octahedra.size() ; ++ i ) {
-        file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " alpha";
-        file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " beta";
-        file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " gamma";
+        if ( _octahedra[i]->center() >= _natom ) continue;
+        file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center()+1 << std::setw(6) << " alpha";
+        file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center()+1 << std::setw(6) << " beta";
+        file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center()+1 << std::setw(6) << " gamma";
       }
       file << std::endl;
       // Write data
       file.precision(14);
       file.setf(std::ios::scientific,std::ios::floatfield);
       file.setf(std::ios::right,std::ios::adjustfield);
+      const double *rprimd0 = _histdata->getRprimd(0);
+      const double *xcart0 = _histdata->getXcart(0);
 #pragma omp for ordered, schedule(static)
       for ( int itime = _tbegin ; itime < _tend ; ++itime ) {
         Octahedra::u3f angles;
+        Octahedra::u3f angles0;
         const double *rprimd = _histdata->getRprimd(itime);
         const double *xcart = _histdata->getXcart(itime);
         for( auto& octa : _octahedra ){
           OctaAngles oa(*dynamic_cast<Octahedra*>(octa.get()));
+          oa.buildCart(rprimd0,xcart0,angles0,_baseCart);
           oa.build(rprimd,xcart,angles);
         }
 
 #pragma omp ordered
         {
         file << std::setw(22) << itime;
-        for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
+        for ( unsigned i = 0 ; i < angles.size() ; ++i ) {
           file << std::setw(22) << angles[i].second[0];
           file << std::setw(22) << angles[i].second[1];
           file << std::setw(22) << angles[i].second[2];
@@ -359,6 +397,7 @@ void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
       // Write header
       file << "# " << std::setw(20) << "Time step";
       for ( unsigned i = 0 ; i < _octahedra.size() ; ++ i ) {
+        if ( _octahedra[i]->center() >= _natom ) continue;
         file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " a";
         file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " b";
         file << std::setw(9) << "atom " << std::setw(7) << _octahedra[i]->center() << std::setw(6) << " c";
@@ -397,7 +436,7 @@ void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
 #pragma omp ordered
         {
         file << std::setw(22) << itime;
-        for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
+        for ( unsigned i = 0 ; i < angles.size() ; ++i ) {
           file << std::setw(22) << angles[i].second[0];
           file << std::setw(22) << angles[i].second[1];
           file << std::setw(22) << angles[i].second[2];
@@ -447,6 +486,38 @@ void CanvasLocal::convertOctahedra() {
         _octahedra[i].reset(tmpocta);
       }
       break;
+  }
+}
+
+
+void CanvasLocal::resetBase() {
+  if ( _histdata == nullptr ) return;
+  const double *rprimd = _histdata->getRprimd(0);
+  const double *xcart = _histdata->getXcart(0);
+  Octahedra::u3f angles;
+
+  if ( !_octahedra.empty() && typeid(_octahedra[0].get()) != typeid(OctaAngles*) ) {
+    switch ( _view ) {
+      case ANGLES :
+        for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
+          OctaAngles *tmpocta = dynamic_cast<OctaAngles*>(_octahedra[i].get());
+          tmpocta->buildCart(rprimd,xcart,angles,_baseCart);
+        }
+        _orientations.resize(_octahedra.size());
+        for ( unsigned i = 0 ; i <_octahedra.size() ; ++i ) {
+          _orientations[i] = angles[i].second;
+        }
+        break;
+      case LENGTHS :
+        //for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
+        //  OctaAngles *tmpocta = new OctaAngles(std::move(*_octahedra[i].get()));
+        //  tmpocta->buildCart(rprimd,xcart,angles,false);
+        //  OctaLengths *pushocta = new OctaLengths(std::move(*tmpocta));
+        //  delete tmpocta;
+        //  _octahedra[i].reset(pushocta);
+        //}
+        break;
+    }
   }
 }
 

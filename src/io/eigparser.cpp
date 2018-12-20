@@ -195,6 +195,7 @@ EigParser* EigParser::getEigParser(const std::string& file){
     }
     if ( eigparser != nullptr ) {
       std::clog << "Format is "+p.second << std::endl;
+      eigparser->_filename = file;
       return eigparser;
     }
   }

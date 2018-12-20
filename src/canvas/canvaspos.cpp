@@ -1279,16 +1279,16 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
   (void) tend;
 
   stream >> function;
-  std::vector<double> &x = config.x;
-  std::list<std::vector<double>> &y = config.y;
-  //std::list<std::pair<std::vector<double>,std::vector<double>>> &xy = config.xy;
-  std::list<std::string> &labels = config.labels;
-  std::vector<short> &colors = config.colors;
-  std::string &filename = config.filename;
-  std::string &xlabel = config.xlabel;
-  std::string &ylabel = config.ylabel;
-  std::string &title = config.title;
-  bool &doSumUp = config.doSumUp;
+  //std::vector<double> &x = config.x;
+  //std::list<std::vector<double>> &y = config.y;
+  ////std::list<std::pair<std::vector<double>,std::vector<double>>> &xy = config.xy;
+  //std::list<std::string> &labels = config.labels;
+  //std::vector<short> &colors = config.colors;
+  //std::string &filename = config.filename;
+  //std::string &xlabel = config.xlabel;
+  //std::string &ylabel = config.ylabel;
+  //std::string &title = config.title;
+  //bool &doSumUp = config.doSumUp;
 
   std::string line;
   size_t pos = stream.tellg();
@@ -1301,224 +1301,23 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
 
   // band
   if ( function == "band" ) {
-    if ( _gplot != nullptr )
-      _gplot->setWinTitle("Band Structure");
-    doSumUp = false;
-    title = "Band Structure";
-    xlabel = "k-path";
-    std::clog << std::endl << " -- Band Structure --" << std::endl;
     std::string bandfile;
     stream >> bandfile;
     if ( stream.fail() )
       throw EXCEPTION("You need to specify a filename",ERRDIV);
 
-    try {
-      filename = parser.getToken<std::string>("output");
-    }
-    catch (Exception &e) {
-      filename = utils::noSuffix(bandfile)+"_bandStruct";
-    }
-    
-
-    EigParser* eigparser;
-    try {
-      eigparser = EigParser::getEigParser(bandfile);
-    }
-    catch (Exception &e) {
-      e.ADD("Unable to get an EigParser",ERRDIV);
-      throw e;
-    }
-    double fermi = 0;
-    try {
-      fermi = parser.getToken<double>("fermi");
-    }
-    catch (Exception &e) {
-      if ( e.getReturnValue() != ConfigParser::ERFOUND )
-        throw e;
-    }
-    try {
-      std::string strUnit = utils::tolower(parser.getToken<std::string>("eunit"));
-      EigParser::Unit eunit;
-      if ( strUnit == "ev" )
-        eunit = EigParser::eV;
-      else if ( strUnit == "ha" )
-        eunit = EigParser::Ha;
-      else if ( strUnit == "thz" )
-        eunit = EigParser::THz;
-      else if ( strUnit == "cm-1" )
-        eunit = EigParser::pcm;
-      eigparser->setUnit(eunit);
-
-    }
-    catch (Exception &e) {
-      if ( e.getReturnValue() != ConfigParser::ERFOUND )
-        throw e;
-    }
-    unsigned ignore = 0;
-    try {
-      ignore = parser.getToken<double>("ignore");
-      if ( ignore >= eigparser->getNband() )
-        throw EXCEPTION("ignore should be smaller than the number of bands",ERRDIV);
-    }
-    catch (Exception &e) {
-      if ( e.getReturnValue() != ConfigParser::ERFOUND )
-        throw e;
-    }
-    std::vector<unsigned> ndiv = eigparser->getNdiv();
-    std::vector<std::string> kptlabels = eigparser->getLabels();
-    try {
-      std::string tok1 = parser.getToken<std::string>("ndiv");
-      std::vector<std::string> ndivk = utils::explode(tok1,':');
-      ndiv.clear();
-      for ( auto div : ndivk )
-        ndiv.push_back(utils::stoi(div));
-    }
-    catch (Exception &e) {
-      if ( e.getReturnValue() != ConfigParser::ERFOUND )
-        throw e;
-    }
-    try {
-      std::string tok2 = parser.getToken<std::string>("labels");
-      kptlabels = utils::explode(tok2,':');
-    }
-    catch (Exception &e) {
-      if ( e.getReturnValue() != ConfigParser::ERFOUND )
-        throw e;
-    }
-    switch (eigparser->getUnit()) {
-      case EigParser::Unit::eV:
-        ylabel = "Energy [eV]";
-        break;
-      case EigParser::Unit::Ha:
-        ylabel = "Energy [Ha]";
-        break;
-      case EigParser::Unit::THz:
-        ylabel = "Energy [THz]";
-        break;
-      case EigParser::Unit::pcm:
-        ylabel = "Energy [cm-1]";
-        break;
-      default:
-        ylabel = "Energy";
-    }
-
-    std::vector<unsigned> projectionUMask;
-    bool projection = false;
-    if ( parser.hasToken("fatband") ) {
-      projection = true;
+    if ( _eigparser == nullptr || (_eigparser != nullptr && _eigparser->getFilename() != bandfile) ) {
       try {
-        projectionUMask = parser.getToken<unsigned>("fatband",eigparser->getNband());
+        _eigparser.reset(EigParser::getEigParser(bandfile));
       }
-      catch ( Exception &e ) { 
-        if ( e.getReturnValue() & ConfigParser::ERDIM ) {
-          auto blabla = e.what("",true);
-          auto pos = blabla.find("Could only read ");
-          int maxToRead = 0;
-          if ( pos != std::string::npos ) {
-            std::istringstream sub(blabla.substr(pos+16));
-            sub >> maxToRead;
-            projectionUMask = parser.getToken<unsigned>("fatband",maxToRead);
-          }
-        }
+      catch (Exception &e) {
+        e.ADD("Unable to get an EigParser",ERRDIV);
+        throw e;
       }
     }
 
-    EigParserElectrons* eeig = nullptr;
-    if ( (eeig = dynamic_cast<EigParserElectrons*>(eigparser)) ) {
-      std::vector<int> m;
-      int lang;
-      if ( parser.hasToken("angular") ) {
-        lang = parser.getToken<int>("angular");
-        if ( parser.hasToken("magnetic") ) {
-          try {
-            m = parser.getToken<int>("magnetic",2*lang+1);
-          }
-          catch ( Exception &e ) { 
-            if ( e.getReturnValue() & ConfigParser::ERDIM ) {
-              auto blabla = e.what("",true);
-              auto pos = blabla.find("Could only read ");
-              int maxToRead = 0;
-              if ( pos != std::string::npos ) {
-                std::istringstream sub(blabla.substr(pos+16));
-                sub >> maxToRead;
-                m = parser.getToken<int>("magnetic",maxToRead);
-              }
-            }
-          }
-        }
-        else {
-          m.resize(2*lang+1);
-          int i = -lang;
-          for(auto& mm : m )
-            mm = (i++);
-        }
-        eeig->selectLM(lang,m);
-      }
-      else {
-        if ( parser.hasToken("magnetic") ) {
-          throw EXCEPTION("You need to specify the angular quantum number first",ERRDIV);
-        }
-      }
-      eeig = nullptr;
-    }
 
-    x = eigparser->getPath();
-    std::list<std::vector<unsigned>> &projectionsColor = config.rgb;
-    for ( unsigned iband = ignore ; iband < eigparser->getNband() ; ++iband ) {
-      y.push_back(std::move(eigparser->getBand(iband,fermi,1)));
-      if ( projection )
-        projectionsColor.push_back(std::move(eigparser->getBandColor(iband,1,projectionUMask)));
-      colors.push_back(0);
-      labels.push_back("");
-    }
-    if ( eigparser->isPolarized() ) {
-      *labels.begin() = "Spin 1";
-      labels.push_back("Spin 2");
-      for ( unsigned iband = ignore ; iband < eigparser->getNband() ; ++iband ) {
-        y.push_back(std::move(eigparser->getBand(iband,fermi,2)));
-        if ( projection )
-          projectionsColor.push_back(std::move(eigparser->getBandColor(iband,2,projectionUMask)));
-        colors.push_back(1);
-        labels.push_back("");
-      }
-      labels.pop_back();
-    }
-    double minval = *std::min_element(y.begin()->begin(),y.begin()->end());
-    double maxval = *std::max_element(y.rbegin()->begin(),y.rbegin()->end());
-    double min = minval-(maxval-minval)*0.1;
-    double max = maxval+(maxval-minval)*0.1;
-    std::stringstream tmp;
-    if ( _gplot != nullptr ) {
-      _gplot->setXRange(0,eigparser->getLength());
-      _gplot->setYRange(min,max);
-      _gplot->addArrow(0,0,eigparser->getLength(),0,false);
-      unsigned kptsize = kptlabels.size();
-      if ( ndiv.size() > 0 &&  (ndiv.size() == kptsize-1 || kptsize == 0 ) ) {
-        if ( kptsize > 0 ) {
-          _gplot->addXTic(kptlabels[0],0);
-        }
-        unsigned acc = 0;
-        for ( unsigned i = 0 ; i < ndiv.size()-1 ; ++i ) {
-          acc += ndiv[i];
-          if ( acc >= x.size() )
-            throw EXCEPTION("Something is wrong in you ndiv argument",ERRDIV);
-          if ( kptsize > 0 ) {
-            _gplot->addXTic(kptlabels[i+1],x[acc]);
-          }
-          _gplot->addArrow(x[acc],min,x[acc],max,false);
-        }
-        if ( kptsize > 0 ) {
-          _gplot->addXTic(*kptlabels.rbegin(),eigparser->getLength());
-        }
-      }
-      else if ( ndiv.size() > 0 &&  ndiv.size() != kptlabels.size()-1 ) {
-        throw EXCEPTION("Number of ndiv not compatible with number of labels",ERRDIV);
-      }
-    }
-    if ( save == Graph::GraphSave::DATA ) { 
-      eigparser->dump(filename+".dat",EigParser::PRTKPT|EigParser::PRTIKPT|(projection ? EigParser::PRTPROJ : 0));
-      save = Graph::GraphSave::NONE;
-    }
+    this->plotBand(*(_eigparser.get()),parser,save);
   }
   else if ( function == "tdep" ) {
     if ( _histdata == nullptr ) 
@@ -1625,10 +1424,10 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
   else {
     throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet or your need to load a file first"),ERRABT);
   }
-  config.save = save;
-  Graph::plot(config,_gplot.get());
-  if ( _gplot != nullptr )
-    _gplot->clearCustom();
+  //config.save = save;
+  //Graph::plot(config,_gplot.get());
+  //if ( _gplot != nullptr )
+  //  _gplot->clearCustom();
 }
 
 void CanvasPos::buildBorders(unsigned itime, bool findBorder) {

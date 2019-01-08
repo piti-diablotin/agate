@@ -642,7 +642,7 @@ void Canvas::plotBand(EigParser &eigparser, ConfigParser &parser, Graph::GraphSa
       for ( unsigned i = 0 ; i < ndiv.size()-1 ; ++i ) {
         acc += ndiv[i];
         if ( acc >= x.size() )
-          throw EXCEPTION("Something is wrong in you ndiv argument",ERRDIV);
+          throw EXCEPTION("Something is wrong in your ndiv argument",ERRDIV);
         if ( kptsize > 0 ) {
           _gplot->addXTic(kptlabels[i+1],x[acc]);
         }

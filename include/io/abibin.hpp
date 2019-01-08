@@ -37,6 +37,7 @@
 #endif
 
 #include "io/dtset.hpp"
+#include "io/abihdr.hpp"
 #include "base/geometry.hpp"
 
 /** 
@@ -53,6 +54,7 @@ class AbiBin : public Dtset {
     int _nspden;                                  ///< Number of densities to read in the file
     int _ngfft[3];                                ///< Grid for FFT along a, b and c
     std::vector<double> _fftData;                 ///< Data point along a, b and c directions.
+    AbiHdr _header;
 
   public :
 

@@ -538,6 +538,8 @@ HistData* HistData::getHist(const std::string& file, bool wait){
   else if ( file.find(".nc") != std::string::npos ) allFormat[0].swap(allFormat[8]);
   else if ( file.find("POSCAR") != std::string::npos ) allFormat[0].swap(allFormat[8]);
   else if ( file.find("_DEN") != std::string::npos ) allFormat[0].swap(allFormat[8]);
+  else if ( file.find("_POT") != std::string::npos ) allFormat[0].swap(allFormat[8]);
+  else if ( file.find("_OPT") != std::string::npos ) allFormat[0].swap(allFormat[8]);
   else if ( file.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[8]);
 
   for ( auto& p : allFormat ) {

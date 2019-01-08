@@ -27,7 +27,7 @@
 #include "hist/histdatapolydtset.hpp"
 #include "io/poscar.hpp"
 #include "io/etsfnc.hpp"
-#include "io/abibin.hpp"
+#include "io/abihdr.hpp"
 #include "io/phonopydtset.hpp"
 #include <memory>
 
@@ -48,12 +48,14 @@ void HistDataPolyDtset::readFromFile(const std::string& filename) {
   std::vector<std::pair<std::unique_ptr<Dtset>,std::string> > allFormat;
 
   allFormat.push_back(std::make_pair(std::unique_ptr<Dtset>(new Poscar),"POSCAR")); //0
-  allFormat.push_back(std::make_pair(std::unique_ptr<Dtset>(new AbiBin),"Abinit Binary"));   //1
+  allFormat.push_back(std::make_pair(std::unique_ptr<Dtset>(new AbiHdr),"Abinit Binary Header"));   //1
   allFormat.push_back(std::make_pair(std::unique_ptr<Dtset>(new EtsfNC),"ETSF"));   //2
   allFormat.push_back(std::make_pair(std::unique_ptr<Dtset>(new PhonopyDtset),"Phonopy"));     //3
 
   if      ( filename.find("POSCAR") != std::string::npos ) allFormat[0].swap(allFormat[0]);
   else if ( filename.find("_DEN") != std::string::npos ) allFormat[0].swap(allFormat[1]);
+  else if ( filename.find("_OPT") != std::string::npos ) allFormat[0].swap(allFormat[1]);
+  else if ( filename.find("_POT") != std::string::npos ) allFormat[0].swap(allFormat[1]);
   else if ( filename.find(".nc") != std::string::npos ) allFormat[0].swap(allFormat[2]);
   else if ( filename.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[3]);
 
@@ -68,16 +70,15 @@ void HistDataPolyDtset::readFromFile(const std::string& filename) {
       if ( e.getReturnValue() == ERRABT ) {
         break;
       }
-      eloc.ADD("Format is not "+p.second,ERRDIV);
+      eloc.ADD("Format is not "+p.second,e.getReturnValue());
     }
     if ( dtset != nullptr ) {
       std::clog << "Format is "+p.second << std::endl;
       this->buildFromDtset(*dtset);
+      _filename = filename;
       delete dtset;
       return;
     }
   }
-
-  eloc.ADD("Failed to build the HistData file",ERRDIV);
   throw eloc;
 }

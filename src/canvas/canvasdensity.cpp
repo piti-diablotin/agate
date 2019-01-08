@@ -46,7 +46,7 @@ CanvasDensity::CanvasDensity(bool drawing) : CanvasPos(drawing),
 
 CanvasDensity::CanvasDensity(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _origin(0),
-  _npoints(1),
+  _npoints(0),
   _ipoint(0),
   _ibegin(0),
   _iend(-1),
@@ -60,8 +60,14 @@ CanvasDensity::CanvasDensity(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
 {
   _nLoop = -2;
   if ( _histdata == nullptr ) return;
-  _density.readFromFile(_histdata->filename());
-  this->setData();
+  try {
+    _density.readFromFile(_histdata->filename());
+    this->setData();
+  }
+  catch ( Exception &e ) {
+    e.ADD("Need a density or potential file",ERRDIV);
+    std::clog << e.fullWhat() << std::endl;
+  }
 }
 
 //
@@ -117,13 +123,21 @@ void CanvasDensity::setData() {
 void CanvasDensity::setHist(HistData& hist) {
   CanvasPos::setHist(hist);
   if ( _histdata == nullptr ) return;
-  _density.readFromFile(_histdata->filename());
-  this->setData();
+  try {
+    _density.readFromFile(_histdata->filename());
+    this->setData();
+  }
+  catch ( Exception &e ) {
+    e.ADD("Need a density or potential file",ERRDIV);
+    std::clog << e.fullWhat() << std::endl;
+  }
 }
 
 void CanvasDensity::refresh(const geometry::vec3d &cam, TextRender &render) {
+  if ( _histdata == nullptr ) return;
   CanvasPos::refresh(cam,render);
   CanvasPos::drawCell();
+  if ( _npoints == 0 ) return;
 
   std::vector<double> values;
   auto normal = _density.getVector(_normal);
@@ -159,6 +173,10 @@ void CanvasDensity::refresh(const geometry::vec3d &cam, TextRender &render) {
 }
 
 void CanvasDensity::setNTime(int ntime) {
+  if ( _npoints == 0 ) {
+    CanvasPos::setNTime(ntime);
+    return;
+  }
   if ( ntime == 0 ) return;
   if ( ntime != 1 ) 
     throw EXCEPTION("ntime should be equal to 1 in density mode!",ERRDIV);

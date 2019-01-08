@@ -308,14 +308,15 @@ void Window::loopStep() {
     initBuffer = 0;
   }
 
-  const float aspect = (_optionf["aspect"] = (float) _width / (float) _height);
-  const float distance = (_optionf["distance"] = 1.2f*_canvas->typicalDim());
-
   if ( update || !_canvas->isPaused() ) {
     update = true;
     const bool paral_proj = _optionb["paral_proj"];
     float& zoom = ( _optionf["zoom"]+= _optionf["wheel"]*0.04f);
     if ( zoom < 0.01f ) zoom = 0.01f;
+
+    const float aspect = (_optionf["aspect"] = (float) _width / (float) _height);
+    const float distance = (_optionf["distance"] = 1.2f*_canvas->typicalDim());
+
 
 #ifdef HAVE_GL
     glViewport(0,0,_width,_height);
@@ -350,7 +351,7 @@ void Window::loopStep() {
 
     const float totalfactor = ( (aspect > 1.f || paral_proj) ? 1.f : 1.f/aspect ) 
       * factor_proj * distance * ( paral_proj ? 4.f : zoom); // 4 is for the spot light
-    
+
     const float campsi   = _optionf["campsi"];
     const float camtheta = _optionf["camtheta"];
     const float camphi   = _optionf["camphi"];
@@ -360,7 +361,7 @@ void Window::loopStep() {
 
 
     _canvas->refresh({{totalfactor*euler[0],totalfactor*euler[3],totalfactor*euler[6]}},_render);
-    if ( _canvas->ntime() >= 1 && _optionb["axis"] ) this->drawAxis();
+    if ( /*_canvas->ntime() >= 1 &&*/ _optionb["axis"] ) this->drawAxis();
 
     if ( _optionb["takeSnapshot"] || (_movie && !_canvas->isPaused()) ) this->snapshot();
 
@@ -913,64 +914,64 @@ void Window::drawAxis() {
 
 void Window::lookAt(double zoom, double centerX, double centerY, double centerZ) {
   using namespace geometry;
-    const float& campsi   = _optionf["campsi"];
-    const float& camtheta = _optionf["camtheta"];
-    const float& camphi   = _optionf["camphi"];
+  const float& campsi   = _optionf["campsi"];
+  const float& camtheta = _optionf["camtheta"];
+  const float& camphi   = _optionf["camphi"];
 
-    geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
-    const float eyeX = zoom*euler[0];
-    const float eyeY = zoom*euler[3];
-    const float eyeZ = zoom*euler[6];
+  geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
+  const float eyeX = zoom*euler[0];
+  const float eyeY = zoom*euler[3];
+  const float eyeZ = zoom*euler[6];
 
-    const float upX = euler[2];
-    const float upY = euler[5];
-    const float upZ = euler[8];
+  const float upX = euler[2];
+  const float upY = euler[5];
+  const float upZ = euler[8];
 
-    vec3d f({{
-        centerX-eyeX,
-        centerY-eyeY,
-        centerZ-eyeZ
-        }});
-    f = f*(1./norm(f));
+  vec3d f({{
+      centerX-eyeX,
+      centerY-eyeY,
+      centerZ-eyeZ
+      }});
+  f = f*(1./norm(f));
 
-    vec3d s({{
-         f[1]*upZ-f[2]*upY,
-         f[2]*upX-f[0]*upZ,
-         f[0]*upY-f[1]*upX
-        }});
-    s = s*(1./norm(s));
+  vec3d s({{
+      f[1]*upZ-f[2]*upY,
+      f[2]*upX-f[0]*upZ,
+      f[0]*upY-f[1]*upX
+      }});
+  s = s*(1./norm(s));
 
-    vec3d u({{
-         s[1]*f[2]-s[2]*f[1],
-         s[2]*f[0]-s[0]*f[2],
-         s[0]*f[1]-s[1]*f[0]
-        }});
-    u = u*(1./norm(u));
-    
+  vec3d u({{
+      s[1]*f[2]-s[2]*f[1],
+      s[2]*f[0]-s[0]*f[2],
+      s[0]*f[1]-s[1]*f[0]
+      }});
+  u = u*(1./norm(u));
 
-    float M[16];
-    M[0] =  s[0];
-    M[4] =  s[1];
-    M[8] =  s[2];
-    M[12] = 0;
 
-    M[1] =  u[0];
-    M[5] =  u[1];
-    M[9] =  u[2];
-    M[13] = 0;
+  float M[16];
+  M[0] =  s[0];
+  M[4] =  s[1];
+  M[8] =  s[2];
+  M[12] = 0;
 
-    M[2] = -f[0];
-    M[6] = -f[1];
-    M[10] = -f[2];
-    M[14] = 0;
+  M[1] =  u[0];
+  M[5] =  u[1];
+  M[9] =  u[2];
+  M[13] = 0;
 
-    M[3] = 0;
-    M[7] = 0;
-    M[11] = 0;
-    M[15] = 1;
+  M[2] = -f[0];
+  M[6] = -f[1];
+  M[10] = -f[2];
+  M[14] = 0;
 
-    glMultMatrixf(M);
-    glTranslated(-eyeX, -eyeY, -eyeZ);
+  M[3] = 0;
+  M[7] = 0;
+  M[11] = 0;
+  M[15] = 1;
+
+  glMultMatrixf(M);
+  glTranslated(-eyeX, -eyeY, -eyeZ);
 
 }
 

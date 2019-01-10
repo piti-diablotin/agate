@@ -91,7 +91,7 @@ class AbiHdr : virtual public Dtset {
     std::vector<int> _symrel;
     //std::vector<> typat;
     std::vector<double> _kptns;
-    std::vector<double> _occ3d;
+    std::vector<double> _occ3d; ///< Occupation in nsppol*nkpt*mband
     std::vector<double> _tnons;
     //std::vector<> znucltypat;
     std::vector<double> _wtk;
@@ -140,80 +140,80 @@ class AbiHdr : virtual public Dtset {
      */
     virtual void readFromFile(const std::string& filename);
 
-    const char* codvsn(){return _codvsn;}
-    const int& hdrform(){return _hdrform;}
-    const int& fform(){return _fform;}
+    const char* codvsn() const {return _codvsn;}
+    const int& hdrform() const {return _hdrform;}
+    const int& fform() const {return _fform;}
     // <H2>                 
-    const int& bandtot(){return _bandtot;}
-    const int& date(){return _date;}
-    const int& intxc(){return _intxc;}
-    const int& ixc(){return _ixc;}
+    const int& bandtot() const {return _bandtot;}
+    const int& date() const {return _date;}
+    const int& intxc() const {return _intxc;}
+    const int& ixc() const {return _ixc;}
     //int _natom;
-    const int* ngfft(){return _ngfft;}
-    const int& nkpt(){return _nkpt;}
-    const int& nspden(){return _nspden;}
-    const int& nspinor(){return _nspinor;}
-    const int& nsppol(){return _nsppol;}
-    const int& nsym(){return _nsym;}
-    const int& npsp(){return _npsp;}
+    const int* ngfft() const {return _ngfft;}
+    const int& nkpt() const {return _nkpt;}
+    const int& nspden() const {return _nspden;}
+    const int& nspinor() const {return _nspinor;}
+    const int& nsppol() const {return _nsppol;}
+    const int& nsym() const {return _nsym;}
+    const int& npsp() const {return _npsp;}
     //int _ntypat;
-    const int& occopt(){return _occopt;}
-    const int& pertcase(){return _pertcase;}
-    const int& usepaw(){return _usepaw;}
-    const double& ecut(){return _ecut;}
-    const double& ecutdg(){return _ecutdg;}
-    const double& ecutsm(){return _ecutsm;}
-    const double& ecut_eff(){return _ecut_eff;}
-    const double* qptn(){return _qptn;}
+    const int& occopt() const {return _occopt;}
+    const int& pertcase() const {return _pertcase;}
+    const int& usepaw() const {return _usepaw;}
+    const double& ecut() const {return _ecut;}
+    const double& ecutdg() const {return _ecutdg;}
+    const double& ecutsm() const {return _ecutsm;}
+    const double& ecut_eff() const {return _ecut_eff;}
+    const double* qptn() const {return _qptn;}
     //double _rprimd[9];
-    const double& stmbias(){return _stmbias;}
-    const double& tphysel(){return _tphysel;}
-    const double& tsmear(){return _tsmear;}
-    const int& usewvl(){return _usewvl;}
-    const int& nshiftk_orig(){return _nshiftk_orig;}
-    const int& nshiftk(){return _nshiftk;}
-    const int& mband(){return _mband;}
+    const double& stmbias() const {return _stmbias;}
+    const double& tphysel() const {return _tphysel;}
+    const double& tsmear() const {return _tsmear;}
+    const int& usewvl() const {return _usewvl;}
+    const int& nshiftk_orig() const {return _nshiftk_orig;}
+    const int& nshiftk() const {return _nshiftk;}
+    const int& mband() const {return _mband;}
     // <H3>
-    const std::vector<int>& istwfk(){return _istwfk;}
-    const std::vector<int>& nband(){return _nband;}
-    const std::vector<int>& npwarr(){return _npwarr;}
-    const std::vector<int>& so_psp(){return _so_psp;}
-    const std::vector<int>& symafm(){return _symafm;}
-    const std::vector<int>& symrel(){return _symrel;}
+    const std::vector<int>& istwfk() const {return _istwfk;}
+    const std::vector<int>& nband() const {return _nband;}
+    const std::vector<int>& npwarr() const {return _npwarr;}
+    const std::vector<int>& so_psp() const {return _so_psp;}
+    const std::vector<int>& symafm() const {return _symafm;}
+    const std::vector<int>& symrel() const {return _symrel;}
     //std::vector<> typat;
-    const std::vector<double>& kptns(){return _kptns;}
-    const std::vector<double>& occ3d(){return _occ3d;}
-    const std::vector<double>& tnons(){return _tnons;}
+    const std::vector<double>& kptns() const {return _kptns;}
+    const std::vector<double>& occ3d() const {return _occ3d;}
+    const std::vector<double>& tnons() const {return _tnons;}
     //std::vector<> znucltypat;
-    const std::vector<double>& wtk(){return _wtk;}
+    const std::vector<double>& wtk() const {return _wtk;}
     // <H4>
-    const double& residm(){return _residm;}
+    const double& residm() const {return _residm;}
     //std::vector<double> _xred;
-    const double& etot(){return _etot;}
-    const double& fermie(){return _fermie;}
-    const std::vector<double>& amu(){return _amu;}
+    const double& etot() const {return _etot;}
+    const double& fermie() const {return _fermie;}
+    const std::vector<double>& amu() const {return _amu;}
     // <H5>
-    const int& kptopt(){return _kptopt;}
-    const int& pawcpxocc(){return _pawcpxocc;}
-    const int& nelect(){return _nelect;}
-    const double& charge(){return _charge;}
-    const double& icoulomb(){return _icoulomb;}
-    const int* kptrlatt(){return _kptrlatt;}
-    const int* kptrlatt_orig(){return _kptrlatt_orig;}
-    const std::vector<double>& shiftk_orig(){return _shiftk_orig;}
-    const std::vector<double>& shiftk(){return _shiftk;}
+    const int& kptopt() const {return _kptopt;}
+    const int& pawcpxocc() const {return _pawcpxocc;}
+    const int& nelect() const {return _nelect;}
+    const double& charge() const {return _charge;}
+    const double& icoulomb() const {return _icoulomb;}
+    const int* kptrlatt() const {return _kptrlatt;}
+    const int* kptrlatt_orig() const {return _kptrlatt_orig;}
+    const std::vector<double>& shiftk_orig() const {return _shiftk_orig;}
+    const std::vector<double>& shiftk() const {return _shiftk;}
     // <H6>
-    const std::vector<std::string>& title(){return _title;}
-    const std::vector<int>& znuclpsp(){return _znuclpsp;}
-    const std::vector<int>& zionpsp(){return _zionpsp;}
-    const std::vector<int>& pspso(){return _pspso;}
-    const std::vector<int>& pspdat(){return _pspdat;}
-    const std::vector<int>& pspcod(){return _pspcod;}
-    const std::vector<double>& pspxc(){return _pspxc;}
-    const std::vector<double>& lmn_size(){return _lmn_size;}
-    const std::vector<std::string>& md5_pseudos(){return _md5_pseudos;}
+    const std::vector<std::string>& title() const {return _title;}
+    const std::vector<int>& znuclpsp() const {return _znuclpsp;}
+    const std::vector<int>& zionpsp() const {return _zionpsp;}
+    const std::vector<int>& pspso() const {return _pspso;}
+    const std::vector<int>& pspdat() const {return _pspdat;}
+    const std::vector<int>& pspcod() const {return _pspcod;}
+    const std::vector<double>& pspxc() const {return _pspxc;}
+    const std::vector<double>& lmn_size() const {return _lmn_size;}
+    const std::vector<std::string>& md5_pseudos() const {return _md5_pseudos;}
 
-    int endHeader(){return _endHeader;}
+    int endHeader() const {return _endHeader;}
 
 };
 

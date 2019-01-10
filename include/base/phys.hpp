@@ -30,8 +30,8 @@
 namespace phys {
 
   /** Length */
-  const double b2A = 0.52917720859;              ///< 1 bohr in angstrom
-  const double A2b = 1/b2A; 			 ///< 1 angstrom in bohr
+  const double b2A = 0.52917720859e0;              ///< 1 bohr in angstrom
+  const double A2b = 1e0/b2A; 			 ///< 1 angstrom in bohr
   const double A2m = 1e-10;			 ///< 1 angstrom in m 
 
   /** Time */
@@ -67,10 +67,11 @@ namespace phys {
   const double Hz2eV = Hz / eV;                  ///< 1 Hz in eV
   const double  m2eV = Hz * c / eV;              ///<  1 m in eV
   const double atu2fs = hbar/Ha*1e15;            ///< 1 atomic unit of time 2 fs
+  const double Ohmcm = 2e0*pi*Ha2THz*10e0/9e0;   ///< Conductivity unit conversion abinit -> Ohm.cm
 
   /** Factor needed in linear response calc **/ 
   
-  const double fac = (eV/(A2m*A2m*amu*4*pi*pi*1e024));
+  const double fac = (eV/(A2m*A2m*amu*4.*pi*pi*1e024));
 
 
 }

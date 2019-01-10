@@ -7,9 +7,9 @@ cat > $1 << EOF
  *
  * @brief 
  *
- * @author Jordan Bieder <jordan.bieder@cea.fr>
+ * @author Jordan Bieder <jordan.bieder@uliege.be>
  *
- * @copyright Copyright 2018 Jordan Bieder
+ * @copyright Copyright 2019 Jordan Bieder
  *
  * This file is part of AbiOut.
  *

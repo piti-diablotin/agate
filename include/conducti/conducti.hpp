@@ -37,6 +37,7 @@
 #endif
 
 #include "conducti/abiopt.hpp"
+#include "io/configparser.hpp"
 
 /** 
  *
@@ -44,21 +45,31 @@
 class Conducti {
 
   private :
+    enum rangeSelection { NONE, ENERGY, BAND };
+
+    int _nsppol;
     int _nomega;
     double _omegaMin;
     double _omegaMax;
     double _smearing;
 
-    int _bandMin;
-    int _bandMax;
-    double _eMin;
-    double _eMax;
-    std::vector<int> _histogram;
+    int _bandSelection[4];
+    double _energySelection[4];
+    double _histDelta;
+    double _histBorder[2];
+    rangeSelection _selection;
+    std::vector<double> _omega;
+    std::vector<double> _sigma;
+    std::vector<double> _histogramI;
+    std::vector<double> _histogramJ;
 
   protected :
 
+    void buildOmega();
+    void buildHistogram(double min, double max, int npoints);
+
   public :
-    enum TensorIndex { XX, YY, ZZ, XY, XZ, YZ };
+    enum TensorIndex { XX, YY, ZZ, YZ, XZ, XY };
 
     /**
      * Constructor.
@@ -70,11 +81,28 @@ class Conducti {
      */
     virtual ~Conducti();
 
+    void setNOmega(int nomega);
+
+    void setSmearing(double smearing);
+
+    void setOmegaRange(double omin, double omax);
+
+    void setRange(double eMin1, double eMax1, double eMin2, double eMax2);
+
+    void setRange(int bandMin1, int bandMax1, int bandMin2, int bandMax2);
+
+    const std::vector<double>& omega() const { return _omega; }
+
     std::array<std::vector<double>,6> fullTensor(const AbiOpt &abiopt);
 
     std::array<std::vector<double>,3> diagonalTensor(const AbiOpt &abiopt);
 
-    std::vector<double> traceTensor(const AbiOpt &abiopt);
+    void traceTensor(const AbiOpt &abiopt);
+
+    void printSigma(std::ostream& out);
+    void printHistogram(std::ostream& out);
+
+    void setParameters(ConfigParser &parser);
 
 };
 

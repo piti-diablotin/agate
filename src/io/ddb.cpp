@@ -33,6 +33,7 @@
 #include "io/configparser.hpp"
 #include "io/ddbabinit.hpp"
 #include "io/ddbphonopy.hpp"
+#include <fstream>
 
 //
 Ddb::Ddb() : Dtset(),
@@ -83,6 +84,30 @@ const std::vector<Ddb::d2der>& Ddb::getDdb(const geometry::vec3d qpt) const {
         +utils::to_string(qpt[0])+std::string(",")
         +utils::to_string(qpt[1])+std::string(",")
         +utils::to_string(qpt[2])+std::string("]"),Ddb::ERFOUND);
+  /*
+  auto& d2 = found->second;
+  std::ofstream out(std::string("ddb-")+utils::to_string(qpt[0])+"-"+utils::to_string(qpt[1])+"-"+utils::to_string(qpt[2])+".out");
+  for ( int iatom1 = 0 ; iatom1 < _natom ; ++iatom1 ) {
+    for ( int idir1 = 0 ; idir1 < 3 ; ++idir1 ) {
+      for ( int iatom2 = 0 ; iatom2 < _natom ; ++iatom2 ) {
+        for ( int idir2 = 0 ; idir2 < 3 ; ++idir2 ) {
+          for ( auto &elt : d2 ) {
+            auto &coord = elt.first;
+            if ( 
+               coord[0] == idir1 &&
+                coord[1] == iatom1 &&
+                coord[2] == idir2 &&
+                coord[3] == iatom2
+               )
+              out << std::setw(12) << elt.second.real() << " " ;
+          }
+        }
+      }
+      out << std::endl;
+    }
+  }
+  //*/
+
   return found->second;
 }
 

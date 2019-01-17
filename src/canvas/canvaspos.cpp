@@ -58,6 +58,8 @@
 #include "base/utils.hpp"
 #include "io/abibin.hpp"
 #include "io/eigparserelectrons.hpp"
+#include "conducti/abiopt.hpp"
+#include "conducti/conducti.hpp"
 
 //
 CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
@@ -740,6 +742,14 @@ void CanvasPos::drawSpins(unsigned batom) {
 //
 void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
   std::ostringstream out;
+  std::string line;
+  size_t pos = stream.tellg();
+  std::getline(stream,line);
+  stream.clear();
+  stream.seekg(pos);
+  ConfigParser parser;
+  parser.setSensitive(true);
+  parser.setContent(line);
   if ( token == "octa_z" || token == "octahedra_z" ) {
     int z = 0;
     auto pos = stream.tellg();
@@ -790,6 +800,20 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     }
     //_histdata.reset(hist);
     if ( _histdata->ntime() == 1 ) _status = UPDATE;
+  }
+  else if ( token == "conducti" ) {
+    if ( _histdata == nullptr ) return;
+    AbiOpt opt;
+    opt.readFromFile(_histdata->filename());
+    Conducti conducti;
+    conducti.setParameters(parser);
+    conducti.traceTensor(opt);
+    std::ofstream hist(_histdata->filename()+"_histogram.dat",std::ios::out);
+    std::ofstream sigma(_histdata->filename()+"_sigma.dat",std::ios::out);
+    conducti.printSigma(sigma);
+    conducti.printHistogram(hist);
+    hist.close();
+    sigma.close();
   }
   else if ( token == "plot" || token == "print" || token == "data" ) {
     Graph::GraphSave save = Graph::GraphSave::NONE;

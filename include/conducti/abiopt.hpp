@@ -72,6 +72,7 @@ class AbiOpt {
 
     int nsppol() const { return _header.nsppol(); }
     int nkpt() const { return _header.nkpt(); }
+    double fermie() const { return _header.fermie(); }
     int nband(int isppol, int ikpt) const;
     std::vector<double>::const_iterator occ(int isppol, int ikpt) const;
     const std::vector<double>& eigen(int isppol, int ikpt) const;

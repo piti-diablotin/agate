@@ -26,6 +26,8 @@
 #ifndef PHYS_HPP
 #define PHYS_HPP
 #include <cmath>
+#include <vector>
+#include <string>
 
 namespace phys {
 
@@ -73,7 +75,16 @@ namespace phys {
   
   const double fac = (eV/(A2m*A2m*amu*4.*pi*pi*1e024));
 
+    /**
+     * Unit of the eigen energies.
+     */
+}
 
+namespace Units {
+  enum Energy { eV, Ha, THz, pcm };
+  Energy getEnergyUnit(std::string unit);
+  double getFactor(Energy from, Energy to);
+  std::string toString(Energy);
 }
 
 #endif   // PHYS_HPP

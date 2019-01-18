@@ -223,7 +223,16 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
  
   if ( token == "qpt" ) {
     geometry::vec3d qpt;
-    stream >> qpt[0] >> qpt[1] >> qpt[2];
+    std::string x, y, z;
+    stream >> x >> y >> z;
+    try {
+      qpt[0] = utils::parseNumber<double>(x);
+      qpt[1] = utils::parseNumber<double>(y);
+      qpt[2] = utils::parseNumber<double>(z);
+    }
+    catch ( Exception &e ) {
+      throw EXCEPTION("Unable to parser a number",ERRDIV);
+    }
     if ( stream.fail() ) {
       throw EXCEPTION("Give the three component of the qpt vector",ERRDIV);
     }
@@ -247,7 +256,16 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   }
   else if ( token == "add" ) {
     geometry::vec3d qpt;
-    stream >> qpt[0] >> qpt[1] >> qpt[2];
+    std::string x, y, z;
+    stream >> x >> y >> z;
+    try {
+      qpt[0] = utils::parseNumber<double>(x);
+      qpt[1] = utils::parseNumber<double>(y);
+      qpt[2] = utils::parseNumber<double>(z);
+    }
+    catch ( Exception &e ) {
+      throw EXCEPTION("Unable to parser a number",ERRDIV);
+    }
     if ( stream.fail() ) {
       throw EXCEPTION("Give the three component of the qpt vector",ERRDIV);
     }
@@ -300,7 +318,16 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   }
   else if ( token == "remove" || token == "rm" ) {
     geometry::vec3d qpt;
-    stream >> qpt[0] >> qpt[1] >> qpt[2];
+    std::string x, y, z;
+    stream >> x >> y >> z;
+    try {
+      qpt[0] = utils::parseNumber<double>(x);
+      qpt[1] = utils::parseNumber<double>(y);
+      qpt[2] = utils::parseNumber<double>(z);
+    }
+    catch ( Exception &e ) {
+      throw EXCEPTION("Unable to parser a number",ERRDIV);
+    }
     if ( stream.fail() ) {
       throw EXCEPTION("Give the three component of the qpt vector",ERRDIV);
     }
@@ -371,23 +398,11 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     rebuild = true;
   }
   else if ( token == "list" ) {
-    using namespace phys;
     double factor = 1.0;
     if ( parser.hasToken("eunit") ) {
       parser.setSensitive(false);
-      std::string unit = parser.getToken<std::string>("eunit");
-      if ( unit == "ev" ) {
-        factor = Ha2eV;
-      }
-      else if ( unit == "thz" ) {
-        factor /= (1e12 * Hz2eV / Ha2eV);
-      }
-      else if ( unit == "cm-1" ) {
-        factor /= (1e2 * m2eV / Ha2eV);
-      }
-      else {
-        throw EXCEPTION("Bad unit",ERRDIV);
-      }
+      std::string unit = utils::tolower(parser.getToken<std::string>("eunit"));
+      factor = Units::getFactor(Units::Ha,Units::getEnergyUnit(unit));
     }
       
     for ( auto iqpt = _condensedModes.begin() ; iqpt != _condensedModes.end() ; ++iqpt ) {

@@ -45,6 +45,13 @@
 #include <stdexcept>
 #include <numeric>
 #include <cmath>
+#include <regex>
+#include <vector>
+#include <string>
+#include <sstream>
+//#include <iomanip>
+#include <utility>
+#include <type_traits>
 #include "base/exception.hpp"
 
 //#define DEBUG_LOG(a) std::cerr << a << std::endl;
@@ -233,6 +240,50 @@ namespace utils {
    * @return A vector containing a pair of timestamp (modification time) and file name
    */
   std::vector<std::pair<long int, std::string>> ls(std::string pattern=".*");
+
+  template<typename T>
+    T parseNumber(std::string& str) {
+      T numerator;
+      T denominator;
+      auto convertNumber = [](std::string snum) {
+        using namespace std::regex_constants;
+        std::smatch m;
+        if ( std::regex_search ( snum, m, std::regex("sqrt\\((.*)\\)") ) ) {
+          std::istringstream inside(m[1]);
+          T value;
+          inside >> value;
+          if ( inside.fail() ) throw EXCEPTION("",1);
+          return static_cast<T>(std::sqrt(value));
+        }
+        else {
+          std::istringstream basic(snum);
+          T value;
+          basic >> value;
+          if ( basic.fail() ) throw EXCEPTION("",1);
+          return  value;
+        }
+      };
+
+      if ( std::is_arithmetic<T>::value ) {
+        std::vector<std::string> divide = utils::explode(str,'/');
+        if ( divide.size() == 0 ) {
+          return static_cast<T>(0);
+        }
+        else if ( divide.size() == 1 ) { // No / found
+          numerator = convertNumber(divide[0]);
+          denominator = static_cast<T>(1);
+        }
+        else if ( divide.size() == 2 ) { // We have on / found
+          numerator = convertNumber(divide[0]);
+          denominator = convertNumber(divide[1]);
+        }
+        return numerator/denominator;
+      }
+      else {
+        return convertNumber(str);
+      }
+    }
+
 
 }
 

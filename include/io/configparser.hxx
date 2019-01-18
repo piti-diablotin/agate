@@ -31,54 +31,8 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include <utility>
-#include <type_traits>
 #include "base/utils.hpp"
 #include "base/phys.hpp"
-#include <regex>
-
-template<typename T>
-T ConfigParser::parseNumber(std::string& str) {
-  T numerator;
-  T denominator;
-  auto convertNumber = [](std::string snum) {
-    using namespace std::regex_constants;
-    std::smatch m;
-    if ( std::regex_search ( snum, m, std::regex("sqrt\\((.*)\\)") ) ) {
-      std::istringstream inside(m[1]);
-      T value;
-      inside >> value;
-      if ( inside.fail() ) throw EXCEPTION("",1);
-      return static_cast<T>(std::sqrt(value));
-    }
-    else {
-      std::istringstream basic(snum);
-      T value;
-      basic >> value;
-      if ( basic.fail() ) throw EXCEPTION("",1);
-      return  value;
-    }
-  };
-
-  if ( std::is_arithmetic<T>::value ) {
-    std::vector<std::string> divide = utils::explode(str,'/');
-    if ( divide.size() == 0 ) {
-      return static_cast<T>(0);
-    }
-    else if ( divide.size() == 1 ) { // No / found
-      numerator = convertNumber(divide[0]);
-      denominator = static_cast<T>(1);
-    }
-    else if ( divide.size() == 2 ) { // We have on / found
-      numerator = convertNumber(divide[0]);
-      denominator = convertNumber(divide[1]);
-    }
-    return numerator/denominator;
-  }
-  else {
-    return convertNumber(str);
-  }
-}
 
 //
 template<typename T>
@@ -110,12 +64,12 @@ std::vector<T> ConfigParser::getToken(const std::string& token, const unsigned s
         throw EXCEPTION("",1);
       }
       else if ( multiple.size() == 1) { // No multiple
-        value = ConfigParser::parseNumber<T>(multiple[0]);
+        value = utils::parseNumber<T>(multiple[0]);
       }
       else if ( multiple.size() == 2 ) { // We have a multiplication
         unsigned factor;
         try{
-          factor = ConfigParser::parseNumber<unsigned>(multiple[0]);
+          factor = utils::parseNumber<unsigned>(multiple[0]);
           if ( factor == 0 ) factor = size;
         }
         catch ( Exception &e ) {
@@ -123,7 +77,7 @@ std::vector<T> ConfigParser::getToken(const std::string& token, const unsigned s
             factor = size;
           else throw e;
         }
-        value = ConfigParser::parseNumber<T>(multiple[1]);
+        value = utils::parseNumber<T>(multiple[1]);
         for ( unsigned time = 1 ; time < factor && i < (size-1); ++time ) {
           // factor - 1 insertion since the last on is done at the end.
           rvector[i++]=value;
@@ -204,7 +158,7 @@ T ConfigParser::getToken(const std::string& token, Characteristic dim) const {
     str_err +=  TypeName<T>::get() + " value for token \"" + token + "\"."; 
     throw EXCEPTION(str_err,ConfigParser::ERTYPE);
   }
-  T rvector = ConfigParser::parseNumber<T>(readToken);
+  T rvector = utils::parseNumber<T>(readToken);
   /* Try to read characteristic */
   if ( dim != NONE && std::is_arithmetic<T>::value ) {
     str_data >> readToken;

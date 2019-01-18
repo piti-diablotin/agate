@@ -51,6 +51,8 @@ void AbiOpt::readFromFile(const std::string &filename) {
     e.ADD("Header cannot be read properly",e.getReturnValue());
     throw e;
   }
+  if ( _header.fform() != 610 )
+    throw EXCEPTION("fform should be 610",ERRABT);
 
   std::ifstream file;
   

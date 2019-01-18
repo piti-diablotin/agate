@@ -808,8 +808,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     Conducti conducti;
     conducti.setParameters(parser);
     conducti.traceTensor(opt);
-    std::ofstream hist(_histdata->filename()+"_histogram.dat",std::ios::out);
-    std::ofstream sigma(_histdata->filename()+"_sigma.dat",std::ios::out);
+    std::ofstream hist(utils::noSuffix(_histdata->filename())+"_histogram.dat",std::ios::out);
+    std::ofstream sigma(utils::noSuffix(_histdata->filename())+"_sigma.dat",std::ios::out);
     conducti.printSigma(sigma);
     conducti.printHistogram(hist);
     hist.close();

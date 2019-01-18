@@ -38,6 +38,7 @@
 
 #include "conducti/abiopt.hpp"
 #include "io/configparser.hpp"
+#include "base/phys.hpp"
 
 /** 
  *
@@ -52,6 +53,8 @@ class Conducti {
     double _omegaMin;
     double _omegaMax;
     double _smearing;
+    Units::Energy _eunit;
+    double _sunit;
 
     int _bandSelection[4];
     double _energySelection[4];

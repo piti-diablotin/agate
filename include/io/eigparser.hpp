@@ -38,6 +38,7 @@
 
 #include<string>
 #include<vector>
+#include "base/phys.hpp"
 #include "base/geometry.hpp"
 #include "io/dtset.hpp"
 
@@ -47,10 +48,6 @@
 class EigParser {
 
   public :
-    /**
-     * Unit of the eigen energies.
-     */
-    enum Unit { eV, Ha, THz, pcm };
 
   protected :
     std::string                        _filename; ///< Name of the _EIG file to read
@@ -58,7 +55,7 @@ class EigParser {
     std::vector<double>                _lengths;  ///< Distance from the first kpt.
     std::vector< std::vector<double> > _eigens;   ///< eigen energies for each kpt.
     unsigned                           _nband;    ///< Number of bands to plot
-    Unit                               _eunit;    ///< Energy unit in the _EIG.
+    Units::Energy                      _eunit;    ///< Energy unit in the _EIG.
     double                             _conversion; ///< Conversion factor from input to _eunit;
     bool                               _hasSpin;  ///< Are we polarized
     std::vector<unsigned>              _ndiv;
@@ -120,13 +117,13 @@ class EigParser {
      * Getter for the unit
      * @return the unit of the eigen values;
      */
-    Unit getUnit() const { return _eunit; }
+    Units::Energy getUnit() const { return _eunit; }
 
     /**
      * Set the new unit for the bands we have
      * @param u is the Unit we want for the energies
      */
-    void setUnit(Unit u);
+    void setUnit(Units::Energy u);
 
     /**
      * Getter for the spin polarization

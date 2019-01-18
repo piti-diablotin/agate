@@ -50,7 +50,7 @@ EigParser::EigParser() :
   _lengths(),
   _eigens(),
   _nband(-1),
-  _eunit(Ha),
+  _eunit(Units::Ha),
   _conversion(1.0),
   _hasSpin(false),
   _ndiv(),
@@ -119,43 +119,9 @@ std::vector<double> EigParser::getBand(const unsigned iband, const double fermi,
 }
 
 //
-void EigParser::setUnit(Unit u) {
-  using namespace phys;
-  double factor = 1.e0;
+void EigParser::setUnit(Units::Energy u) {
   if ( u == _eunit ) return;
-  // Convert to eV
-  switch (_eunit) {
-    case eV :
-       break;
-    case Ha :
-      factor = Ha2eV;
-      break;
-    case THz :
-      factor = 1e12 * Hz2eV;
-      break;
-    case pcm :
-      factor = 1e-2 * m2eV; // m-> ev = m2eV/input 
-      break;
-    default :
-      throw EXCEPTION("Unit not yet implemented",ERRDIV);
-      break;
-  }
-  switch (u) {
-    case eV :
-      break;
-    case Ha :
-      factor /= Ha2eV;
-      break;
-    case THz :
-      factor /= (1e12 * Hz2eV);
-      break;
-    case pcm :
-      factor /= (1e2 * m2eV);
-      break;
-    default :
-      throw EXCEPTION("Unit not yet implemented",ERRDIV);
-      break;
-  }
+  double factor = Units::getFactor(_eunit,u);
   for( auto& eigk : _eigens ) 
     for ( auto& band : eigk )
       band *= factor;

@@ -478,15 +478,7 @@ void Canvas::plotBand(EigParser &eigparser, ConfigParser &parser, Graph::GraphSa
   }
   try {
     std::string strUnit = utils::tolower(parser.getToken<std::string>("eunit"));
-    EigParser::Unit eunit;
-    if ( strUnit == "ev" )
-      eunit = EigParser::eV;
-    else if ( strUnit == "ha" )
-      eunit = EigParser::Ha;
-    else if ( strUnit == "thz" )
-      eunit = EigParser::THz;
-    else if ( strUnit == "cm-1" )
-      eunit = EigParser::pcm;
+    Units::Energy eunit = Units::getEnergyUnit(strUnit);
     eigparser.setUnit(eunit);
 
   }
@@ -527,16 +519,16 @@ void Canvas::plotBand(EigParser &eigparser, ConfigParser &parser, Graph::GraphSa
       throw e;
   }
   switch (eigparser.getUnit()) {
-    case EigParser::Unit::eV:
+    case ::Units::eV:
       ylabel = "Energy [eV]";
       break;
-    case EigParser::Unit::Ha:
+    case ::Units::Ha:
       ylabel = "Energy [Ha]";
       break;
-    case EigParser::Unit::THz:
+    case ::Units::THz:
       ylabel = "Energy [THz]";
       break;
-    case EigParser::Unit::pcm:
+    case ::Units::pcm:
       ylabel = "Energy [cm-1]";
       break;
     default:

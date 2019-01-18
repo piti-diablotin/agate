@@ -26,6 +26,7 @@
 
 #include "conducti/conducti.hpp"
 #include "base/phys.hpp"
+#include <iomanip>
 #ifdef HAVE_OMP
 #include <omp.h>
 #endif
@@ -37,6 +38,8 @@ Conducti::Conducti() :
   _omegaMin(0.001),
   _omegaMax(1.837466191e-01),
   _smearing(0.003),
+  _eunit(Units::Ha),
+  _sunit(1),
   _bandSelection(),
   _energySelection(),
   _histDelta(0),
@@ -144,7 +147,7 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   _nsppol = abiopt.nsppol();
   int nkpt = abiopt.nkpt();
   double fermi = abiopt.fermie();
-  std::clog << "Fermi level: " << fermi << std::endl;
+  std::clog << "Fermi level [" << Units::toString(_eunit) << "]: " << fermi*Units::getFactor(Units::Ha,_eunit) << std::endl;
 
   double factor = 2*phys::pi/(geometry::det(abiopt.rprim())*_smearing*2*std::sqrt(phys::pi));
 
@@ -242,20 +245,53 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
 }
 
 void Conducti::printSigma(std::ostream& out) {
-  for ( int w = 0 ; w < _nomega ; ++w ) {
-    out << _omega[w] << "  ";
-    double sum = 0;
-    for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
-      sum+=_sigma[isppol*_nomega+w];
-      out << _sigma[isppol*_nomega+w] << "  ";
+  double factor = Units::getFactor(Units::Ha,_eunit);
+  out.precision(14);
+  out.setf(std::ios::scientific,std::ios::floatfield);
+  out.setf(std::ios::right,std::ios::adjustfield);
+  std::string tmp = std::string("Frequency [") + Units::toString(_eunit) + std::string("]");
+  out << "# " << std::setw(20) << tmp;
+  std::string symbol = "au";
+  if ( _sunit != 1 ) symbol = "Ohm-1.cm-1";
+  if ( _nsppol == 2 ) {
+    tmp = std::string("Sigma Up [") + symbol + std::string("]");
+    out << std::setw(22) << tmp;
+    tmp = std::string("Sigma Dn [") + symbol + std::string("]");
+    out << std::setw(22) << tmp;
+    tmp = std::string("Sigma Tot [") + symbol + std::string("]");
+    out << std::setw(22) << tmp << std::endl;
+    for ( int w = 0 ; w < _nomega ; ++w ) {
+      out << std::setw(22) << _omega[w]*factor << "  ";
+      double sum = 0;
+      for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
+        sum+=_sigma[isppol*_nomega+w];
+        out << _sigma[isppol*_nomega+w]*_sunit << "  ";
+      }
+      out << sum*_sunit << std::endl;
     }
-    out << sum << std::endl;
   }
+  else {
+    tmp = std::string("Sigma [") + symbol + std::string("]");
+    out << std::setw(22) << tmp << std::endl;
+    for ( int w = 0 ; w < _nomega ; ++w ) {
+      out << std::setw(22) << _omega[w]*factor << "  " << _sigma[w]*_sunit << std::endl;
+    }
+  }
+
 }
 
 void Conducti::printHistogram(std::ostream& out) {
+  double factor = Units::getFactor(Units::Ha,_eunit);
+  out.precision(14);
+  out.setf(std::ios::scientific,std::ios::floatfield);
+  out.setf(std::ios::right,std::ios::adjustfield);
+  std::string tmp = std::string("Energy [") + Units::toString(_eunit) + std::string("]");
+  out << "# " << std::setw(20) << tmp;
+  out << std::setw(22) << "From [au]";
+  out << std::setw(22) << "To [au]";
+  out << std::endl;
   for ( unsigned h = 0 ; h < _histogramI.size() ; ++h ) {
-    out << _histBorder[0]+h*_histDelta << "  " << _histogramI[h] << "  " << _histogramJ[h] << std::endl;
+    out << std::setw(22) << (_histBorder[0]+h*_histDelta)*factor << std::setw(22) << _histogramI[h] << std::setw(22) << _histogramJ[h] << std::endl;
   }
 }
 
@@ -285,12 +321,23 @@ void Conducti::setParameters(ConfigParser &parser){
     this->setRange(tmp[0],tmp[1],tmp[2],tmp[3]);
   }
 
+  if ( parser.hasToken("eunit") ) {
+    _eunit = Units::getEnergyUnit(utils::tolower(parser.getToken<std::string>("eunit")));
+  }
+  std::string unit = Units::toString(_eunit);
+  double factor = Units::getFactor(Units::Ha,_eunit);
 
-  std::clog << "nomega " << _nomega << std::endl;
-  std::clog << "omega range " << _omegaMin << " " << _omegaMax << std::endl;
-  std::clog << "smearing " << _smearing << std::endl;
+  if ( parser.hasToken("sunit") ) {
+    if ( parser.getToken<std::string>("sunit") == "ohm-1.cm-1" )
+      _sunit = phys::Ohmcm;
+  }
+
+
+  std::clog << "Number of frequencies: " << _nomega << std::endl;
+  std::clog << "Frequency range ["<< unit << "]: " << _omegaMin*factor << "->" << _omegaMax*factor << std::endl;
+  std::clog << "Smearing energy [" << unit << "]: " << _smearing*factor << std::endl;
   if ( _selection == ENERGY )
-    std::clog << "energy ranges" << _energySelection[0] << "->" << _energySelection[1] << "; " << _energySelection[2] << "->" << _energySelection[3] << std::endl;
+    std::clog << "Energy ranges selection [" << unit << "]: " << _energySelection[0]*factor << "->" << _energySelection[1]*factor << "; " << _energySelection[2]*factor << "->" << _energySelection[3]*factor << std::endl;
   else if ( _selection == BAND )
-    std::clog << "band ranges" << _bandSelection[0] << "->" << _bandSelection[1] << "; " << _bandSelection[2] << "->" << _bandSelection[3] << std::endl;
+    std::clog << "Band ranges selection: " << _bandSelection[0] << "->" << _bandSelection[1] << "; " << _bandSelection[2] << "->" << _bandSelection[3] << std::endl;
 }

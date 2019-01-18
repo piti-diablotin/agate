@@ -108,7 +108,7 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
       _lengths.push_back(length);
     }
     _filename = filename;
-    _eunit = THz;
+    _eunit = Units::THz;
     _hasSpin = false;
     this->renormalizeEigenDisp();
   }

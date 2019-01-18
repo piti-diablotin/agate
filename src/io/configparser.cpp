@@ -151,10 +151,12 @@ std::vector<std::string> ConfigParser::getToken(const std::string& token, const 
     std::string str;
     str_data >> str;
     // Try to convert D exp format to E format
+    /* For numbers only !!
     {
       size_t pos(str.find_first_of("Dd"));
       if (pos != std::string::npos) str[pos] = 'e';
     }
+    */
     try {
       std::vector<std::string> multiple = utils::explode(str,'*');
       if ( multiple.size() == 0) { // No multiple

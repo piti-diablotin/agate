@@ -147,6 +147,7 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   _nsppol = abiopt.nsppol();
   int nkpt = abiopt.nkpt();
   double fermi = abiopt.fermie();
+  double maxEnergy = 0;
   std::clog << "Fermi level [" << Units::toString(_eunit) << "]: " << fermi*Units::getFactor(Units::Ha,_eunit) << std::endl;
 
   double factor = 2*phys::pi/(geometry::det(abiopt.rprim())*_smearing*2*std::sqrt(phys::pi));
@@ -158,19 +159,23 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   double inv_smearingSquare = 1./(_smearing*_smearing);
   auto wtk = abiopt.wtk();
 
-  std::vector<double> fullMinE;
-  std::vector<double> fullMaxE;
+  //std::vector<double> fullMinE;
+  //std::vector<double> fullMaxE;
   for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
     for ( int ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
       auto &eigen = abiopt.eigen(isppol,ikpt);
-      double maxE = *std::max_element(eigen.begin(),eigen.end());
-      double minE = *std::min_element(eigen.begin(),eigen.end());
-      fullMinE.push_back(minE);
-      fullMaxE.push_back(maxE);
+  //    double maxE = *std::max_element(eigen.begin(),eigen.end());
+  //    //double minE = *std::min_element(eigen.begin(),eigen.end());
+  //    //fullMinE.push_back(minE);
+  //    fullMaxE.push_back(maxE);
+      maxEnergy += (*std::max_element(eigen.begin(),eigen.end()))-fermi;
     }
   }
   //double fullMin = *std::min_element(fullMinE.begin(),fullMinE.end());
   //double fullMax = *std::max_element(fullMaxE.begin(),fullMaxE.end());
+  
+  std::clog << "Emax-Efermi [" << Units::toString(_eunit) << "]: " << maxEnergy/(nkpt*_nsppol)*Units::getFactor(Units::Ha,_eunit) << std::endl;
+
   const int nhist = 1000;
   this->buildHistogram(-_omegaMax*2,_omegaMax*2,nhist);
   //this->buildHistogram(fullMin,fullMax,nhist);
@@ -178,10 +183,19 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   // Make sigma private and then reduce !
 
   int progress = 0;
+#ifdef HAVE_OMP
+  int nthread = 1;
+#pragma omp parallel 
+#pragma omp single
+  {
+  nthread = omp_get_num_threads();
+  }
+#endif
+
 #pragma omp declare reduction(+: std::vector<double> : \
     std::transform(omp_out.begin(), omp_out.end(), omp_in.begin(), omp_out.begin(), std::plus<double>())) \
   initializer(omp_priv = omp_orig)
-#pragma omp parallel for collapse(2), schedule(static), reduction(+:_sigma), reduction(+:_histogramI), reduction(+:_histogramJ)
+#pragma omp parallel for collapse(2), schedule(static), reduction(+:_sigma), reduction(+:_histogramI), reduction(+:_histogramJ), if ( _nsppol*nkpt >= nthread )
   for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
     for ( int ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
 #pragma omp atomic
@@ -195,6 +209,7 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
       auto occ = abiopt.occ(isppol,ikpt);
       auto &eigen = abiopt.eigen(isppol,ikpt);
       std::vector<double> coeff(nband*nband,0);
+
 
       if ( _selection != BAND ) {
         _bandSelection[0] = 0;
@@ -212,13 +227,14 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
       }
 
       for ( int idir = 0 ; idir < 3 ; ++idir ) {
+        auto &nabla = abiopt.nabla(isppol,ikpt,idir);
         for ( int jband = _bandSelection[2] ; jband < _bandSelection[3] ; ++ jband ) {
           for ( int iband = _bandSelection[0] ; iband < _bandSelection[1] ; ++iband ) {
-            auto &nabla = abiopt.nabla(isppol,ikpt,idir);
             coeff[iband*nband+jband] += weight*std::norm(nabla[jband*nband+iband]);
           }
         }
       }
+#pragma omp parallel for schedule(static), reduction(+:_sigma), reduction(+:_histogramI), reduction(+:_histogramJ), if (_nsppol*nkpt < nthread )
       for ( int iband = _bandSelection[0] ; iband < _bandSelection[1] ; ++iband ) {
         const double eigenI = eigen[iband] - fermi;
         if ( eigenI <= _energySelection[0] || eigenI >= _energySelection[1] ) continue;

@@ -604,6 +604,26 @@ if test x"$useomp" = x"yes"; then
 
   if test x"$have_omp" = x"yes"; then
     AC_DEFINE([HAVE_OMP],[1],[Define to 1 if OpenMP is usable.])
+    AC_MSG_CHECKING([whether OpenMP 4.0 is supported])
+    omp_input="std::vector<double> a;
+    #pragma omp declare reduction(+: std::vector<double> : \
+    std::transform(omp_out.begin(), omp_out.end(), omp_in.begin(), omp_out.begin(), std::plus<double>())) \
+  initializer(omp_priv = omp_orig)
+#pragma omp parallel for reduction(+:a)
+for ( int i = 0 ; i < 42 ; ++ i )
+a.at(i) += i;
+        "
+    omp_header="#include<vector>
+                #include<algorithm>
+                #include<functional>"
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$omp_header],[$omp_input])],
+                      [have_omp4=yes;],
+                      [have_omp4=no;]
+                     )
+    AC_MSG_RESULT([$have_omp4])
+    if test x"$have_omp4" = x"yes"; then
+      AC_DEFINE([HAVE_OMP4],[1],[Define to 1 if OpenMP is usable.])
+    fi
   else
     AC_MSG_WARN([OpenMP does not seem to be working -> Not used])
   fi

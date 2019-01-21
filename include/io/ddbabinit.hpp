@@ -72,6 +72,8 @@ class DdbAbinit : public Ddb {
      * @param filename The name of the input file to read.
      */
     virtual void readFromFile(const std::string& filename);
+
+    static void dump(const Ddb &ddb, std::string filename);
 };
 
 #endif  // DDBABINIT_HPP

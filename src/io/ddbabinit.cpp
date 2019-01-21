@@ -27,6 +27,7 @@
 #include "io/ddbabinit.hpp"
 #include <fstream>
 #include <string>
+#include <iomanip>
 #include "base/utils.hpp"
 #include "io/configparser.hpp"
 #include "base/mendeleev.hpp"
@@ -172,4 +173,100 @@ bool DdbAbinit::readBlock(std::ifstream& idd) {
 
   std::getline(idd, line);
   return true;
+}
+
+void DdbAbinit::dump(const Ddb &ddb, std::string filename) {
+  using namespace std;
+  using namespace geometry;
+
+  ofstream out (filename);
+  if ( !out ) throw EXCEPTION(string("Unable to create file ")+filename,ERRDIV);
+
+  out.setf(std::ios::right,std::ios::adjustfield);
+
+  auto qpts = ddb.getQpts();
+
+  out << endl;
+  out << " **** Database of total energy derivatives ****" << endl;
+  out << " Number of data blocks=" << setw(4) << qpts.size() << endl;
+  out << endl;
+
+  for ( unsigned iblock = 0 ; iblock < qpts.size() ; ++iblock ) {
+    auto &qpt = qpts[iblock];
+    auto &d2 = ddb.getDdb(qpt);
+    out.unsetf(std::ios::floatfield);
+    out << " 2nd derivatives (non-stat.)  - # elements :" << setw(8) << d2.size() << endl;
+    out << " qpt";
+    out.precision(8);
+    out.setf(std::ios::scientific,std::ios::floatfield);
+    out << setw(16) << qpt[0];
+    out << setw(16) << qpt[1];
+    out << setw(16) << qpt[2];
+    // float
+    out.precision(1);
+    out.setf(std::ios::fixed,std::ios::floatfield);
+    out << setw(6) << 1.0 << endl;
+    for ( auto &elt : d2 ) {
+      auto &coord = elt.first;
+      out.unsetf(std::ios::floatfield);
+      out << setw(4) << 1+coord[0];
+      out << setw(4) << 1+coord[1];
+      out << setw(4) << 1+coord[2];
+      out << setw(4) << 1+coord[3];
+      out.setf(std::ios::scientific,std::ios::floatfield);
+      out.precision(14);
+      out << setw(22) << elt.second.real() << " " ;
+      out << setw(22) << elt.second.imag() << " " ;
+      out << endl;
+    }
+    /*
+    for ( unsigned iatom2 = 0 ; iatom2 < ddb.natom() ; ++iatom2 ) {
+      for ( unsigned idir2 = 0 ; idir2 < 3 ; ++idir2 ) {
+        for ( unsigned iatom1 = 0 ; iatom1 < ddb.natom() ; ++iatom1 ) {
+          for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 ) {
+            for ( auto &elt : d2 ) {
+              auto &coord = elt.first;
+              if ( 
+                  coord[0] == idir1 &&
+                  coord[1] == iatom1 &&
+                  coord[2] == idir2 &&
+                  coord[3] == iatom2
+                 ) {
+                out.unsetf(std::ios::floatfield);
+                out << setw(4) << 1+idir1;
+                out << setw(4) << 1+iatom1;
+                out << setw(4) << 1+idir2;
+                out << setw(4) << 1+iatom2;
+                out.setf(std::ios::scientific,std::ios::floatfield);
+                out.precision(14);
+                out << setw(22) << elt.second.real() << " " ;
+                out << setw(22) << elt.second.imag() << " " ;
+                out << endl;
+              }
+            }
+          }
+        }
+      }
+    }
+    */
+    out << endl;
+  }
+  out << " List of bloks and their characteristics" << endl << endl ;
+  for ( unsigned iblock = 0 ; iblock < qpts.size() ; ++iblock ) {
+    auto &qpt = qpts[iblock];
+    auto &d2 = ddb.getDdb(qpt);
+    out.unsetf(std::ios::floatfield);
+    out << " 2nd derivatives (non-stat.)  - # elements :" << setw(8) << d2.size() << endl;
+    out << " qpt";
+    out.precision(8);
+    out.setf(std::ios::scientific,std::ios::floatfield);
+    out << setw(16) << qpt[0];
+    out << setw(16) << qpt[1];
+    out << setw(16) << qpt[2];
+    out.precision(1);
+    out.setf(std::ios::fixed,std::ios::floatfield);
+    out << setw(6) << 1.0 << endl;
+    out << endl;
+  }
+  out.close();
 }

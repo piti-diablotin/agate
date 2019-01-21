@@ -699,6 +699,23 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       }
     }
   }
+  else if ( token == "dynmat" ) {
+    if ( _ddb.get() == nullptr ) 
+      throw EXCEPTION("You need to load a DDB first",ERRDIV);
+    _ddb->dump(_qptModes->first);
+    throw EXCEPTION(std::string("Dynamical matrix written."), ERRCOM);
+  }
+  else if ( token == "dumpDDB" || token == "dDDB" ) {
+    if ( _ddb.get() == nullptr ) 
+      throw EXCEPTION("You need to load a DDB first",ERRDIV);
+    std::string filename;
+    stream >> filename;
+    if ( stream.fail() )
+      throw EXCEPTION("Please specify a filename",ERRDIV);
+    DdbAbinit::dump(*_ddb.get(),filename);
+    throw EXCEPTION(std::string("DDB file ")+filename+std::string(" written."), ERRCOM);
+
+  }
   else { 
     CanvasPos::my_alter(token,stream);
     return;
@@ -761,6 +778,8 @@ void CanvasPhonons::help(std::ostream &out) {
   out << setw(40) << ":amplitude A [imode [imode ...] ]" << setw(59) << "Set the amplitude of the listed modes. If none is present then set the default amplitude" << endl;
   out << setw(40) << ":add qx qy qz imode" << setw(59) << "Freeze the mode imode at the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":a or :append filename" << setw(59) << "Use file filename to get the eigen displacements." << endl;
+  out << setw(40) << ":dynmat" << setw(59) << "Dump the dynamial matrix at the current q-point in reduced coordinates into dynmat-qx-qy-qz.out" << endl;
+  out << setw(40) << ":dDDB or :dumpDDB filename" << setw(59) << "Dump all the dynamial matrix into Abinit DDB format. WARNING : header is missing !!" << endl;
   out << setw(40) << ":findqpt filename" << setw(59) << "List the square amplitudes of each Qpt in filename" << endl;
   out << setw(40) << ":list" << setw(59) << "List all the q-pt and the related frozen mode." << endl;
   out << setw(40) << ":madd" << setw(59) << "Freeze the mode imode at the selected qpt (or the last added)." << endl;

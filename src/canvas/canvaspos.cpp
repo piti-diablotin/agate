@@ -1269,9 +1269,9 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         *dttrial = Supercell(*dttrial,i,j,k);
       }
       ( format == "cif" ) ? dttrial->cif(name,tolerance) : dttrial->dump(name);
+      delete dttrial;
       out << "Input file " << name << " written.";
       throw EXCEPTION(out.str(), ERRCOM);
-      delete dttrial;
     }
     else {
       throw EXCEPTION("Bad tokens for \"write\": write (dtset|poscar|cif) filename.",ERRDIV);

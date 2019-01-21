@@ -133,6 +133,8 @@ class Ddb : public Dtset {
      */
     inline const std::vector<unsigned>& zion() const { return _zion; }
 
+    virtual void dump(const geometry::vec3d qpt, std::string filename="");
+
 };
 
 #endif  // DDB_HPP

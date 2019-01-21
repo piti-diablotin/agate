@@ -180,19 +180,19 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
       std::clog << actual << "% ";
     previous = actual;
   };
-#ifdef HAVE_OMP
+#ifdef HAVE_OMP4
   int nthread = 1;
 #pragma omp parallel 
 #pragma omp single
   {
   nthread = omp_get_num_threads();
   }
-#endif
 
 #pragma omp declare reduction(+: std::vector<double> : \
     std::transform(omp_out.begin(), omp_out.end(), omp_in.begin(), omp_out.begin(), std::plus<double>())) \
   initializer(omp_priv = omp_orig)
 #pragma omp parallel for collapse(2), schedule(static), reduction(+:_sigma), reduction(+:_histogramI), reduction(+:_histogramJ), if ( _nsppol*nkpt >= nthread )
+#endif
   for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
     for ( int ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
 #pragma omp atomic

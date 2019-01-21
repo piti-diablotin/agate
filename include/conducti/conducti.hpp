@@ -39,6 +39,7 @@
 #include "conducti/abiopt.hpp"
 #include "io/configparser.hpp"
 #include "base/phys.hpp"
+#include "plot/graph.hpp"
 
 /** 
  *
@@ -96,9 +97,9 @@ class Conducti {
 
     const std::vector<double>& omega() const { return _omega; }
 
-    std::array<std::vector<double>,6> fullTensor(const AbiOpt &abiopt);
+    void fullTensor(const AbiOpt &abiopt);
 
-    std::array<std::vector<double>,3> diagonalTensor(const AbiOpt &abiopt);
+    void diagonalTensor(const AbiOpt &abiopt);
 
     void traceTensor(const AbiOpt &abiopt);
 
@@ -106,6 +107,8 @@ class Conducti {
     void printHistogram(std::ostream& out);
 
     void setParameters(ConfigParser &parser);
+
+    void getResult(Graph::Config &config);
 
 };
 

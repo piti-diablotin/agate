@@ -137,10 +137,10 @@ void Conducti::buildHistogram(double min, double max, int npoints) {
 }
 
 
-std::array<std::vector<double>,6> Conducti::fullTensor(const AbiOpt &abiopt) {
+void Conducti::fullTensor(const AbiOpt &abiopt) {
 }
 
-std::array<std::vector<double>,3> Conducti::diagonalTensor(const AbiOpt &abiopt) {
+void Conducti::diagonalTensor(const AbiOpt &abiopt) {
 }
 
 void Conducti::traceTensor(const AbiOpt &abiopt) {
@@ -159,30 +159,27 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   double inv_smearingSquare = 1./(_smearing*_smearing);
   auto wtk = abiopt.wtk();
 
-  //std::vector<double> fullMinE;
-  //std::vector<double> fullMaxE;
   for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
     for ( int ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
       auto &eigen = abiopt.eigen(isppol,ikpt);
-  //    double maxE = *std::max_element(eigen.begin(),eigen.end());
-  //    //double minE = *std::min_element(eigen.begin(),eigen.end());
-  //    //fullMinE.push_back(minE);
-  //    fullMaxE.push_back(maxE);
       maxEnergy += (*std::max_element(eigen.begin(),eigen.end()))-fermi;
     }
   }
-  //double fullMin = *std::min_element(fullMinE.begin(),fullMinE.end());
-  //double fullMax = *std::max_element(fullMaxE.begin(),fullMaxE.end());
   
   std::clog << "Emax-Efermi [" << Units::toString(_eunit) << "]: " << maxEnergy/(nkpt*_nsppol)*Units::getFactor(Units::Ha,_eunit) << std::endl;
 
   const int nhist = 1000;
   this->buildHistogram(-_omegaMax*2,_omegaMax*2,nhist);
-  //this->buildHistogram(fullMin,fullMax,nhist);
-
-  // Make sigma private and then reduce !
 
   int progress = 0;
+  int previous = 0;
+  auto printProgress = [&]() {
+    const double total = nkpt*_nsppol;
+    int actual = (int)(100.*(double)progress/total);
+    if ( actual > previous )
+      std::clog << actual << "% ";
+    previous = actual;
+  };
 #ifdef HAVE_OMP
   int nthread = 1;
 #pragma omp parallel 
@@ -203,7 +200,7 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
 #ifdef HAVE_OMP
       if ( omp_get_thread_num() == 0 )
 #endif
-        std::clog << (int) (progress/(double)(nkpt*_nsppol)*100.) << "% ";
+        printProgress();
       double weight = wtk[ikpt]/3.;
       int nband = abiopt.nband(isppol,ikpt);
       auto occ = abiopt.occ(isppol,ikpt);
@@ -234,7 +231,7 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
           }
         }
       }
-#pragma omp parallel for schedule(static), reduction(+:_sigma), reduction(+:_histogramI), reduction(+:_histogramJ), if (_nsppol*nkpt < nthread )
+//#pragma omp parallel for schedule(static), reduction(+:_sigma), reduction(+:_histogramI), reduction(+:_histogramJ), if (_nsppol*nkpt < nthread )
       for ( int iband = _bandSelection[0] ; iband < _bandSelection[1] ; ++iband ) {
         const double eigenI = eigen[iband] - fermi;
         if ( eigenI <= _energySelection[0] || eigenI >= _energySelection[1] ) continue;
@@ -257,6 +254,8 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
       }
     }
   }
+  progress = nkpt*_nsppol;
+  printProgress();
   std::clog << std::endl;
 }
 
@@ -356,4 +355,59 @@ void Conducti::setParameters(ConfigParser &parser){
     std::clog << "Energy ranges selection [" << unit << "]: " << _energySelection[0]*factor << "->" << _energySelection[1]*factor << "; " << _energySelection[2]*factor << "->" << _energySelection[3]*factor << std::endl;
   else if ( _selection == BAND )
     std::clog << "Band ranges selection: " << _bandSelection[0] << "->" << _bandSelection[1] << "; " << _bandSelection[2] << "->" << _bandSelection[3] << std::endl;
+}
+
+void Conducti::getResult(Graph::Config &config) {
+  config.x = _omega;
+  std::list<std::vector<double>> &y = config.y;
+  std::list<std::string> &labels = config.labels;
+  std::string &filename = config.filename;
+  std::string &xlabel = config.xlabel;
+  std::string &ylabel = config.ylabel;
+  config.title = "Conductivity";
+  config.doSumUp = false;
+
+  double factor = Units::getFactor(Units::Ha,_eunit);
+  for ( auto &w : config.x ) w*=factor;
+  xlabel = std::string("Frequency [") + Units::toString(_eunit) + std::string("]");
+  std::string symbol = "au";
+  if ( _sunit != 1 ) symbol = "Ohm-1.cm-1";
+  ylabel = std::string("Sigma [") + symbol + std::string("]");
+  if ( _nsppol == 2 ) {
+    labels.push_back("Up");
+    labels.push_back("Down");
+    labels.push_back("Total");
+    y.resize(2);
+    y.front().resize(_nomega);
+    y.back().resize(_nomega);
+    std::vector<double> total(_nomega);
+    for ( int w = 0 ; w < _nomega ; ++w ) {
+      double sum = 0;
+      auto it = y.begin();
+      for ( int isppol = 0 ; isppol < _nsppol ; ++isppol,++it ) {
+        sum+=_sigma[isppol*_nomega+w];
+        (*it)[w] = _sigma[isppol*_nomega+w]*_sunit;
+      }
+      total[w] = sum*_sunit;
+    }
+    y.push_back(std::move(total));
+  }
+  else {
+    y.resize(1);
+    auto vec = *y.begin();
+    vec.resize(_nomega);
+    for ( int w = 0 ; w < _nomega ; ++w ) {
+      vec[w] = _sigma[w]*_sunit;
+    }
+  }
+
+  if ( config.save == Graph::DATA ) {
+    std::ofstream hist(filename+"_histogram.dat",std::ios::out);
+    std::ofstream sigma(filename+"_sigma.dat",std::ios::out);
+    config.save = Graph::NONE;
+    this->printSigma(sigma);
+    this->printHistogram(hist);
+    hist.close();
+    sigma.close();
+  }
 }

@@ -801,21 +801,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     //_histdata.reset(hist);
     if ( _histdata->ntime() == 1 ) _status = UPDATE;
   }
-  else if ( token == "conducti" ) {
-    if ( _histdata == nullptr ) return;
-    AbiOpt opt;
-    opt.readFromFile(_histdata->filename());
-    Conducti conducti;
-    conducti.setParameters(parser);
-    conducti.traceTensor(opt);
-    std::ofstream hist(utils::noSuffix(_histdata->filename())+"_histogram.dat",std::ios::out);
-    std::ofstream sigma(utils::noSuffix(_histdata->filename())+"_sigma.dat",std::ios::out);
-    conducti.printSigma(sigma);
-    conducti.printHistogram(hist);
-    hist.close();
-    sigma.close();
-  }
-  else if ( token == "plot" || token == "print" || token == "data" ) {
+ else if ( token == "plot" || token == "print" || token == "data" ) {
     Graph::GraphSave save = Graph::GraphSave::NONE;
     if ( token == "print" )
       save = Graph::GraphSave::PRINT;
@@ -1343,6 +1329,33 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
 
     this->plotBand(*(_eigparser.get()),parser,save);
   }
+  else if ( function == "conducti" ) {
+    if ( _histdata == nullptr ) return;
+    Graph::Config config;
+    config.save = save;
+    config.filename = utils::noSuffix(_histdata->filename());
+
+    AbiOpt opt;
+    opt.readFromFile(_histdata->filename());
+    Conducti conducti;
+    conducti.setParameters(parser);
+    conducti.traceTensor(opt);
+    conducti.getResult(config);
+
+    try {
+      if ( _gplot == nullptr ) 
+        _gplot.reset(new Gnuplot);
+      Graph::plot(config,_gplot.get());
+    }
+    catch ( Exception &e ) {
+      e.ADD("Unable to plot with gnuplot.\nInstead, writing data.", ERRWAR);
+      std::cerr << e.fullWhat() << std::endl;
+      _gplot.reset(nullptr);
+    }
+
+    if ( _gplot != nullptr )
+      _gplot->clearCustom();
+  }
   else if ( function == "tdep" ) {
     if ( _histdata == nullptr ) 
       throw EXCEPTION("No data loaded",ERRDIV);
@@ -1448,10 +1461,6 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
   else {
     throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet or your need to load a file first"),ERRABT);
   }
-  //config.save = save;
-  //Graph::plot(config,_gplot.get());
-  //if ( _gplot != nullptr )
-  //  _gplot->clearCustom();
 }
 
 void CanvasPos::buildBorders(unsigned itime, bool findBorder) {

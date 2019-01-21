@@ -604,12 +604,10 @@ HistData& HistData::operator+=(HistData& hist) {
   bool reorder = false;
   try {
     order = this->reorder(hist);
-    if ( _natom < 100 ) {
-      for ( unsigned i=0 ; i < order.size() ; ++i ) {
-        if ( i != order[i] ) {
-          reorder = true;
-          break;
-        }
+    for ( unsigned i=0 ; i < order.size() ; ++i ) {
+      if ( i != order[i] ) {
+        reorder = true;
+        break;
       }
     }
   }

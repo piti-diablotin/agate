@@ -182,6 +182,9 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   };
 #ifdef HAVE_OMP4
   int nthread = 1;
+  auto sigma = _sigma;
+  auto histogramI = _histogramI;
+  auto histogramJ = _histogramJ;
 #pragma omp parallel 
 #pragma omp single
   {
@@ -191,7 +194,11 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
 #pragma omp declare reduction(+: std::vector<double> : \
     std::transform(omp_out.begin(), omp_out.end(), omp_in.begin(), omp_out.begin(), std::plus<double>())) \
   initializer(omp_priv = omp_orig)
-#pragma omp parallel for collapse(2), schedule(static), reduction(+:_sigma), reduction(+:_histogramI), reduction(+:_histogramJ), if ( _nsppol*nkpt >= nthread )
+#pragma omp parallel for collapse(2), schedule(static), reduction(+:sigma), reduction(+:histogramI), reduction(+:histogramJ), if ( _nsppol*nkpt >= nthread )
+#else
+  auto &sigma = _sigma;
+  auto &histogramI = _histogramI;
+  auto &histogramJ = _histogramJ;
 #endif
   for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
     for ( int ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
@@ -231,7 +238,7 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
           }
         }
       }
-//#pragma omp parallel for schedule(static), reduction(+:_sigma), reduction(+:_histogramI), reduction(+:_histogramJ), if (_nsppol*nkpt < nthread )
+//#pragma omp parallel for schedule(static), reduction(+:sigma), reduction(+:histogramI), reduction(+:histogramJ), if (_nsppol*nkpt < nthread )
       for ( int iband = _bandSelection[0] ; iband < _bandSelection[1] ; ++iband ) {
         const double eigenI = eigen[iband] - fermi;
         if ( eigenI <= _energySelection[0] || eigenI >= _energySelection[1] ) continue;
@@ -242,18 +249,20 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
           const double dE = eigenJ-eigenI;
           if ( std::abs(docc) < 1e-8 || dE < _omegaMin || dE > (_omegaMax+_smearing*2.0) ) continue;
           const double preContrib = coeff[iband*nband+jband]*docc;
-          _histogramI[(eigenI-_histBorder[0])/_histDelta]+=docc;
-          _histogramJ[(eigenJ-_histBorder[0])/_histDelta]+=docc;
+          histogramI[(eigenI-_histBorder[0])/_histDelta]+=docc;
+          histogramJ[(eigenJ-_histBorder[0])/_histDelta]+=docc;
           for ( int iomega = 0 ; iomega < _nomega ; ++iomega ) {
             const double w = _omega[iomega];
             const double contrib = preContrib/w
               * ( std::exp( -(dE-w)*(dE-w)*inv_smearingSquare ) - std::exp( -(dE+w)*(dE+w)*inv_smearingSquare) );
-            _sigma[isppol*_nomega+iomega] += contrib*factor ;
+            sigma[isppol*_nomega+iomega] += contrib*factor ;
           }
         }
       }
     }
   }
+#ifdef HAVE_OMP4
+#endif
   progress = nkpt*_nsppol;
   printProgress();
   std::clog << std::endl;

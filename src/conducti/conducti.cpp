@@ -78,11 +78,11 @@ void Conducti::setSmearing(double smearing) {
 }
 
 void Conducti::setOmegaRange(double omin, double omax) {
-  if ( omin > omax )
+  if ( omin >= omax )
     throw EXCEPTION("min cannot be larger than max",ERRDIV);
-  if ( omin < 0 )
+  if ( omin <= 0 )
     throw EXCEPTION("min cannot be negative",ERRDIV);
-  if ( omax < 0 )
+  if ( omax <= 0 )
     throw EXCEPTION("min cannot be negative",ERRDIV);
   _omegaMin = omin;
   _omegaMax = omax;
@@ -90,11 +90,11 @@ void Conducti::setOmegaRange(double omin, double omax) {
 }
 
 void Conducti::setRange(double eMin1, double eMax1, double eMin2, double eMax2) {
-  if ( eMin1 > eMax1 )
+  if ( eMin1 >= eMax1 )
     throw EXCEPTION("min1 cannot be larger than max1",ERRDIV);
-  if ( eMin2 > eMax2 )
+  if ( eMin2 >= eMax2 )
     throw EXCEPTION("min2 cannot be larger than max2",ERRDIV);
-  if ( eMin2 < eMax1 )
+  if ( eMin2 <= eMax1 )
     throw EXCEPTION("min2 cannot be less than max1",ERRDIV);
   _energySelection[0] = eMin1;
   _energySelection[1] = eMax1;
@@ -104,11 +104,11 @@ void Conducti::setRange(double eMin1, double eMax1, double eMin2, double eMax2) 
 }
 
 void Conducti::setRange(int bandMin1, int bandMax1, int bandMin2, int bandMax2) {
-  if ( bandMin1 > bandMax1 )
+  if ( bandMin1 >= bandMax1 )
     throw EXCEPTION("min1 cannot be larger than max1",ERRDIV);
-  if ( bandMin2 > bandMax2 )
+  if ( bandMin2 >= bandMax2 )
     throw EXCEPTION("min2 cannot be larger than max2",ERRDIV);
-  if ( bandMin2 < bandMax1 )
+  if ( bandMin2 <= bandMax1 )
     throw EXCEPTION("min2 cannot be less than max1",ERRDIV);
   _bandSelection[0] = bandMin1;
   _bandSelection[1] = bandMax1;
@@ -143,11 +143,28 @@ void Conducti::fullTensor(const AbiOpt &abiopt) {
 void Conducti::diagonalTensor(const AbiOpt &abiopt) {
 }
 
+double Conducti::getOmegaMax(const AbiOpt &abiopt) {
+  int nsppol = abiopt.nsppol();
+  int nkpt = abiopt.nkpt();
+  double maxEnergy = 0;
+
+  for ( int isppol = 0 ; isppol < nsppol ; ++isppol ) {
+    for ( int ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
+      auto &eigen = abiopt.eigen(isppol,ikpt);
+      maxEnergy += (*std::max_element(eigen.begin(),eigen.end()))-abiopt.fermie();
+    }
+  }
+  
+  return maxEnergy/(nkpt*nsppol);
+}
+
 void Conducti::traceTensor(const AbiOpt &abiopt) {
+  using std::min;
+  using std::max;
   _nsppol = abiopt.nsppol();
   int nkpt = abiopt.nkpt();
   double fermi = abiopt.fermie();
-  double maxEnergy = 0;
+  double maxEnergy = getOmegaMax(abiopt);
   std::clog << "Fermi level [" << Units::toString(_eunit) << "]: " << fermi*Units::getFactor(Units::Ha,_eunit) << std::endl;
 
   double factor = 2*phys::pi/(geometry::det(abiopt.rprim())*_smearing*2*std::sqrt(phys::pi));
@@ -158,15 +175,8 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   std::fill(_sigma.begin(),_sigma.end(),0);
   double inv_smearingSquare = 1./(_smearing*_smearing);
   auto wtk = abiopt.wtk();
-
-  for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
-    for ( int ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
-      auto &eigen = abiopt.eigen(isppol,ikpt);
-      maxEnergy += (*std::max_element(eigen.begin(),eigen.end()))-fermi;
-    }
-  }
   
-  std::clog << "Emax-Efermi [" << Units::toString(_eunit) << "]: " << maxEnergy/(nkpt*_nsppol)*Units::getFactor(Units::Ha,_eunit) << std::endl;
+  std::clog << "Emax-Efermi [" << Units::toString(_eunit) << "]: " << maxEnergy*Units::getFactor(Units::Ha,_eunit) << std::endl;
 
   const int nhist = 1000;
   this->buildHistogram(-_omegaMax*2,_omegaMax*2,nhist);
@@ -176,8 +186,10 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   auto printProgress = [&]() {
     const double total = nkpt*_nsppol;
     int actual = (int)(100.*(double)progress/total);
-    if ( actual > previous )
+    if ( actual > previous ) {
       std::clog << actual << "% ";
+      std::clog.flush();
+    }
     previous = actual;
   };
 #ifdef HAVE_OMP4
@@ -232,22 +244,22 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
 
       for ( int idir = 0 ; idir < 3 ; ++idir ) {
         auto &nabla = abiopt.nabla(isppol,ikpt,idir);
-        for ( int jband = _bandSelection[2] ; jband < _bandSelection[3] ; ++ jband ) {
-          for ( int iband = _bandSelection[0] ; iband < _bandSelection[1] ; ++iband ) {
+        for ( int jband = max(0,_bandSelection[2]) ; jband < min(nband,_bandSelection[3]) ; ++ jband ) {
+          for ( int iband = max(0,_bandSelection[0]) ; iband < min(nband,_bandSelection[1]) ; ++iband ) {
             coeff[iband*nband+jband] += weight*std::norm(nabla[jband*nband+iband]);
           }
         }
       }
 //#pragma omp parallel for schedule(static), reduction(+:sigma), reduction(+:histogramI), reduction(+:histogramJ), if (_nsppol*nkpt < nthread )
-      for ( int iband = _bandSelection[0] ; iband < _bandSelection[1] ; ++iband ) {
+      for ( int iband = max(0,_bandSelection[0]) ; iband < min(nband,_bandSelection[1]) ; ++iband ) {
         const double eigenI = eigen[iband] - fermi;
         if ( eigenI <= _energySelection[0] || eigenI >= _energySelection[1] ) continue;
-        for ( int jband = std::max(_bandSelection[2],iband+1) ; jband < _bandSelection[3] ; ++jband ) {
+        for ( int jband = max(_bandSelection[2],iband+1) ; jband < min(nband,_bandSelection[3]) ; ++jband ) {
           const double eigenJ = eigen[jband] - fermi;
           if ( eigenJ <= _energySelection[2] || eigenJ >= _energySelection[3] ) continue;
           const double docc = occ[iband]-occ[jband];
           const double dE = eigenJ-eigenI;
-          if ( std::abs(docc) < 1e-8 || dE < _omegaMin || dE > (_omegaMax+_smearing*2.0) ) continue;
+          if ( std::abs(docc) < 1e-8 || dE < (_omegaMin-_smearing*2.0) || dE > (_omegaMax+_smearing*2.0) ) continue;
           const double preContrib = coeff[iband*nband+jband]*docc;
           histogramI[(eigenI-_histBorder[0])/_histDelta]+=docc;
           histogramJ[(eigenJ-_histBorder[0])/_histDelta]+=docc;
@@ -262,6 +274,9 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
     }
   }
 #ifdef HAVE_OMP4
+  _sigma = std::move(sigma);
+  _histogramI = std::move(histogramI);
+  _histogramJ = std::move(histogramJ);
 #endif
   progress = nkpt*_nsppol;
   printProgress();
@@ -319,6 +334,12 @@ void Conducti::printHistogram(std::ostream& out) {
   }
 }
 
+void Conducti::setUnits(const std::string &eunit, const std::string &sunit) {
+    _eunit = Units::getEnergyUnit(utils::tolower(eunit));
+    if ( utils::tolower(sunit) == "ohm-1.cm-1" )
+      _sunit = phys::Ohmcm;
+}
+
 void Conducti::setParameters(ConfigParser &parser){
   parser.setSensitive(false);
   if ( parser.hasToken("erange") && parser.hasToken("brange") )
@@ -345,17 +366,17 @@ void Conducti::setParameters(ConfigParser &parser){
     this->setRange(tmp[0],tmp[1],tmp[2],tmp[3]);
   }
 
+  std::string eunit("Ha"), sunit;
   if ( parser.hasToken("eunit") ) {
-    _eunit = Units::getEnergyUnit(utils::tolower(parser.getToken<std::string>("eunit")));
+    eunit = parser.getToken<std::string>("eunit");
   }
+  if ( parser.hasToken("sunit") ) {
+    sunit = parser.getToken<std::string>("sunit");
+  }
+  Conducti::setUnits(eunit,sunit);
+
   std::string unit = Units::toString(_eunit);
   double factor = Units::getFactor(Units::Ha,_eunit);
-
-  if ( parser.hasToken("sunit") ) {
-    if ( parser.getToken<std::string>("sunit") == "ohm-1.cm-1" )
-      _sunit = phys::Ohmcm;
-  }
-
 
   std::clog << "Number of frequencies: " << _nomega << std::endl;
   std::clog << "Frequency range ["<< unit << "]: " << _omegaMin*factor << "->" << _omegaMax*factor << std::endl;
@@ -366,7 +387,7 @@ void Conducti::setParameters(ConfigParser &parser){
     std::clog << "Band ranges selection: " << _bandSelection[0] << "->" << _bandSelection[1] << "; " << _bandSelection[2] << "->" << _bandSelection[3] << std::endl;
 }
 
-void Conducti::getResult(Graph::Config &config) {
+void Conducti::getResultSigma(Graph::Config &config) {
   config.x = _omega;
   std::list<std::vector<double>> &y = config.y;
   std::list<std::string> &labels = config.labels;
@@ -386,28 +407,24 @@ void Conducti::getResult(Graph::Config &config) {
     labels.push_back("Up");
     labels.push_back("Down");
     labels.push_back("Total");
-    y.resize(2);
-    y.front().resize(_nomega);
-    y.back().resize(_nomega);
+    std::vector<double> up(_nomega);
+    std::vector<double> down(_nomega);
     std::vector<double> total(_nomega);
     for ( int w = 0 ; w < _nomega ; ++w ) {
-      double sum = 0;
-      auto it = y.begin();
-      for ( int isppol = 0 ; isppol < _nsppol ; ++isppol,++it ) {
-        sum+=_sigma[isppol*_nomega+w];
-        (*it)[w] = _sigma[isppol*_nomega+w]*_sunit;
-      }
-      total[w] = sum*_sunit;
+      up[w] = _sigma[0*_nomega+w]*_sunit;
+      down[w] = _sigma[1*_nomega+w]*_sunit;
+      total[w] = up[w]+down[w];
     }
+    y.push_back(std::move(up));
+    y.push_back(std::move(down));
     y.push_back(std::move(total));
   }
   else {
-    y.resize(1);
-    auto vec = *y.begin();
-    vec.resize(_nomega);
+    std::vector<double> vec(_nomega);
     for ( int w = 0 ; w < _nomega ; ++w ) {
       vec[w] = _sigma[w]*_sunit;
     }
+    y.push_back(std::move(vec));
   }
 
   if ( config.save == Graph::DATA ) {
@@ -419,4 +436,39 @@ void Conducti::getResult(Graph::Config &config) {
     hist.close();
     sigma.close();
   }
+}
+
+void Conducti::getResultHistogram(Graph::Config &config) {
+  auto& x  = config.x;
+  std::list<std::vector<double>> &y = config.y;
+  std::list<std::string> &labels = config.labels;
+  std::string &filename = config.filename;
+  std::string &xlabel = config.xlabel;
+  std::string &ylabel = config.ylabel;
+  config.title = "Historgram";
+  config.doSumUp = false;
+
+  double factor = Units::getFactor(Units::Ha,_eunit);
+
+  x.resize(_histogramI.size());
+  for ( unsigned h = 0 ; h < _histogramI.size() ; ++h ) {
+    x[h] = (_histBorder[0]+h*_histDelta)*factor;
+  }
+
+  xlabel = std::string("Frequency [") + Units::toString(_eunit) + std::string("]");
+  ylabel = std::string("Histogram [au]");
+  labels.push_back("From");
+  labels.push_back("To");
+  y.push_back(_histogramI);
+  y.push_back(_histogramJ);
+
+  //if ( config.save == Graph::DATA ) {
+  //  std::ofstream hist(filename+"_histogram.dat",std::ios::out);
+  //  std::ofstream sigma(filename+"_sigma.dat",std::ios::out);
+  //  config.save = Graph::NONE;
+  //  this->printSigma(sigma);
+  //  this->printHistogram(hist);
+  //  hist.close();
+  //  sigma.close();
+  //}
 }

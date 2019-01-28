@@ -28,6 +28,7 @@
 #include "base/utils.hpp"
 #include "base/exception.hpp"
 #include <iomanip>
+#include <algorithm>
 
 //
 Graph::Graph() : _xlabel(),
@@ -113,19 +114,52 @@ void Graph::plot(const Config &conf, Graph* gplot) {
         std::ofstream file(conf.filename+".dat",std::ios::out);
         if ( !file )
           throw EXCEPTION("Unable to save file "+conf.filename,ERRABT);
-        file << "# " << std::setw(20) << conf.xlabel;
-        for ( auto& label : conf.labels )
-          file << std::setw(22) << label;
-        file << std::endl;
-        file.precision(14);
-        file.setf(std::ios::scientific,std::ios::floatfield);
-        file.setf(std::ios::right,std::ios::adjustfield);
-        for ( unsigned r = 0 ; r < conf.x.size() ; ++r ) {
-          file << std::setw(22) << conf.x[r];
-          for ( auto& vec : conf.y ) {
-            file << std::setw(22) << vec[r];
+        if ( conf.xy.size() == 0 ) {
+          file << "# " << std::setw(20) << conf.xlabel;
+          for ( auto& label : conf.labels )
+            file << std::setw(22) << label;
+          file << std::endl;
+          file.precision(14);
+          file.setf(std::ios::scientific,std::ios::floatfield);
+          file.setf(std::ios::right,std::ios::adjustfield);
+          for ( unsigned r = 0 ; r < conf.x.size() ; ++r ) {
+            file << std::setw(22) << conf.x[r];
+            for ( auto& vec : conf.y ) {
+              file << std::setw(22) << vec[r];
+            }
+            file << std::endl;
+          }
+        }
+        else {
+          file << "# ";
+          for ( unsigned n = 0 ; n < conf.xy.size() ; ++n ) {
+            file << std::setw(n==0 ? 20 : 22) << conf.xlabel;
+            auto it = conf.labels.begin();
+            std::advance(it,n);
+            file << std::setw(22) << *(it);
           }
           file << std::endl;
+          file.precision(14);
+          file.setf(std::ios::scientific,std::ios::floatfield);
+          file.setf(std::ios::right,std::ios::adjustfield);
+          std::vector<int> allSize;
+          for ( auto it = conf.xy.begin(); it != conf.xy.end() ; ++it )
+            allSize.push_back(it->first.size());
+          unsigned maxX = *std::max_element(allSize.begin(),allSize.end());
+
+          for ( unsigned r = 0 ; r < maxX ; ++r ) {
+            for ( auto curve = conf.xy.begin() ; curve != conf.xy.end(); curve++ )
+            {
+              if ( r >= curve->first.size() ) {
+                file << std::setw(22) << " " << std::setw(22) << " ";
+              }
+              else {
+                file << std::setw(22) << curve->first[r] << std::setw(22) << curve->second[r];
+              }
+
+            }
+            file << std::endl;
+          }
         }
         file.close();
         break;

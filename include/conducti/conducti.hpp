@@ -95,6 +95,8 @@ class Conducti {
 
     void setRange(int bandMin1, int bandMax1, int bandMin2, int bandMax2);
 
+    void setUnits(const std::string &eunit, const std::string &sunit);
+
     const std::vector<double>& omega() const { return _omega; }
 
     void fullTensor(const AbiOpt &abiopt);
@@ -108,7 +110,11 @@ class Conducti {
 
     void setParameters(ConfigParser &parser);
 
-    void getResult(Graph::Config &config);
+    void getResultSigma(Graph::Config &config);
+
+    void getResultHistogram(Graph::Config &config);
+
+    static double getOmegaMax(const AbiOpt &abiopt);
 
 };
 

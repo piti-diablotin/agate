@@ -1340,7 +1340,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     Conducti conducti;
     conducti.setParameters(parser);
     conducti.traceTensor(opt);
-    conducti.getResult(config);
+    conducti.getResultSigma(config);
 
     try {
       if ( _gplot == nullptr ) 

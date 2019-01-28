@@ -79,6 +79,7 @@ class AbiOpt {
     const std::vector<std::complex<double>>& nabla(int isppol, int ikpt, int idir) const;
     const geometry::mat3d& rprim() const { return _header.rprim(); }
     const std::vector<double>& wtk() const { return _header.wtk(); }
+    int mband() const { return _header.mband(); }
 
 };
 

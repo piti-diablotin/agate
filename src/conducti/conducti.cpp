@@ -387,7 +387,7 @@ void Conducti::setParameters(ConfigParser &parser){
     std::clog << "Band ranges selection: " << _bandSelection[0] << "->" << _bandSelection[1] << "; " << _bandSelection[2] << "->" << _bandSelection[3] << std::endl;
 }
 
-void Conducti::getResultSigma(Graph::Config &config) {
+void Conducti::getResultSigma(Graph::Config &config, bool spin) {
   config.x = _omega;
   std::list<std::vector<double>> &y = config.y;
   std::list<std::string> &labels = config.labels;
@@ -404,9 +404,11 @@ void Conducti::getResultSigma(Graph::Config &config) {
   if ( _sunit != 1 ) symbol = "Ohm-1.cm-1";
   ylabel = std::string("Sigma [") + symbol + std::string("]");
   if ( _nsppol == 2 ) {
-    labels.push_back("Up");
-    labels.push_back("Down");
-    labels.push_back("Total");
+    if ( spin ) {
+      labels.push_back("Up");
+      labels.push_back("Down");
+      labels.push_back("Total");
+    }
     std::vector<double> up(_nomega);
     std::vector<double> down(_nomega);
     std::vector<double> total(_nomega);
@@ -415,8 +417,10 @@ void Conducti::getResultSigma(Graph::Config &config) {
       down[w] = _sigma[1*_nomega+w]*_sunit;
       total[w] = up[w]+down[w];
     }
-    y.push_back(std::move(up));
-    y.push_back(std::move(down));
+    if ( spin ) {
+      y.push_back(std::move(up));
+      y.push_back(std::move(down));
+    }
     y.push_back(std::move(total));
   }
   else {

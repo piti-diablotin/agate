@@ -110,7 +110,7 @@ class Conducti {
 
     void setParameters(ConfigParser &parser);
 
-    void getResultSigma(Graph::Config &config);
+    void getResultSigma(Graph::Config &config, bool spin=true);
 
     void getResultHistogram(Graph::Config &config);
 

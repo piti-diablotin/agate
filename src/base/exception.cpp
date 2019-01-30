@@ -162,7 +162,7 @@ std::string Exception::what(std::string prefix, bool textonly) const _NOEXCEPT {
 
   if ( textonly ) return _text[_text.size()-1];
 
-#ifdef HAVE_CPPTHREAD && defined(_DEBUG)
+#if defined(HAVE_CPPTHREAD) && defined(DEBUG)
   std::thread::id my_id = std::this_thread::get_id();
   if ( my_id != std::thread::id() )
     oss << "== " << my_id << " == " ;

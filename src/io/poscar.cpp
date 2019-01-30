@@ -148,20 +148,11 @@ void Poscar::readFromFile(const std::string& filename) {
         bool found = false;
         sstr >> tmp_str;
         if ( tmp_str.empty() ) continue;
-        std::locale loc;
-        for ( unsigned c = 1 ; c < tmp_str.size() ; ++c ) // No need to set the first char to lower since it has to be upper
-          tmp_str[c] = std::tolower(tmp_str[c],loc);
-        tmp_str[0] = std::toupper(tmp_str[0],loc);
-        for ( unsigned sp = 1 ; sp < 119 ; ++sp ) {
-          std::string specie(mendeleev::name[sp]);
-          utils::rtrim(specie);
-          if ( tmp_str.compare(specie) == 0 ) {
-            found = true;
-            _znucl.push_back(sp);
-            break;
-          }
+        try {
+          unsigned sp = mendeleev::znucl(tmp_str);
+          _znucl.push_back(sp);
         }
-        if ( found == false ) {
+        catch ( Exception& e ) {
           _names = line;
           _znucl.clear();
           break;
@@ -206,7 +197,7 @@ void Poscar::readFromFile(const std::string& filename) {
     sstr.str(line);
     sstr >> ntype;
     if ( sstr.fail() ) {
-      if ( _znucl.empty() ) {
+        std::vector<int> znucl_tmp;
         sstr.clear();
         sstr.str(line);
         /* Try to identify symbols */
@@ -215,26 +206,17 @@ void Poscar::readFromFile(const std::string& filename) {
           bool found = false;
           sstr >> tmp_str;
           if ( tmp_str.empty() ) continue;
-          std::locale loc;
-          for ( unsigned c = 1 ; c < tmp_str.size() ; ++c ) // No need to set the first char to lower since it has to be upper
-            tmp_str[c] = std::tolower(tmp_str[c],loc);
-          tmp_str[0] = std::toupper(tmp_str[0],loc);
-          for ( unsigned sp = 1 ; sp < 119 ; ++sp ) {
-            std::string specie(mendeleev::name[sp]);
-            utils::rtrim(specie);
-            if ( tmp_str.compare(specie) == 0 ) {
-              found = true;
-              _znucl.push_back(sp);
-              break;
-            }
+          try {
+            unsigned sp = mendeleev::znucl(tmp_str);
+            znucl_tmp.push_back(sp);
           }
-          if ( found == false ) {
+          catch ( Exception& e ) {
             _names = line;
-            _znucl.clear();
+            znucl_tmp.clear();
             break;
           }
         } while ( !sstr.eof() );
-      }
+        if ( !znucl_tmp.empty() ) _znucl = std::move(znucl_tmp);
 
       std::getline(poscar,line);
       utils::trim(line);

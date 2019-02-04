@@ -12,7 +12,7 @@ AC_CONFIG_SRCDIR([src/base/exception.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([m4])
 # Check include directory
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADER([agate.h])
 #AC_CONFIG_HEADER(config.h)
 
 # Check for c++ preprocessor and compiler

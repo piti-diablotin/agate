@@ -54,7 +54,6 @@ extern "C"{
 #endif
 
 
-pCanvas crystal(nullptr); ///< Will generate the OpenGL canvas to draw the position of the atoms.
 Window* ptrwin = nullptr; ///< Pointer to the window if created
 
 /**
@@ -94,6 +93,7 @@ void initInput(int argc, const char** argv) {
     file.close();
   }
   try {
+    auto crystal = ptrwin->canvas();
     if ( crystal != nullptr && filename.size() > 0 ) {
       try {
         crystal->openFile(filename[0]);
@@ -263,6 +263,7 @@ int main(int argc, char** argv) {
     unsigned width  = parser.getOption<unsigned>("width");
     unsigned height = parser.getOption<unsigned>("height");
     bool useopengl = !parser.getOption<bool>("term");
+    pCanvas crystal(nullptr);
     if ( useopengl ) {
 #ifdef HAVE_GL
 #ifdef HAVE_GLFW3
@@ -315,13 +316,16 @@ int main(int argc, char** argv) {
       crystal->alter("wait",stream);
     }
 
+    ptrwin->canvas(crystal);
+
     try {
       initInput(argc-1, (const char**) argv+1);
     }
     catch ( Exception &e ) {
       std::clog << e.fullWhat() << std::endl;
-      crystal.reset(new CanvasPos(useopengl));
+      ptrwin->canvas(new CanvasPos(useopengl));
     }
+
     try{
       if ( parser.isSetOption("font") )
         ptrwin->setFont(parser.getOption<std::string>("font"));
@@ -363,8 +367,8 @@ int main(int argc, char** argv) {
       Window::help();
     }
   }
-  crystal.reset();
   /*
+  crystal.reset();
      if ( crystal != nullptr ) {
      delete crystal;
      crystal = nullptr;

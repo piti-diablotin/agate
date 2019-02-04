@@ -102,8 +102,8 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
 #ifdef HAVE_CPPTHREAD
   _snake(nullptr),
 #endif
-  _canvas(canvas),
-  _arrow(nullptr)
+  _canvas(canvas.release()),
+  _arrow()
 {
 
   _background[0] = 0.f;
@@ -179,6 +179,98 @@ void Window::beginGl() {
      glLineWidth(linewidth);
      }
      */
+#endif
+}
+
+Window::Window():
+  _exit(false),
+  _posX(0),
+  _posY(0),
+  _width(0),
+  _height(0),
+  _suffix(0),
+  _title(PACKAGE_STRING) ,
+  _background(),
+  _image(),
+  _imageBuffer(nullptr),
+  _keepImage(false),
+  _imageSize(0),
+  _imageSuffixMode(convert),
+  _movie(false),
+  _mouseButtonLeft(0),
+  _mouseButtonRight(0),
+  _mouseButtonMiddle(0),
+  _keyEnter(0),
+  _keyKPEnter(0),
+  _keyBackspace(0),
+  _keyEscape(0),
+  _keyArrowUp(0),
+  _keyArrowDown(0),
+  _keyArrowLeft(0),
+  _keyArrowRight(0),
+  _keyX(0),
+  _keyY(0),
+  _keyZ(0),
+  _mode(mode_static),
+  _modeMouse(mode_static),
+  _command(),
+  _commandStack(),
+  _commandStackNo(),
+  _render(),
+  _optionb(),
+  _optionf(),
+  _optioni(),
+#ifdef HAVE_CPPTHREAD
+  _snake(nullptr),
+#endif
+  _canvas(),
+  _arrow()
+{
+
+  _background[0] = 0.f;
+  _background[1] = 0.f;
+  _background[2] = 0.f;
+  _render._color[0] = 255;
+  _render._color[1] = 255;
+  _render._color[2] = 255;
+
+  _optionf["x0"] = 0.f;
+  _optionf["y0"] = 0.f;
+  _optionf["campsi"] = 0.f;
+  _optionf["camtheta"] = 0.f;
+  _optionf["camphi"] = 0.f;
+  _optionf["shiftOriginX"] = 0.f;
+  _optionf["shiftOriginY"] = 0.f;
+  _optionf["speed"] = 1.f;
+  _optionf["aspect"] = 1.f;
+  //_optionf["distance"] = 1.1f*_canvas->typicalDim();
+  _optionf["wheel"] = 0.f;
+  _optionf["oldWheel"] = 0.f;
+  _optionf["zoom"] = 1.f;
+
+  _optionb["view_angle"] = true;
+  _optionb["view_time_input"] = true;
+  //_optionb["view_time"] = (_canvas->ntime()>0);
+  _optionb["error"] = false;
+  _optionb["msaa"] = true;
+  _optionb["paral_proj"] = true;
+  _optionb["takeSnapshot"] = false;
+  _optionb["axis"] = true;
+
+  _optioni["shouldExit"] = 0;
+  _optioni["oldWidth"] = 0;
+  _optioni["oldHeight"] = 0;
+  _optioni["dumpframe"] = 0;
+
+  _optioni["oldWidth"] = _width;
+  _optioni["oldHeight"] = _height;
+
+  _optioni["initBuffer"] = 0;
+  _optioni["prevNtime"] = 0;
+  _optioni["ntime"] = 0;
+
+#if defined(HAVE_GL) && defined(HAVE_GLEXT)
+  std::clog << "OpenGL might use VBO" << std::endl;
 #endif
 }
 

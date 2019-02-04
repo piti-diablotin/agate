@@ -114,7 +114,7 @@ class Window {
     std::unique_ptr<std::thread> _snake;
 #endif
 
-    pCanvas& _canvas; ///< Canvas to use
+    pCanvas _canvas; ///< Canvas to use
     std::unique_ptr<TriArrow> _arrow;
 
     static std::queue<unsigned int> _inputChar; ///< Store all character dropped by the glfw callback function.
@@ -221,6 +221,8 @@ class Window {
      */
     Window(pCanvas &canvas, const int width, const int height);
 
+    Window();
+
     /**
      * Copy constructor.
      */
@@ -316,6 +318,11 @@ class Window {
      * Set flag to exit the main loop
      */
     virtual void exit() { _exit = true; }
+    
+    virtual Canvas* canvas() const {return _canvas.get();}
+
+    virtual void canvas(pCanvas &canvas) {_canvas.reset(canvas.release());}
+    virtual void canvas(Canvas* canvas) {_canvas.reset(canvas);canvas=nullptr;}
 
 };
 

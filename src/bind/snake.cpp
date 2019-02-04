@@ -11,7 +11,7 @@
 #define MIN(i,j) i>j ? j : i
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "agate.h"
 #undef HAVE_CONFIG_H
 #endif
 

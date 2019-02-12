@@ -70,10 +70,10 @@ QWidget* TabWinGl::newTab() {
   QGridLayout *gridLayout = new QGridLayout(tab);
   gridLayout->setContentsMargins(0,0,0,0);
 
-  pCanvas *canvas = new pCanvas(nullptr);
-  _glwidgets.push_back(new GLWidget(*canvas,1280,961,60,tab));
-  canvas->reset(new CanvasPos(true)); 
-  canvas->get()->setGraph(new QPlot(this));
+  pCanvas canvas(new CanvasPos(true));
+  canvas->setGraph(new QPlot(this));
+  _glwidgets.push_back(new GLWidget(canvas,1280,961,60,tab));
+  //canvas->reset(new CanvasPos(true)); 
   _glwidgets.back()->setTitle("New Tab");
   gridLayout->addWidget(_glwidgets.back(), 0, 0, 1, 1);
   return tab;

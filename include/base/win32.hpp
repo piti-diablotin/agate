@@ -28,7 +28,7 @@
 #define WIN32_HPP
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "agate.h"
 #undef HAVE_CONFIG_H
 #endif
 

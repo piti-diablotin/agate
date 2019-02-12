@@ -432,12 +432,12 @@ void Conducti::getResultSigma(Graph::Config &config, bool spin) {
   }
 
   if ( config.save == Graph::DATA ) {
-    std::ofstream hist(filename+"_histogram.dat",std::ios::out);
+    //std::ofstream hist(filename+"_histogram.dat",std::ios::out);
     std::ofstream sigma(filename+"_sigma.dat",std::ios::out);
     config.save = Graph::NONE;
     this->printSigma(sigma);
-    this->printHistogram(hist);
-    hist.close();
+    //this->printHistogram(hist);
+    //hist.close();
     sigma.close();
   }
 }
@@ -466,13 +466,13 @@ void Conducti::getResultHistogram(Graph::Config &config) {
   y.push_back(_histogramI);
   y.push_back(_histogramJ);
 
-  //if ( config.save == Graph::DATA ) {
-  //  std::ofstream hist(filename+"_histogram.dat",std::ios::out);
-  //  std::ofstream sigma(filename+"_sigma.dat",std::ios::out);
-  //  config.save = Graph::NONE;
-  //  this->printSigma(sigma);
-  //  this->printHistogram(hist);
-  //  hist.close();
-  //  sigma.close();
-  //}
+  if ( config.save == Graph::DATA ) {
+    std::ofstream hist(filename+"_histogram.dat",std::ios::out);
+    //std::ofstream sigma(filename+"_sigma.dat",std::ios::out);
+    config.save = Graph::NONE;
+    //this->printSigma(sigma);
+    this->printHistogram(hist);
+    hist.close();
+    //sigma.close();
+  }
 }

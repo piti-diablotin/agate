@@ -470,7 +470,6 @@ void Window::loopStep() {
     glRasterPos2f(0.f,1.f);
     _render.render(_command);
 
-    if ( _movie ) { info << "Recording ";}
     // buffer is modified in _render.render();
     Render::BufferRender &buffer = _render._buffer;
     glRasterPos2f(0.f,1.f-(float)buffer.rows()/(float)_height);
@@ -944,6 +943,7 @@ bool Window::userInput(std::stringstream& info) {
       << ", phi=" << (int)(camphi/pi*180.f) << " ";
   if ( view_angle && view_time ) info << "| ";
   if ( view_time ) info << "Time step: " << _canvas->itime() << "/" << _canvas->ntime()-1 << " ";
+  if ( _movie ) { info << "Recording ";}
   if ( _exit ) _optioni["shouldExit"] = 1;
 
   return action;
@@ -992,6 +992,8 @@ void Window::drawAxis() {
   _arrow->pop();
 
   glRasterPos3f(0.f,-2.f,0.f);
+  bool state = _render._doRender;
+  _render._doRender = true;
   _render.render("z");
   //glDrawPixels(buffer.cols(), buffer.rows(), GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buffer.getPtr());
   glRasterPos3f(-2.f,0.f,0.f);
@@ -1001,6 +1003,7 @@ void Window::drawAxis() {
   _render.render("x");
   //glDrawPixels(buffer.cols(), buffer.rows(), GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buffer.getPtr());
   /* End draw cartesian axis */
+  _render._doRender = state;
 #endif
 }
 

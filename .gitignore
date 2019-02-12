@@ -9,8 +9,8 @@ autom4te.cache/
 bin/Makefile.am
 bin/Makefile.in
 build/
-config.h.in
-config.h.in~
+agate.h.in
+agate.h.in~
 configure
 configure.ac
 doc/Makefile.in

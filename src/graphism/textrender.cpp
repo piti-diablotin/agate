@@ -56,10 +56,11 @@
 //# endif
 //#endif
 
-TextRender::TextRender() : _isOk(false), _color(), _render(), _buffer(Render::BufferRender(200,200) ) {
+TextRender::TextRender() : _doRender(false), _isOk(false), _color(), _render(), _buffer(Render::BufferRender(200,200) ) {
   try {
     _render = Render(DEFAULT_FONT,20,RENDERGRAY);
     _isOk = true;
+    _doRender = true;
   }
   catch( Exception &e ) {
     e.ADD("Won't display any information on the screen",ERRWAR);
@@ -72,6 +73,7 @@ TextRender::TextRender() : _isOk(false), _color(), _render(), _buffer(Render::Bu
 }
 
 void TextRender::render(const std::string str, bool center) {
+  if ( !_doRender || !_isOk ) return;
   _render.render(str,_buffer,_color);
 #ifdef HAVE_GL
   if ( center ) {

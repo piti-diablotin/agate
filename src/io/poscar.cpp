@@ -145,7 +145,6 @@ void Poscar::readFromFile(const std::string& filename) {
       // Try to identify symbols 
       do {
         std::string tmp_str;
-        bool found = false;
         sstr >> tmp_str;
         if ( tmp_str.empty() ) continue;
         try {
@@ -203,7 +202,6 @@ void Poscar::readFromFile(const std::string& filename) {
         /* Try to identify symbols */
         do {
           std::string tmp_str;
-          bool found = false;
           sstr >> tmp_str;
           if ( tmp_str.empty() ) continue;
           try {

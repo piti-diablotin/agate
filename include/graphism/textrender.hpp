@@ -32,7 +32,7 @@
 #endif
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "agate.h"
 #undef HAVE_CONFIG_H
 #endif
 
@@ -49,6 +49,7 @@ struct TextRender {
 
   public :
 
+    bool                 _doRender; ///< True if render will be displayed on screen
     bool                 _isOk;     ///< Save the state of the render (true if can draw something, false otherwise)
     unsigned char        _color[3]; ///< Color for rendering text;
     Render               _render;   ///< Render to use;

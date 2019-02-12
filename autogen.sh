@@ -8,7 +8,7 @@ then
     autom4te.cache/ \
     configure \
     config.log \
-    config.h \
+    agate.h \
     ar-lib \
     compile \
     config.guess \
@@ -46,7 +46,7 @@ then
     bin/Makefile \
     bin/Makefile.in \
     bin/Makefile.am \
-    config.h.in \
+    agate.h.in \
     doc/Makefile \
     Makefile \
     Makefile.in \
@@ -260,6 +260,8 @@ SUBDIRS = @AM_SPGLIB@ \\" > Makefile.am
 EXTRA_DIST = autogen.sh configure1 configure2 icons icons.qrc spglib-1.9.9.tar.gz $(if test "$1" = "-t"; then echo "glfw-3.1.1.zip"; fi)
 #EXTRA_DIST = autogen.sh glfw-3.1.2.zip spglib-1.8.3.tar.gz
 
+nodist_include_HEADERS = agate.h
+
 clean-local:
 	find . -name "*~" -exec rm {} \; || echo "Not cleaning"
 	find . -name "*swp" -exec rm {} \; || echo "Not cleaning"
@@ -283,7 +285,7 @@ EOF
   cat configure.tmp configure2 > configure.ac
   rm configure.tmp
 
-  touch config.h.in
+  touch agate.h.in
   libtoolize && \
   aclocal \
     && automake --add-missing \

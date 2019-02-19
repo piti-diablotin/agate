@@ -35,7 +35,10 @@ const EnergyUnit::UnitDefinition EnergyUnit::dataBase[EnergyUnit::_nunit] = {
   {THz, Energy, "THz"  ,1e12*phys::Hz2eV},
   {pcm, Energy, "cm-1" ,1e2*phys::m2eV},
   {au, Conductivity, "au" ,1.},
-  {pOhmpcm, Conductivity, "Ohm-1.cm-1" ,1./phys::Ohmcm}
+  {pOhmpcm, Conductivity, "Ohm-1.cm-1" ,1./phys::Ohmcm},
+  {amu, Mass, "amu" ,1.},
+  {emu, Mass, "emu" ,phys::emass/phys::amu},
+  {kg, Mass, "kg" ,1./phys::amu}
 };
 
 //

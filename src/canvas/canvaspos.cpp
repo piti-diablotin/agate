@@ -60,6 +60,7 @@
 #include "io/eigparserelectrons.hpp"
 #include "conducti/abiopt.hpp"
 #include "conducti/conducti.hpp"
+#include "base/energyunit.hpp"
 
 //
 CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
@@ -1064,6 +1065,37 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       *tomodify = radius;
     }
     else throw EXCEPTION("Radius must be positive",ERRDIV);
+  }
+  else if ( token == "amu" ){
+    int z;
+    double mass;
+    std::string unit;
+    auto pos = stream.tellg();
+    stream >> z;
+    if ( stream.fail() ) {
+      stream.clear();
+      stream.seekg(pos);
+      std::string name;
+      stream >> name;
+      if ( !stream.fail() ) {
+        z = mendeleev::znucl(name);
+      }
+      else throw EXCEPTION("Don't undestand "+name,ERRDIV);
+    }
+    else if ( z <= 0 || z >= 119 )
+      throw EXCEPTION("Bad atomic number",ERRDIV);
+
+    stream >> mass;
+    if ( stream.fail() )
+      throw EXCEPTION("Need to read a mass",ERRDIV);
+    stream >> unit;
+    EnergyUnit munit(EnergyUnit::amu);
+    if ( !stream.fail() ) {
+      munit.rebase(EnergyUnit::getUnit(unit));
+      mass = mass*munit;
+    }
+    mendeleev::mass[z] = mass;
+    throw EXCEPTION("Mass of "+utils::trim(std::string(mendeleev::name[z]))+" set to "+utils::to_string(mass)+" "+munit.str(),ERRCOM);
   }
   else if ( token == "move" || token == "mv" ){
     double red[3]={0};

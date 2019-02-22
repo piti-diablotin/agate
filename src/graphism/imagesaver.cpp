@@ -66,7 +66,7 @@ void ImageSaver::setFormat(ImageType format) {
 #ifdef HAVE_LIBJPEG
                   _format = jpeg;
                   _ext = ".jpeg";
-                  std::clog << "Image format set to jpeg." << std::endl;
+                  throw EXCEPTION("Image format set to jpeg.",ERRCOM);
 #else
                   throw EXCEPTION("Jpeg format not available.\nConsider compiling with libjpeg.\nUsing ppm",ERRWAR);
 #endif
@@ -77,21 +77,20 @@ void ImageSaver::setFormat(ImageType format) {
 #ifdef HAVE_LIBPNG
                  _format = png;
                  _ext = ".png";
-                  std::clog << "Image format set to png." << std::endl;
+                 throw EXCEPTION("Image format set to png.",ERRCOM);
 #else
-                   throw EXCEPTION("Png format not available.\nConsider compiling with libpng.\nUsing ppm.",ERRWAR);
+                 throw EXCEPTION("Png format not available.\nConsider compiling with libpng.\nUsing ppm.",ERRWAR);
 #endif
                  break;
                }
     case ppm : {
                  _format = ppm;
                  _ext = ".ppm";
-                  std::clog << "Image format set to ppm." << std::endl;
+                 throw EXCEPTION("Image format set to ppm.",ERRCOM);
                  break;
                }
     default : {
-                Exception e = EXCEPTION("Unrecognize format (jpeg|png|ppm).\nUsing ppm",ERRWAR);
-                std::cerr << e.fullWhat() << std::endl;
+                throw EXCEPTION("Unrecognize format (jpeg|png|ppm).\nUsing ppm",ERRDIV);
                 break;
               }
   }
@@ -124,7 +123,7 @@ void ImageSaver::save(int width, int height, char *image, std::string& suff) {
   }
   catch(Exception &e) {
     e.ADD("Error exporting image to "+filename,ERRDIV);
-    std::cerr << e.fullWhat() << std::endl;
+    throw e;
   }
 }
 

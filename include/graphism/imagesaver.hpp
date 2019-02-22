@@ -49,7 +49,7 @@ class ImageSaver {
     /**
      * Store the compression type desired.
      */
-    enum ImageType { jpeg, ppm, png };
+    enum ImageType { jpeg=0, png=1, ppm=2 };
 
   private :
 
@@ -130,6 +130,20 @@ class ImageSaver {
      * @param suff The suffix to append to the name of the file.
      */
     void save(int width, int height, char *image, std::string& suff);
+
+    /**
+     * Getter for the format
+     * @return the format of the image (jpeg/png/ppm)
+     */
+    ImageType getFormat() const { return _format; };
+
+    /**
+     * Getter for the quality of the compressed image
+     * It may not be relevant for non-compressed formats
+     * @return the quality of the image (0 bad 100 very good).
+     */
+    int getQuality() const { return _quality; }
+
 };
 
 #endif  // IMAGESAVE_HPP

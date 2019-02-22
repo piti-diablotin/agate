@@ -692,8 +692,7 @@ bool Window::userInput(std::stringstream& info) {
             else if ( ext == "jpeg" )  _image.setFormat(ImageSaver::ImageType(ImageSaver::jpeg));
             else if ( ext == "ppm" ) _image.setFormat(ImageSaver::ImageType(ImageSaver::ppm));
             else {
-              Exception e = EXCEPTION("Unrecognize format (jpeg|png|ppm)",ERRWAR);
-              std::cerr << e.fullWhat() << std::endl;
+             throw EXCEPTION("Unrecognize format (jpeg|png|ppm)",ERRWAR);
             }
           }
           else if ( token == "img_qlt" || token == "image_quality" ) {
@@ -707,8 +706,7 @@ bool Window::userInput(std::stringstream& info) {
             if ( suf == "convert" ) _imageSuffixMode = convert;
             else if ( suf == "animate" )  _imageSuffixMode = animate;
             else {
-              Exception e = EXCEPTION("Unrecognize suffix format (convert|animate)",ERRWAR);
-              std::cerr << e.fullWhat() << std::endl;
+              throw EXCEPTION("Unrecognize suffix format (convert|animate)",ERRWAR);
             }
           }
           else if ( token == "load" ) {

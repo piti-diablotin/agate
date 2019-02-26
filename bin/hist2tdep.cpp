@@ -50,9 +50,9 @@ int main(int argc, char** argv) {
   Parser parser(argc,argv);
   parser.setOption("input",'i',"","Input to read to construct the dataset");
   parser.setOption("temperature",'t',"-1","Temperature of the HIST");
-  parser.setOption("init_step",'i',"0","Starting step (from 0) in the HIST");
-  parser.setOption("final_step",'f',"-1","End step (excluded) in the HIST");
-  parser.setOption("increment_step",'s',"1","Increment in the loop over number of steps");
+  parser.setOption("init_time",'b',"0","Starting step (from 0) in the HIST");
+  parser.setOption("final_time",'f',"-1","End step (excluded) in the HIST");
+  parser.setOption("increment_time",'s',"1","Increment in the loop over number of steps");
   parser.setOption("version",'v',"Print the version number");
   parser.setOption("help",'h',"Print this message");
 
@@ -68,9 +68,9 @@ int main(int argc, char** argv) {
     if ( !parser.isSetOption("input") ) {
       throw EXCEPTION("You must specify an input file with -i filename or --input filename",ERRDIV);
     }
-    int init_step = parser.getOption<int>("init_step");
-    int final_step = parser.getOption<int>("final_step");
-    int increment = parser.getOption<int>("increment_step");
+    int init_time = parser.getOption<int>("init_time");
+    int final_time = parser.getOption<int>("final_time");
+    int increment_time = parser.getOption<int>("increment_time");
 
     HistDataNC hist;
     hist.readFromFile(parser.getOption<std::string>("input"));
@@ -78,9 +78,9 @@ int main(int argc, char** argv) {
     int natom = hist.natom();
     int ntime = hist.ntime();
     hist.waitTime(ntime);
-    if (final_step == -1) final_step = ntime;
-    if (increment<1) increment = 1;
-    if (init_step < 0) init_step = 0;
+    if (final_time == -1) final_time = ntime;
+    if (increment_time<1) increment_time = 1;
+    if (init_time < 0) init_time = 0;
 
     // Sort atoms once for all
     auto typat = hist.typat();
@@ -109,7 +109,8 @@ int main(int argc, char** argv) {
     if ( !positions || !forces ) 
       throw EXCEPTION("Unable to open a file for writing",ERRDIV);
 
-    for ( int itime = init_step; itime < final_step; itime+=increment ) { 
+    int time_counter = 0;
+    for ( int itime = init_time; itime < final_time; itime+=increment_time ) { 
       const double *xred = hist.getXred(itime);
       const double *fcart = hist.getFcart(itime);
       const double *stress = hist.getStress(itime);
@@ -126,7 +127,7 @@ int main(int argc, char** argv) {
           << std::setw(23) << fcart[atoms[iatom]*3+1]*phys::Ha2eV/phys::b2A
           << std::setw(23) << fcart[atoms[iatom]*3+2]*phys::Ha2eV/phys::b2A << std::endl;
       }
-      stat << std::setw(6) << itime
+      stat << std::setw(6) << time_counter
         << std::setprecision(5) << std::setw(12) << hist.getTime(itime) * phys::hbar/phys::Ha * 1e15
         << std::setprecision(6) << std::setw(15) << (hist.getEtotal(itime)+hist.getEkin(itime)) * phys::Ha2eV
         << std::setprecision(6) << std::setw(15) << hist.getEtotal(itime) * phys::Ha2eV
@@ -140,6 +141,7 @@ int main(int argc, char** argv) {
         << std::setprecision(3) << std::setw( 9) << stress[3] * phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21
         << std::setprecision(3) << std::setw( 9) << stress[4] * phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21
         << std::endl;
+      ++time_counter;
     }
 
     double temperature;
@@ -164,7 +166,7 @@ int main(int argc, char** argv) {
 
     meta.precision(2);
     meta << std::setw( 9) << natom << "# natom" << std::endl;
-    meta << std::setw( 9) << ntime << "# ntime" << std::endl;
+    meta << std::setw( 9) << time_counter << "# ntime" << std::endl;
     meta << std::setw( 9) << dtion << "# dtion [fs]" << std::endl;
     meta << std::setw( 9) << (int)temperature << "# Temperature [K]" << std::endl;
     positions.close();

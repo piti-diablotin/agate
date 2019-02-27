@@ -43,6 +43,7 @@
 #endif
 
 using std::abs;
+using namespace Agate;
 
 //
 HistDataMD::HistDataMD() : HistData(),
@@ -769,7 +770,7 @@ void HistDataMD::computePressureTemperature(unsigned itime) {
   // In PIMD ekin != 1/2 mv^2 So recompute from velocities
   _temperature[itime] = 0;
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    const double mass = mendeleev::mass[_znucl[_typat[iatom]-1]]*phys::amu_emass;
+    const double mass = Mendeleev.mass[_znucl[_typat[iatom]-1]]*phys::amu_emass;
     double v2 = 0;
     for ( unsigned c = 0 ; c < 3 ; ++c ) {
       v2 += _velocities[itime*_natom*3+iatom*3+c]*_velocities[itime*_natom*3+iatom*3+c];

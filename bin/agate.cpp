@@ -42,6 +42,7 @@
 #ifdef HAVE_FFTW3_THREADS
 #include "fftw3.h"
 #endif
+#include "base/mendeleev.hpp"
 
 #if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
 #  ifdef __cplusplus
@@ -53,6 +54,7 @@ extern "C"{
 #  endif
 #endif
 
+Agate::mendeleev  Agate::Mendeleev;
 
 Window* ptrwin = nullptr; ///< Pointer to the window if created
 

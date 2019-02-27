@@ -37,6 +37,9 @@
 #include "hist/histdatanc.hpp"
 #include "base/phys.hpp"
 #include "io/poscar.hpp"
+#include "base/mendeleev.hpp"
+
+Agate::mendeleev  Agate::Mendeleev;
 
 /**
  * Main Program

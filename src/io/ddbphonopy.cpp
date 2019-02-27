@@ -33,6 +33,8 @@
 #include "base/phys.hpp"
 #include "base/mendeleev.hpp"
 
+using namespace Agate;
+
 //
 DdbPhonopy::DdbPhonopy() : Ddb() {
   _haveMasses = true;
@@ -177,7 +179,7 @@ void DdbPhonopy::buildFrom(const Dtset& dtset) {
         const unsigned idir2 = elt.first[2];
         const unsigned ipert2 = elt.first[3];
         if ( !(idir1 < 3 && idir2 < 3 && ipert1 < _natom && ipert2 < _natom) ) continue;
-        elt.second *= std::sqrt(mendeleev::mass[_znucl[_typat[ipert1]-1]]*mendeleev::mass[_znucl[_typat[ipert2]-1]]);
+        elt.second *= std::sqrt(Mendeleev.mass[_znucl[_typat[ipert1]-1]]*Mendeleev.mass[_znucl[_typat[ipert2]-1]]);
       }
     }
   }

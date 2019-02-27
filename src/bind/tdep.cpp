@@ -26,7 +26,7 @@
 
 #include "bind/tdep.hpp"
 #include "base/exception.hpp"
-#include "base/mendeleev.hpp"
+//#include "base/mendeleev.hpp"
 #include "hist/histdatanc.hpp"
 #include "hist/histdatadtset.hpp"
 #include <sstream>
@@ -277,7 +277,7 @@ void Tdep::tdep() {
 
      input << std::setw(16) << "amu";
      for ( auto z : _unitcell.znucl() )
-     input << std::setw(25) << mendeleev::mass[z];
+     input << std::setw(25) << Mendeleev.mass[z];
      input << std::endl;
      */
 

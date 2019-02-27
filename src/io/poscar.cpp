@@ -37,6 +37,7 @@
 #include "base/mendeleev.hpp"
 #include "base/utils.hpp"
 
+using Agate::mendeleev;
 
 //
 Poscar::Poscar() : Dtset(),

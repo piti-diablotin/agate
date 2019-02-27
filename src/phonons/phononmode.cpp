@@ -34,6 +34,7 @@
 #include <iostream>
 #include <typeinfo>
 
+using namespace Agate;
 
 //
 PhononMode::PhononMode() :
@@ -119,7 +120,7 @@ void PhononMode::computeForceCst(const geometry::vec3d& qpt, const Ddb& ddb) {
 #endif
 
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    _mass[iatom] = mendeleev::mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]*phys::amu_emass; // type starts at 1
+    _mass[iatom] = Mendeleev.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]*phys::amu_emass; // type starts at 1
   }
 
   try {
@@ -234,7 +235,7 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::v
 			throw EXCEPTION("NEGATIVE PHONON FREQUENCY FOUND: The linear response to an Electric-Field calculation makes only sense in stable structures. Fully relax your structure",ERRDIV);	
 	}
         for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-            _mass[iatom] = mendeleev::mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]; // type starts at 1
+            _mass[iatom] = Mendeleev.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]; // type starts at 1
         }	
 	for ( unsigned i = 0; i < disp_gamma.size(); ++i ) {             
             disp_gamma[i] = disp_gamma[i].real()*pow(phys::amu_emass,0.5);
@@ -567,7 +568,7 @@ void PhononMode::computeAllEigen(const Ddb& ddb, double *freq, complex *modes) {
          gprim[6], gprim[7], gprim[8];
 
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    _mass[iatom] = mendeleev::mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]*phys::amu_emass; // type starts at 1
+    _mass[iatom] = Mendeleev.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]*phys::amu_emass; // type starts at 1
   }
 
   unsigned iqpt = 0;

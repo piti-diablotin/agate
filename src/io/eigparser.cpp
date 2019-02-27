@@ -33,7 +33,6 @@
 #include "base/exception.hpp"
 #include "base/utils.hpp"
 #include "base/phys.hpp"
-#include "base/mendeleev.hpp"
 #include <iostream>
 #include <fstream>
 #include <utility>

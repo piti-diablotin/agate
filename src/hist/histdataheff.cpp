@@ -30,6 +30,8 @@
 #include "base/mendeleev.hpp"
 #include <fstream>
 
+using namespace Agate;
+
 //
 HistDataHeff::HistDataHeff() {
   ;
@@ -140,7 +142,7 @@ void HistDataHeff::readFromFile(const std::string& filename) {
     unsigned type = (unsigned) -1;
     for ( unsigned sp = 0 ; sp < _znucl.size() ; ++sp ) {
       const int zcomp = _znucl[sp];
-      if ( fabs(masses[iatom]-mendeleev::mass[zcomp])/mendeleev::mass[zcomp] < 1.e-3 ) {
+      if ( fabs(masses[iatom]-Mendeleev.mass[zcomp])/Mendeleev.mass[zcomp] < 1.e-3 ) {
         type = sp+1;
         break;
       }

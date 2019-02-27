@@ -27,6 +27,7 @@
 #include "base/utils.hpp"
 #include <cmath>
 
+using namespace Agate;
 const char mendeleev::name[119][4] = {
   { "XXX"},  // The first is empty so we can call name directly without reindexing
   { "H  "},
@@ -149,8 +150,9 @@ const char mendeleev::name[119][4] = {
   { "Og "}
 };
 
+mendeleev::mendeleev() :
 /** Define the mass of each specie. */
-double mendeleev::mass[119] = {
+mass{
   0.0e0       , // The first is empty so we can call name directly without reindexing
   1.00794e0   ,
   4.002602e0  ,
@@ -270,10 +272,9 @@ double mendeleev::mass[119] = {
   260.0e0     ,
   260.0e0     ,
   260.0e0     ,
-};
-
+},
 /** Define the color of each specie. */
-float mendeleev::color[119][3] = {
+color{
   {0.5f, 0.5f, 0.5f}       , // The first is empty so we can call name directly without reindexing
   {1.000f, 1.000f, 1.000f}       ,
   {0.847f, 0.843f, 0.996f}       ,
@@ -393,9 +394,9 @@ float mendeleev::color[119][3] = {
   {1.000f, 1.000f, 1.000f}       , 
   {1.000f, 1.000f, 1.000f}       , 
   {1.000f, 1.000f, 1.000f}       , 
-};
+},
 
-double mendeleev::radius[119] = {
+radius{
   1.00e0       , // The first is empty so we can call name directly without reindexing
   0.32e0 ,
   0.93e0 ,
@@ -515,9 +516,9 @@ double mendeleev::radius[119] = {
   1.42e0 ,
   1.42e0 ,
   1.42e0 
-};
+},
 
-double mendeleev::rcov[119] = {
+rcov{
   1.00e0       , // The first is empty so we can call name directly without reindexing
   0.32e0 ,
   0.93e0 ,
@@ -637,7 +638,10 @@ double mendeleev::rcov[119] = {
   1.42e0 ,
   1.42e0 ,
   1.42e0 
-};
+}
+{
+  ;
+}
 
 /**
  * find the znucl corresponding to a string
@@ -663,7 +667,7 @@ unsigned mendeleev::znucl(const std::string &inname) {
  */
 unsigned mendeleev::znucl(const double inmass) {
   for ( unsigned sp = 1 ; sp < 119 ; ++sp ) {
-    if( fabs( (mendeleev::mass[sp]-inmass)/mendeleev::mass[sp] ) < 1e-3){
+    if( fabs( (Mendeleev.mass[sp]-inmass)/Mendeleev.mass[sp] ) < 1e-3){
       return sp;
     }
   }

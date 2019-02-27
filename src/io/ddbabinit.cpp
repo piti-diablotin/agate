@@ -32,6 +32,8 @@
 #include "io/configparser.hpp"
 #include "base/mendeleev.hpp"
 
+using namespace Agate;
+
 //
 DdbAbinit::DdbAbinit() : Ddb() {
   _haveMasses = false;
@@ -74,7 +76,7 @@ void DdbAbinit::readFromFile(const std::string& filename) {
     try{
       std::vector<double> amu(parser.getToken<double>("amu",_ntypat));
       for ( unsigned ityp = 0 ; ityp < _ntypat ; ++ityp ) {
-        mendeleev::mass[_znucl[ityp]] = amu[ityp];
+        Mendeleev.mass[_znucl[ityp]] = amu[ityp];
       }
     }
     catch ( Exception& e ) {

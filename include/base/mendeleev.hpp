@@ -30,7 +30,9 @@
 #include "base/exception.hpp"
 #include <string>
 #include <locale>
+#include <memory>
 
+namespace Agate {
 /**
  * A public structure to access some general data that can be tuned.
  * Basically it contains the name, mass, radius and a color for each specie.
@@ -41,16 +43,18 @@ struct mendeleev {
  static const char name[119][4];
 
  /** Define the mass of each specie. */
- static double mass[119];
-
- /** Define the radius of each specie. */
- static double radius[119];
-
- /** Define the covalent radius of each specie. */
- static double rcov[119];
+ double mass[119];
 
  /** Define the color of each specie. */
- static float color[119][3];
+ float color[119][3];
+
+ /** Define the radius of each specie. */
+ double radius[119];
+
+ /** Define the covalent radius of each specie. */
+ double rcov[119];
+
+ mendeleev();
 
  /**
   * find the znucl corresponding to a string
@@ -66,4 +70,6 @@ struct mendeleev {
   */
  static unsigned znucl(const double inmass);
 };
+extern mendeleev Mendeleev;
+}
 #endif  // MENDELEEV_H PP

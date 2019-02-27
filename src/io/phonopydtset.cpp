@@ -30,6 +30,8 @@
 #endif
 #include "base/mendeleev.hpp"
 
+using Agate::mendeleev;
+
 //
 PhonopyDtset::PhonopyDtset() : Dtset() {
   ;

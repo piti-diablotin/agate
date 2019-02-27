@@ -48,6 +48,7 @@ extern "C" {
 #endif
 #include "phonons/supercell.hpp"
 
+using namespace Agate;
 
 //
 Dtset::Dtset() : 

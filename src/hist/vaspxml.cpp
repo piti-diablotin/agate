@@ -37,6 +37,8 @@
 #include <libxml/xpath.h>
 #endif
 
+using namespace Agate;
+
 //
 VaspXML::VaspXML() {
   ;

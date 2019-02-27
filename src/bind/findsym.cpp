@@ -44,6 +44,7 @@
 #include "base/utils.hpp"
 #include "base/mendeleev.hpp"
 
+using Agate::mendeleev;
 
 Findsym::Findsym() :
   _findsym(""),

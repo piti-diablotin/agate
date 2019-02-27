@@ -30,6 +30,8 @@
 #include "shape/octalengths.hpp"
 #include <iomanip>
 
+using Agate::Mendeleev;
+
 //
 CanvasLocal::CanvasLocal(bool drawing) : CanvasPos(drawing),
   _baseCart(false),
@@ -115,7 +117,7 @@ void CanvasLocal::refresh(const geometry::vec3d &cam, TextRender &render){
   const GLfloat fx[] = {(GLfloat)rprimd[0], (GLfloat)rprimd[3], (GLfloat)rprimd[6]};
   const GLfloat fy[] = {(GLfloat)rprimd[1], (GLfloat)rprimd[4], (GLfloat)rprimd[7]};
   const GLfloat fz[] = {(GLfloat)rprimd[2], (GLfloat)rprimd[5], (GLfloat)rprimd[8]};
-  //const float width = (float)mendeleev::radius[_octahedra_z];
+  //const float width = (float)Mendeleev.radius[_octahedra_z];
 
   const float factor = ( _view == ANGLES ? 1.f/15.f : 1.f/0.10f ); CanvasPos::drawCell(); 
 
@@ -171,7 +173,7 @@ void CanvasLocal::refresh(const geometry::vec3d &cam, TextRender &render){
           glRotatef(-_orientations[i][0],1.,0.,0.);
           glRotatef(-_orientations[i][1],0.,1.,0.);
           glRotatef(-_orientations[i][2],0.,0.,1.);
-          glScalef(mendeleev::radius[_znucl[_typat[iatom]]],mendeleev::radius[_znucl[_typat[iatom]]],mendeleev::radius[_znucl[_typat[iatom]]]);
+          glScalef(Mendeleev.radius[_znucl[_typat[iatom]]],Mendeleev.radius[_znucl[_typat[iatom]]],Mendeleev.radius[_znucl[_typat[iatom]]]);
           _cube.draw(&_octacolor[0],&_octacolor[3],angles[i].second[0]*factor,angles[i].second[1]*factor,angles[i].second[2]*factor);
           glPopMatrix();
         }

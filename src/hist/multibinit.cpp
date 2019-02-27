@@ -40,6 +40,8 @@
 #include <libxml/xpath.h>
 #endif
 
+using namespace Agate;
+
 //
 Multibinit::Multibinit() {
   ;

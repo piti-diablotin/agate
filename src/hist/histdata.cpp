@@ -72,6 +72,7 @@ extern "C" {
 #endif
 #include <random>
 
+using Agate::mendeleev;
 
 //
 HistData::HistData() :

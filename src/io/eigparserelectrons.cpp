@@ -28,6 +28,8 @@
 #include "base/mendeleev.hpp"
 #include <algorithm>
 
+using namespace Agate;
+
 //
 EigParserElectrons::EigParserElectrons() :EigParser(),
   _lmax(-1),
@@ -100,9 +102,9 @@ std::vector<unsigned> EigParserElectrons::getBandColor(const unsigned iband, con
 
     std::vector<unsigned> colors(ntypat+1,0x666666);
     for ( unsigned itypat = 0 ; itypat < ntypat ; ++itypat ) {
-      unsigned r = 255*mendeleev::color[znucl[itypat]][0];
-      unsigned g = 255*mendeleev::color[znucl[itypat]][1];
-      unsigned b = 255*mendeleev::color[znucl[itypat]][2];
+      unsigned r = 255*Mendeleev.color[znucl[itypat]][0];
+      unsigned g = 255*Mendeleev.color[znucl[itypat]][1];
+      unsigned b = 255*Mendeleev.color[znucl[itypat]][2];
       colors[itypat+1] = (r<<16)|(g<<8)|b;
     }
 

@@ -40,6 +40,8 @@
 #include <csignal>
 #include <iomanip>
 
+using namespace Agate;
+
 //
 HistDataXYZ::HistDataXYZ() {
   ;

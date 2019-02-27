@@ -147,6 +147,8 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _optioni["initBuffer"] = 0;
   _optioni["prevNtime"] = 0;
   _optioni["ntime"] = 0;
+  _optioni["fontSize"] = 20;
+  _render._render.setSize(_optioni["fontSize"]);
 
 #if defined(HAVE_GL) && defined(HAVE_GLEXT)
   std::clog << "OpenGL might use VBO" << std::endl;
@@ -268,6 +270,8 @@ Window::Window():
   _optioni["initBuffer"] = 0;
   _optioni["prevNtime"] = 0;
   _optioni["ntime"] = 0;
+  _optioni["fontSize"] = 20;
+  _render._render.setSize(_optioni["fontSize"]);
 
 #if defined(HAVE_GL) && defined(HAVE_GLEXT)
   std::clog << "OpenGL might use VBO" << std::endl;
@@ -683,6 +687,7 @@ bool Window::userInput(std::stringstream& info) {
             int pixel;
             cin >> pixel;
             _render._render.setSize(pixel);
+            _optioni["fontSize"] = pixel;
           }
 
           else if ( token == "img_fmt" || token == "image_format" ) {

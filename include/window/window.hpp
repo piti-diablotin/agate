@@ -53,6 +53,10 @@
  */
 class Window {
 
+  public :
+
+    enum ImageSuffix { convert, animate };
+
   private :
 
     /**
@@ -68,7 +72,6 @@ class Window {
   protected :
 
     enum InputMode { mode_mouse, mode_static, mode_command, mode_add, mode_remove, mode_process};
-    enum ImageSuffix { convert, animate };
 
     bool           _exit;          ///< flag to exit the main loop by signals or other thread.
     int            _posX;          ///< Horizontal position (0 is left)

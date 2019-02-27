@@ -38,7 +38,9 @@ const EnergyUnit::UnitDefinition EnergyUnit::dataBase[EnergyUnit::_nunit] = {
   {pOhmpcm, Conductivity, "Ohm-1.cm-1" ,1./phys::Ohmcm},
   {amu, Mass, "amu" ,1.},
   {emu, Mass, "emu" ,phys::emass/phys::amu},
-  {kg, Mass, "kg" ,1./phys::amu}
+  {kg, Mass, "kg" ,1./phys::amu},
+  {A, Length, "A" ,phys::A2b},
+  {bohr, Length, "bohr" ,1.},
 };
 
 //

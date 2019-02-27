@@ -979,6 +979,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       unsigned int div;
       stream >> div;
       if ( !stream.fail() ) { 
+        _ndiv = div;
           delete _sphere;
         if ( div == 1 ) {
           _sphere = new TriCloud(_opengl);
@@ -1637,6 +1638,12 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
     }
   }
   return bonds;
+}
+
+//
+void CanvasPos::getBondInfo(double& rad, double& factor) {
+  rad = _bondRadius;
+  factor = _bond-1.;
 }
 
 

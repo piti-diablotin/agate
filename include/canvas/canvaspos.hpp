@@ -242,6 +242,13 @@ class CanvasPos : public Canvas {
     unsigned int getDisplay() const { return _display; }
 
     /**
+     * Get bond info
+     * @param rad bond radius for cylinder drawing
+     * @param factor factor to look for neighbours
+     */
+    void getBondInfo(double& rad, double& factor);
+
+    /**
      * Display help message with all command that are use in this class
      * @param out the stream to write the help message
      */

@@ -66,7 +66,8 @@ class Canvas {
     int  _itime;      ///< Current time (/_ntime)
     int  _nLoop;      ///< How many times do we play the sequence ? -1 (default) is infinite
     int  _iLoop;      ///< How many times have we already play the sequence.
-    int  _dir;      ///< Direction of the animation
+    int  _dir;        ///< Direction of the animation
+    int _ndiv;
     Status  _status;     ///< Start/Pause/...
     int _translate[3];   ///< Translation vector to repeat the cell
     std::string _info;   ///< Basically save the name of the file we use.
@@ -397,6 +398,11 @@ class Canvas {
      * @return The string that should be displayed;
      */
     const std::string& info() { return _info; }
+
+    /**
+     * Get the number of divisions used for sphere and other GL objects
+     */
+    int ndiv() { return _ndiv; }
 
     /**
      * Set the tool to plot graphs

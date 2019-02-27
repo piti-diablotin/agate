@@ -50,10 +50,11 @@ class EnergyUnit {
     enum Unit { 
       eV, Ha, THz, pcm, 
       au, pOhmpcm,
-      amu, kg, emu 
+      amu, kg, emu,
+      A, bohr
     };
 
-    enum Type { Energy, Conductivity, Mass };
+    enum Type { Energy, Conductivity, Mass, Length };
 
   private :
     Unit _from;
@@ -68,7 +69,7 @@ class EnergyUnit {
       double _toRef;
     } UnitDefinition;
 
-    static const int _nunit = 9;
+    static const int _nunit = 11;
     static const UnitDefinition dataBase[_nunit]; 
 
     int getIndex(Unit u);

@@ -141,12 +141,12 @@ const char mendeleev::name[119][4] = {
   { "Ds "},
   { "Rg "},
   { "Cn "},
-  { "Uut"},
+  { "Nh "},
   { "Fl "},
-  { "Uup"},
+  { "Mc "},
   { "Lv "},
-  { "Uus"},
-  { "Uuo"}
+  { "Ts "},
+  { "Og "}
 };
 
 /** Define the mass of each specie. */

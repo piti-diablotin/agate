@@ -30,6 +30,7 @@
 #include "io/ddbabinit.hpp"
 #include "plot/gnuplot.hpp"
 #include <algorithm>
+#include "base/unitconverter.hpp"
 
 //
 CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
@@ -398,11 +399,11 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     rebuild = true;
   }
   else if ( token == "list" ) {
-    double factor = 1.0;
+    UnitConverter eunit(UnitConverter::Ha);
     if ( parser.hasToken("eunit") ) {
       parser.setSensitive(false);
       std::string unit = utils::tolower(parser.getToken<std::string>("eunit"));
-      factor = Units::getFactor(Units::Ha,Units::getEnergyUnit(unit));
+      eunit = UnitConverter::getUnit(unit);
     }
       
     for ( auto iqpt = _condensedModes.begin() ; iqpt != _condensedModes.end() ; ++iqpt ) {
@@ -420,7 +421,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       std::cout << std::endl;
       std::cout << "  Energies   : ";
       for ( auto imode : iqpt->second ) 
-        std::cout << std::setw(12) << imode.energy*factor << "  ";
+        std::cout << std::setw(12) << imode.energy*eunit << "  ";
       std::cout << std::endl;
     }
     return;

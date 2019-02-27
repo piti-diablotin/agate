@@ -25,7 +25,7 @@
 
 
 #include "conducti/conducti.hpp"
-#include "base/phys.hpp"
+#include "base/unitconverter.hpp"
 #include <iomanip>
 #ifdef HAVE_OMP
 #include <omp.h>
@@ -38,8 +38,8 @@ Conducti::Conducti() :
   _omegaMin(0.001),
   _omegaMax(1.837466191e-01),
   _smearing(0.003),
-  _eunit(Units::Ha),
-  _sunit(1),
+  _eunit(UnitConverter::Ha),
+  _sunit(UnitConverter::au),
   _bandSelection(),
   _energySelection(),
   _histDelta(0),
@@ -138,9 +138,11 @@ void Conducti::buildHistogram(double min, double max, int npoints) {
 
 
 void Conducti::fullTensor(const AbiOpt &abiopt) {
+  (void) abiopt;
 }
 
 void Conducti::diagonalTensor(const AbiOpt &abiopt) {
+  (void) abiopt;
 }
 
 double Conducti::getOmegaMax(const AbiOpt &abiopt) {
@@ -165,7 +167,7 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   int nkpt = abiopt.nkpt();
   double fermi = abiopt.fermie();
   double maxEnergy = getOmegaMax(abiopt);
-  std::clog << "Fermi level [" << Units::toString(_eunit) << "]: " << fermi*Units::getFactor(Units::Ha,_eunit) << std::endl;
+  std::clog << "Fermi level [" << _eunit << "]: " << fermi*_eunit << std::endl;
 
   double factor = 2*phys::pi/(geometry::det(abiopt.rprim())*_smearing*2*std::sqrt(phys::pi));
 
@@ -176,7 +178,7 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
   double inv_smearingSquare = 1./(_smearing*_smearing);
   auto wtk = abiopt.wtk();
   
-  std::clog << "Emax-Efermi [" << Units::toString(_eunit) << "]: " << maxEnergy*Units::getFactor(Units::Ha,_eunit) << std::endl;
+  std::clog << "Emax-Efermi [" << _eunit << "]: " << maxEnergy*_eunit << std::endl;
 
   const int nhist = 1000;
   this->buildHistogram(-_omegaMax*2,_omegaMax*2,nhist);
@@ -284,14 +286,12 @@ void Conducti::traceTensor(const AbiOpt &abiopt) {
 }
 
 void Conducti::printSigma(std::ostream& out) {
-  double factor = Units::getFactor(Units::Ha,_eunit);
   out.precision(14);
   out.setf(std::ios::scientific,std::ios::floatfield);
   out.setf(std::ios::right,std::ios::adjustfield);
-  std::string tmp = std::string("Frequency [") + Units::toString(_eunit) + std::string("]");
+  std::string tmp = std::string("Frequency [") +_eunit.str() + std::string("]");
   out << "# " << std::setw(20) << tmp;
-  std::string symbol = "au";
-  if ( _sunit != 1 ) symbol = "Ohm-1.cm-1";
+  std::string symbol = _sunit.str();
   if ( _nsppol == 2 ) {
     tmp = std::string("Sigma Up [") + symbol + std::string("]");
     out << std::setw(22) << tmp;
@@ -300,7 +300,7 @@ void Conducti::printSigma(std::ostream& out) {
     tmp = std::string("Sigma Tot [") + symbol + std::string("]");
     out << std::setw(22) << tmp << std::endl;
     for ( int w = 0 ; w < _nomega ; ++w ) {
-      out << std::setw(22) << _omega[w]*factor << "  ";
+      out << std::setw(22) << _omega[w]*_eunit << "  ";
       double sum = 0;
       for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
         sum+=_sigma[isppol*_nomega+w];
@@ -313,31 +313,31 @@ void Conducti::printSigma(std::ostream& out) {
     tmp = std::string("Sigma [") + symbol + std::string("]");
     out << std::setw(22) << tmp << std::endl;
     for ( int w = 0 ; w < _nomega ; ++w ) {
-      out << std::setw(22) << _omega[w]*factor << "  " << _sigma[w]*_sunit << std::endl;
+      out << std::setw(22) << _omega[w]*_eunit << "  " << _sigma[w]*_sunit << std::endl;
     }
   }
 
 }
 
 void Conducti::printHistogram(std::ostream& out) {
-  double factor = Units::getFactor(Units::Ha,_eunit);
   out.precision(14);
   out.setf(std::ios::scientific,std::ios::floatfield);
   out.setf(std::ios::right,std::ios::adjustfield);
-  std::string tmp = std::string("Energy [") + Units::toString(_eunit) + std::string("]");
+  std::string tmp = std::string("Energy [") + _eunit.str() + std::string("]");
   out << "# " << std::setw(20) << tmp;
   out << std::setw(22) << "From [au]";
   out << std::setw(22) << "To [au]";
   out << std::endl;
   for ( unsigned h = 0 ; h < _histogramI.size() ; ++h ) {
-    out << std::setw(22) << (_histBorder[0]+h*_histDelta)*factor << std::setw(22) << _histogramI[h] << std::setw(22) << _histogramJ[h] << std::endl;
+    out << std::setw(22) << (_histBorder[0]+h*_histDelta)*_eunit << std::setw(22) << _histogramI[h] << std::setw(22) << _histogramJ[h] << std::endl;
   }
 }
 
 void Conducti::setUnits(const std::string &eunit, const std::string &sunit) {
-    _eunit = Units::getEnergyUnit(utils::tolower(eunit));
-    if ( utils::tolower(sunit) == "ohm-1.cm-1" )
-      _sunit = phys::Ohmcm;
+    _eunit = UnitConverter::getFromString(utils::tolower(eunit));
+    _eunit.rebase(UnitConverter::Ha);
+    _sunit = UnitConverter::getFromString(utils::tolower(sunit));
+    _sunit.rebase(UnitConverter::au);
 }
 
 void Conducti::setParameters(ConfigParser &parser){
@@ -375,14 +375,12 @@ void Conducti::setParameters(ConfigParser &parser){
   }
   Conducti::setUnits(eunit,sunit);
 
-  std::string unit = Units::toString(_eunit);
-  double factor = Units::getFactor(Units::Ha,_eunit);
 
   std::clog << "Number of frequencies: " << _nomega << std::endl;
-  std::clog << "Frequency range ["<< unit << "]: " << _omegaMin*factor << "->" << _omegaMax*factor << std::endl;
-  std::clog << "Smearing energy [" << unit << "]: " << _smearing*factor << std::endl;
+  std::clog << "Frequency range ["<< _eunit << "]: " << _omegaMin*_eunit << "->" << _omegaMax*_eunit << std::endl;
+  std::clog << "Smearing energy [" << _eunit << "]: " << _smearing*_eunit << std::endl;
   if ( _selection == ENERGY )
-    std::clog << "Energy ranges selection [" << unit << "]: " << _energySelection[0]*factor << "->" << _energySelection[1]*factor << "; " << _energySelection[2]*factor << "->" << _energySelection[3]*factor << std::endl;
+    std::clog << "Energy ranges selection [" << _eunit << "]: " << _energySelection[0]*_eunit << "->" << _energySelection[1]*_eunit << "; " << _energySelection[2]*_eunit << "->" << _energySelection[3]*_eunit << std::endl;
   else if ( _selection == BAND )
     std::clog << "Band ranges selection: " << _bandSelection[0] << "->" << _bandSelection[1] << "; " << _bandSelection[2] << "->" << _bandSelection[3] << std::endl;
 }
@@ -397,12 +395,9 @@ void Conducti::getResultSigma(Graph::Config &config, bool spin) {
   config.title = "Conductivity";
   config.doSumUp = false;
 
-  double factor = Units::getFactor(Units::Ha,_eunit);
-  for ( auto &w : config.x ) w*=factor;
-  xlabel = std::string("Frequency [") + Units::toString(_eunit) + std::string("]");
-  std::string symbol = "au";
-  if ( _sunit != 1 ) symbol = "Ohm-1.cm-1";
-  ylabel = std::string("Sigma [") + symbol + std::string("]");
+  for ( auto &w : config.x ) w=w*_eunit;
+  xlabel = std::string("Frequency [") + _eunit.str() + std::string("]");
+  ylabel = std::string("Sigma [") + _sunit.str()+ std::string("]");
   if ( _nsppol == 2 ) {
     if ( spin ) {
       labels.push_back("Up");
@@ -452,14 +447,12 @@ void Conducti::getResultHistogram(Graph::Config &config) {
   config.title = "Historgram";
   config.doSumUp = false;
 
-  double factor = Units::getFactor(Units::Ha,_eunit);
-
   x.resize(_histogramI.size());
   for ( unsigned h = 0 ; h < _histogramI.size() ; ++h ) {
-    x[h] = (_histBorder[0]+h*_histDelta)*factor;
+    x[h] = (_histBorder[0]+h*_histDelta)*_eunit;
   }
 
-  xlabel = std::string("Frequency [") + Units::toString(_eunit) + std::string("]");
+  xlabel = std::string("Frequency [") + _eunit.str() + std::string("]");
   ylabel = std::string("Histogram [au]");
   labels.push_back("From");
   labels.push_back("To");

@@ -43,7 +43,7 @@
 /** 
  *
  */
-class EnergyUnit {
+class UnitConverter {
 
   public :
 
@@ -81,52 +81,52 @@ class EnergyUnit {
     /**
      * Constructor.
      */
-    EnergyUnit();
+    UnitConverter();
 
     /**
      * Constructor.
      */
-    EnergyUnit(Unit u);
+    UnitConverter(Unit u);
 
     /**
      * Destructor.
      */
-    virtual ~EnergyUnit();
+    virtual ~UnitConverter();
 
-    EnergyUnit& operator=(Unit u);
+    UnitConverter& operator=(Unit u);
 
     void rebase(Unit u);
 
-    friend std::string operator+(std::string &str, EnergyUnit &eunit);
+    friend std::string operator+(std::string &str, UnitConverter &eunit);
 
-    friend std::istream& operator>>(std::istream &in, EnergyUnit &eunit);
+    friend std::istream& operator>>(std::istream &in, UnitConverter &eunit);
 
-    friend std::ostream& operator<<(std::ostream &out, EnergyUnit &eunit);
+    friend std::ostream& operator<<(std::ostream &out, UnitConverter &eunit);
 
     std::string str() const ;
 
-      friend double operator*(double val, EnergyUnit &eunit) {
+      friend double operator*(double val, const UnitConverter &eunit) {
         double factor = 1.0;
         factor *= dataBase[eunit._fromIndex]._toRef;
         factor /= dataBase[eunit._toIndex]._toRef;
         return val*factor;
       }
 
-      friend  double operator*(EnergyUnit &eunit, double val) {
+      friend  double operator*(const UnitConverter &eunit, double val) {
         double factor = 1.0;
         factor *= dataBase[eunit._fromIndex]._toRef;
         factor /= dataBase[eunit._toIndex]._toRef;
         return val*factor;
       }
 
-      friend double operator/(double val, EnergyUnit &eunit) {
+      friend double operator/(double val, const UnitConverter &eunit) {
         double factor = 1.0;
         factor *= dataBase[eunit._fromIndex]._toRef;
         factor /= dataBase[eunit._toIndex]._toRef;
         return val/factor;
       }
 
-    static EnergyUnit getFromString(const std::string unit);
+    static UnitConverter getFromString(const std::string unit);
     static Unit getUnit(const std::string unit);
 
 

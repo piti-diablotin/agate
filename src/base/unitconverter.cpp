@@ -24,12 +24,12 @@
  */
 
 
-#include "base/energyunit.hpp"
+#include "base/unitconverter.hpp"
 #include "base/phys.hpp"
 #include "base/utils.hpp"
 #include "base/exception.hpp"
 
-const EnergyUnit::UnitDefinition EnergyUnit::dataBase[EnergyUnit::_nunit] = {
+const UnitConverter::UnitDefinition UnitConverter::dataBase[UnitConverter::_nunit] = {
   {eV , Energy, "eV"   ,1.},
   {Ha , Energy, "Ha"   ,phys::Ha2eV},
   {THz, Energy, "THz"  ,1e12*phys::Hz2eV},
@@ -44,7 +44,7 @@ const EnergyUnit::UnitDefinition EnergyUnit::dataBase[EnergyUnit::_nunit] = {
 };
 
 //
-EnergyUnit::EnergyUnit() :
+UnitConverter::UnitConverter() :
   _from(Ha),
   _fromIndex(getIndex(Ha)),
   _to(Ha),
@@ -54,7 +54,7 @@ EnergyUnit::EnergyUnit() :
 }
 
 //
-EnergyUnit::EnergyUnit(Unit u) :
+UnitConverter::UnitConverter(Unit u) :
   _from(u),
   _fromIndex(getIndex(u)),
   _to(u),
@@ -64,27 +64,27 @@ EnergyUnit::EnergyUnit(Unit u) :
 }
 
 //
-EnergyUnit::~EnergyUnit() {
+UnitConverter::~UnitConverter() {
   ;
 }
 
-std::istream& operator>>(std::istream &in, EnergyUnit &eunit) {
+std::istream& operator>>(std::istream &in, UnitConverter &eunit) {
   std::string tmp;
   in >> tmp;
-  eunit = EnergyUnit::getFromString(tmp);
+  eunit = UnitConverter::getFromString(tmp);
   return in;
 }
 
-std::ostream& operator<<(std::ostream &out, EnergyUnit &eunit) {
-  out << EnergyUnit::dataBase[eunit._toIndex]._symbol;
+std::ostream& operator<<(std::ostream &out, UnitConverter &eunit) {
+  out << UnitConverter::dataBase[eunit._toIndex]._symbol;
   return out;
 }
 
-std::string operator+(std::string &str, EnergyUnit &eunit) {
-  return str+EnergyUnit::dataBase[eunit._toIndex]._symbol;
+std::string operator+(std::string &str, UnitConverter &eunit) {
+  return str+UnitConverter::dataBase[eunit._toIndex]._symbol;
 }
 
-EnergyUnit& EnergyUnit::operator=(Unit u) {
+UnitConverter& UnitConverter::operator=(Unit u) {
   int newIndex = getIndex(u);
   if ( dataBase[newIndex]._type == dataBase[_fromIndex]._type ) {
     _to = u;
@@ -95,7 +95,7 @@ EnergyUnit& EnergyUnit::operator=(Unit u) {
   return *this;
 }
 
-void EnergyUnit::rebase(Unit u) {
+void UnitConverter::rebase(Unit u) {
   int newIndex = getIndex(u);
   if ( dataBase[newIndex]._type == dataBase[_toIndex]._type ) {
     _from = u;
@@ -105,18 +105,18 @@ void EnergyUnit::rebase(Unit u) {
     throw EXCEPTION(dataBase[newIndex]._symbol+" is not compatible with "+dataBase[_toIndex]._symbol,ERRDIV);
 }
 
-int EnergyUnit::getIndex(Unit u) {
+int UnitConverter::getIndex(Unit u) {
   for ( unsigned i = 0 ; i < _nunit ; ++i ) {
     if ( dataBase[i]._unit == u ) return i;
   }
   return -1;
 }
 
-EnergyUnit EnergyUnit::getFromString(const std::string unit) {
-  return EnergyUnit(getUnit(unit));
+UnitConverter UnitConverter::getFromString(const std::string unit) {
+  return UnitConverter(getUnit(unit));
 }
 
-EnergyUnit::Unit EnergyUnit::getUnit(const std::string unit) {
+UnitConverter::Unit UnitConverter::getUnit(const std::string unit) {
   for ( unsigned i = 0 ; i < _nunit ; ++i ) {
     if ( utils::tolower(dataBase[i]._symbol) == utils::tolower(unit) ) 
       return dataBase[i]._unit;
@@ -125,7 +125,7 @@ EnergyUnit::Unit EnergyUnit::getUnit(const std::string unit) {
   return dataBase[0]._unit;
 }
 
-std::string EnergyUnit::str() const {
+std::string UnitConverter::str() const {
   return dataBase[_toIndex]._symbol;
 }
 

@@ -93,7 +93,7 @@ void EigParserFatbands::readFromFile(const std::string& filename) {
   if ( dimval != 1 )
     throw EXCEPTION("nspinor is 2. This case is not yet implemented.",ERRDIV);
 
-  _eunit = Units::Ha;
+  _eunit = UnitConverter(UnitConverter::Ha);
   double efermi;
   int status = nc_inq_varid(ncid, "fermi_energy", &varid);
   size_t start[] = {0};

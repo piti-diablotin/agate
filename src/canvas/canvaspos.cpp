@@ -60,7 +60,7 @@
 #include "io/eigparserelectrons.hpp"
 #include "conducti/abiopt.hpp"
 #include "conducti/conducti.hpp"
-#include "base/energyunit.hpp"
+#include "base/unitconverter.hpp"
 
 using namespace Agate;
 
@@ -1092,9 +1092,9 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     if ( stream.fail() )
       throw EXCEPTION("Need to read a mass",ERRDIV);
     stream >> unit;
-    EnergyUnit munit(EnergyUnit::amu);
+    UnitConverter munit(UnitConverter::amu);
     if ( !stream.fail() ) {
-      munit.rebase(EnergyUnit::getUnit(unit));
+      munit.rebase(UnitConverter::getUnit(unit));
       mass = mass*munit;
     }
     Mendeleev.mass[z] = mass;

@@ -77,6 +77,6 @@ void EigParserPHFRQ::readFromFile(const std::string& filename) {
   phfrq.close();
   _filename = filename;
   _nband = nband;
-  _eunit = Units::Ha;
+  _eunit = UnitConverter(UnitConverter::Ha);
   _hasSpin = false;
 }

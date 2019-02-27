@@ -480,8 +480,7 @@ void Canvas::plotBand(EigParser &eigparser, ConfigParser &parser, Graph::GraphSa
   }
   try {
     std::string strUnit = utils::tolower(parser.getToken<std::string>("eunit"));
-    Units::Energy eunit = Units::getEnergyUnit(strUnit);
-    eigparser.setUnit(eunit);
+    eigparser.setUnit(strUnit);
 
   }
   catch (Exception &e) {
@@ -520,22 +519,7 @@ void Canvas::plotBand(EigParser &eigparser, ConfigParser &parser, Graph::GraphSa
     if ( e.getReturnValue() != ConfigParser::ERFOUND )
       throw e;
   }
-  switch (eigparser.getUnit()) {
-    case ::Units::eV:
-      ylabel = "Energy [eV]";
-      break;
-    case ::Units::Ha:
-      ylabel = "Energy [Ha]";
-      break;
-    case ::Units::THz:
-      ylabel = "Energy [THz]";
-      break;
-    case ::Units::pcm:
-      ylabel = "Energy [cm-1]";
-      break;
-    default:
-      ylabel = "Energy";
-  }
+  ylabel = "Energy ["+eigparser.getUnit().str()+"]";
 
   std::vector<unsigned> projectionUMask;
   bool projection = false;

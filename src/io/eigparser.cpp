@@ -49,8 +49,7 @@ EigParser::EigParser() :
   _lengths(),
   _eigens(),
   _nband(-1),
-  _eunit(Units::Ha),
-  _conversion(1.0),
+  _eunit(UnitConverter::Ha),
   _hasSpin(false),
   _ndiv(),
   _labels()
@@ -105,11 +104,13 @@ void EigParser::dump(const std::string& filename, unsigned options, std::vector<
 std::vector<double> EigParser::getBand(const unsigned iband, const double fermi, const unsigned ispin) const { 
   unsigned spin = _hasSpin ? 2 : 1 ;
   unsigned nkpt = _kpts.size()/spin;
+  UnitConverter fermiUnit(_eunit);
+  fermiUnit.rebase(UnitConverter::Ha);
   std::vector<double> eigen(nkpt,0);
   if ( (ispin != 1 && ispin != 2) || ispin > spin ) throw EXCEPTION("Bad value for ispin",ERRABT);
   if ( iband < _nband ) {
     for ( unsigned ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
-      eigen[ikpt] = _eigens[ikpt+(ispin-1)*nkpt][iband]-fermi*_conversion;
+      eigen[ikpt] = (_eigens[ikpt+(ispin-1)*nkpt][iband]-fermi*fermiUnit)*_eunit;
     }
   }
   else
@@ -118,14 +119,8 @@ std::vector<double> EigParser::getBand(const unsigned iband, const double fermi,
 }
 
 //
-void EigParser::setUnit(Units::Energy u) {
-  if ( u == _eunit ) return;
-  double factor = Units::getFactor(_eunit,u);
-  for( auto& eigk : _eigens ) 
-    for ( auto& band : eigk )
-      band *= factor;
-  _eunit = u;
-  _conversion = factor;
+void EigParser::setUnit(std::string u) {
+  _eunit = UnitConverter::getUnit(u);
 }
 
 //
@@ -241,7 +236,7 @@ std::string EigParser::dump(unsigned options, std::vector<unsigned> umask) const
     str << std::setw(w) << _lengths[ikpt];
     for ( unsigned ispin = 0 ; ispin < nspin ; ++ispin ) {
       for ( unsigned i = 0; i < _nband ; ++i ) 
-        str << std::setw(w) << _eigens[ikpt+ispin*nkpt][i];
+        str << std::setw(w) << _eigens[ikpt+ispin*nkpt][i]*_eunit;
     }
     if ( options & PRTPROJ ) {
       for ( unsigned ispin = 0 ; ispin < nspin ; ++ispin ) {

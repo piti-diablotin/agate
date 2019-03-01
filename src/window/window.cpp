@@ -456,7 +456,10 @@ void Window::loopStep() {
     this->lookAt(totalfactor,0,0,0);
 
 
+    bool state = _render._doRender;
+    _render._doRender = true;
     _canvas->refresh({{totalfactor*euler[0],totalfactor*euler[3],totalfactor*euler[6]}},_render);
+    _render._doRender = state;
     if ( /*_canvas->ntime() >= 1 &&*/ _optionb["axis"] ) this->drawAxis();
 
     if ( _optionb["takeSnapshot"] || (_movie && !_canvas->isPaused()) ) this->snapshot();
@@ -545,7 +548,7 @@ bool Window::userInput(std::stringstream& info) {
           _commandStackNo = _commandStack.size()-1;
           _inputChar.pop();
           _command = ":|";
-          if ( !_render._isOk ) std::clog << ":";
+          if ( !_render._isOk && _render._doRender ) std::clog << ":";
           _mode = mode_command;
           continue;
         }
@@ -583,7 +586,7 @@ bool Window::userInput(std::stringstream& info) {
             case '*' : {_optionf["speed"] *= 2.0f;break;}
             case '/' : {_optionf["speed"] /= (_optionf["speed"] <= 0.001 ? 1.f : 2.0f);break;}
             case 'a' : { 
-                         if ( !_render._isOk && !view_angle )
+                         if ( !_render._isOk  && _render._doRender && !view_angle )
                            std::clog 
                              << "psi=" << (int)(campsi/pi*180.f) 
                              << ", theta=" << (int)(camtheta/pi*180.f)
@@ -600,7 +603,7 @@ bool Window::userInput(std::stringstream& info) {
             case 'o' : {_canvas->switchDrawing();break;}
 
             case 't' :{
-                        if ( !_render._isOk && !view_time_input )
+                        if ( !_render._isOk && _render._doRender && !view_time_input )
                           std::clog << "Time step: " << _canvas->itime() << "/" << _canvas->ntime()-1 << std::endl;
                         view_time_input = !view_time_input;
                         break;
@@ -622,7 +625,7 @@ bool Window::userInput(std::stringstream& info) {
           _inputChar.pop();
           if ( _modeMouse != mode_mouse ) {
             _command += ic;
-            if ( !_render._isOk ) {std::clog << ic; std::clog.flush();}
+            if ( !_render._isOk && _render._doRender ) {std::clog << ic; std::clog.flush();}
           }
         }
         else 
@@ -641,7 +644,7 @@ bool Window::userInput(std::stringstream& info) {
         action = true;
         _commandStack.back() = _command;
         try {
-          if ( !_render._isOk ) std::clog << std::endl;
+          if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
           std::istringstream cin(_command.substr(1,_command.size()-2));
           std::string token;
           int istep;  
@@ -838,13 +841,13 @@ bool Window::userInput(std::stringstream& info) {
         _commandStackNo = _commandStack.size();
         error = false;
         action = true;
-        if ( !_render._isOk ) std::clog << std::endl;
+        if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
         while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
       } // escape
       else if ( this->getChar(_keyBackspace)  && _command.size() > 1 ){
         _command.erase(_command.end()-2);
         _commandStack.back() = _command;
-        if ( !_render._isOk ) std::clog << "\b \b";
+        if ( !_render._isOk && _render._doRender ) std::clog << "\b \b";
         action = true;
       } // backspace
       else if ( this->getChar(_keyArrowUp) ) {

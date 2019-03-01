@@ -942,6 +942,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display |= DISP_BORDER;
         this->buildBorders(_itime,true);
       }
+      else if ( what == "none" )
+        _display = (_display&~(DISP_ZNUCL | DISP_ID | DISP_NAME));
       else if ( what == "name" ) 
         _display = (_display&~(DISP_ZNUCL | DISP_ID))|DISP_NAME;
       else if ( what == "znucl" )
@@ -1180,6 +1182,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     while (!stream.eof() && !exit) {
       char direction;
       stream >> direction;
+      if ( !stream ) break;
       switch (direction) {
         case 'x' :
           _drawSpins[0] = true;
@@ -1643,11 +1646,20 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
 }
 
 //
-void CanvasPos::getBondInfo(double& rad, double& factor) {
+void CanvasPos::getBondInfo(double& rad, double& factor) const {
   rad = _bondRadius;
   factor = _bond-1.;
 }
 
+void CanvasPos::getSpinDirection(bool &x, bool &y, bool &z) const {
+  x = _drawSpins[0];
+  y = _drawSpins[1];
+  z = _drawSpins[2];
+}
+
+std::vector<int> CanvasPos::getOctahedra() const {
+  return _octahedra_z;
+}
 
 //
 void CanvasPos::help(std::ostream &out) {

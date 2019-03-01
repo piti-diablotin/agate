@@ -246,7 +246,21 @@ class CanvasPos : public Canvas {
      * @param rad bond radius for cylinder drawing
      * @param factor factor to look for neighbours
      */
-    void getBondInfo(double& rad, double& factor);
+    void getBondInfo(double& rad, double& factor) const;
+
+    /**
+     * Get spin display orientation
+     * @param x true if x direction is displayed
+     * @param y true if y direction is displayed
+     * @param z true if z direction is displayed
+     */
+    void getSpinDirection(bool &x, bool &y, bool &z) const;
+
+    /**
+     * Get the list of znucl around which an octahedra will be displayed
+     * @return a vector of znucl around which an octahedra will be calculated
+     */
+    std::vector<int> getOctahedra() const;
 
     /**
      * Display help message with all command that are use in this class

@@ -1657,7 +1657,8 @@ void CanvasPos::getSpinDirection(bool &x, bool &y, bool &z) const {
   z = _drawSpins[2];
 }
 
-std::vector<int> CanvasPos::getOctahedra() const {
+std::vector<int> CanvasPos::getOctahedra(bool& drawAtoms) const {
+  drawAtoms = _octaDrawAtoms;
   return _octahedra_z;
 }
 

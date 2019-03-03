@@ -258,9 +258,10 @@ class CanvasPos : public Canvas {
 
     /**
      * Get the list of znucl around which an octahedra will be displayed
+     * @param drawAtoms flag is set to true if atoms for octahedra are plotted
      * @return a vector of znucl around which an octahedra will be calculated
      */
-    std::vector<int> getOctahedra() const;
+    std::vector<int> getOctahedra(bool& drawAtoms) const;
 
     /**
      * Display help message with all command that are use in this class

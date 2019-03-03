@@ -818,7 +818,7 @@ bool Window::userInput(std::stringstream& info) {
             view_time = view_time_input && (_canvas->ntime()>1);
             std::string info = _canvas->info();
             size_t pos = info.find_last_of("/\\");
-            if ( !info.empty() ) this->setTitle(info.substr(pos+1));
+            if ( !info.empty() && _title != info.substr(pos+1) ) this->setTitle(info.substr(pos+1));
           }
           //if ( cin.fail() ) throw EXCEPTION("Bad line argument",ERRCOM);
           error = false;

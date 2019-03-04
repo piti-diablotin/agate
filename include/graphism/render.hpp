@@ -39,7 +39,7 @@
 #include <cstddef>
 #include <string>
 #ifdef HAVE_FREETYPE
-#include <freetype2/ft2build.h> 
+#include <ft2build.h> 
 #include FT_FREETYPE_H
 #endif
 #include "graphism/buffer.hpp"

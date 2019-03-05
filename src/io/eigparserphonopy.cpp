@@ -56,9 +56,16 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
     throw EXCEPTION("Cannot read file",ERRABT);
   }
   try {
-    PhonopyDtset *tmp = new PhonopyDtset;
-    tmp->readFromYAML(fulldoc);
-    _dtset.reset(tmp);
+    try {
+      PhonopyDtset *tmp = new PhonopyDtset;
+      tmp->readFromYAML(fulldoc);
+      _dtset.reset(tmp);
+    }
+    catch (Exception& e) {
+      e.ADD("Cannot read a phonopy dtset. Fatbands will fail",ERRWAR);
+      _dtset.reset(nullptr); // safety
+      std::clog << e.fullWhat() << std::endl;
+    }
     unsigned natom = fulldoc["natom"].as<unsigned>();
     unsigned nband = 3*natom;
     _nband = nband;
@@ -110,10 +117,15 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
     _filename = filename;
     _eunit = UnitConverter(UnitConverter::THz);
     _hasSpin = false;
-    this->renormalizeEigenDisp();
+    if ( !_eigenDisp.empty() && _dtset != nullptr )
+      this->renormalizeEigenDisp();
   }
   catch (YAML::BadSubscript &e) {
     throw EXCEPTION("Bad subscript",ERRABT);
+  }
+  catch (Exception& e) {
+    e.ADD("Aborting",ERRDIV);
+    throw e;
   }
   catch (...) {
     throw EXCEPTION("Something unexpected happened", ERRDIV);

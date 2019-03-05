@@ -29,6 +29,7 @@
 #include "io/yaml.hpp"
 #endif
 #include "base/mendeleev.hpp"
+#include "base/phys.hpp"
 
 using Agate::mendeleev;
 
@@ -65,18 +66,29 @@ void PhonopyDtset::readFromYAML(const YAML::Node &doc) {
     _natom = doc["natom"].as<unsigned>();
     _spinat.clear();
 
-    auto lattice = doc["lattice"];
-    _rprim[0] = lattice[0][0].as<double>();
-    _rprim[3] = lattice[0][1].as<double>();
-    _rprim[6] = lattice[0][2].as<double>();
-    _rprim[1] = lattice[1][0].as<double>();
-    _rprim[4] = lattice[1][1].as<double>();
-    _rprim[7] = lattice[1][2].as<double>();
-    _rprim[2] = lattice[2][0].as<double>();
-    _rprim[5] = lattice[2][1].as<double>();
-    _rprim[8] = lattice[2][2].as<double>();
+    double scaling = phys::A2b;
+    if ( doc["calculator"] && doc["calculator"].as<std::string>() == std::string("abinit") ) scaling = 1e0;
 
-    auto points = doc["points"];
+    auto lattice = doc["lattice"];
+    _rprim[0] = lattice[0][0].as<double>()*scaling;
+    _rprim[3] = lattice[0][1].as<double>()*scaling;
+    _rprim[6] = lattice[0][2].as<double>()*scaling;
+    _rprim[1] = lattice[1][0].as<double>()*scaling;
+    _rprim[4] = lattice[1][1].as<double>()*scaling;
+    _rprim[7] = lattice[1][2].as<double>()*scaling;
+    _rprim[2] = lattice[2][0].as<double>()*scaling;
+    _rprim[5] = lattice[2][1].as<double>()*scaling;
+    _rprim[8] = lattice[2][2].as<double>()*scaling;
+
+    YAML::Node points;
+    std::string coordinates = "coordinates";
+    try {
+      points = doc["points"];
+    }
+    catch (...) {
+      points = doc["atoms"];
+      coordinates = "position";
+    }
     _xred.resize(_natom);
     _xcart.resize(_natom);
     _typat.resize(_natom);
@@ -84,7 +96,7 @@ void PhonopyDtset::readFromYAML(const YAML::Node &doc) {
       throw EXCEPTION("Band number of atoms",ERRABT);
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
       auto data = points[iatom];
-      _xred[iatom] = data["coordinates"].as<geometry::vec3d>();
+      _xred[iatom] = data[coordinates].as<geometry::vec3d>();
       std::string name = data["symbol"].as<std::string>();
       unsigned z = mendeleev::znucl(name);
       auto it = std::find(_znucl.begin(),_znucl.end(),z);

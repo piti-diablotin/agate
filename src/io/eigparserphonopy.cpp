@@ -62,9 +62,7 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
       _dtset.reset(tmp);
     }
     catch (Exception& e) {
-      e.ADD("Cannot read a phonopy dtset. Fatbands will fail",ERRWAR);
       _dtset.reset(nullptr); // safety
-      std::clog << e.fullWhat() << std::endl;
     }
     unsigned natom = fulldoc["natom"].as<unsigned>();
     unsigned nband = 3*natom;
@@ -119,12 +117,13 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
     _hasSpin = false;
     if ( !_eigenDisp.empty() && _dtset != nullptr )
       this->renormalizeEigenDisp();
+    else if ( !_eigenDisp.empty() && _dtset == nullptr )
+      throw EXCEPTION("Eigen displacements read but no dtset found -> fatband unavailable",ERRWAR);
   }
   catch (YAML::BadSubscript &e) {
     throw EXCEPTION("Bad subscript",ERRABT);
   }
   catch (Exception& e) {
-    e.ADD("Aborting",ERRDIV);
     throw e;
   }
   catch (...) {

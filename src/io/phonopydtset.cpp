@@ -116,6 +116,9 @@ void PhonopyDtset::readFromYAML(const YAML::Node &doc) {
   catch ( Exception &e ) {
     e.ADD("Aborting yaml parsing",ERRABT);
   }
+  catch (YAML::BadSubscript &e) {
+    throw EXCEPTION("Bad subscript",ERRABT);
+  }
   catch ( ... ) {
     throw EXCEPTION("Yaml error happend",ERRABT);
   }

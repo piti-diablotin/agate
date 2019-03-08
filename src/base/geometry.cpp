@@ -188,7 +188,7 @@ namespace geometry {
     const double n1 = norm(vec1); 
     const double n2 = norm(vec2); 
     static const double rad2deg = 180.0 / phys::pi;
-    return std::acos(dot(vec1,vec2)/(n1*n2))*rad2deg;
+    return (n1<1.e-6||n2<1e-6) ? 0. : std::acos(dot(vec1,vec2)/(n1*n2))*rad2deg;
   }
 
 

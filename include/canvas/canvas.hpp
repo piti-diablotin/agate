@@ -409,7 +409,7 @@ class Canvas {
      * By default it will use gnuplot
      * @param plot a Graph pointer 
      */
-    void setGraph(Graph *plot) { _gplot.reset(plot); }
+    void setGraph(Graph *plot) { _gplot.release();_gplot.reset(plot); }
 
     /**
      * Function to plot a band structure

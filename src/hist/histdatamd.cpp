@@ -484,6 +484,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         }
         if ( smearing < 0 )
           throw EXCEPTION("tsmear needs to be positive",ERRDIV);
+        std::clog << "Smearing [K]: " << smearing << std::endl;
 
         smearing *= (phys::kB/phys::eV*1e3)/(phys::THz2Ha * phys::Ha2eV *1e3)*(dtion*2); // kBT(ev) / Scaling x axis
 
@@ -515,6 +516,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         std::cout << "C_v   = " << thermo[2] << " kB/atom" << std::endl;
         std::cout << "S_vib = " << thermo[3] << " kB/atom" << std::endl;
         std::cout << "F_tot = " << thermo[0]+Etotal << " kB/atom" << std::endl;
+        config.doSumUp = false;
       }
 
       // thermo

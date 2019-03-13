@@ -856,7 +856,7 @@ std::pair<std::vector<double>,std::vector<double>> HistData::getPDF(unsigned znu
 
 
   // Number of bins
-  unsigned nbin = (unsigned) std::floor(Rmax/dR);
+  unsigned nbin = (unsigned) std::ceil(Rmax/dR);
   double Rmax2 = (Rmax+dR)*(Rmax+dR);
   std::vector<double> G(nbin,0.);
   std::vector<double> r(nbin,0.);
@@ -886,26 +886,30 @@ std::pair<std::vector<double>,std::vector<double>> HistData::getPDF(unsigned znu
     rprimv[2] = {{ rprimd[2], rprimd[5], rprimd[8] }};
 
     const vec3d acell = {{ norm(rprimv[0]), norm(rprimv[1]), norm(rprimv[2]) }};
-    const int xShift =  0 + (int) std::floor(2.*Rmax/acell[0]+0.5);
-    const int yShift =  0 + (int) std::floor(2.*Rmax/acell[1]+0.5);
-    const int zShift =  0 + (int) std::floor(2.*Rmax/acell[2]+0.5);
+    const int xShift =  std::max(1,0 + (int) std::floor(2.*Rmax/acell[0]+0.5));
+    const int yShift =  std::max(1,0 + (int) std::floor(2.*Rmax/acell[1]+0.5));
+    const int zShift =  std::max(1,0 + (int) std::floor(2.*Rmax/acell[2]+0.5));
 
     Supercell replica(Dtset(*this,itime),xShift,yShift,zShift);
     mat3d rprimdSupercell = replica.rprim();
 
     // Find all indices for typat1
     std::vector<unsigned> typ1;
-    for ( unsigned t = 0 ; t < replica.natom() ; ++t )
+    for ( unsigned t = 0 ; t < replica.natom() ; ++t ) {
       if ( (unsigned) _znucl[replica.typat()[t]-1] == znucl1 || znucl1 == 0 ) typ1.push_back(t);
+    }
     if ( typ1.size() == 0 )
-      throw EXCEPTION("There is no atom of type "+utils::trim(std::string(mendeleev::name[znucl1])),ERRABT);
+      continue;
+      //throw EXCEPTION("There is no atom of type "+utils::trim(std::string(mendeleev::name[znucl1])),ERRABT);
 
     // Find all indices for znucl2
     std::vector<unsigned> typ2;
-    for ( unsigned t = 0 ; t < replica.natom() ; ++t )
+    for ( unsigned t = 0 ; t < replica.natom() ; ++t ) {
       if ( (unsigned) _znucl[replica.typat()[t]-1] == znucl2 || znucl2 == 0 ) typ2.push_back(t);
+    }
     if ( typ2.size() == 0 )
-      throw EXCEPTION("There is no atom of type "+utils::trim(std::string(mendeleev::name[znucl2])),ERRABT);
+      continue;
+      //throw EXCEPTION("There is no atom of type "+utils::trim(std::string(mendeleev::name[znucl2])),ERRABT);
 
     factor += (double)(xShift*yShift*zShift)*det(rprimd)/(double)(typ1.size()*typ2.size());
 
@@ -1213,10 +1217,13 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 
     for ( unsigned typ1 = 0 ; typ1 < nznucl ; ++typ1 ) {
       for ( unsigned typ2 = typ1 ; typ2 < nznucl ; ++typ2 ) {
-        data = this->getPDF(_znucl[typ1],_znucl[typ2],rmax,dr,tbegin,tend);
-        y.push_back(data.second);
-        labels.push_back(utils::trim(std::string(mendeleev::name[_znucl[typ1]]))+std::string("-")
-            +utils::trim(std::string(mendeleev::name[_znucl[typ2]])));
+        try {
+          data = this->getPDF(_znucl[typ1],_znucl[typ2],rmax,dr,tbegin,tend);
+          y.push_back(data.second);
+          labels.push_back(utils::trim(std::string(mendeleev::name[_znucl[typ1]]))+std::string("-")
+              +utils::trim(std::string(mendeleev::name[_znucl[typ2]])));
+        }
+        catch(Exception& e) {}
       }
     }
     if ( nznucl > 0) x = std::move(data.first);
@@ -1294,7 +1301,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     char yaxis=plan[1];
     unsigned coordx = xaxis-'x';
     unsigned coordy = yaxis-'x';
-    auto &pos = _xcart;
+    auto pos = _xcart.begin();
 
     filename = std::string("Posisions") + xaxis;
     filename += yaxis;
@@ -1312,7 +1319,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     if ( !stream.fail() ){
       utils::tolower(coord);
       if ( coord == "red" || coord == "reduced" || coord == "xred" ) {
-        pos = _xred;
+        pos = _xred.begin();
         title = "Trajectories (reduced)";
       }
     }

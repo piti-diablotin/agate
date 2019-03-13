@@ -48,7 +48,7 @@ class UnitConverter {
   public :
 
     enum Unit { 
-      eV, Ha, THz, pcm, 
+      eV, Ha, THz, pcm, K, 
       au, pOhmpcm,
       amu, kg, emu,
       A, bohr
@@ -69,7 +69,7 @@ class UnitConverter {
       double _toRef;
     } UnitDefinition;
 
-    static const int _nunit = 11;
+    static const int _nunit = 12;
     static const UnitDefinition dataBase[_nunit]; 
 
     int getIndex(Unit u);

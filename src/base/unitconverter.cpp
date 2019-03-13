@@ -34,6 +34,7 @@ const UnitConverter::UnitDefinition UnitConverter::dataBase[UnitConverter::_nuni
   {Ha , Energy, "Ha"   ,phys::Ha2eV},
   {THz, Energy, "THz"  ,1e12*phys::Hz2eV},
   {pcm, Energy, "cm-1" ,1e2*phys::m2eV},
+  {K, Energy, "K" ,phys::kB/phys::eV},
   {au, Conductivity, "au" ,1.},
   {pOhmpcm, Conductivity, "Ohm-1.cm-1" ,1./phys::Ohmcm},
   {amu, Mass, "amu" ,1.},

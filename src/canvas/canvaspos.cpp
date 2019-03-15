@@ -886,8 +886,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       tomodify[2] = (float)c[2]/255.f;
       if ( tomodify == &_octacolor[0] ) {
         stream >> c[0];
-        if ( !stream.fail() && c[0] < 101 ) 
-          _octacolor[3] = (float)c[0]/100.f;
+        if ( !stream.fail() && c[0] < 256 ) 
+          _octacolor[3] = (float)c[0]/255.f;
         stream.clear();
       }
     }
@@ -1676,6 +1676,10 @@ void CanvasPos::getSpinDirection(bool &x, bool &y, bool &z) const {
 std::vector<int> CanvasPos::getOctahedra(bool& drawAtoms) const {
   drawAtoms = _octaDrawAtoms;
   return _octahedra_z;
+}
+
+const float* CanvasPos::getOctahedraColor() const {
+  return _octacolor;
 }
 
 //

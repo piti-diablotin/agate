@@ -65,13 +65,13 @@ CanvasLocal::CanvasLocal(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _octacolor[5] = 0.f;
 
   if ( _histdata == nullptr ) return;
+  if ( _histdata->ntime() == 1 ) _baseCart = true;
 
   const double *rprimd = _histdata->getRprimd(0);
   const double *xcart = _histdata->getXcart(0);
   Octahedra::u3f angles;
 
   if ( !_octahedra.empty() && typeid(_octahedra[0].get()) != typeid(OctaAngles*) ) {
-    std::cerr << "fine" << std::endl;
     switch ( _view ) {
       case ANGLES :
         for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
@@ -529,6 +529,7 @@ void CanvasLocal::help(std::ostream &out) {
   using std::setw;
   out << endl << "-- Here are the commands related to local mode --" << endl;
   out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
+  out << setw(40) << ":basis (cart|rel)" << setw(59) << "Set the basis for angle calculation. cart for cartesian and rel for relative to first time step." << endl;
   out << setw(40) << ":c or :color (plus|minus)" << setw(59) << "Set the color in RGB for plus or minus rotations." << endl;
   out << setw(40) << ":length filename" << setw(59) << "Dump for each octaheadra the a b and c lengths in filename." << endl;
   out << setw(40) << ":rot filename" << setw(59) << "Dump for each octaheadra the alpha, beta and gamma angles in filename." << endl;

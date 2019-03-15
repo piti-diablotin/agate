@@ -264,6 +264,12 @@ class CanvasPos : public Canvas {
     std::vector<int> getOctahedra(bool& drawAtoms) const;
 
     /**
+     * Get the base color for plotting octahedra
+     * @return RGBA all between 0 and 1
+     */
+    const float* getOctahedraColor() const;
+
+    /**
      * Display help message with all command that are use in this class
      * @param out the stream to write the help message
      */

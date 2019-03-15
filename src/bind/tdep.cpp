@@ -376,7 +376,7 @@ void Tdep::tdep() {
   if ( tdep == nullptr ) 
     throw EXCEPTION("Unable to open pipe for tdep",ERRDIV);
 
-  std::string files("input.in\nHIST.nc\n"+utils::to_string(_temperature)+"K");
+  std::string files("input.in\nHIST.nc\n"+utils::to_string(_temperature)+"K\n");
   fputs(files.c_str(),tdep);
   int st = pclose(tdep);
   if ( WIFEXITED(st) && WEXITSTATUS(st) != 0 ) {

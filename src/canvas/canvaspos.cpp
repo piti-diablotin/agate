@@ -76,6 +76,7 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _octahedra(),
   _hasTranslations(false),
   _display(DISP_BORDER|DISP_ATOM),
+  _drawSpins(),
   _bond(2.00), 
   _bondRadius(0.15), 
   _sphere(nullptr),
@@ -85,7 +86,6 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _down(),
   _octacolor(),
   _octaDrawAtoms(true),
-  _drawSpins(),
   _maxDim(1.1)
 {
   _sphere = new TriSphere(_opengl);
@@ -102,6 +102,7 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _drawSpins[0]=true;
   _drawSpins[1]=true;
   _drawSpins[2]=true;
+  _drawSpins[3]=true; // true = relative; false = absolute
 }
 
 //
@@ -116,6 +117,7 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _octahedra(std::move(canvas._octahedra)),
   _hasTranslations(canvas._hasTranslations),
   _display(canvas._display),
+  _drawSpins(),
   _bond(canvas._bond), 
   _bondRadius(canvas._bondRadius), 
   _sphere(canvas._sphere),
@@ -125,7 +127,6 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _down(),
   _octacolor(),
   _octaDrawAtoms(canvas._octaDrawAtoms),
-  _drawSpins(),
   _maxDim(canvas._maxDim)
 {
   canvas._sphere = nullptr;
@@ -142,6 +143,7 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _drawSpins[0] = canvas._drawSpins[0];
   _drawSpins[1] = canvas._drawSpins[1];
   _drawSpins[2] = canvas._drawSpins[2];
+  _drawSpins[3] = canvas._drawSpins[3];
   
   if ( !_octahedra.empty() ) {
     for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
@@ -682,28 +684,35 @@ void CanvasPos::drawBonds(std::vector< std::pair<int,int> >& bonds) {
 //
 void CanvasPos::drawSpins(unsigned batom) {
 #ifdef HAVE_GL
+  bool colinearZ = _drawSpins[2] && !_drawSpins[0] && !_drawSpins[1];
   auto drawOneSpeen = [&](const double spin[3], GLfloat x, GLfloat y, GLfloat z, int znucl) {
-    if ( (spin[0]*spin[0]+spin[1]*spin[1]+spin[2]*spin[2]) > 0.0099 ) {
+    const float spinx = ( _drawSpins[0] ? static_cast<float>(spin[0]) : 0.f );
+    const float spiny = ( _drawSpins[1] ? static_cast<float>(spin[1]) : 0.f );
+    const float spinz = ( _drawSpins[2] ? static_cast<float>(spin[2]) : 0.f );
+    const float nn = sqrt(spinx*spinx+spiny*spiny+spinz*spinz);
+    if ( nn > 0.0099 ) {
       glPushMatrix();
-      const float spinx = ( _drawSpins[0] ? static_cast<float>(spin[0]) : 0.f );
-      const float spiny = ( _drawSpins[1] ? static_cast<float>(spin[1]) : 0.f );
-      const float spinz = ( _drawSpins[2] ? static_cast<float>(spin[2]) : 0.f );
-      const float nn = sqrt(spinx*spinx+spiny*spiny+spinz*spinz);
-      const float length = 2.f*(float)Mendeleev.radius[znucl]*(1.f+nn*0.5f);
+      const float length = _drawSpins[3] ? 2.f*(float)Mendeleev.radius[znucl]*(1.f+nn*0.5f) // Relatif
+      : 2.f*(float)Mendeleev.radius[znucl]+nn; // Absolute
       const float inv_nn = 1.f/nn;
       const float nprod = sqrt(spiny*spiny+spinx*spinx);
       const float angle = ( (spinz<0.) ? 180.f+180.f/3.14f*asin(nprod*inv_nn) : -180.f/3.14f*asin(nprod*inv_nn) );
-      const float scale=0.5f*length/nn;
-      const float tol = ( (std::fabs(spinx)+std::fabs(spiny)) > 0.001f ? 0.0f : 1.0f );
+      const float scale=0.5f*length/nn; // OK
+      const float tol = ( (std::fabs(spinx)+std::fabs(spiny)) > 0.001f ? 0.0f : 0.001f );
 
-      glTranslatef(x-spinx*scale,y-spiny*scale,z-spinz*scale);
+      glTranslatef(x-spinx*scale,y-spiny*scale,z-spinz*scale); // OK
       glRotatef(angle,spiny+tol,-spinx+tol,0.0f); // Keep the +1e-7 to avoid a rotation around (0,0,0)
-      if ( spinz > 0 ) {
-        glColor3fv(&_up[0]);
+      if ( colinearZ ) {
+        if ( spinz > 0 ) {
+          glColor3fv(&_up[0]);
+        }
+        else { 
+          glColor3fv(&_down[0]);
+        }
       }
-      else { 
-        glColor3fv(&_down[0]);
-      }
+      else
+          glColor3fv(&Mendeleev.color[znucl][0]);
+
 
       _arrow.draw((float)Mendeleev.radius[1]/2.,length);
       glPopMatrix();

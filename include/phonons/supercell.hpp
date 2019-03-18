@@ -101,6 +101,17 @@ class Supercell : public Dtset{
     void makeDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned imode, double amplitude, double phase);
 
     /**
+     * Make a displacement in the supercell for the given qpt (which may not be the one used to construct the supercell).
+     * Use the db displacement database to find the qpt and the mode
+     * Then show the displacement in the spinat variable.
+     * @param qpt the qpt of the phonon
+     * @param db The displacement database with the eigen displacements
+     * @param imode the mode to condence.
+     * @param amplitude A prefactor to increase the displacement
+     */
+    void arrowDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned imode, double amplitude);
+
+    /**
      * Set the reference structure to this Dtset.
      * We need to find the dimensions of the supercell with respect to the dtset and then find the corresponding indices 
      * of each atom in each cell with respect to the supercell

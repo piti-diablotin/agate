@@ -166,6 +166,30 @@ void Supercell::makeDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned
   geometry::changeBasis(_rprim, _xcart, _xred, true);
 }
 
+void Supercell::arrowDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned imode, double amplitude) {
+  using namespace geometry;
+  unsigned natom = db.natom();
+
+  const double A_sqrtamu2b_sqrtu = sqrt(phys::amu_emass)/phys::b2A;
+
+  if ( natom*static_cast<unsigned>(_dim[0]*_dim[1]*_dim[2]) != _natom )
+    throw EXCEPTION("Hmm supercell and DispDB are incoherent",ERRDIV);
+  if ( _cellCoord.size() == 0 or _baseAtom.size() == 0 )
+    throw EXCEPTION("Hmm supercell is not built ahead of a reference structure",ERRDIV);
+  unsigned q = db.getQpt(qpt);
+  auto mymode = db.getMode(q,imode);
+
+  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+    const vec3d R = _cellCoord[iatom];
+    const unsigned iatomUC = _baseAtom[iatom];
+    const double qR = 2.*phys::pi*dot(qpt,R);
+    vec3d Re = {{ mymode[iatomUC*3].real(),mymode[iatomUC*3+1].real(),mymode[iatomUC*3+2].real() }};
+    vec3d Im = {{ mymode[iatomUC*3].imag(),mymode[iatomUC*3+1].imag(),mymode[iatomUC*3+2].imag() }};
+    //std::cerr << iatom << " " << mymode[iatomUC*3] << " " << mymode[iatomUC*3+1] << " " << mymode[iatomUC*3+2] << std::endl;
+    _spinat[iatom] += (Re*std::cos(qR)-Im*std::sin(qR))*2.*amplitude*A_sqrtamu2b_sqrtu;
+  }
+}
+
 //
 void Supercell::findReference(const Dtset& dtset) {
   using namespace geometry;

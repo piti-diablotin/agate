@@ -742,24 +742,38 @@ void CanvasPhonons::buildAnimation() {
   }
 
   else {
-    // Now go through all mode of all qpt and make the displacement
-    const double dtheta = phys::pi/(double)_ntime;
-    _supercell = Supercell(_reference,qpt);
-    for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
-      const double theta = (double) itime*dtheta;
-      Supercell supercell(_supercell);
-      for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
-        for ( auto vib : qpt->second ) {
-          supercell.makeDisplacement(qpt->first,_displacements,vib.imode,vib.amplitude,theta);
+    if ( _ntime > 1 ) { // Build an animation
+      // Now go through all mode of all qpt and make the displacement
+      _drawSpins[3] = true;
+      const double dtheta = phys::pi/(double)_ntime;
+      _supercell = Supercell(_reference,qpt);
+      for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
+        const double theta = (double) itime*dtheta;
+        Supercell supercell(_supercell);
+        for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
+          for ( auto vib : qpt->second ) {
+            supercell.makeDisplacement(qpt->first,_displacements,vib.imode,vib.amplitude,theta);
+          }
+        }
+        if ( itime == 0 ) {
+          hist = new HistDataDtset(supercell);
+        }
+        else {
+          HistDataDtset histi(supercell);
+          *hist += histi;
         }
       }
-      if ( itime == 0 ) {
-        hist = new HistDataDtset(supercell);
+    }
+    else { //Display vectors
+      _drawSpins[3] = false;
+      _supercell = Supercell(_reference,qpt);
+      for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
+        for ( auto vib : qpt->second ) {
+          _supercell.arrowDisplacement(qpt->first,_displacements,vib.imode,vib.amplitude);
+        }
       }
-      else {
-        HistDataDtset histi(supercell);
-        *hist += histi;
-      }
+      hist = new HistDataDtset(_supercell);
+
     }
   }
   auto save = _octahedra_z;

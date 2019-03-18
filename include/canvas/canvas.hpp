@@ -397,7 +397,7 @@ class Canvas {
      * Get some information from the canvas.
      * @return The string that should be displayed;
      */
-    const std::string& info() { return _info; }
+    const std::string& info() const { return _info; }
 
     /**
      * Get the number of divisions used for sphere and other GL objects

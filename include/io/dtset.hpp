@@ -205,6 +205,11 @@ class Dtset {
     virtual const std::vector<geometry::vec3d>& spinat() const { return _spinat; }
 
     /**
+     * Clear spin -> set to 0
+     */
+    virtual void clearSpinat();
+
+    /**
      * Get the findsym result
      * @return _findsym.
      */

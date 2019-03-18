@@ -76,6 +76,7 @@ class CanvasPos : public Canvas {
     std::vector<std::unique_ptr<Octahedra>>   _octahedra;  ///< List of octahedra to draw (should be a generic unique_ptr<polygon*> to be able to draw something else.
     bool                          _hasTranslations; ///< True if rprimd is available for translations.
     unsigned int                  _display;    ///< What labels to display on screen
+    bool                          _drawSpins[4];
 
   private :
 
@@ -88,7 +89,6 @@ class CanvasPos : public Canvas {
     float                         _down[3];    ///< Color spin down
     float                         _octacolor[4];///< Color spin down
     bool                          _octaDrawAtoms;///< Draw the additional atoms at tops of octahedra
-    bool                          _drawSpins[3];
     float                         _maxDim;
 
 

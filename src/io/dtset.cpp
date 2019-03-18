@@ -861,3 +861,8 @@ void Dtset::standardizeCell(const bool primitive, const double tolerance) {
     this->reBuildStructure(tolerance,false);
 #endif
 }
+
+void Dtset::clearSpinat() {
+  for (auto& spin : _spinat)
+    for (int s = 0 ; s < 3 ; ++s ) spin[s] = 0;
+}

@@ -292,6 +292,24 @@ void HistDataNC::readFromFile(const std::string& filename) {
   catch (...) {
     has_typat = false;
   }
+  
+  double *amu = nullptr;
+  try {
+    //amu(ntypat)
+    if ( _znucl.size() > 0 ) {
+      amu = new double[_znucl.size()];
+      size_t count[] = {_znucl.size()};
+      size_t start[] = {0};
+      get_var(ncid,start,count,amu,"amu");
+      for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
+        Mendeleev.mass[_znucl[z]] = amu[z];
+      delete[] amu;
+    }
+  }
+  catch (...) {
+     if ( amu != nullptr ) delete[] amu;
+  }
+
   // SPINAT
   try {
     if ( nc_inq_varid(ncid, "spinat", &varid) == NC_NOERR ) {//no error means present
@@ -401,6 +419,19 @@ void HistDataNC::readFromFile(const std::string& filename) {
           throw EXCEPTION(std::string("Error while reading znucl var in ")+outfilename,ERRDIV);
         }
         has_znucl = true;
+
+        {
+          amu = new double[_znucl.size()];
+          count[0] = {_znucl.size()};
+          start[0] = {0};
+          try {
+          get_var(ncid,start,count,amu,"amu");
+          for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
+            Mendeleev.mass[_znucl[z]] = amu[z];
+          }
+          catch (...) {;}
+          delete[] amu;
+        }
 
         _typat.resize(natomImg);
         nc_inq_varid(ncid, "typat", &varid);

@@ -395,6 +395,20 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
       }
     }
     ++step;
+
+    token = "amu";
+    try { 
+      tokenVectorCheck = parser.getToken<double>(token,_znucl.size());
+      for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
+        Mendeleev.mass[_znucl[z]] = tokenVectorCheck[z];
+    }
+    catch (Exception& e) {
+      if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+        e.ADD("Bad supercell_latt parameter",ERRABT);
+        throw e;
+      }
+    }
+    ++step;
   }
   catch( Exception& e ) {
     e.ADD("ConfigParser failed to get all required parameters.",(step < 2) ? e.getReturnValue() : ERRABT);

@@ -26,6 +26,7 @@
 
 #include "io/abihdr.hpp"
 #include "base/exception.hpp"
+#include "base/mendeleev.hpp"
 #include <fstream>
 #include <algorithm>
 #include <numeric>
@@ -324,6 +325,8 @@ void AbiHdr::readFromFile(const std::string& filename) {
   file.read((char*)(&_fermie),dsize[3]*sizeof(double));
   _amu.resize(dsize[4]);
   file.read((char*)(&_amu[0]),dsize[4]*sizeof(double));
+  for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
+    Agate::Mendeleev.mass[_znucl[z]] = _amu[z];
 
   checkMarker(-4);
 

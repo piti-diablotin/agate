@@ -82,6 +82,18 @@ class EigParserPhonons : public EigParser {
      * vector[nkpt][natom] is basically the result and between 0 and 1.
      */
     virtual std::vector<std::vector<double>> getBandProjection(const unsigned iband, const unsigned ispin) const;
+
+    /**
+     * Getter for the dtset
+     * @result the dtset of the band structure.
+     */
+    const Dtset& getDtset() const { return *_dtset.get(); }
+
+    /**
+     * Getter for eigenDisp
+     * @result a vector of eigen displacement for each qpt.
+     */
+    const std::vector<std::vector<double>>& getEigenDisp() const { return _eigenDisp; }
 };
 
 #endif  // EIGPARSERPHONONS_HPP

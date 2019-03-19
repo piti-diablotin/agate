@@ -41,6 +41,7 @@
 #include <complex>
 #include "base/geometry.hpp"
 #include "io/ddb.hpp"
+#include "io/eigparserphonons.hpp"
 
 using geometry::vec3d;
 using geometry::norm;
@@ -119,6 +120,12 @@ class DispDB {
      * @param ddb the ddb from abinit
      */
     void computeFromDDB(Ddb &ddb);
+
+    /**
+     * Load displacement from an EigparserPhonons
+     * @param eigparser the EigparserPhonons containing eigen vectors;
+     */
+    void loadFromEigParserPhonon(EigParserPhonons& eigparser);
 
     /**
      * Compute linear response to electric field 

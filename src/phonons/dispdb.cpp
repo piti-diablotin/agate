@@ -285,6 +285,30 @@ void DispDB::computeFromDDB(Ddb &ddb) {
 }
 
 
+void DispDB::loadFromEigParserPhonon(EigParserPhonons& eigparser) {
+  eigparser.setUnit("Ha");
+  _qpts = eigparser.getKpts();
+  _nmode = eigparser.getNband();
+  if ( eigparser.getDtset().natom() != _natom )
+    throw EXCEPTION("Bad value for natom in the band structure file",ERRDIV);
+  if ( _natom*3 != _nmode )
+    throw EXCEPTION("Bad value for nband in the band structure file",ERRDIV);
+  auto disp = eigparser.getEigenDisp();
+  if ( disp.size() == 0 ) 
+    throw EXCEPTION("Displacements are empty",ERRDIV);
+  if ( disp.size() != _qpts.size() )
+    throw EXCEPTION("Numbers of qpt and eigen displacements are different",ERRDIV);
+  _modes.resize(_qpts.size()*_nmode*_nmode,cplx(0,0));
+  _energies.resize(_qpts.size()*_nmode);
+  for ( unsigned iqpt = 0 ; iqpt < _qpts.size() ; ++iqpt ) {
+    auto nrjTmp = eigparser.getKptEnergies(iqpt,0.,1);
+    std::copy(nrjTmp.begin(),nrjTmp.end(),_energies.begin()+_nmode*iqpt);
+    for ( unsigned m = 0 ; m < _nmode*_nmode ; ++m )
+      _modes[iqpt*_nmode*_nmode+m] = cplx(disp[iqpt][2*m],disp[iqpt][2*m+1]);
+  }
+}
+
+
 void DispDB::linearResponseE(std::vector<double> &Edir, double A, Ddb &ddb) {
   PhononMode respE;
   geometry::vec3d E_dir = {{ Edir[0], Edir[1], Edir[2] }};

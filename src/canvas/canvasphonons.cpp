@@ -170,6 +170,22 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
     if ( _ddb != nullptr ) _ddb.reset(nullptr);
     if ( e.getReturnValue() == ERRABT )  
       std::clog << e.fullWhat() << std::endl;
+    else {
+      EigParser* eig = EigParser::getEigParser(filename);
+      if ( dynamic_cast<EigParserPhonons*>(eig) ) {
+        try {
+          DispDB disp(_reference.natom());
+          disp.loadFromEigParserPhonon(*dynamic_cast<EigParserPhonons*>(eig));
+          _displacements += disp;
+          std::clog << "Displacements loaded" << std::endl;
+          return true;
+        }
+        catch (Exception& ee ) {
+          e += ee;
+          std::clog << e.fullWhat() << std::endl;
+        }
+      }
+    }
     return false;
   }
 }
@@ -219,8 +235,8 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   parser.setSensitive(true);
   parser.setContent(line);
 
-  if ( _ddb == nullptr ) 
-    throw EXCEPTION("First load a DDB",ERRDIV);
+  //if ( _ddb == nullptr ) 
+  //  throw EXCEPTION("First load a DDB",ERRDIV);
  
   if ( token == "qpt" ) {
     geometry::vec3d qpt;
@@ -688,6 +704,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         );
       }
       rebuild = true;
+      _ntime = 1;
     }
     catch ( Exception &e ) {
       if ( e.getReturnValue() == ConfigParser::ERFOUND ) {

@@ -253,8 +253,9 @@ class CanvasPos : public Canvas {
      * @param x true if x direction is displayed
      * @param y true if y direction is displayed
      * @param z true if z direction is displayed
+     * @param relative true if length is relative, false if absolute
      */
-    void getSpinDirection(bool &x, bool &y, bool &z) const;
+    void getSpinDirection(bool &x, bool &y, bool &z, bool &relative) const;
 
     /**
      * Get the list of znucl around which an octahedra will be displayed

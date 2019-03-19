@@ -117,11 +117,10 @@ Ddb* Ddb::getDdb(const std::string& file){
     catch (Exception &e) {
       ddb = nullptr;
       eloc += e;
-      eloc.ADD("Format is not "+p.second,ERRDIV);
-      std::cerr << eloc.fullWhat() << std::endl;
       if ( e.getReturnValue() == ERRABT ) {
         break;
       }
+      eloc.ADD("Format is not "+p.second,ERRDIV);
     }
     if ( ddb != nullptr ) {
       std::clog << "Format is "+p.second << std::endl;

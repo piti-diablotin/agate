@@ -1214,6 +1214,19 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
     }
     stream.clear();
   }
+  else if ( token == "spin_length" ) {
+    std::string length;
+    stream >> length;
+    if ( stream.fail() ) 
+      throw EXCEPTION("Specify either relative or absolute",ERRDIV);
+    if ( length == "relative" ) 
+      _drawSpins[3] = true;
+    else if (length == "absolute" )
+      _drawSpins[3] = false;
+    else
+      throw EXCEPTION("Bad value for spin_length", ERRDIV);
+    stream.clear();
+  }
   /*
   else if ( token == "dec" ) {
     unsigned ntime = 100;
@@ -1676,10 +1689,11 @@ void CanvasPos::getBondInfo(double& rad, double& factor) const {
   factor = _bond-1.;
 }
 
-void CanvasPos::getSpinDirection(bool &x, bool &y, bool &z) const {
+void CanvasPos::getSpinDirection(bool &x, bool &y, bool &z, bool &relative) const {
   x = _drawSpins[0];
   y = _drawSpins[1];
   z = _drawSpins[2];
+  relative = _drawSpins[3];
 }
 
 std::vector<int> CanvasPos::getOctahedra(bool& drawAtoms) const {
@@ -1716,6 +1730,7 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":shift X Y Z [all]" << setw(59) << "Shift the origin to the new REDUCED coordinate (X,Y,Z)" << endl;
   out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(atom|border|name|znucl|id)" << endl;
   out << setw(40) << ":spin COMPONENTS" << setw(59) << "Specify what component of the spin to draw (x,y,z,xy,yz,xz,xyz)" << endl;
+  out << setw(40) << ":spin_length (relative|absolute)" << setw(59) << "Specify how the arrow for spin is plotted" << endl;
   out << setw(40) << ":spg or :spacegroup [tol]" << setw(59) << "Get the space group number and name. Tol is the tolerance for the symmetry finder." << endl;
   out << setw(40) << ":thermo or thermodynamics" << setw(59) << "Print total energy, volume, temperature, pressure averages (Only available for _HIST files)." << endl;
   out << setw(40) << ":typat iatom TYPAT" << setw(59) << "Change atom iatom to be of type TYPAT." << endl;

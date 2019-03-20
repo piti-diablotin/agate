@@ -1403,7 +1403,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     }
 
 
-    this->plotBand(*(_eigparser.get()),parser,save);
+    Graph::plotBand(*(_eigparser.get()),parser,_gplot.get(),save);
   }
   else if ( function == "conducti" ) {
     if ( _histdata == nullptr ) return;

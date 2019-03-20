@@ -41,6 +41,10 @@
 #include <vector>
 #include <ostream>
 #include <fstream>
+#include "io/configparser.hpp"
+//#include "io/eigparser.hpp"
+
+class EigParser;
 
 /** 
  *
@@ -254,6 +258,15 @@ class Graph {
      * @param filename The name of the file to be written which contains the commands to plot the graph.
      */
     static void plot(const Config &conf, Graph* gplot);
+
+    /**
+     * Function to plot a band structure
+     * @param eigenparser An EigParser object to plot
+     * @param parser A ConfigParser to get the parameters for the plot
+     * @param gplot The graph to plot to. If nullptr, nothing plot but data written
+     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
+     */
+    static void plotBand(EigParser &eigparser, ConfigParser &config, Graph* gplot, Graph::GraphSave save);
 };
 
 #endif  // GRAPH_HPP

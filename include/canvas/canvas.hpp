@@ -412,14 +412,6 @@ class Canvas {
     void setGraph(Graph *plot) { _gplot.release();_gplot.reset(plot); }
 
     /**
-     * Function to plot a band structure
-     * @param eigenparser An EigParser object to plot
-     * @param parser A ConfigParser to get the parameters for the plot
-     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
-     */
-    void plotBand(EigParser &eigparser, ConfigParser &config, Graph::GraphSave save);
-
-    /**
      * Display help message with all command that are use in this class
      * @param out the stream to write the help message
      */

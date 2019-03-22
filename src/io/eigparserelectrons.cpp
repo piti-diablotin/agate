@@ -83,7 +83,7 @@ std::vector<unsigned> EigParserElectrons::getBandColor(const unsigned iband, con
   }
 
   std::vector<unsigned> color(nkpt,0);
-  if ( _fractions.empty() ) return color;
+  if ( _fractions.empty() ) throw EXCEPTION("No projection available",ERRDIV);
   if ( _dtset.get() == nullptr ) throw EXCEPTION("Need a dtset",ERRDIV);
   const unsigned natom = _dtset->natom();
 

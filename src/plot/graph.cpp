@@ -242,7 +242,7 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
 
   double fermi = 0;
   try {
-    fermi = parser.getToken<double>("fermi");
+    fermi = parser.getToken<double>("fermi",ConfigParser::ENERGY);
   }
   catch (Exception &e) {
     if ( e.getReturnValue() != ConfigParser::ERFOUND )
@@ -274,8 +274,14 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
     std::string tok1 = parser.getToken<std::string>("ndiv");
     std::vector<std::string> ndivk = utils::explode(tok1,':');
     ndiv.clear();
-    for ( auto div : ndivk )
-      ndiv.push_back(utils::stoi(div));
+    unsigned check = 0;
+    for ( auto div : ndivk ) {
+      int idiv = utils::stoi(div);
+      check += idiv;
+      ndiv.push_back(idiv);
+    }
+    if ( check != eigparser.getPath().size() )
+      throw EXCEPTION("Sum of all segments is wrong "+utils::to_string(check)+std::string("<>")+utils::to_string(eigparser.getPath().size()),ERRDIV);
   }
   catch (Exception &e) {
     if ( e.getReturnValue() != ConfigParser::ERFOUND )

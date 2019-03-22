@@ -106,12 +106,12 @@ std::vector<double> EigParser::getBand(const unsigned iband, const double fermi,
   unsigned spin = _hasSpin ? 2 : 1 ;
   unsigned nkpt = _kpts.size()/spin;
   UnitConverter fermiUnit(_eunit);
-  fermiUnit.rebase(UnitConverter::Ha);
+  fermiUnit = UnitConverter::Ha;
   std::vector<double> eigen(nkpt,0);
   if ( (ispin != 1 && ispin != 2) || ispin > spin ) throw EXCEPTION("Bad value for ispin",ERRABT);
   if ( iband < _nband ) {
     for ( unsigned ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
-      eigen[ikpt] = (_eigens[ikpt+(ispin-1)*nkpt][iband]-fermi*fermiUnit)*_eunit;
+      eigen[ikpt] = (_eigens[ikpt+(ispin-1)*nkpt][iband]-fermi/fermiUnit)*_eunit;
     }
   }
   else
@@ -124,13 +124,13 @@ std::vector<double> EigParser::getKptEnergies(const unsigned ikpt, const double 
   unsigned spin = _hasSpin ? 2 : 1 ;
   unsigned nkpt = _kpts.size()/spin;
   UnitConverter fermiUnit(_eunit);
-  fermiUnit.rebase(UnitConverter::Ha);
+  fermiUnit = UnitConverter::Ha;
   std::vector<double> eigen(_nband,0);
   if ( (ispin != 1 && ispin != 2) || ispin > spin ) throw EXCEPTION("Bad value for ispin",ERRABT);
   if ( ikpt < nkpt ) {
     const int kpt = ikpt+(ispin-1)*nkpt;
     for ( unsigned iband = 0 ; iband < _nband ; ++iband ) {
-      eigen[iband] = (_eigens[kpt][iband]-fermi*fermiUnit)*_eunit;
+      eigen[iband] = (_eigens[kpt][iband]-fermi/fermiUnit)*_eunit;
     }
   }
   else

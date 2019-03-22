@@ -97,6 +97,8 @@ class UnitConverter {
 
     void rebase(Unit u);
 
+    Unit base() {return _from;}
+
     friend std::string operator+(std::string &str, UnitConverter &eunit);
 
     friend std::istream& operator>>(std::istream &in, UnitConverter &eunit);

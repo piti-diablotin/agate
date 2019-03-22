@@ -152,7 +152,7 @@ class EigParser {
     /**
      * Getter eigenvalue of the ith kpt
      * @param ikpt The index of the kpt.
-     * @param fermi Fermi level to shift the bands
+     * @param fermi Fermi level to shift the bands in Ha
      * @param ispin Spin of the band we want can only be 1 or 2
      * @return the eigen values for this kpts.
      */
@@ -161,7 +161,7 @@ class EigParser {
     /**
      * Getter eigenvalue of the ith band
      * @param iband The band for which we want the eigen values;
-     * @param fermi Fermi level to shift the bands
+     * @param fermi Fermi level to shift the bands in Ha
      * @param ispin Spin of the band we want can only be 1 or 2
      * @return the eigen values along the path for the ith band
      */

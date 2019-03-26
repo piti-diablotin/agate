@@ -54,6 +54,7 @@ extern "C" {
 #  include "io/cifparser.hpp"
 #endif
 #include "base/phys.hpp"
+#include "base/unitconverter.hpp"
 #include "base/mendeleev.hpp"
 #include "base/geometry.hpp"
 #include "phonons/supercell.hpp"
@@ -1178,10 +1179,16 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
   }
 
+  std::string sdunit = "bohr";
+  if ( parser.hasToken("dunit") )
+    sdunit = parser.getToken<std::string>("dunit");
+  UnitConverter dunit = UnitConverter::getFromString(sdunit);
+  dunit.rebase(UnitConverter::bohr);
+
   //RDF
   if ( function == "g(r)" ) {
     filename = "PDF";
-    xlabel="R[Bohr]";
+    xlabel="R["+dunit.str()+"]";
     ylabel = "Radial Distribution Function [a.u]";
     title = "G(r)";
     double rmax = 0;
@@ -1202,7 +1209,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     if ( rmax < 1e-2 || dr < 1e-10 )
       throw EXCEPTION("Rmax or dr is too small. This is either a bad input you set or a histdata without rprimd definition",ERRDIV);
     std::clog << std::endl << " -- Pair Distribution Function --" << std::endl;
-    std::clog << " Rmax = " << rmax << "[Bohr]\tdR = " << dr << "[Bohr]" << std::endl << std::endl;;
+    std::clog << " Rmax = " << rmax*dunit << "["+dunit.str()+"]\tdR = " << dr*dunit << "["+dunit.str()+"]" << std::endl << std::endl;;
 
 
     const unsigned nznucl =_znucl.size();
@@ -1227,15 +1234,18 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       }
     }
     if ( nznucl > 0) x = std::move(data.first);
+    for ( auto &xx : x ) xx = xx*dunit;
   }
 
   else if ( function == "msd" ) {
     filename = "MSD";
-    ylabel = "Mean Square Displacement [bohr^2]";
+    ylabel = "Mean Square Displacement ["+dunit.str()+"^2]";
     title = "MSD";
     std::clog << std::endl << " -- Mean Square Displacement --" << std::endl;
 
     y = std::move(this->getMSD(tbegin,tend));
+    for ( auto curve = y.begin() ; curve != y.end() ; ++curve )
+      for ( auto &d : *curve ) d = d*dunit*dunit;
 
     const double dtion = phys::atu2fs*( _time.size() > 1 ? _time[1]-_time[0] : 1);
     x.resize(y.front().size());
@@ -1253,11 +1263,13 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   // VACF
   else if ( function == "pacf" ){
     filename = "PACF";
-    ylabel = "PACF [bohr^2]";
+    ylabel = "PACF ["+dunit.str()+"^2]";
     title = "PACF";
     std::clog << std::endl << " -- PACF --" << std::endl;
 
     y = std::move(this->getPACF(tbegin,tend));
+    for ( auto curve = y.begin() ; curve != y.end() ; ++curve )
+      for ( auto &d : *curve ) d = d*dunit*dunit;
 
     const double dtion = phys::atu2fs*( _time.size() > 1 ? _time[1]-_time[0] : 100);
     x.resize(y.front().size());
@@ -1276,11 +1288,13 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   else if ( function == "gyration" ) {
     if ( _nimage < 2 ) throw EXCEPTION("Your data contains only 1 image",ERRDIV);
     filename = "gyration_tensor";
-    ylabel = "Gyration radius tensor [bohr^2]";
+    ylabel = "Gyration radius tensor ["+dunit.str()+"^2]";
     title = "Gyration radius tensor";
     std::clog << std::endl << " -- Gyration radius tensor --" << std::endl;
 
     y = std::move(this->getGyration(tbegin,tend));
+    for ( auto curve = y.begin() ; curve != y.end() ; ++curve )
+      for ( auto &d : *curve ) d = d*dunit*dunit;
 
     for ( unsigned typ = 0 ; typ < _znucl.size() ; ++typ ) {
       std::string specie = utils::trim(std::string(mendeleev::name[_znucl[typ]]));
@@ -1305,8 +1319,8 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 
     filename = std::string("Posisions") + xaxis;
     filename += yaxis;
-    xlabel = "Positions X[Bohr]";
-    ylabel = "Positions Y[Bohr]";
+    xlabel = "Positions X["+dunit.str()+"]";
+    ylabel = "Positions Y["+dunit.str()+"]";
     xlabel[10] = xaxis;
     ylabel[10] = yaxis;
     title = "Trajectories (cartesian)";
@@ -1321,6 +1335,10 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       if ( coord == "red" || coord == "reduced" || coord == "xred" ) {
         pos = _xred.begin();
         title = "Trajectories (reduced)";
+        xlabel = "Positions X";
+        ylabel = "Positions Y";
+        xlabel[10] = xaxis;
+        ylabel[10] = yaxis;
       }
     }
     else 
@@ -1347,8 +1365,8 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       p = xy.begin();
       std::advance(p,iatom);
       for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
-        p->first[itime]= pos[(itime*_natom+iatom)*3+coordx];
-        p->second[itime]=pos[(itime*_natom+iatom)*3+coordy];
+        p->first[itime]= pos[(itime*_natom+iatom)*3+coordx]*dunit;
+        p->second[itime]=pos[(itime*_natom+iatom)*3+coordy]*dunit;
       }
     }
   }
@@ -1365,7 +1383,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
         << "_" << iatom2;
       filename = str.str();
     }
-    ylabel = "Distance[Bohr]" ;
+    ylabel = "Distance["+dunit.str()+"]" ;
     title = std::string("Distance ") + utils::to_string(iatom1) + std::string("-") + utils::to_string(iatom2);
     std::clog << std::endl << " -- Distance --" << std::endl;
     std::vector<double> distance(ntime);
@@ -1374,12 +1392,14 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       distance[itime-tbegin] = this->getDistance(iatom1,iatom2,itime);
     }
     y.push_back(std::move(distance));
+    for ( auto curve = y.begin() ; curve != y.end() ; ++curve )
+      for ( auto &d : *curve ) d = d*dunit;
   }
 
   ///VOLUME
   else if ( function == "V" ) {
     filename = "volume";
-    ylabel = "Volume[Bohr^3]";
+    ylabel = "Volume["+dunit.str()+"^3]";
     title = "Volume";
     std::clog << std::endl << " -- Volume --" << std::endl;
     std::vector<double> volume(ntime);
@@ -1397,7 +1417,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
       geometry::mat3d rprimd;
       std::copy(&_rprimd[itime*3*3],&_rprimd[itime*3*3+9],rprimd.begin());
-      volume[itime-tbegin] = scaleV*geometry::det(rprimd);
+      volume[itime-tbegin] = scaleV*geometry::det(rprimd)*dunit*dunit*dunit;
     }
     y.push_back(std::move(volume));
   }
@@ -1405,7 +1425,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   ///ACELL 
   else if ( function == "acell" ) {
     filename = "latticeLengths";
-    ylabel = "Lattice length [Bohr]";
+    ylabel = "Lattice length ["+dunit.str()+"]";
     title = "Lattice parameters";
     std::clog << std::endl << " -- Lattice parameters --" << std::endl;
     std::vector<double> acell1(ntime);
@@ -1423,9 +1443,9 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 #pragma omp parallel for schedule(static)
     for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
       const double *rp = &_rprimd[itime*3*3];
-      acell1[itime-tbegin] = multiplicity[0]*std::sqrt(rp[0]*rp[0]+rp[3]*rp[3]+rp[6]*rp[6]);
-      acell2[itime-tbegin] = multiplicity[1]*std::sqrt(rp[1]*rp[1]+rp[4]*rp[4]+rp[7]*rp[7]);
-      acell3[itime-tbegin] = multiplicity[2]*std::sqrt(rp[2]*rp[2]+rp[5]*rp[5]+rp[8]*rp[8]);
+      acell1[itime-tbegin] = multiplicity[0]*std::sqrt(rp[0]*rp[0]+rp[3]*rp[3]+rp[6]*rp[6])*dunit;
+      acell2[itime-tbegin] = multiplicity[1]*std::sqrt(rp[1]*rp[1]+rp[4]*rp[4]+rp[7]*rp[7])*dunit;
+      acell3[itime-tbegin] = multiplicity[2]*std::sqrt(rp[2]*rp[2]+rp[5]*rp[5]+rp[8]*rp[8])*dunit;
     }
     y.push_back(std::move(acell1));
     y.push_back(std::move(acell2));

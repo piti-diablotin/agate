@@ -140,7 +140,11 @@ HistData::HistData(const HistData& hist) :
   hist.waitTime(hist._ntime);
 #endif
   _ntime = hist._ntime;
+#ifdef HAVE_CPPTHREAD
   _ntimeAvail.store(hist._ntimeAvail.load());
+#else
+  _ntimeAvail = hist._ntimeAvail;
+#endif
 
   _xcart = hist._xcart;
   _xred = hist._xred;
@@ -189,7 +193,11 @@ HistData::HistData(HistData&& hist) :
   hist.waitTime(hist._ntime);
 #endif
   _ntime = hist._ntime;
+#ifdef HAVE_CPPTHREAD
   _ntimeAvail.store(hist._ntimeAvail.load());
+#else
+  _ntimeAvail = hist._ntimeAvail;
+#endif
 
   _xcart = std::move(hist._xcart);
   _xred = std::move(hist._xred);
@@ -237,7 +245,12 @@ HistData& HistData::operator=(const HistData& hist) {
   hist.waitTime(hist._ntime);
 #endif
   _ntime = hist._ntime;
+#ifdef HAVE_CPPTHREAD
   _ntimeAvail.store(hist._ntimeAvail.load());
+#else
+  _ntimeAvail = hist._ntimeAvail;
+#endif
+
   _isPeriodic = hist._isPeriodic;
   _xcart = hist._xcart;
   _xred = hist._xred;
@@ -277,7 +290,12 @@ HistData& HistData::operator=(HistData&& hist) {
   hist.waitTime(hist._ntime);
 #endif
   _ntime = hist._ntime;
+
+#ifdef HAVE_CPPTHREAD
   _ntimeAvail.store(hist._ntimeAvail.load());
+#else
+  _ntimeAvail = hist._ntimeAvail;
+#endif
   _isPeriodic = hist._isPeriodic;
   _xcart = std::move(hist._xcart);
   _xred = std::move(hist._xred);

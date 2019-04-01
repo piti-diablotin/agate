@@ -133,6 +133,7 @@ class Ddb : public Dtset {
      */
     inline const std::vector<unsigned>& zion() const { return _zion; }
 
+    using Dtset::dump; //Clang warning: indicate we want both dump functions
     virtual void dump(const geometry::vec3d qpt, std::string filename="");
 
 };

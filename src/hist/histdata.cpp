@@ -883,9 +883,9 @@ std::pair<std::vector<double>,std::vector<double>> HistData::getPDF(unsigned znu
 
   double factor = 0.;
   unsigned ntime = tend-tbegin;
-  unsigned nthread = 1;
 
 #ifdef HAVE_OMP
+  unsigned nthread = 1;
 #pragma omp parallel 
   {
 #pragma omp single 
@@ -1070,7 +1070,7 @@ std::list<std::vector<double>> HistData::getMSD(unsigned tbegin,unsigned tend) c
     }
   }
 
-  S2 = std::move(HistData::acf(fullxred.begin(),fullxred.end(),3*_natom));
+  S2 = HistData::acf(fullxred.begin(),fullxred.end(),3*_natom);
   if ( S2.size() != ntau*3*_natom ) 
     throw EXCEPTION("Hmm something is wrong in computing MSD", ERRDIV);
 
@@ -1261,7 +1261,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     title = "MSD";
     std::clog << std::endl << " -- Mean Square Displacement --" << std::endl;
 
-    y = std::move(this->getMSD(tbegin,tend));
+    y = this->getMSD(tbegin,tend);
     for ( auto curve = y.begin() ; curve != y.end() ; ++curve )
       for ( auto &d : *curve ) d = d*dunit*dunit;
 
@@ -1285,7 +1285,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     title = "PACF";
     std::clog << std::endl << " -- PACF --" << std::endl;
 
-    y = std::move(this->getPACF(tbegin,tend));
+    y = this->getPACF(tbegin,tend);
     for ( auto curve = y.begin() ; curve != y.end() ; ++curve )
       for ( auto &d : *curve ) d = d*dunit*dunit;
 
@@ -1310,7 +1310,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     title = "Gyration radius tensor";
     std::clog << std::endl << " -- Gyration radius tensor --" << std::endl;
 
-    y = std::move(this->getGyration(tbegin,tend));
+    y = this->getGyration(tbegin,tend);
     for ( auto curve = y.begin() ; curve != y.end() ; ++curve )
       for ( auto &d : *curve ) d = d*dunit*dunit;
 
@@ -2035,7 +2035,7 @@ std::list<std::vector<double>> HistData::getPACF(unsigned tbegin, unsigned tend)
 
   std::vector<double> fullpacf;
   try {
-    fullpacf = std::move(HistData::acf(begin,end,3*_natom));
+    fullpacf = HistData::acf(begin,end,3*_natom);
   }
   catch ( Exception &e ) {
     e.ADD("PACF calculation failed",ERRDIV);
@@ -2128,7 +2128,7 @@ void HistData::decorrelate(unsigned tbegin, unsigned tend, unsigned ntime, doubl
   };
 
   auto computeE = [] (HistData* hist) -> double {
-    auto y = std::move(hist->getPACF(0,hist->_ntime));
+    auto y = hist->getPACF(0,hist->_ntime);
     // Only use the all PACF (which is 0)
     auto& pacf = y.front();
     double sum = 0.0;

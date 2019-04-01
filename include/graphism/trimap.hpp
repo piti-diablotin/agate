@@ -84,6 +84,7 @@ class TriMap : public TriObj {
      */
     virtual ~TriMap();
 
+    using TriObj::genUnit;
     void genUnit(double *origin, double *udir, double *vdir, int upoint, int vpoint);
 
     /**

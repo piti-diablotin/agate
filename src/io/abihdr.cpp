@@ -410,7 +410,9 @@ void AbiHdr::readFromFile(const std::string& filename) {
       checkMarker(11);
       isize = {bsize};
       dsize = {bsize};
-      file.seekg(file.tellg()+(long int)marker);
+      //file.seekg(file.tellg()+(long int)marker);
+      file.read((char*)(&idummy[0]),isize[0]*sizeof(int));
+      file.read((char*)(&ddummy[0]),dsize[0]*sizeof(double));
       checkMarker(-11);
     }
     else if ( _hdrform >= 56 ) {
@@ -454,7 +456,9 @@ void AbiHdr::readFromFile(const std::string& filename) {
       isize = { bsize };
       dsize = { bsize*my_nspden*my_cplx*my_qphase };
       checkMarker(21);
-      file.seekg(file.tellg()+(long int)marker);
+      //file.seekg(file.tellg()+(long int)marker);
+      file.read((char*)(&idummy[0]),isize[0]*sizeof(int));
+      file.read((char*)(&ddummy[0]),dsize[0]*sizeof(double));
       checkMarker(-21);
     }
   }

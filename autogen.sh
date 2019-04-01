@@ -285,8 +285,15 @@ EOF
   cat configure.tmp configure2 > configure.ac
   rm configure.tmp
 
+  if test "$OSTYPE" = "darwin*" 
+  then
+    LIBTOOLIZE=glibtoolize 
+  else
+    LIBTOOLIZE=libtoolize 
+  fi
+
   touch agate.h.in
-  libtoolize && \
+  $LIBTOOLIZE && \
   aclocal \
     && automake --add-missing \
     && autoconf \

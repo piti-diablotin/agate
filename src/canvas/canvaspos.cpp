@@ -1,4 +1,4 @@
-**
+/**
  * @file src/canvaspos.cpp
  *
  * @brief 

@@ -200,6 +200,7 @@ void TriCylinder::draw(const double start[3], const double end[3], const _float 
   const float inv_nn = 1.f/nn;
   const float nprod = sqrt(n1*n1+n0*n0);
   const float angle = ( (n2<0) ? 180.f+180.f/phys::pi*asin(nprod*inv_nn) : -180.f/phys::pi*asin(nprod*inv_nn) );
+#if defined(HAVE_GL)
   glPushMatrix();
   glTranslatef(start[0],start[1],start[2]);
   if ( nprod > 1e-6 ) {
@@ -211,6 +212,11 @@ void TriCylinder::draw(const double start[3], const double end[3], const _float 
 
   this->draw(radius,nn);
   glPopMatrix();
+#else
+  (void) start;
+  (void) end;
+  (void) radius;
+#endif
 }
 
 //

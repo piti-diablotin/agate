@@ -1,4 +1,4 @@
-/**
+**
  * @file src/canvaspos.cpp
  *
  * @brief 
@@ -539,7 +539,7 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
 
   glFlush();
 #else
-  (void) cam;
+  (void) camin;
   (void) render;
 #endif
 }

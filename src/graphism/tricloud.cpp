@@ -176,9 +176,6 @@ void TriCloud::pop() {
   }
   glEnable(GL_LIGHTING);
   _nvertex = 0;
-#else
-  (void) pos;
-  (void) radius;
 #endif
 }
 

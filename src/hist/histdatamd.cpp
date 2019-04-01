@@ -444,7 +444,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         title = "VACF";
         std::clog << std::endl << " -- VACF --" << std::endl;
 
-        y = std::move(this->getVACF(tbegin,tend));
+        y = this->getVACF(tbegin,tend);
 
         const double dtion = phys::atu2fs*1e-3*( _time.size() > 1 ? _time[1]-_time[0] : 100);
         x.resize(y.front().size());
@@ -488,7 +488,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
 
         smearing *= (phys::kB/phys::eV*1e3)/(phys::THz2Ha * phys::Ha2eV *1e3)*(dtion*2); // kBT(ev) / Scaling x axis
 
-        y = std::move(this->getPDOS(tbegin,tend,smearing));
+        y = this->getPDOS(tbegin,tend,smearing);
 
         x.resize(y.front().size());
         for ( unsigned itime = 0 ; itime < y.front().size() ; ++itime )
@@ -612,7 +612,7 @@ std::list<std::vector<double>> HistDataMD::getVACF(unsigned tbegin, unsigned ten
 
   std::vector<double> fullvacf;
   try {
-    fullvacf = std::move(HistData::acf(begin,end,3*_natom));
+    fullvacf = HistData::acf(begin,end,3*_natom);
   }
   catch ( Exception &e ) {
     e.ADD("VACF calculation failed",ERRDIV);
@@ -800,7 +800,7 @@ std::array<double,4> HistDataMD::computeThermoFunctionHA(unsigned tbegin, unsign
 
   std::vector<double> pdos;
   try {
-    auto pdosfull = std::move(this->getPDOS(tbegin,tend,0));
+    auto pdosfull = this->getPDOS(tbegin,tend,0);
     pdos = std::move(pdosfull.front());
   }
   catch ( Exception &e ) {

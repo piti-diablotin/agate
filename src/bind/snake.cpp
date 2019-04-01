@@ -62,7 +62,7 @@ inline void snakeErase(snake*, int, map*);
 inline void snakePrintOne(snake*, map*);
 inline void snakeEraseOne(snake*, map*);
 void snakeMove(snake* snake1, map* plateau, int direction);
-bool snakeCollision(snake* localSnake, map* plateau);
+bool snakeCollision(snake* localSnake);
 bool snakeEat(snake* localSnake, point* apple);
 bool snakeIsSnake(snake* snakes, int nbJoueurs, point* apple);
 void snakeDestruct(snake* localSnake);
@@ -479,7 +479,7 @@ void snakeMove(snake* snake1, map* plateau, int direction) {
      */
 }
 
-bool snakeCollision(snake* localSnake, map* plateau){
+bool snakeCollision(snake* localSnake){
   int head;
   int i;
   head = localSnake->head;

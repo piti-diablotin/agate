@@ -130,7 +130,7 @@ std::vector<unsigned> EigParserPhonons::getBandColor(const unsigned iband, const
     }
 
     try {
-      auto projection(std::move(this->getBandProjection(iband,1)));
+      auto projection(this->getBandProjection(iband,1));
       for ( unsigned ikpt = 0 ; ikpt < nkpt ; ++ikpt ) {
         unsigned r = 0,g = 0,b = 0;
         for ( unsigned iatom = 0 ; iatom < _dtset->natom() ; ++iatom ) {

@@ -360,9 +360,9 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
   x = eigparser.getPath();
   std::list<std::vector<unsigned>> &projectionsColor = config.rgb;
   for ( unsigned iband = ignore ; iband < eigparser.getNband() ; ++iband ) {
-    y.push_back(std::move(eigparser.getBand(iband,fermi,1)));
+    y.push_back(eigparser.getBand(iband,fermi,1));
     if ( projection )
-      projectionsColor.push_back(std::move(eigparser.getBandColor(iband,1,projectionUMask)));
+      projectionsColor.push_back(eigparser.getBandColor(iband,1,projectionUMask));
     colors.push_back(0);
     labels.push_back("");
   }
@@ -370,9 +370,9 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
     *labels.begin() = "Spin 1";
     labels.push_back("Spin 2");
     for ( unsigned iband = ignore ; iband < eigparser.getNband() ; ++iband ) {
-      y.push_back(std::move(eigparser.getBand(iband,fermi,2)));
+      y.push_back(eigparser.getBand(iband,fermi,2));
       if ( projection )
-        projectionsColor.push_back(std::move(eigparser.getBandColor(iband,2,projectionUMask)));
+        projectionsColor.push_back(eigparser.getBandColor(iband,2,projectionUMask));
       colors.push_back(1);
       labels.push_back("");
     }

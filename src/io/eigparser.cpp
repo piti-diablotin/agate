@@ -204,7 +204,7 @@ std::string EigParser::dump(unsigned options, std::vector<unsigned> umask) const
     try {
       for ( unsigned ispin = 0 ; ispin < nspin ; ++ispin ) {
         for ( unsigned iband = 0 ; iband < _nband ; ++iband ) {
-          projections.push_back(std::move(this->getBandColor(iband,ispin+1,umask))); // ispin should be 1 or 2
+          projections.push_back(this->getBandColor(iband,ispin+1,umask)); // ispin should be 1 or 2
         }
       }
     }

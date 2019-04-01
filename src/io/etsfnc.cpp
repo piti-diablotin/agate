@@ -118,7 +118,7 @@ void EtsfNC::readFromFile(const std::string& filename) {
     }
   }
 
-  auto get_var = [this,filename](int ncid, size_t start[], size_t count[], double *data,const char name[]) {
+  auto get_var = [filename](int ncid, size_t start[], size_t count[], double *data,const char name[]) {
     int varid;
     int status = nc_inq_varid(ncid, name, &varid);
     if ( status ) {

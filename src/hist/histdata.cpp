@@ -327,6 +327,8 @@ void HistData::waitTime(unsigned t) const {
   }
   if ( ok ) 
     std::clog << "ok" << std::endl;
+#else
+  (void) t;
 #endif
 }
 
@@ -583,6 +585,8 @@ HistData* HistData::getHist(const std::string& file, bool wait){
       if ( wait ) {
         hist->waitTime(hist->_ntime);
       }
+#else
+      (void) wait;
 #endif
       return hist;
     }

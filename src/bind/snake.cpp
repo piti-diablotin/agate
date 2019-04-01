@@ -234,7 +234,7 @@ int runSnake() {
     snakePrint(p_snakes,nbJoueurs,&plateau);
 
     for(nb=0; nb<nbJoueurs; nb++){
-      if(snakeCollision(&p_snakes[nb],&plateau)){
+      if(snakeCollision(&p_snakes[nb])){
         timeout(500);
         snakeEraseOne(&p_snakes[nb],&plateau);
         getch();

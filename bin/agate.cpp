@@ -31,6 +31,8 @@
 #include <csignal>
 #include <fstream>
 #include <sstream>
+#include <exception>
+#include <execinfo.h>
 #include "io/parser.hpp"
 #include "io/configparser.hpp"
 #include "hist/histdatanc.hpp"
@@ -176,9 +178,24 @@ void handle_signal (int para) {
   }
   ptrwin->exit();
   std::cerr << "Window has been asked to close." << std::endl;
-  exit(-1);
+  exit(1);
 };
 
+
+/**
+ * Handle when the terminate function is called
+ */
+void handle_terminate() {
+    void *trace_elems[20];
+    int trace_elem_count(backtrace( trace_elems, 20 ));
+    char **stack_syms(backtrace_symbols( trace_elems, trace_elem_count ));
+    for ( int i = 0 ; i < trace_elem_count ; ++i )
+    {
+        std::cerr << stack_syms[i] << std::endl;
+    }
+    free( stack_syms );
+    exit(1);
+}
 
 
 /**
@@ -188,6 +205,18 @@ void handle_signal (int para) {
  * @return 0 if succeeded, =/0 otherwise.
  */
 int main(int argc, char** argv) {
+  signal(SIGABRT,handle_signal);
+  signal(SIGFPE,handle_signal);
+  signal(SIGILL,handle_signal);
+  signal(SIGINT,handle_signal);
+  signal(SIGSEGV,handle_signal);
+  signal(SIGTERM,handle_signal);
+#ifndef _WIN32
+  signal(SIGKILL,handle_signal);
+  signal(SIGQUIT,handle_signal);
+#endif
+  std::set_terminate (handle_terminate);
+
   int rvalue = 0;
   Parser parser(argc,argv);
   parser.setOption("config",'c',"","Configuration file to configure the animation.");
@@ -296,19 +325,6 @@ int main(int argc, char** argv) {
       Winfake::init();
       ptrwin = new Winfake(crystal,width,height);
     }
-
-
-    signal(SIGABRT,handle_signal);
-    signal(SIGFPE,handle_signal);
-    signal(SIGILL,handle_signal);
-    signal(SIGINT,handle_signal);
-    signal(SIGSEGV,handle_signal);
-    signal(SIGTERM,handle_signal);
-#ifndef _WIN32
-    signal(SIGKILL,handle_signal);
-    signal(SIGQUIT,handle_signal);
-#endif
-
 
 
     bool wait = parser.getOption<bool>("wait");

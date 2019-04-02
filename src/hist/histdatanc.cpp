@@ -883,13 +883,13 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
       if ( (rval = nc_def_var(ncid,"imgmov",NC_INT,0,dimids,&varid) ) )
         throw EXCEPTION(std::string("Error creating variable imgmov with error ")+std::string(nc_strerror(rval)),ERRABT);
       if ( (rval = nc_put_att_text(ncid, varid, "units", units.size(), units.c_str()) ) )
-        throw EXCEPTION(std::string(std::string("Error creating attribut unit for variable dtion with error "))+std::string(nc_strerror(rval)),ERRABT);
+        throw EXCEPTION(std::string(std::string("Error creating attribut unit for variable imgmov with error "))+std::string(nc_strerror(rval)),ERRABT);
       if ( (rval = nc_put_att_text(ncid, varid, "mnemonics", mnemo.size(), mnemo.c_str()) ) )
-        throw EXCEPTION(std::string(std::string("Error creating attribut mnemonics for variable dtion with error "))+std::string(nc_strerror(rval)),ERRABT);
+        throw EXCEPTION(std::string(std::string("Error creating attribut mnemonics for variable imgmov with error "))+std::string(nc_strerror(rval)),ERRABT);
       if ( (rval = nc_enddef(ncid) ) )
         throw EXCEPTION(std::string("Error ending define mode with error ")+std::string(nc_strerror(rval)),ERRABT);
       if ( (rval = nc_put_var_int(ncid,varid,&_imgdata._imgmov) ) )
-        throw EXCEPTION(std::string("Error putting variable dtion with error ")+std::string(nc_strerror(rval)),ERRABT);
+        throw EXCEPTION(std::string("Error putting variable imgmov with error ")+std::string(nc_strerror(rval)),ERRABT);
       // set dtion to 1 so mdtime is still itime*dtion
       dtion = 1;
     }

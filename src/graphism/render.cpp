@@ -73,18 +73,17 @@ Render::Render(const std::string& filename, const size_t size, const long render
   try {
 #ifdef HAVE_FREETYPE
     int error = FT_Init_FreeType( &_library ); 
-#else
-    Exception e = EXCEPTION("FreeType not available.",ERRWAR);
-    std::clog << e.fullWhat();
-    int error = 1;
-#endif
-    if ( error ) 
+    if ( error != 0 ) 
       throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
     if ( _fontfile != "" ) {
       this->setFont(filename);
       this->setSize(size);
       this->setRender(renderMode);
     }
+#else
+    Exception e = EXCEPTION("FreeType not available.",ERRWAR);
+    std::clog << e.fullWhat();
+#endif
   }
   catch ( Exception& e ) {
     e.ADD("Constructor failed.",ERRDIV);
@@ -106,20 +105,17 @@ Render::Render(const Render& render) :
   _renderMode(render._renderMode),
   _temp(nullptr)
 {
-#ifdef HAVE_FREETYPE
-  int error = FT_Init_FreeType( &_library ); 
-#else
-    Exception e = EXCEPTION("FreeType not available.",ERRWAR);
-    std::clog << e.fullWhat();
-    int error = 1;
-#endif
-  if ( error ) 
-    throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
   try {
 #ifdef HAVE_FREETYPE
+  int error = FT_Init_FreeType( &_library ); 
+  if ( error != 0 ) 
+    throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
     this->setFont(_fontfile);
     this->setSize(_size);
     this->setRender(_renderMode);
+#else
+    Exception e = EXCEPTION("FreeType not available.",ERRWAR);
+    std::clog << e.fullWhat();
 #endif
   }
   catch ( Exception& e ) {
@@ -160,22 +156,20 @@ Render& Render::operator = (const Render& render) {
   _fontfile = render._fontfile;
   _renderMode = render._renderMode;
 
+  try {
 #ifdef HAVE_FREETYPE
   _size =render._size;
   _pixelRatio = render._pixelRatio;
   int error = FT_Init_FreeType( &_library ); 
+  if ( error != 0 ) 
+    throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
+    this->setFont(_fontfile);
+    this->setSize(_size);
+    this->setRender(_renderMode);
 #else
     Exception e = EXCEPTION("FreeType not available.",ERRWAR);
     std::clog << e.fullWhat();
     int error = 1;
-#endif
-  if ( error ) 
-    throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
-  try {
-#ifdef HAVE_FREETYPE
-    this->setFont(_fontfile);
-    this->setSize(_size);
-    this->setRender(_renderMode);
 #endif
   }
   catch ( Exception& e ) {

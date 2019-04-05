@@ -48,6 +48,7 @@ echo " * Eigen....: $have_eigen_usable"
 echo " * Spglib...: $have_spglib_usable"
 echo " * Yaml-cpp.: $have_yamlcpp_usable"
 echo " * FFTW3....: $have_fftw3_usable"
+echo " * SSH(SFTP): $have_ssh_usable"
 echo
 echo " - Libraries (Graphics) -"
 echo " ~~~~~~~~~~~~~~~~~~~~~~~~"

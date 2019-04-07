@@ -49,8 +49,10 @@
 class Sftp {
 
   private :
+#ifdef HAVE_SSH
     ssh_session _sshSession;
     sftp_session _sftpSession;
+#endif
     std::string _hostname;
     std::string _user;
     std::string _password;
@@ -58,10 +60,10 @@ class Sftp {
 
   protected :
 
-    bool authenticateNone();
-    bool authenticatePubKey();
-    bool authenticatePassword();
-    bool authenticateInteractive();
+    int authenticateNone();
+    int authenticatePubKey();
+    int authenticatePassword();
+    int authenticateInteractive();
     void createSftp();
 
   public :
@@ -75,6 +77,21 @@ class Sftp {
      * Constructor.
      */
     Sftp(const std::string &host, const std::string &user, const std::string &password, int port=22);
+
+    /**
+     * Copy constructor
+     */
+    Sftp(const Sftp& sftp) = delete;
+
+    /**
+     * Move constructor
+     */
+    Sftp(Sftp&& sftp) = delete;
+
+    /**
+     * Copy opeartor
+     */
+    Sftp& operator=(const Sftp &sftp) = delete;
 
     /**
      * Destructor.
@@ -91,7 +108,8 @@ class Sftp {
     bool verifyHost(std::string &message);
     void validateHost();
     void authenticate();
-    int sizeOfFile(std::string file);
+    uint64_t sizeOfFile(const std::string &filename);
+    void getFile(const std::string &filename, std::ostream &destination);
 };
 
 #endif  // SFTP_HPP

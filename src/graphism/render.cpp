@@ -51,8 +51,8 @@ Render::Render() :
   if ( error ) 
     throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
 #else
-    Exception e = EXCEPTION("FreeType not available.",ERRWAR);
-    std::clog << e.fullWhat();
+  Exception e = EXCEPTION("FreeType not available.",ERRWAR);
+  std::clog << e.fullWhat();
 #endif
 }
 
@@ -107,9 +107,9 @@ Render::Render(const Render& render) :
 {
   try {
 #ifdef HAVE_FREETYPE
-  int error = FT_Init_FreeType( &_library ); 
-  if ( error != 0 ) 
-    throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
+    int error = FT_Init_FreeType( &_library ); 
+    if ( error != 0 ) 
+      throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
     this->setFont(_fontfile);
     this->setSize(_size);
     this->setRender(_renderMode);
@@ -158,11 +158,11 @@ Render& Render::operator = (const Render& render) {
 
   try {
 #ifdef HAVE_FREETYPE
-  _size =render._size;
-  _pixelRatio = render._pixelRatio;
-  int error = FT_Init_FreeType( &_library ); 
-  if ( error != 0 ) 
-    throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
+    _size =render._size;
+    _pixelRatio = render._pixelRatio;
+    int error = FT_Init_FreeType( &_library ); 
+    if ( error != 0 ) 
+      throw EXCEPTION("Error while initializing FT_library.",ERRDIV);
     this->setFont(_fontfile);
     this->setSize(_size);
     this->setRender(_renderMode);

@@ -28,11 +28,17 @@
 #include "base/utils.hpp"
 #include "base/exception.hpp"
 #include <sstream>
+#include <fcntl.h>
+#include <chrono>
+#include <vector>
+#include <unistd.h>
 
 //
 Sftp::Sftp() :
+#ifdef HAVE_SSH
   _sshSession(ssh_new()),
   _sftpSession(nullptr),
+#endif
   _hostname(),
   _user(),
   _password(),
@@ -43,7 +49,10 @@ Sftp::Sftp() :
 
 //
 Sftp::Sftp(const std::string &host, const std::string &user, const std::string &password, int port) :
+#ifdef HAVE_SSH
   _sshSession(ssh_new()),
+  _sftpSession(nullptr),
+#endif
   _hostname(host),
   _user(user),
   _password(password),
@@ -54,11 +63,9 @@ Sftp::Sftp(const std::string &host, const std::string &user, const std::string &
 
 //
 Sftp::~Sftp() {
-  if ( _sftpSession != nullptr )
-    sftp_free(_sftpSession);
+#ifdef HAVE_SSH
   this->disconnect();
-  if ( _sshSession != nullptr )
-    ssh_free(_sshSession);
+#endif
 }
 
 //
@@ -83,6 +90,7 @@ void Sftp::setPort(int port) {
 
 //
 void Sftp::connect() {
+#ifdef HAVE_SSH
   int error;
 
   if ( _sshSession == nullptr )
@@ -96,23 +104,35 @@ void Sftp::connect() {
   error = ssh_connect(_sshSession);
   if ( error != SSH_OK )
     throw EXCEPTION("Error connecting to ssh server with error:\n"+std::string(ssh_get_error(_sshSession)),ERRABT);
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+#endif
 }
 
 void Sftp::disconnect() {
-  ssh_disconnect(_sshSession);
+#ifdef HAVE_SSH
+  if ( _sftpSession != nullptr ) {
+    sftp_free(_sftpSession);
+    _sftpSession =nullptr;
+  }
+  if ( _sshSession != nullptr ) {
+    ssh_free(_sshSession);
+    _sshSession = nullptr;
+  }
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+#endif
 }
 
 
 bool Sftp::verifyHost(std::string &message) {
+#ifdef HAVE_SSH
   //enum ssh_server_known_e state;
   int state;
   unsigned char *hash = nullptr;
   ssh_key srv_pubkey = nullptr;
   size_t hlen;
-  char buf[10];
   char *hexa;
-  char *p;
-  int cmp;
   int rc;
   std::ostringstream str;
   rc = ssh_get_server_publickey(_sshSession, &srv_pubkey);
@@ -160,6 +180,7 @@ bool Sftp::verifyHost(std::string &message) {
         << "If you accept the host key here, the file will be"
           "automatically created." << std::endl;
       /* FALL THROUGH to SSH_SERVER_NOT_KNOWN behavior */
+      [[fallthrough]];
     //case SSH_SERVER_KNOWN_HOSTS_UNKNOWN:
     case SSH_SERVER_NOT_KNOWN:
       hexa = ssh_get_hexa(hash, hlen);
@@ -179,76 +200,110 @@ bool Sftp::verifyHost(std::string &message) {
   }
   ssh_clean_pubkey_hash(&hash);
   return true;
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+  (void) message;
+#endif
 }
 void Sftp::validateHost() {
+#ifdef HAVE_SSH
   int rc = ssh_write_knownhost(_sshSession);
   //int rc = ssh_session_update_known_hosti(_sshSession);
   if (rc < 0) 
     throw EXCEPTION("Error during host validation:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+#endif
 }
 
 //
-bool Sftp::authenticateNone() {
+int Sftp::authenticateNone() {
+#ifdef HAVE_SSH
   int rc = ssh_userauth_none(_sshSession, _user.c_str());
-  return rc == SSH_AUTH_SUCCESS;
+  return rc;
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+  return 0;
+#endif
 }
 
 //
-bool Sftp::authenticatePubKey() {
+int Sftp::authenticatePubKey() {
+#ifdef HAVE_SSH
   int rc;
   rc = ssh_userauth_publickey_auto(_sshSession, _user.c_str(), _password.c_str());
   if (rc == SSH_AUTH_ERROR) {
     throw EXCEPTION("Authentication failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
   }
-  return true;
+  return rc;
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+  return 0;
+#endif
 }
 
 //
-bool Sftp::authenticatePassword() {
+int Sftp::authenticatePassword() {
+#ifdef HAVE_SSH
   int rc;
   rc = ssh_userauth_password(_sshSession, _user.c_str(), _password.c_str());
   if (rc == SSH_AUTH_ERROR)
   {
     throw EXCEPTION("Authentication failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
   }
-  return true;
+  return rc;
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+  return 0;
+#endif
 }
 
 //
-bool Sftp::authenticateInteractive() {
+int Sftp::authenticateInteractive() {
+#ifdef HAVE_SSH
+  return SSH_ERROR;
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+  return 0;
+#endif
 }
 
 //
 void Sftp::authenticate() {
+#ifdef HAVE_SSH
   int method, rc;
-  if ( this->authenticateNone() ) return;
+  if ( (rc = this->authenticateNone()) == SSH_OK ) return;
   Exception e;
   method = ssh_userauth_list(_sshSession, _user.c_str());
   if (method & SSH_AUTH_METHOD_NONE) { 
-    if ( this->authenticateNone() ) 
+    if ( (rc = this->authenticateNone()) == SSH_OK ) 
       return;
-    e.ADD("Authentication None failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+    e.ADD("Authentication None failed:\n"+std::string(ssh_get_error(_sshSession)),rc);
   }
   if (method & SSH_AUTH_METHOD_PUBLICKEY) { 
-    if ( this->authenticatePubKey() ) 
+    if ( (rc = this->authenticatePubKey()) == SSH_OK ) 
       return;
-    e.ADD("Authentication PubKey failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+    e.ADD("Authentication PubKey failed:\n"+std::string(ssh_get_error(_sshSession)),rc);
   }
   if (method & SSH_AUTH_METHOD_INTERACTIVE) { 
-    if ( this->authenticateInteractive() ) 
+    if ( (rc = this->authenticateInteractive()) == SSH_OK) 
       return;
-    e.ADD("Authentication Interactive failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+    e.ADD("Authentication Interactive failed:\n"+std::string(ssh_get_error(_sshSession)),rc);
   }
   if (method & SSH_AUTH_METHOD_PASSWORD) {
-    if ( this->authenticatePassword() ) 
+    if ( (rc = this->authenticatePassword()) == SSH_OK ) 
       return;
-    e.ADD("Authentication Password failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+    e.ADD("Authentication Password failed:\n"+std::string(ssh_get_error(_sshSession)),rc);
   }
   e.ADD("Could not get authenticated",ERRDIV);
   throw e;
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+#endif
 }
 
 void Sftp::createSftp() {
+#ifdef HAVE_SSH
   int rc;
   if (_sftpSession != nullptr) return;
   _sftpSession = sftp_new(_sshSession);
@@ -261,17 +316,21 @@ void Sftp::createSftp() {
     _sftpSession = nullptr;
     throw EXCEPTION("Error initializing SFTP session: "+utils::to_string(sftp_get_error(_sftpSession)),ERRDIV);
   }
+#else
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+#endif
 }
 
-int Sftp::sizeOfFile(std::string file) {
+uint64_t Sftp::sizeOfFile(const std::string &filename) {
+#ifdef HAVE_SSH
   this->createSftp();
-  int pos = file.find_last_of("/\\");
-  std::string dirname = file.substr(0,pos);
-  std::string filename = file.substr(pos+1);
+  int pos = filename.find_last_of("/\\");
+  std::string dirname = filename.substr(0,pos);
+  std::string filenamename = filename.substr(pos+1);
 
   sftp_dir dir;
   sftp_attributes attributes;
-  int rc;
+  //int rc;
   uint64_t size = 0;
 
   dir = sftp_opendir(_sftpSession, dirname.c_str());
@@ -280,18 +339,121 @@ int Sftp::sizeOfFile(std::string file) {
 
   while( (attributes = sftp_readdir(_sftpSession,dir)) != nullptr ) {
     std::cout << "scanning " << attributes->name << std::endl;
-    if ( strcmp(attributes->name, filename.c_str()) == 0 ) {
+    if ( strcmp(attributes->name, filenamename.c_str()) == 0 ) {
       size = attributes->size;
+      sftp_attributes_free(attributes);
       break;
     }
     sftp_attributes_free(attributes);
   }
 
   if ( sftp_dir_eof(dir) && size == 0 ) {
-    rc = sftp_closedir(dir);
-    throw EXCEPTION("File " +file+ " does not exist on the server",ERRDIV);
+    /*rc = */sftp_closedir(dir);
+    throw EXCEPTION("File " +filename+ " does not exist on the server.",ERRDIV);
   }
-  rc = sftp_closedir(dir);
+  /*rc = */sftp_closedir(dir);
   return size;
+#else
+  (void) filename;
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+  return 0;
+#endif
+}
 
+//
+void Sftp::getFile(const std::string &filename, std::ostream &destination) {
+#ifdef HAVE_SSH
+  sftp_file file;
+  char buffer[1024*1024];
+  int nbytes/*, nwritten, rc*/;
+
+  const uint64_t size = this->sizeOfFile(filename);
+  uint64_t advancement = 0;
+
+  auto printProgress = [size](int current) {
+    static int previous = -1;
+    static uint64_t previousSize = 0;
+    static auto start = std::chrono::system_clock::now();
+    int actual = (int)(100.*(double)current/size);
+    if ( actual > previous ) {
+      auto end = std::chrono::system_clock::now();
+      std::chrono::duration<double> elapsed_seconds = end-start;
+      const uint64_t total = current-previousSize;
+      double speed = total/elapsed_seconds.count();
+      std::string unit("B/s");
+      if (speed > 1e9) {speed/=1e9;unit="G"+unit;}
+      else if (speed > 1e6) {speed/=1e6;unit="M"+unit;}
+      else if (speed > 1e3) {speed/=1e3;unit="k"+unit;}
+      std::clog << actual << "% " << speed << unit << std::endl;
+      previousSize = current;
+      std::clog.flush();
+      start = std::chrono::system_clock::now();
+    }
+    previous = actual;
+  };
+
+  file = sftp_open(_sftpSession, filename.c_str(), O_RDONLY, 0);
+
+  if (file == nullptr) 
+    throw EXCEPTION("Can't open file for reading:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+
+  if ( !destination )
+    throw EXCEPTION("Unable to use output stream",ERRDIV);
+  
+  //
+  sftp_file_set_nonblocking(file);
+
+  /**
+   * Synchrone version
+   */
+  /*
+  for (;;) {
+    nbytes = sftp_read(file, buffer,sizeof(buffer));
+    if (nbytes == 0) {
+      break; // EOF
+    } 
+    else if (nbytes < 0) {
+      sftp_close(file);
+      throw EXCEPTION("Error while reading file "+filename+":\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+    }
+    destination.write(buffer,nbytes);
+    printProgress((advancement+=nbytes));
+    if ( !destination ) {
+      sftp_close(file);
+      throw EXCEPTION("Error writing",ERRDIV);
+    }
+  }
+  */
+
+  /**
+   * Asynchrone version
+   */
+  int async_request = sftp_async_read_begin(file, sizeof(buffer));
+  if (async_request >= 0) {
+    nbytes = sftp_async_read(file, buffer, sizeof(buffer),
+                             async_request);
+  } else {
+      nbytes = -1;
+  }
+  while (nbytes > 0 || nbytes == SSH_AGAIN) {
+    if (nbytes > 0) {
+      destination.write(buffer,nbytes);
+      printProgress((advancement+=nbytes));
+      async_request = sftp_async_read_begin(file, sizeof(buffer));
+    } 
+    if (async_request >= 0) {
+      nbytes = sftp_async_read(file, buffer, sizeof(buffer),
+                               async_request);
+    } else {
+        nbytes = -1;
+    }
+  }
+
+  printProgress((advancement+=nbytes));
+  /*rc = */sftp_close(file);
+#else
+  (void) file;
+  (void) destination;
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+#endif
 }

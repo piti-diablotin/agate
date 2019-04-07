@@ -454,7 +454,7 @@ void Sftp::getFileSFTP(const std::string &filename, std::ostream &destination) {
   printProgress((advancement+=nbytes));
   /*rc = */sftp_close(file);
 #else
-  (void) file;
+  (void) filename;
   (void) destination;
   throw EXCEPTION("SSH support is not activated",ERRDIV);
 #endif
@@ -462,6 +462,7 @@ void Sftp::getFileSFTP(const std::string &filename, std::ostream &destination) {
 
 //
 uint64_t Sftp::sizeOfFileSCP(const std::string &filename) {
+#ifdef HAVE_SSH
   int rc;
   ssh_scp scp;
   int size ;
@@ -488,9 +489,14 @@ uint64_t Sftp::sizeOfFileSCP(const std::string &filename) {
   ssh_scp_free(scp);
 
   return size;
+#else
+  (void) filename;
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+#endif
 }
 //
 void Sftp::getFileSCP(const std::string &filename, std::ostream &destination) {
+#ifdef HAVE_SSH
   int rc;
   ssh_scp scp;
   int size, bufferSize ;
@@ -562,6 +568,11 @@ void Sftp::getFileSCP(const std::string &filename, std::ostream &destination) {
 
   ssh_scp_close(scp);
   ssh_scp_free(scp);
+#else
+  (void) filename;
+  (void) destination;
+  throw EXCEPTION("SSH support is not activated",ERRDIV);
+#endif
 }
 
 //

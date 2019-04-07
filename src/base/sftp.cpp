@@ -31,7 +31,8 @@
 #include <fcntl.h>
 #include <chrono>
 #include <vector>
-#include <unistd.h>
+#include <cmath>
+#include <iomanip>
 
 //
 Sftp::Sftp() :
@@ -155,7 +156,7 @@ bool Sftp::verifyHost(std::string &message) {
     case SSH_SERVER_KNOWN_OK:
       /* OK */
       break;
-    //case SSH_KNOWN_HOSTS_CHANGED:
+      //case SSH_KNOWN_HOSTS_CHANGED:
     case SSH_SERVER_KNOWN_CHANGED:
       str << "Host key for server changed: it is now:" << std::endl;
       hexa = ssh_get_hexa(hash, hlen);
@@ -165,34 +166,34 @@ bool Sftp::verifyHost(std::string &message) {
       ssh_clean_pubkey_hash(&hash);
       message = str.str();
       return false;
-    //case SSH_KNOWN_HOSTS_OTHER:
+      //case SSH_KNOWN_HOSTS_OTHER:
     case SSH_SERVER_FOUND_OTHER:
       str << "The host key for this server was not found but an other"
         << " type of key exists." << std::endl
         << "An attacker might change the default server key to"
-          "confuse your client into thinking the key does not exist" << std::endl;
+        "confuse your client into thinking the key does not exist" << std::endl;
       ssh_clean_pubkey_hash(&hash);
       message = str.str();
       return false;
-    //case SSH_KNOWN_HOSTS_NOT_FOUND:
+      //case SSH_KNOWN_HOSTS_NOT_FOUND:
     case SSH_SERVER_FILE_NOT_FOUND:
       str << "Could not find known host file." << std::endl
         << "If you accept the host key here, the file will be"
-          "automatically created." << std::endl;
+        "automatically created." << std::endl;
       /* FALL THROUGH to SSH_SERVER_NOT_KNOWN behavior */
       [[fallthrough]];
-    //case SSH_SERVER_KNOWN_HOSTS_UNKNOWN:
+      //case SSH_SERVER_KNOWN_HOSTS_UNKNOWN:
     case SSH_SERVER_NOT_KNOWN:
       hexa = ssh_get_hexa(hash, hlen);
       str << "The server is unknown. Do you trust the host key?" << std::endl
-       << hexa << std::endl;
+        << hexa << std::endl;
       //str << utils::base64_encode(hashStr) << std::endl;
       ssh_string_free_char(hexa);
       ssh_clean_pubkey_hash(&hash);
 
       message = str.str();
       return false;
-    //case SSH_KNOWN_HOSTS_ERROR:
+      //case SSH_KNOWN_HOSTS_ERROR:
     case SSH_SERVER_ERROR:
       ssh_clean_pubkey_hash(&hash);
       throw EXCEPTION("Error during host verification:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
@@ -321,7 +322,7 @@ void Sftp::createSftp() {
 #endif
 }
 
-uint64_t Sftp::sizeOfFile(const std::string &filename) {
+uint64_t Sftp::sizeOfFileSFTP(const std::string &filename) {
 #ifdef HAVE_SSH
   this->createSftp();
   int pos = filename.find_last_of("/\\");
@@ -361,8 +362,9 @@ uint64_t Sftp::sizeOfFile(const std::string &filename) {
 }
 
 //
-void Sftp::getFile(const std::string &filename, std::ostream &destination) {
+void Sftp::getFileSFTP(const std::string &filename, std::ostream &destination) {
 #ifdef HAVE_SSH
+  this->createSftp();
   sftp_file file;
   char buffer[1024*1024];
   int nbytes/*, nwritten, rc*/;
@@ -384,7 +386,7 @@ void Sftp::getFile(const std::string &filename, std::ostream &destination) {
       if (speed > 1e9) {speed/=1e9;unit="G"+unit;}
       else if (speed > 1e6) {speed/=1e6;unit="M"+unit;}
       else if (speed > 1e3) {speed/=1e3;unit="k"+unit;}
-      std::clog << actual << "% " << speed << unit << std::endl;
+      std::clog << actual << "% " << std::setprecision(2) << std::fixed << speed << unit << std::endl;
       previousSize = current;
       std::clog.flush();
       start = std::chrono::system_clock::now();
@@ -399,7 +401,7 @@ void Sftp::getFile(const std::string &filename, std::ostream &destination) {
 
   if ( !destination )
     throw EXCEPTION("Unable to use output stream",ERRDIV);
-  
+
   //
   sftp_file_set_nonblocking(file);
 
@@ -407,23 +409,23 @@ void Sftp::getFile(const std::string &filename, std::ostream &destination) {
    * Synchrone version
    */
   /*
-  for (;;) {
-    nbytes = sftp_read(file, buffer,sizeof(buffer));
-    if (nbytes == 0) {
-      break; // EOF
-    } 
-    else if (nbytes < 0) {
-      sftp_close(file);
-      throw EXCEPTION("Error while reading file "+filename+":\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
-    }
-    destination.write(buffer,nbytes);
-    printProgress((advancement+=nbytes));
-    if ( !destination ) {
-      sftp_close(file);
-      throw EXCEPTION("Error writing",ERRDIV);
-    }
-  }
-  */
+     for (;;) {
+     nbytes = sftp_read(file, buffer,sizeof(buffer));
+     if (nbytes == 0) {
+     break; // EOF
+     } 
+     else if (nbytes < 0) {
+     sftp_close(file);
+     throw EXCEPTION("Error while reading file "+filename+":\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+     }
+     destination.write(buffer,nbytes);
+     printProgress((advancement+=nbytes));
+     if ( !destination ) {
+     sftp_close(file);
+     throw EXCEPTION("Error writing",ERRDIV);
+     }
+     }
+     */
 
   /**
    * Asynchrone version
@@ -431,9 +433,9 @@ void Sftp::getFile(const std::string &filename, std::ostream &destination) {
   int async_request = sftp_async_read_begin(file, sizeof(buffer));
   if (async_request >= 0) {
     nbytes = sftp_async_read(file, buffer, sizeof(buffer),
-                             async_request);
+        async_request);
   } else {
-      nbytes = -1;
+    nbytes = -1;
   }
   while (nbytes > 0 || nbytes == SSH_AGAIN) {
     if (nbytes > 0) {
@@ -443,9 +445,9 @@ void Sftp::getFile(const std::string &filename, std::ostream &destination) {
     } 
     if (async_request >= 0) {
       nbytes = sftp_async_read(file, buffer, sizeof(buffer),
-                               async_request);
+          async_request);
     } else {
-        nbytes = -1;
+      nbytes = -1;
     }
   }
 
@@ -456,4 +458,120 @@ void Sftp::getFile(const std::string &filename, std::ostream &destination) {
   (void) destination;
   throw EXCEPTION("SSH support is not activated",ERRDIV);
 #endif
+}
+
+//
+uint64_t Sftp::sizeOfFileSCP(const std::string &filename) {
+  int rc;
+  ssh_scp scp;
+  int size ;
+
+  scp = ssh_scp_new(_sshSession, SSH_SCP_READ, filename.c_str());
+  if (scp == nullptr)
+    throw EXCEPTION("Error allocating scp session:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+
+  rc = ssh_scp_init(scp);
+  if (rc != SSH_OK) {
+    ssh_scp_free(scp);
+    throw EXCEPTION("Error initializing scp session:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+  }
+
+  rc = ssh_scp_pull_request(scp);
+  if (rc != SSH_SCP_REQUEST_NEWFILE)
+    throw EXCEPTION("Error receiving information about file:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+
+  size = ssh_scp_request_get_size(scp);
+
+  ssh_scp_deny_request(scp,"Only quering size");
+
+  ssh_scp_close(scp);
+  ssh_scp_free(scp);
+
+  return size;
+}
+//
+void Sftp::getFileSCP(const std::string &filename, std::ostream &destination) {
+  int rc;
+  ssh_scp scp;
+  int size, bufferSize ;
+  char *buffer = nullptr;
+  uint64_t advancement = 0;
+
+  auto printProgress = [&size](int current) {
+    static int previous = -1;
+    static uint64_t previousSize = 0;
+    static auto start = std::chrono::system_clock::now();
+    int actual = (int)(100.*(double)current/size);
+    if ( actual > previous ) {
+      auto end = std::chrono::system_clock::now();
+      std::chrono::duration<double> elapsed_seconds = end-start;
+      const uint64_t total = current-previousSize;
+      double speed = total/elapsed_seconds.count();
+      std::string unit("B/s");
+      if (speed > 1e9) {speed/=1e9;unit="G"+unit;}
+      else if (speed > 1e6) {speed/=1e6;unit="M"+unit;}
+      else if (speed > 1e3) {speed/=1e3;unit="k"+unit;}
+      std::clog << actual << "% " << std::setprecision(2) << std::fixed << speed << unit << std::endl;
+      previousSize = current;
+      std::clog.flush();
+      start = std::chrono::system_clock::now();
+    }
+    previous = actual;
+  };
+
+  scp = ssh_scp_new(_sshSession, SSH_SCP_READ, filename.c_str());
+  if (scp == nullptr)
+    throw EXCEPTION("Error allocating scp session:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+
+  rc = ssh_scp_init(scp);
+  if (rc != SSH_OK) {
+    ssh_scp_free(scp);
+    throw EXCEPTION("Error initializing scp session:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+  }
+
+  rc = ssh_scp_pull_request(scp);
+  if (rc != SSH_SCP_REQUEST_NEWFILE)
+    throw EXCEPTION("Error receiving information about file:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+
+  size = ssh_scp_request_get_size(scp);
+  bufferSize = std::min(size,1024*1024);
+
+  try {
+    buffer = new char[bufferSize];
+  }
+  catch (...) {
+    throw EXCEPTION("Error allocating memory", ERRDIV);
+  }
+
+  ssh_scp_accept_request(scp);
+
+  do {
+    rc = ssh_scp_read(scp, buffer, bufferSize);
+    if (rc == SSH_ERROR) {
+      delete[] buffer;
+      throw EXCEPTION("Error receiving file data:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+    }
+    destination.write(buffer, rc);
+    printProgress(advancement+=rc);
+  } while ( (rc=ssh_scp_pull_request(scp)) != SSH_SCP_REQUEST_EOF);
+
+  delete[] buffer;
+
+  if (rc != SSH_SCP_REQUEST_EOF)
+    throw EXCEPTION("Unexpected request:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
+
+  ssh_scp_close(scp);
+  ssh_scp_free(scp);
+}
+
+//
+uint64_t Sftp::sizeOfFile(const std::string &filename) {
+  //return this->sizeOfFileSFTP(filename);
+  return this->sizeOfFileSCP(filename);
+}
+
+//
+void Sftp::getFile(const std::string &filename, std::ostream &destination) {
+  //this->getFileSFTP(filename, destination);
+  this->getFileSCP(filename, destination);
 }

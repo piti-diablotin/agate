@@ -50,13 +50,17 @@ class Sftp {
 
   private :
 #ifdef HAVE_SSH
-    ssh_session _sshSession;
+    ssh_session  _sshSession;
     sftp_session _sftpSession;
 #endif
     std::string _hostname;
     std::string _user;
     std::string _password;
     int         _port;
+    void getFileSFTP(const std::string &filename, std::ostream &destination);
+    uint64_t sizeOfFileSFTP(const std::string &filename);
+    void getFileSCP(const std::string &filename, std::ostream &destination);
+    uint64_t sizeOfFileSCP(const std::string &filename);
 
   protected :
 

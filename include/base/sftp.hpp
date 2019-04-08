@@ -72,6 +72,8 @@ class Sftp {
 
   public :
 
+    enum TransfertProtocol { SFTP, SCP };
+
     /**
      * Constructor.
      */
@@ -112,8 +114,8 @@ class Sftp {
     bool verifyHost(std::string &message);
     void validateHost();
     void authenticate();
-    uint64_t sizeOfFile(const std::string &filename);
-    void getFile(const std::string &filename, std::ostream &destination);
+    uint64_t sizeOfFile(const std::string &filename, TransfertProtocol proto = SCP);
+    void getFile(const std::string &filename, std::ostream &destination, TransfertProtocol proto = SCP);
 };
 
 #endif  // SFTP_HPP

@@ -232,7 +232,7 @@ int Sftp::authenticateNone() {
 int Sftp::authenticatePubKey() {
 #ifdef HAVE_SSH
   int rc;
-  rc = ssh_userauth_publickey_auto(_sshSession, _user.c_str(), _password.c_str());
+  rc = ssh_userauth_publickey_auto(_sshSession, nullptr, _password.c_str());
   if (rc == SSH_AUTH_ERROR) {
     throw EXCEPTION("Authentication failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
   }
@@ -247,7 +247,7 @@ int Sftp::authenticatePubKey() {
 int Sftp::authenticatePassword() {
 #ifdef HAVE_SSH
   int rc;
-  rc = ssh_userauth_password(_sshSession, _user.c_str(), _password.c_str());
+  rc = ssh_userauth_password(_sshSession, nullptr, _password.c_str());
   if (rc == SSH_AUTH_ERROR)
   {
     throw EXCEPTION("Authentication failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
@@ -272,7 +272,8 @@ int Sftp::authenticateInteractive() {
 //
 void Sftp::authenticate() {
 #ifdef HAVE_SSH
-  int method, rc;
+  int method = 0;
+  int rc = 0;
   if ( (rc = this->authenticateNone()) == SSH_OK ) return;
   Exception e;
   method = ssh_userauth_list(_sshSession, _user.c_str());
@@ -296,7 +297,6 @@ void Sftp::authenticate() {
       return;
     e.ADD("Authentication Password failed:\n"+std::string(ssh_get_error(_sshSession)),rc);
   }
-  e.ADD("Could not get authenticated",ERRDIV);
   throw e;
 #else
   throw EXCEPTION("SSH support is not activated",ERRDIV);
@@ -576,13 +576,26 @@ void Sftp::getFileSCP(const std::string &filename, std::ostream &destination) {
 }
 
 //
-uint64_t Sftp::sizeOfFile(const std::string &filename) {
-  //return this->sizeOfFileSFTP(filename);
-  return this->sizeOfFileSCP(filename);
+uint64_t Sftp::sizeOfFile(const std::string &filename, TransfertProtocol proto) {
+  switch (proto) {
+    case SFTP:
+      return this->sizeOfFileSFTP(filename);
+      break;
+    case SCP:
+      return this->sizeOfFileSCP(filename);
+      break;
+  }
+  return 0;
 }
 
 //
-void Sftp::getFile(const std::string &filename, std::ostream &destination) {
-  //this->getFileSFTP(filename, destination);
-  this->getFileSCP(filename, destination);
+void Sftp::getFile(const std::string &filename, std::ostream &destination, TransfertProtocol proto) {
+  switch (proto) {
+    case SFTP:
+      this->getFileSFTP(filename, destination);
+      break;
+    case SCP:
+      this->getFileSCP(filename, destination);
+      break;
+  }
 }

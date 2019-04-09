@@ -885,8 +885,8 @@ void Dtset::getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<g
 #ifdef HAVE_SPGLIB
   double (*lattice)[3] = (double(*)[3]) &_rprim[0];
   double *positions = new double[_natom*3];
-  for ( int i = 0 ; i < _natom ; ++i )
-    for ( int j = 0 ; j < 3; ++j )
+  for ( unsigned i = 0 ; i < _natom ; ++i )
+    for ( unsigned j = 0 ; j < 3; ++j )
       positions[i*3+j] = _xred[i][j];
   const int max_size = 192;
   int *rot = new int[192*3*3];

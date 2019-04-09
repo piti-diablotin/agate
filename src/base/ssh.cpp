@@ -372,7 +372,7 @@ void Ssh::getFileSftp(const std::string &filename, std::ostream &destination) {
   const uint64_t size = this->sizeOfFileSftp(filename);
   uint64_t advancement = 0;
 
-  uint64_t previous = 0;
+  int previous = 0;
   uint64_t previousSize = 0;
   auto start = std::chrono::system_clock::now();
   auto printProgress = [&size,&previous,&previousSize,&start](uint64_t current) {
@@ -503,7 +503,7 @@ void Ssh::getFileScp(const std::string &filename, std::ostream &destination) {
   char *buffer = nullptr;
   uint64_t advancement = 0;
 
-  uint64_t previous = 0;
+  int previous = 0;
   uint64_t previousSize = 0;
   auto start = std::chrono::system_clock::now();
   auto printProgress = [&size,&previous,&previousSize,&start](uint64_t current) {

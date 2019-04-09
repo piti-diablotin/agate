@@ -34,6 +34,7 @@
 #include "io/ddbabinit.hpp"
 #include "io/ddbphonopy.hpp"
 #include <fstream>
+#include "base/uriparser.hpp"
 
 //
 Ddb::Ddb() : Dtset(),
@@ -99,13 +100,19 @@ const std::vector<geometry::vec3d> Ddb::getQpts() const {
 }
 
 //
-Ddb* Ddb::getDdb(const std::string& file){
+Ddb* Ddb::getDdb(const std::string& infile){
   Ddb *ddb = nullptr;
   Exception eloc;
   std::vector<std::pair<std::unique_ptr<Ddb>,std::string> > allFormat;
 
   allFormat.push_back(std::make_pair(std::unique_ptr<Ddb>(new DdbAbinit),"Abinit DDB")); //0
   allFormat.push_back(std::make_pair(std::unique_ptr<Ddb>(new DdbPhonopy),"Phonopy YAML"));   //1
+
+  std::string file = infile;
+  UriParser uri;
+  if ( uri.parse(infile) ) {
+    file = uri.getFile();
+  }
 
   if ( file.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[1]);
 

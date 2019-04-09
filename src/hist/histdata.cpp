@@ -30,6 +30,8 @@
 #include "base/phys.hpp"
 #include "base/mendeleev.hpp"
 #include "base/geometry.hpp"
+#include "base/uriparser.hpp"
+#include "base/unitconverter.hpp"
 #include "hist/histdatanc.hpp"
 #include "hist/histdataoutnc.hpp"
 #include "hist/histdatadtset.hpp"
@@ -53,10 +55,6 @@ extern "C" {
 #  include "bind/findsym.hpp"
 #  include "io/cifparser.hpp"
 #endif
-#include "base/phys.hpp"
-#include "base/unitconverter.hpp"
-#include "base/mendeleev.hpp"
-#include "base/geometry.hpp"
 #include "phonons/supercell.hpp"
 #include <memory>
 #include <utility>
@@ -535,7 +533,7 @@ std::string HistData::getSpgHM(const unsigned itime) const {
 }
 
 //
-HistData* HistData::getHist(const std::string& file, bool wait){
+HistData* HistData::getHist(const std::string& infile, bool wait){
   HistData *hist = nullptr;
   Exception eloc;
   std::vector<std::pair<std::unique_ptr<HistData>,std::string> > allFormat;
@@ -549,6 +547,12 @@ HistData* HistData::getHist(const std::string& file, bool wait){
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataOutNC),"Abinit _OUT.nc"));   //6
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataGSR),"Abinit _GSR.nc"));   //7
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataPolyDtset),""));   //8
+
+  std::string file = infile;
+  UriParser uri;
+  if ( uri.parse(infile) ) {
+    file = uri.getFile();
+  }
 
   if ( file.find("_HIST") != std::string::npos || file.find("_HIST.nc") != std::string::npos ) allFormat[0].swap(allFormat[1]);
   else if ( file.find("_OUT.nc") != std::string::npos ) allFormat[0].swap(allFormat[6]);

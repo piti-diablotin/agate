@@ -44,7 +44,7 @@
 class UriParser {
 
   public :
-    enum Protocol { Undefined, Http, Https, Sftp, Ftp };
+    enum Protocol { Undefined, Http, Https, Sftp, Ftp, Scp };
 
   private :
       Protocol    _protocol;
@@ -68,7 +68,7 @@ class UriParser {
      */
     virtual ~UriParser();
 
-    void parse(const std::string &uri);
+    bool parse(const std::string &uri);
 
     Protocol getProtocol() const;
     int getPort() const;
@@ -76,6 +76,7 @@ class UriParser {
     std::string getUser() const;
     std::string getPassword() const;
     std::string getPath() const;
+    std::string getFile() const;
 };
 
 #endif  // URIPARSER_HPP

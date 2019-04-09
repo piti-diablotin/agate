@@ -1,5 +1,5 @@
 /**
- * @file src/base/sftp.cpp
+ * @file src/base/ssh.cpp
  *
  * @brief 
  *
@@ -24,7 +24,7 @@
  */
 
 
-#include "base/sftp.hpp"
+#include "base/ssh.hpp"
 #include "base/utils.hpp"
 #include "base/exception.hpp"
 #include <sstream>
@@ -35,7 +35,7 @@
 #include <iomanip>
 
 //
-Sftp::Sftp() :
+Ssh::Ssh() :
 #ifdef HAVE_SSH
   _sshSession(ssh_new()),
   _sftpSession(nullptr),
@@ -49,7 +49,7 @@ Sftp::Sftp() :
 }
 
 //
-Sftp::Sftp(const std::string &host, const std::string &user, const std::string &password, int port) :
+Ssh::Ssh(const std::string &host, const std::string &user, const std::string &password, int port) :
 #ifdef HAVE_SSH
   _sshSession(ssh_new()),
   _sftpSession(nullptr),
@@ -63,34 +63,34 @@ Sftp::Sftp(const std::string &host, const std::string &user, const std::string &
 }
 
 //
-Sftp::~Sftp() {
+Ssh::~Ssh() {
 #ifdef HAVE_SSH
   this->disconnect();
 #endif
 }
 
 //
-void Sftp::setHostname(const std::string &host) {
+void Ssh::setHostname(const std::string &host) {
   _hostname = host;
 }
 
 //
-void Sftp::setUsername(const std::string &user) {
+void Ssh::setUsername(const std::string &user) {
   _user = user;
 }
 
 //
-void Sftp::setPassword(const std::string &password) {
+void Ssh::setPassword(const std::string &password) {
   _password = password;
 }
 
 //
-void Sftp::setPort(int port) {
+void Ssh::setPort(int port) {
   _port = port;
 }
 
 //
-void Sftp::connect() {
+void Ssh::connect() {
 #ifdef HAVE_SSH
   int error;
 
@@ -110,7 +110,7 @@ void Sftp::connect() {
 #endif
 }
 
-void Sftp::disconnect() {
+void Ssh::disconnect() {
 #ifdef HAVE_SSH
   if ( _sftpSession != nullptr ) {
     sftp_free(_sftpSession);
@@ -126,7 +126,7 @@ void Sftp::disconnect() {
 }
 
 
-bool Sftp::verifyHost(std::string &message) {
+bool Ssh::verifyHost(std::string &message) {
 #ifdef HAVE_SSH
   //enum ssh_server_known_e state;
   int state;
@@ -206,7 +206,7 @@ bool Sftp::verifyHost(std::string &message) {
   (void) message;
 #endif
 }
-void Sftp::validateHost() {
+void Ssh::validateHost() {
 #ifdef HAVE_SSH
   int rc = ssh_write_knownhost(_sshSession);
   //int rc = ssh_session_update_known_hosti(_sshSession);
@@ -218,7 +218,7 @@ void Sftp::validateHost() {
 }
 
 //
-int Sftp::authenticateNone() {
+int Ssh::authenticateNone() {
 #ifdef HAVE_SSH
   int rc = ssh_userauth_none(_sshSession, _user.c_str());
   return rc;
@@ -229,10 +229,10 @@ int Sftp::authenticateNone() {
 }
 
 //
-int Sftp::authenticatePubKey() {
+int Ssh::authenticatePubKey() {
 #ifdef HAVE_SSH
   int rc;
-  rc = ssh_userauth_publickey_auto(_sshSession, nullptr, _password.c_str());
+  rc = ssh_userauth_publickey_auto(_sshSession, _user.c_str(), _password.c_str());
   if (rc == SSH_AUTH_ERROR) {
     throw EXCEPTION("Authentication failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
   }
@@ -244,10 +244,10 @@ int Sftp::authenticatePubKey() {
 }
 
 //
-int Sftp::authenticatePassword() {
+int Ssh::authenticatePassword() {
 #ifdef HAVE_SSH
   int rc;
-  rc = ssh_userauth_password(_sshSession, nullptr, _password.c_str());
+  rc = ssh_userauth_password(_sshSession, _user.c_str(), _password.c_str());
   if (rc == SSH_AUTH_ERROR)
   {
     throw EXCEPTION("Authentication failed:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
@@ -260,7 +260,7 @@ int Sftp::authenticatePassword() {
 }
 
 //
-int Sftp::authenticateInteractive() {
+int Ssh::authenticateInteractive() {
 #ifdef HAVE_SSH
   return SSH_ERROR;
 #else
@@ -270,7 +270,7 @@ int Sftp::authenticateInteractive() {
 }
 
 //
-void Sftp::authenticate() {
+void Ssh::authenticate() {
 #ifdef HAVE_SSH
   int method = 0;
   int rc = 0;
@@ -303,7 +303,7 @@ void Sftp::authenticate() {
 #endif
 }
 
-void Sftp::createSftp() {
+void Ssh::createSftp() {
 #ifdef HAVE_SSH
   int rc;
   if (_sftpSession != nullptr) return;
@@ -322,7 +322,7 @@ void Sftp::createSftp() {
 #endif
 }
 
-uint64_t Sftp::sizeOfFileSFTP(const std::string &filename) {
+uint64_t Ssh::sizeOfFileSftp(const std::string &filename) {
 #ifdef HAVE_SSH
   this->createSftp();
   int pos = filename.find_last_of("/\\");
@@ -339,7 +339,7 @@ uint64_t Sftp::sizeOfFileSFTP(const std::string &filename) {
     throw EXCEPTION("Unable to open directory "+dirname,ERRDIV);
 
   while( (attributes = sftp_readdir(_sftpSession,dir)) != nullptr ) {
-    std::cout << "scanning " << attributes->name << std::endl;
+    //std::cout << "scanning " << attributes->name << std::endl;
     if ( strcmp(attributes->name, filenamename.c_str()) == 0 ) {
       size = attributes->size;
       sftp_attributes_free(attributes);
@@ -362,20 +362,20 @@ uint64_t Sftp::sizeOfFileSFTP(const std::string &filename) {
 }
 
 //
-void Sftp::getFileSFTP(const std::string &filename, std::ostream &destination) {
+void Ssh::getFileSftp(const std::string &filename, std::ostream &destination) {
 #ifdef HAVE_SSH
   this->createSftp();
   sftp_file file;
   char buffer[1024*1024];
   int nbytes/*, nwritten, rc*/;
 
-  const uint64_t size = this->sizeOfFile(filename);
+  const uint64_t size = this->sizeOfFileSftp(filename);
   uint64_t advancement = 0;
 
-  auto printProgress = [size](int current) {
-    static int previous = -1;
-    static uint64_t previousSize = 0;
-    static auto start = std::chrono::system_clock::now();
+  uint64_t previous = 0;
+  uint64_t previousSize = 0;
+  auto start = std::chrono::system_clock::now();
+  auto printProgress = [&size,&previous,&previousSize,&start](uint64_t current) {
     int actual = (int)(100.*(double)current/size);
     if ( actual > previous ) {
       auto end = std::chrono::system_clock::now();
@@ -461,11 +461,11 @@ void Sftp::getFileSFTP(const std::string &filename, std::ostream &destination) {
 }
 
 //
-uint64_t Sftp::sizeOfFileSCP(const std::string &filename) {
+uint64_t Ssh::sizeOfFileScp(const std::string &filename) {
 #ifdef HAVE_SSH
   int rc;
   ssh_scp scp;
-  int size ;
+  uint64_t size ;
 
   scp = ssh_scp_new(_sshSession, SSH_SCP_READ, filename.c_str());
   if (scp == nullptr)
@@ -495,18 +495,18 @@ uint64_t Sftp::sizeOfFileSCP(const std::string &filename) {
 #endif
 }
 //
-void Sftp::getFileSCP(const std::string &filename, std::ostream &destination) {
+void Ssh::getFileScp(const std::string &filename, std::ostream &destination) {
 #ifdef HAVE_SSH
   int rc;
   ssh_scp scp;
-  int size, bufferSize ;
+  uint64_t size = 0, bufferSize = 0;
   char *buffer = nullptr;
   uint64_t advancement = 0;
 
-  auto printProgress = [&size](int current) {
-    static int previous = -1;
-    static uint64_t previousSize = 0;
-    static auto start = std::chrono::system_clock::now();
+  uint64_t previous = 0;
+  uint64_t previousSize = 0;
+  auto start = std::chrono::system_clock::now();
+  auto printProgress = [&size,&previous,&previousSize,&start](uint64_t current) {
     int actual = (int)(100.*(double)current/size);
     if ( actual > previous ) {
       auto end = std::chrono::system_clock::now();
@@ -540,7 +540,7 @@ void Sftp::getFileSCP(const std::string &filename, std::ostream &destination) {
     throw EXCEPTION("Error receiving information about file:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
 
   size = ssh_scp_request_get_size(scp);
-  bufferSize = std::min(size,1024*1024);
+  bufferSize = size<1024*1024?size:1024*1024;
 
   try {
     buffer = new char[bufferSize];
@@ -576,26 +576,26 @@ void Sftp::getFileSCP(const std::string &filename, std::ostream &destination) {
 }
 
 //
-uint64_t Sftp::sizeOfFile(const std::string &filename, TransfertProtocol proto) {
+uint64_t Ssh::sizeOfFile(const std::string &filename, Protocol proto) {
   switch (proto) {
-    case SFTP:
-      return this->sizeOfFileSFTP(filename);
+    case Sftp:
+      return this->sizeOfFileSftp(filename);
       break;
-    case SCP:
-      return this->sizeOfFileSCP(filename);
+    case Scp:
+      return this->sizeOfFileScp(filename);
       break;
   }
   return 0;
 }
 
 //
-void Sftp::getFile(const std::string &filename, std::ostream &destination, TransfertProtocol proto) {
+void Ssh::getFile(const std::string &filename, std::ostream &destination, Protocol proto) {
   switch (proto) {
-    case SFTP:
-      this->getFileSFTP(filename, destination);
+    case Sftp:
+      this->getFileSftp(filename, destination);
       break;
-    case SCP:
-      this->getFileSCP(filename, destination);
+    case Scp:
+      this->getFileScp(filename, destination);
       break;
   }
 }

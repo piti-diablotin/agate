@@ -1,5 +1,5 @@
 /**
- * @file include/base/sftp.hpp
+ * @file include/base/ssh.hpp
  *
  * @brief 
  *
@@ -24,8 +24,8 @@
  */
 
 
-#ifndef SFTP_HPP
-#define SFTP_HPP
+#ifndef SSH_HPP
+#define SSH_HPP
 
 #ifdef _WIN32
 #include "base/win32.hpp"
@@ -46,7 +46,7 @@
 /** 
  * Small class to list an retrieve file from remote SSH server
  */
-class Sftp {
+class Ssh {
 
   private :
 #ifdef HAVE_SSH
@@ -57,10 +57,10 @@ class Sftp {
     std::string _user;
     std::string _password;
     int         _port;
-    void getFileSFTP(const std::string &filename, std::ostream &destination);
-    uint64_t sizeOfFileSFTP(const std::string &filename);
-    void getFileSCP(const std::string &filename, std::ostream &destination);
-    uint64_t sizeOfFileSCP(const std::string &filename);
+    void getFileSftp(const std::string &filename, std::ostream &destination);
+    uint64_t sizeOfFileSftp(const std::string &filename);
+    void getFileScp(const std::string &filename, std::ostream &destination);
+    uint64_t sizeOfFileScp(const std::string &filename);
 
   protected :
 
@@ -72,37 +72,37 @@ class Sftp {
 
   public :
 
-    enum TransfertProtocol { SFTP, SCP };
+    enum Protocol { Sftp, Scp };
 
     /**
      * Constructor.
      */
-    Sftp();
+    Ssh();
 
     /**
      * Constructor.
      */
-    Sftp(const std::string &host, const std::string &user, const std::string &password, int port=22);
+    Ssh(const std::string &host, const std::string &user, const std::string &password, int port=22);
 
     /**
      * Copy constructor
      */
-    Sftp(const Sftp& sftp) = delete;
+    Ssh(const Ssh& sftp) = delete;
 
     /**
      * Move constructor
      */
-    Sftp(Sftp&& sftp) = delete;
+    Ssh(Ssh&& sftp) = delete;
 
     /**
      * Copy opeartor
      */
-    Sftp& operator=(const Sftp &sftp) = delete;
+    Ssh& operator=(const Ssh &sftp) = delete;
 
     /**
      * Destructor.
      */
-    virtual ~Sftp();
+    virtual ~Ssh();
 
     void setHostname(const std::string &host);
     void setUsername(const std::string &user);
@@ -114,8 +114,8 @@ class Sftp {
     bool verifyHost(std::string &message);
     void validateHost();
     void authenticate();
-    uint64_t sizeOfFile(const std::string &filename, TransfertProtocol proto = SCP);
-    void getFile(const std::string &filename, std::ostream &destination, TransfertProtocol proto = SCP);
+    uint64_t sizeOfFile(const std::string &filename, Protocol proto = Scp);
+    void getFile(const std::string &filename, std::ostream &destination, Protocol proto = Scp);
 };
 
-#endif  // SFTP_HPP
+#endif  // SSH_HPP

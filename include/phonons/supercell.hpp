@@ -171,6 +171,17 @@ class Supercell : public Dtset{
      * @param dispr The displacement in real space
      */
     void fft(const std::vector<double>& dispr);
+
+    /**
+     * Get the id of the reference atom and the cell coordinates
+     * @param iatom id of the atom in the supercell
+     * @param refAtom will be the id of the atom in the reference
+     * @param x will be the x coodinate of the cell in which iatom is
+     * @param y will be the y coodinate of the cell in which iatom is
+     * @param z will be the z coodinate of the cell in which iatom is
+     */
+    void getRefCoord(int iatom, int &refAtom, int &x, int &y, int &z) const;
+
 };
 
 #endif  // SUPERCELL_HPP

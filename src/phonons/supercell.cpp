@@ -641,3 +641,10 @@ void Supercell::fft(const std::vector<double>& dispr) {
   throw EXCEPTION("FFTW3 is required for this operation.",ERRDIV);
 #endif
 }
+
+void Supercell::getRefCoord(int iatom, int &refAtom, int &x, int &y, int &z) const {
+  refAtom = _baseAtom[iatom];
+  x = _cellCoord[iatom][0];
+  y = _cellCoord[iatom][1];
+  z = _cellCoord[iatom][2];
+}

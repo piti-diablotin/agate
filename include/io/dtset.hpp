@@ -220,6 +220,15 @@ class Dtset {
      */
     virtual void standardizeCell(const bool primitive, const double tolerance);
 
+    /**
+     * Get the symmetry of the current dtset;
+     * Note that rotations and translations have to be used together at the same time
+     * rotations[i]+translations[i] to get the correct operation.
+     * @param rotations rotations operation
+     * @param translations translations operation
+     * @param symprec Precision for the symmetry finder
+     */
+    void getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<geometry::vec3d> &translations, double symprec) const;
 };
 
 #endif //DTSET_HPP

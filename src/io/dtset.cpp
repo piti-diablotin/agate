@@ -880,3 +880,39 @@ void Dtset::clearSpinat() {
   for (auto& spin : _spinat)
     for (int s = 0 ; s < 3 ; ++s ) spin[s] = 0;
 }
+
+void Dtset::getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<geometry::vec3d> &translations, double symprec) const {
+#ifdef HAVE_SPGLIB
+  double (*lattice)[3] = (double(*)[3]) &_rprim[0];
+  double *positions = new double[_natom*3];
+  for ( int i = 0 ; i < _natom ; ++i )
+    for ( int j = 0 ; j < 3; ++j )
+      positions[i*3+j] = _xred[i][j];
+  const int max_size = 192;
+  int *rot = new int[192*3*3];
+  double *tnon = new double[192*3];
+
+  int nsym = spg_get_symmetry(
+      (int(*)[3][3])rot,
+      (double(*)[3])tnon,
+      max_size,
+      lattice,
+      (double(*)[3])positions,
+      &_typat[0],
+      _natom,
+      symprec);
+  rotations.resize(nsym);
+  translations.resize(nsym);
+  for ( int isym = 0 ; isym < nsym ; ++isym ){
+    auto irot = rotations.begin()+isym;
+    auto itrans = translations.begin()+isym;
+    for ( int ii = 0 ; ii < 3 ; ++ii ) {
+      itrans->at(ii) = tnon[isym*3+ii];
+      for ( int jj = 0 ; jj < 3 ; ++jj ) {
+        irot->at(ii*3+jj) = rot[isym*9+ii*3+jj];
+      }
+    }
+  }
+#else
+#endif
+}

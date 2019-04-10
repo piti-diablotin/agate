@@ -153,7 +153,7 @@ void Parser::setOption(std::string name, std::string defaultValue, const std::st
  * @result If option has an argument then return it as a string.
  */
 template<>
-std::string& Parser::getOption(std::string option){
+std::string Parser::getOption(std::string option){
   for ( auto& testOpt : _options ) {
     if ( testOpt._name == option ) {
       if ( testOpt._hasArg == 1 ) {

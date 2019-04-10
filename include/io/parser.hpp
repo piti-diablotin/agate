@@ -171,5 +171,8 @@ class Parser{
 template<>
 bool Parser::getOption(std::string option);
 
+template<>
+std::string Parser::getOption(std::string option);
+
 #include "io/parser.hxx"
 #endif // PARSER_HPP

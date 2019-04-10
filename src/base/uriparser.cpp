@@ -153,6 +153,7 @@ std::string UriParser::getFile() const {
     }
     catch (Exception &e) {
       int rc = e.getReturnValue();
+#ifdef HAVE_SSH
       if ( rc == SSH_AUTH_DENIED ) {
         std::clog << "Password: ";
         std::cin >> message;
@@ -163,6 +164,9 @@ std::string UriParser::getFile() const {
         e.ADD("Wrong authentication",ERRDIV);
         throw e;
       }
+#else
+        throw e;
+#endif
     }
     file = std::string("/tmp/")+*utils::explode(this->getPath(),'/').rbegin();
     std::ofstream tmpfile(file,std::ios::out);

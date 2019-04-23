@@ -32,6 +32,7 @@
 #include <chrono>
 #include <vector>
 #include <cmath>
+#include <cstring>
 #include <iomanip>
 
 //
@@ -136,7 +137,11 @@ bool Ssh::verifyHost(std::string &message) {
   char *hexa;
   int rc;
   std::ostringstream str;
+#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0,8,0)
   rc = ssh_get_server_publickey(_sshSession, &srv_pubkey);
+#else
+  rc = ssh_get_publickey(_sshSession, &srv_pubkey);
+#endif
   if (rc < 0) {
     throw EXCEPTION("Unable to retrieve server public key",ERRDIV);
   }
@@ -181,7 +186,9 @@ bool Ssh::verifyHost(std::string &message) {
         << "If you accept the host key here, the file will be"
         "automatically created." << std::endl;
       /* FALL THROUGH to SSH_SERVER_NOT_KNOWN behavior */
+#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0,8,0)
       [[fallthrough]];
+#endif
       //case SSH_SERVER_KNOWN_HOSTS_UNKNOWN:
     case SSH_SERVER_NOT_KNOWN:
       hexa = ssh_get_hexa(hash, hlen);

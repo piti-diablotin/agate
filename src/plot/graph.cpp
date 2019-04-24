@@ -280,8 +280,8 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
       check += idiv;
       ndiv.push_back(idiv);
     }
-    if ( check != eigparser.getPath().size() )
-      throw EXCEPTION("Sum of all segments is wrong "+utils::to_string(check)+std::string("<>")+utils::to_string(eigparser.getPath().size()),ERRDIV);
+    //if ( check+1 != eigparser.getPath().size() )
+    //  throw EXCEPTION("Sum of all segments is wrong "+utils::to_string(check)+std::string("<>")+utils::to_string(eigparser.getPath().size()-1),ERRDIV);
   }
   catch (Exception &e) {
     if ( e.getReturnValue() != ConfigParser::ERFOUND )

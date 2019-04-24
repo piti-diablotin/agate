@@ -50,7 +50,10 @@ Tdep::Tdep() :
   _order(1),
   _rcut(-1),
   _rcut3(-1),
+  _dosSmearing(4.5e-6),
+  _dosQpt{1,1,1},
   _temperature(-1),
+  _idealPositions(true),
   _multiplicity()
 {
 #ifndef HAVE_TDEP
@@ -185,6 +188,21 @@ void Tdep::multiplicity(geometry::mat3d m) {
   _multiplicity = m;
 }
 
+void Tdep::idealPositions(bool ideal) {
+  _idealPositions = ideal;
+}
+
+void Tdep::dosParameters(int qpts[3], double smearing) {
+  for ( int i = 0 ; i < 3 ; ++i ) {
+    if ( qpts[i] < 1 ) 
+      throw EXCEPTION("Bad qpts grid",ERRDIV);
+    _dosQpt[i] = qpts[i];
+  }
+
+  if ( smearing < 1e-6 ) 
+    throw EXCEPTION("Smearing value is < 1e-6", ERRDIV);
+}
+
 void Tdep::tdep() {
   // Make some checks first
   if ( _supercell == nullptr ) {
@@ -199,7 +217,7 @@ void Tdep::tdep() {
     throw EXCEPTION("tend is too large",ERRDIV);
 
   auto rprimd = _supercell->getRprimd(0);
-  double small = geometry::getWignerSeitzRadius(rprimd);
+  double small = geometry::getWignerSeitzRadius(rprimd)-1e-5;
 
   if ( _rcut >= 0 &&  _rcut > small ) {
     std::ostringstream mess;
@@ -232,33 +250,33 @@ void Tdep::tdep() {
 
   switch (_mode) {
     case Normal :
-      input << std::setw(16) << "NormalMode" << std::endl;
+      input << std::setw(20) << "NormalMode" << std::endl;
       break;
     case Debug :
-      input << std::setw(16) <<  "DebugMode" << std::endl;
+      input << std::setw(20) <<  "DebugMode" << std::endl;
       break;
   }
 
-  input << std::setw(16) << "# Unit cell definition" << std::endl;
-  input << std::setw(16) << "brav";
+  input << std::setw(20) << "# Unit cell definition" << std::endl;
+  input << std::setw(20) << "brav";
   input << std::setw(4) << _bravais << std::setw(4) << _centering << std::endl;
   if ( _bravais == 1 ) {
     auto angles = geometry::angle(_unitcell.rprim());
     input.precision(9);
     input.setf(std::ios::scientific,std::ios::floatfield);
-    input << std::setw(16) << "angle" << std::setw(18) << angles[0] << std::setw(18) << angles[1] << std::setw(18) << angles[2] << std::endl;
+    input << std::setw(20) << "angle" << std::setw(18) << angles[0] << std::setw(18) << angles[1] << std::setw(18) << angles[2] << std::endl;
   }
   else if ( _bravais == 2 ) {
     auto angles = geometry::angle(_unitcell.rprim());
     input.precision(9);
     input.setf(std::ios::scientific,std::ios::floatfield);
-    input << std::setw(16) << "angle" << std::setw(18) << angles[1] << std::endl;
+    input << std::setw(20) << "angle" << std::setw(18) << angles[1] << std::endl;
   }
 
-  input << std::setw(16) << "natom_unitcell";
+  input << std::setw(20) << "natom_unitcell";
   input << std::setw(14) << natomUc << std::endl;
 
-  input << std::setw(16) << "xred_unitcell";
+  input << std::setw(20) << "xred_unitcell";
   input.precision(9);
   input.setf(std::ios::scientific,std::ios::floatfield);
   for ( auto& coord : _unitcell.xred() ) 
@@ -266,25 +284,25 @@ void Tdep::tdep() {
   input << std::endl;
   input.setf(std::ios::fixed,std::ios::floatfield);
 
-  input << std::setw(16) << "typat_unitcell";
+  input << std::setw(20) << "typat_unitcell";
   for ( auto t : _unitcell.typat() )
     input << std::setw(4) << t;
   input << std::endl;
 
   /*
-     input << std::setw(16) << "ntypat";
+     input << std::setw(20) << "ntypat";
      input << std::setw(4) << _unitcell.znucl().size() << std::endl;
 
-     input << std::setw(16) << "amu";
+     input << std::setw(20) << "amu";
      for ( auto z : _unitcell.znucl() )
      input << std::setw(25) << Mendeleev.mass[z];
      input << std::endl;
      */
 
-  input << std::setw(16) << "# Supercell definition" << std::endl;
+  input << std::setw(20) << "# Supercell definition" << std::endl;
 
   /*
-     input << std::setw(16) << "rprimd";
+     input << std::setw(20) << "rprimd";
      auto rprimdS = _supercell->getRprimd(0);
      input << std::setw(10) << rprimdS[0];
      input << std::setw(10) << rprimdS[3];
@@ -299,7 +317,7 @@ void Tdep::tdep() {
      */
 
   this->computeMultiplicity();
-  input << std::setw(16) << "multiplicity";
+  input << std::setw(20) << "multiplicity";
   input.precision(2);
   input.setf(std::ios::fixed,std::ios::floatfield);
   input << std::setw(7) << _multiplicity[0];
@@ -314,43 +332,56 @@ void Tdep::tdep() {
   input << std::endl;
 
   /*
-     input << std::setw(16) << "natom";
+     input << std::setw(20) << "natom";
      input << std::setw(4) << natomSc << std::endl;
 
-     input << std::setw(16) << "typat";
+     input << std::setw(20) << "typat";
      for ( auto t : _supercell->typat() )
      input << std::setw(4) << t;
      input << std::endl;
      */
 
-  input << std::setw(16) << "temperature";
+  input << std::setw(20) << "temperature";
   input.precision(2);
   input << std::setw(10) << _temperature << std::endl;
 
-  input << std::setw(16) << "# Computation details" << std::endl;
-  input << std::setw(16) << "nstep_max";
-  input << std::setw(10) << (_tend-_tbegin)/_step + ((_tend-_tbegin)%_step != 0 ? 1 : 0 ) << std::endl; // _tend will be included
+  input << std::setw(20) << "# Computation details" << std::endl;
+  input << std::setw(20) << "nstep_max";
+  //input << std::setw(10) << (_tend-_tbegin)/_step + ((_tend-_tbegin)%_step != 0 ? 1 : 0 ) << std::endl; // _tend will be included
+  input << std::setw(10) << _tend+1 << std::endl; // _tend will be included
 
-  input << std::setw(16) << "nstep_min";
-  input << std::setw(10) << 1 << std::endl; // Add 1 since it starts at 1
+  input << std::setw(20) << "nstep_min";
+  //input << std::setw(10) << 1 << std::endl; // Add 1 since it starts at 1
+  input << std::setw(10) << _tbegin+1 << std::endl; // Add 1 since it starts at 1
 
-  input << std::setw(16) << "Rcut";
+  input << std::setw(20) << "Rcut";
   input.precision(3);
   input << std::setw(10) << std::floor(_rcut*1000.)/1000. << std::endl;
 
-  input << std::setw(16) << "# Optional inputs" << std::endl;
-  input << std::setw(16) << "Ngqpt2";
-  input << std::setw(10) << "1 1 1" << std::endl;
+  input << std::setw(20) << "# Optional inputs" << std::endl;
+  input << std::setw(20) << "Slice";
+  input << std::setw(10) << _step << std::endl; // Add 1 since it starts at 1
+  input << std::setw(20) << "Ngqpt2";
+  std::stringstream qpttmp;
+  qpttmp << _dosQpt[0] << " " << _dosQpt[1] << " " << _dosQpt[2] << std::endl;
+  input << std::setw(10) << qpttmp.str();
+  input << std::setw(20) << "DosDeltae";
+  input.precision(6);
+  input << std::setw(10) << _dosSmearing << std::endl;
+
+  input << std::setw(20) << "Use_Ideal_Positions";
+  input << std::setw(10) << (_idealPositions ? 1 : 0) << std::endl;
   
   if ( _order == 3 ) {
-    input << std::setw(16) << "Order";
+    input << std::setw(20) << "Order";
     input << std::setw(10) << "3";
     input << std::setw(10) << std::floor((_rcut3 > 0 ? _rcut3 : _rcut)*1000.)/1000. << std::endl;
   }
 
-  input << std::setw(16) << "TheEnd" << std::endl;
+  input << std::setw(20) << "TheEnd" << std::endl;
 
   input.close();
+  /*
   HistDataNC::dump(*_supercell.get(),"HIST.nc",_tbegin,_tend,_step);
   try {
     if ( _tbegin != 0 ) {
@@ -368,6 +399,7 @@ void Tdep::tdep() {
     e.ADD("First time step migth be missing",ERRWAR);
     std::cerr << e.fullWhat() << std::endl;
   }
+  */
 
 
   //int err = system("tdep <<< \"input.in \nHIST.nc\"");
@@ -376,7 +408,8 @@ void Tdep::tdep() {
   if ( tdep == nullptr ) 
     throw EXCEPTION("Unable to open pipe for tdep",ERRDIV);
 
-  std::string files("input.in\nHIST.nc\n"+utils::to_string(_temperature)+"K\n");
+  _outputPrefix = utils::to_string(_temperature)+"K";
+  std::string files("input.in\n"+_supercell->filename()+"\n"+_outputPrefix+"\n");
   fputs(files.c_str(),tdep);
   int st = pclose(tdep);
   if ( WIFEXITED(st) && WEXITSTATUS(st) != 0 ) {

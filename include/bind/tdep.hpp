@@ -64,8 +64,12 @@ class Tdep {
     unsigned                    _order;     ///< Max order to calculate. Default is 2
     double                      _rcut;      ///< Radius cutoff for computing shell inside tdep
     double                      _rcut3;      ///< Radius cutoff for computing shell inside tdep
+    double                      _dosSmearing;  ///< DOS smearing energie
+    int                         _dosQpt[3];    ///< Fine grid for DOS calculation
     double                      _temperature;  ///< Temperature of the simulation
+    bool                        _idealPositions; ///< Use ideal position (unitcell) instead of average position for the reference structure
     std::array<double,9>        _multiplicity; ///< Holds the multiplicity of the supercell with respect to unitcell
+    std::string                 _outputPrefix;
 
     void computeMultiplicity();
 
@@ -104,12 +108,19 @@ class Tdep {
 
     void temperature(double t);
 
+    void idealPositions(bool ideal);
+
+    void dosParameters(int qpts[3], double smearing);
+
     void multiplicity(geometry::mat3d m);
 
     void tdep();
 
     const Dtset& unitcell() const {return _unitcell;}
+
     geometry::mat3d multiplicity() const {return _multiplicity;}
+
+    std::string outputPrefix() {return _outputPrefix;}
 
 };
 

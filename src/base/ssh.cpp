@@ -137,7 +137,7 @@ bool Ssh::verifyHost(std::string &message) {
   char *hexa;
   int rc;
   std::ostringstream str;
-#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0,8,0)
+#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0,7,0)
   rc = ssh_get_server_publickey(_sshSession, &srv_pubkey);
 #else
   rc = ssh_get_publickey(_sshSession, &srv_pubkey);
@@ -186,7 +186,7 @@ bool Ssh::verifyHost(std::string &message) {
         << "If you accept the host key here, the file will be"
         "automatically created." << std::endl;
       /* FALL THROUGH to SSH_SERVER_NOT_KNOWN behavior */
-#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0,8,0)
+#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0,7,0)
       [[fallthrough]];
 #endif
       //case SSH_SERVER_KNOWN_HOSTS_UNKNOWN:

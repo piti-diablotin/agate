@@ -166,16 +166,22 @@ EigParser* EigParser::getEigParser(const std::string& file){
       eigparser = p.first.release();
     }
     catch (Exception &e) {
-      eigparser = nullptr;
-      eloc += e;
-      eloc.ADD("Format is not "+p.second,ERRDIV);
-      if ( e.getReturnValue() == ERRABT ) {
-        break;
+      if ( e.getReturnValue() != ERRWAR ) {
+        eigparser = nullptr;
+        eloc += e;
+        eloc.ADD("Format is not "+p.second,ERRDIV);
+        if ( e.getReturnValue() == ERRABT ) {
+          break;
+        }
       }
+      else
+        eigparser = p.first.release();
     }
     if ( eigparser != nullptr ) {
       std::clog << "Format is "+p.second << std::endl;
       eigparser->_filename = file;
+      if ( eloc.getReturnValue() == ERRWAR ) 
+        std::clog << eloc.fullWhat() << std::endl;
       return eigparser;
     }
   }

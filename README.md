@@ -3,7 +3,7 @@ This package contains 2 mains utilities.
 The first one is **agate** which a `glfw` based UI and **qagate** which offers the same functionnalities with a `Qt` UI. 
 
 ## What you can do with **(q)agate**
-**This version of qagate is depreciated, please see [qAgate]{https://github.com/piti-diablotin/qAgate} for the new version**
+**This version of qagate is depreciated, please see [qAgate](https://github.com/piti-diablotin/qAgate) for the new version**
 Agate is mainly designed to work with the [Abinit](www.abinit.org "Abinit website") DFT code. However, it can perfectly read some [VASP](www.vasp.at "VASP website") files and other commonly used format. 
 
 Agate should help you to visualize in a glance any input file to make sure the structure you're simulating is the one you want.

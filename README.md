@@ -3,6 +3,7 @@ This package contains 2 mains utilities.
 The first one is **agate** which a `glfw` based UI and **qagate** which offers the same functionnalities with a `Qt` UI. 
 
 ## What you can do with **(q)agate**
+**This version of qagate is depreciated, please see [qAgate]{https://github.com/piti-diablotin/qAgate} for the new version**
 Agate is mainly designed to work with the [Abinit](www.abinit.org "Abinit website") DFT code. However, it can perfectly read some [VASP](www.vasp.at "VASP website") files and other commonly used format. 
 
 Agate should help you to visualize in a glance any input file to make sure the structure you're simulating is the one you want.
@@ -60,11 +61,11 @@ Here is a small list of quantities that you can extract with **agate** from an M
   First you need to install some dependancies.
   On Ubuntu <= 15.04
   ```
-  sudo apt-get install autotools-dev automake autoconf m4 g++ libjpeg8-dev libpng3-dev libnetcdf-dev libnetcdfc++4 libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig libglu1-mesa-dev wget unzip cmake xorg-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev git
+  sudo apt-get install autotools-dev automake autoconf m4 g++ libjpeg8-dev libpng3-dev libnetcdf-dev libnetcdfc++4 libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig libglu1-mesa-dev wget unzip cmake xorg-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev git libssh-dev
   ```
 On Ubuntu >= 16.04 (15.10 not maintained anymore)
   ```
-  sudo apt-get install autotools-dev automake autoconf m4 g++ libjpeg8-dev libpng-dev libnetcdf-dev libnetcdf-c++4-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig libglu1-mesa-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev git
+  sudo apt-get install autotools-dev automake autoconf m4 g++ libjpeg8-dev libpng-dev libnetcdf-dev libnetcdf-c++4-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig libglu1-mesa-dev ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libboost-dev qtbase5-dev qt5-qmake qt5-default libqt5opengl5-dev libfftw3-dev git libssh-dev
   ```
   Then the procedure is the same.
   Compile abiout with

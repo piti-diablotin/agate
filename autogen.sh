@@ -242,6 +242,45 @@ EXTRA_DIST = \\
 EOF
   cd ..
 
+  # Generate Makefile.am in test
+  cd test
+  cat > Makefile.am << EOF
+LDADD = \
+\$(top_builddir)/src/libagate.la @SPGLIB_LDFLAGS@
+AM_LDFLAGS = @AM_LDFLAGS@
+AM_CXXFLAGS = -I\$(top_srcdir)/include @AM_CXXFLAGS@ 
+EOF
+  bin=''
+  for f in `ls *.h`;
+  do
+    bin="$bin\n${f%%_*}"
+  done;
+  bin=$(echo $bin | sort -u)
+  echo "check_PROGRAMS = \\" >> Makefile.am
+  for b in $bin
+  do
+    echo "  $b \\" >> Makefile.am
+  done
+  sed -i -e '$s/\\//' Makefile.am
+  for b in $bin
+  do
+    echo "${b}_SOURCES = ${b}.cpp" >> Makefile.am
+    echo "EXTRA_${b}_SOURCES = \\" >> Makefile.am
+    for s in `ls ${b}_*.h`
+    do
+      echo "  $s \\" >> Makefile.am
+    done
+    sed -i -e '$s/\\//' Makefile.am
+  done
+  echo "TESTS = \$(check_PROGRAMS)" >> Makefile.am
+  for b in $bin
+  do
+    echo "${b}.cpp:\$(EXTRA_${b}_SOURCES)" >> Makefile.am
+    echo "	cxxtestgen --error-printer -o \$@ \$^" >> Makefile.am
+  done
+  cd ..
+
+
   # Generate Makefile.am ./
   
   echo "ACLOCAL_AMFLAGS=-I m4
@@ -254,7 +293,7 @@ SUBDIRS = @AM_SPGLIB@ \\" > Makefile.am
   do
     echo "  ${lib} \\" >> Makefile.am
   done
-  echo "  include src bin doc FINDSYM Win_x86" >> Makefile.am
+  echo "  include src bin doc FINDSYM Win_x86 test" >> Makefile.am
 
   cat >> Makefile.am << EOF
 EXTRA_DIST = autogen.sh configure1 configure2 icons icons.qrc spglib-1.9.9.tar.gz $(if test "$1" = "-t"; then echo "glfw-3.1.1.zip"; fi)

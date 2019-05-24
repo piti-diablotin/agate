@@ -40,6 +40,20 @@
 #include <vector>
 #include "base/exception.hpp"
 
+#if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
+#  ifdef __cplusplus
+extern "C"{
+#  endif
+#  include "spglib/spglib.h"
+#  ifdef __cplusplus
+}
+#  endif
+#endif
+
+#ifdef HAVE_FFTW3_THREADS
+#include "fftw3.h"
+#endif
+
 namespace utils {
 
   //
@@ -410,6 +424,29 @@ std::string base64_decode(const std::string &in) {
     }
   }
   return out;
+}
+
+void Version(){
+  std::cout << PACKAGE_NAME << " version " << PACKAGE_VERSION << std::endl;
+  utils::dumpConfig(std::clog);
+#if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
+  std::clog << "Using spglib version " << spg_get_major_version() << "." 
+    << spg_get_minor_version() << "." 
+    << spg_get_micro_version() << std::endl;
+#endif
+}
+
+void fftw3Init() {
+#ifdef HAVE_FFTW3_THREADS
+  fftw_init_threads();
+#endif
+}
+
+void fftw3Free() {
+#ifdef HAVE_FFTW3_THREADS
+      fftw_cleanup_threads();
+#endif
+
 }
 
 }

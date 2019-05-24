@@ -64,6 +64,21 @@ namespace utils {
   void dumpConfig(std::ostream &out);
 
   /**
+   * Display version number
+   */
+  void Version();
+
+  /**
+   * Init FFTW3 if needed
+   */
+  void fftw3Init();
+
+  /**
+   * Free FFTW3 if needed
+   */
+  void fftw3Free();
+
+  /**
    * Overload std::to_string in case it does not exist
    * and write the function otherwise.
    * @param num Integer value only.

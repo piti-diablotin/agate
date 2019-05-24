@@ -105,7 +105,7 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _canvas(canvas.release()),
   _arrow()
 {
-
+  utils::fftw3Init();
   _background[0] = 0.f;
   _background[1] = 0.f;
   _background[2] = 0.f;
@@ -228,7 +228,7 @@ Window::Window():
   _canvas(),
   _arrow()
 {
-
+  utils::fftw3Init();
   _background[0] = 0.f;
   _background[1] = 0.f;
   _background[2] = 0.f;

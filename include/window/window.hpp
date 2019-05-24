@@ -254,6 +254,7 @@ class Window {
         delete[] _imageBuffer;
         _imageBuffer = nullptr;
       }
+      utils::fftw3Free();
     }
 
     /**

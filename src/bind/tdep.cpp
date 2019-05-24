@@ -54,7 +54,8 @@ Tdep::Tdep() :
   _dosQpt{1,1,1},
   _temperature(-1),
   _idealPositions(true),
-  _multiplicity()
+  _multiplicity(),
+  _outputPrefix("")
 {
 #ifndef HAVE_TDEP
   //throw EXCEPTION("TDEP support not enabled",ERRABT);

@@ -41,20 +41,7 @@
 #include "window/winfake.hpp"
 #include "canvas/canvaspos.hpp"
 #include "base/utils.hpp"
-#ifdef HAVE_FFTW3_THREADS
-#include "fftw3.h"
-#endif
 #include "base/mendeleev.hpp"
-
-#if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
-#  ifdef __cplusplus
-extern "C"{
-#  endif
-#  include "spglib/spglib.h"
-#  ifdef __cplusplus
-}
-#  endif
-#endif
 
 Agate::mendeleev  Agate::Mendeleev;
 
@@ -65,8 +52,7 @@ Window* ptrwin = nullptr; ///< Pointer to the window if created
  */
 void Version(){
   int major, minor, rev;
-  std::cout << PACKAGE_NAME << " version " << PACKAGE_VERSION << std::endl;
-  utils::dumpConfig(std::clog);
+  utils::Version();
 #ifdef HAVE_GLFW2
   WinGlfw2::version(major, minor, rev);
 #elif defined(HAVE_GLFW3)
@@ -77,12 +63,6 @@ void Version(){
   (void)(rev);
   std::clog << "No window mode" << std::endl;
 #endif
-#if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
-  std::clog << "Using spglib version " << spg_get_major_version() << "." 
-    << spg_get_minor_version() << "." 
-    << spg_get_micro_version() << std::endl;
-#endif
-  
 }
 
 void initInput(int argc, const char** argv) {
@@ -236,10 +216,6 @@ int main(int argc, char** argv) {
 
 #ifdef _WIN32
   _set_output_format(_TWO_DIGIT_EXPONENT);
-#endif
-
-#ifdef HAVE_FFTW3_THREADS
-  fftw_init_threads();
 #endif
 
   try {
@@ -405,10 +381,6 @@ int main(int argc, char** argv) {
   }
   else
     Winfake::end();
-
-#ifdef HAVE_FFTW3_THREADS
-  fftw_cleanup_threads();
-#endif
 
   std::cerr.rdbuf(bufstderr);
   if ( fstderr ) fstderr.close();

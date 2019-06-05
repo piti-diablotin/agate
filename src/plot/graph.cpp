@@ -350,6 +350,7 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
       eeig->selectLM(lang,m);
     }
     else {
+      eeig->selectLM(-1,m);
       if ( parser.hasToken("magnetic") ) {
         throw EXCEPTION("You need to specify the angular quantum number first",ERRDIV);
       }

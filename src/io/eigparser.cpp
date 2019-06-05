@@ -30,6 +30,7 @@
 #include "io/eigparserphonopy.hpp"
 #include "io/eigparserphbst.hpp"
 #include "io/eigparserfatbands.hpp"
+#include "io/procar.hpp"
 #include "base/exception.hpp"
 #include "base/utils.hpp"
 #include "base/phys.hpp"
@@ -154,11 +155,13 @@ EigParser* EigParser::getEigParser(const std::string& file){
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserPhonopy),"Phonopy band YAML"));   //2
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserPHBST),"Abinit _PHBST")); //3
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserFatbands),"Abinit _FATBANDS")); //4
+  allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new Procar),"Procar PROCAR")); //5
 
   if ( file.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[2]);
   if ( file.find("PHFRQ") != std::string::npos ) allFormat[0].swap(allFormat[1]);
   if ( file.find("_PHBST") != std::string::npos ) allFormat[0].swap(allFormat[3]);
   if ( file.find("_FATBANDS") != std::string::npos ) allFormat[0].swap(allFormat[4]);
+  if ( file.find("PROCAR") != std::string::npos ) allFormat[0].swap(allFormat[5]);
 
   for ( auto& p : allFormat ) {
     try {

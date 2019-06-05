@@ -52,6 +52,11 @@ void EigParserElectrons::selectLM(int l, std::vector<int> &umaskm) {
     if ( m < -l || m > l )
       throw EXCEPTION("Found a bad value for m",ERRDIV);
 
+  if ( l == -1 ) {
+    std::fill(_lmMask.begin(),_lmMask.end(),1);
+    return;
+  }
+
   // Hide all
   std::fill(_lmMask.begin(),_lmMask.end(),0);
   int lbegin = 0;

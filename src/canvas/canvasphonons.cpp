@@ -171,7 +171,13 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
     if ( e.getReturnValue() == ERRABT )  
       std::clog << e.fullWhat() << std::endl;
     else {
-      EigParser* eig = EigParser::getEigParser(filename);
+      EigParser* eig = nullptr;
+      try {
+        EigParser::getEigParser(filename);
+      }
+      catch( Exception &e ) {
+        return false;
+      }
       if ( dynamic_cast<EigParserPhonons*>(eig) ) {
         try {
           DispDB disp(_reference.natom());

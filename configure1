@@ -1754,8 +1754,10 @@ echo "==========================================================================
 if test x"$AM_SPGLIB" != x"" 
 then
   AM_CPPFLAGS="$AM_CPPFLAGS -I\$(top_srcdir)/spglib-1.9.9/src"
+  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L\$(top_builddir)/spglib-1.9.9/src/.libs"
   AC_SUBST(AM_CPPFLAGS)
-  SPGLIB_LDFLAGS="$AM_LDFLAGS \$(top_builddir)/spglib-1.9.9/src/libsymspg.la"
+#SPGLIB_LDFLAGS="$AM_LDFLAGS  -lsymspg"
+  LIBS="$LIBS -lsymspg"
   AC_SUBST(SPGLIB_LDFLAGS)
 fi
 

@@ -248,8 +248,16 @@ EOF
 LDADD = \
 \$(top_builddir)/src/libagate.la @SPGLIB_LDFLAGS@
 AM_LDFLAGS = @AM_LDFLAGS@
-AM_CXXFLAGS = -I\$(top_srcdir)/include @AM_CXXFLAGS@ 
+AM_CXXFLAGS = -I\$(top_srcdir)/include -I\$(top_srcdir)/test/files @AM_CXXFLAGS@ 
+
+EXTRA_DIST = \\
 EOF
+  for f in `ls files/`
+  do
+    echo "  files/$f \\" >> Makefile.am
+  done
+  sed -i -e '$s/\\//' Makefile.am
+  
   bin=''
   for f in `ls *.h`;
   do
@@ -278,6 +286,12 @@ EOF
     echo "${b}.cpp:\$(EXTRA_${b}_SOURCES)" >> Makefile.am
     echo "	cxxtestgen --error-printer -o \$@ \$^" >> Makefile.am
   done
+  cat >> Makefile.am << EOF
+clean-local: clean-test-files
+.PHONY: clean-test-files
+clean-test-files:
+	-rm -rf *.dat *.nc
+EOF
   cd ..
 
 

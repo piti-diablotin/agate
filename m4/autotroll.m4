@@ -212,7 +212,7 @@ dnl Memo: AC_ARG_WITH(package, help-string, [if-given], [if-not-given])
 
   # Find uic (User Interface Compiler).
   AC_ARG_VAR([UIC], [Qt User Interface Compiler command])
-  AX_PATH_TOOLS([UIC], [uic-qt5 uic-qt4 uic-qt3 uic3 uic], [missing],
+  AX_PATH_TOOLS([UIC], [uic-qt5 uic-qt4 uic-qt3 uic], [missing],
                 [$QT_PATH:$PATH:$tmp_qt_paths])
   if test x"$UIC" = xmissing; then
     AX_INSTEAD_IF([$4],

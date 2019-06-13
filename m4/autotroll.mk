@@ -56,6 +56,12 @@ am__v_RCC_ = $(am__v_RCC_$(AM_DEFAULT_VERBOSITY))
 am__v_RCC_0 = @echo "  RCC     " $@;
 am__v_RCC_1 = 
 
+UICCOMPILE = $(UIC)
+AM_V_UIC = $(am__v_UIC_$(V))
+am__v_UIC_ = $(am__v_UIC_$(AM_DEFAULT_VERBOSITY))
+am__v_UIC_0 = @echo "  UIC     " $@;
+am__v_UIC_1 = 
+
 # --- #
 # MOC #
 # --- #
@@ -104,6 +110,8 @@ am__v_RCC_1 =
 
 .ui.ui.h:
 	$(UIC) $< -o $@
+%.ui.h: $(top_srcdir)/src/qtgui/%.ui
+	$(AM_V_UIC)$(UICCOMPILE) $< -o $@
 
 # --- #
 # RCC #

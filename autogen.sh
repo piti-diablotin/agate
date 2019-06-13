@@ -116,6 +116,10 @@ AM_CPPFLAGS = -I\$(top_srcdir)/include @AM_CPPFLAGS@  -DDATADIR=\\\"\$(datadir)\
   do
     echo "  ${src%.cpp}.moc.cpp \\" >> Makefile.am
   done
+  for src in $(ls *.ui )
+  do
+    echo "  ${src}.h \\" >> Makefile.am
+  done
   sed -i -e '$s/\\//' Makefile.am
 
   echo "nodist_libqtgui_a_SOURCES = \$(BUILT_SOURCES)" >> Makefile.am

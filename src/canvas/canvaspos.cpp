@@ -319,6 +319,13 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
   glPushMatrix();
   CanvasPos::drawCell();
 
+  if ( _display & DISP_INCIRCLE ) {
+  _sphere->push();
+  const GLfloat pos[3] = {(fx[0]+fy[0]+fz[0])/(GLfloat)2.,(fx[1]+fy[1]+fz[1])/(GLfloat)2.,(fx[2]+fy[2]+fz[2])/(GLfloat)2.};
+  _sphere->draw(pos,Mendeleev.color[0],geometry::getWignerSeitzRadius(rprimd));
+  _sphere->pop();
+  }
+
   if ( _display & DISP_BORDER )
     this->buildBorders(_itime,_histdata->isPeriodic());
 
@@ -963,6 +970,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display |= DISP_BOND;
       else if ( what == "atom" )
         _display |= DISP_ATOM;
+      else if ( what == "incircle" )
+        _display |= DISP_INCIRCLE;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }
@@ -983,6 +992,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display &= ~DISP_BOND;
       else if ( what == "atom" )
         _display &= ~DISP_ATOM;
+      else if ( what == "incircle" )
+        _display &= ~DISP_INCIRCLE;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }

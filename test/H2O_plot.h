@@ -1,3 +1,8 @@
+#ifdef HAVE_CONFIG_H
+#include "agate.h"
+#undef HAVE_CONFIG_H
+#endif
+
 #include <cxxtest/TestSuite.h>
 #include "base/mendeleev.hpp"
 #include "hist/histdata.hpp"
@@ -17,6 +22,8 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void setUp()
   {
+    hist = nullptr;
+#ifdef HAVE_NETCDF
     try {
 #include "H2O_HIST.hxx"
       hist = HistData::getHist("H2O_HIST.nc",true);
@@ -26,6 +33,7 @@ class HistMDPlot : public CxxTest::TestSuite
       hist = nullptr;
       TS_FAIL("Unable to create HIST");
     }
+#endif
   }
 
   void tearDown() {
@@ -34,6 +42,7 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void testMSD( void )
   {
+    if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "H2O_HIST_MSD.hxx"
       std::stringstream input;
@@ -51,6 +60,7 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void testPDF( void )
   {
+    if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "H2O_HIST_PDF.hxx"
       std::stringstream input;
@@ -68,6 +78,7 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void testAngle( void )
   {
+    if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "H2O_HIST_angle.hxx"
       std::stringstream input;
@@ -85,6 +96,7 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void testAngleAtoms( void )
   {
+    if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "H2O_HIST_angle_269_77_333.hxx"
       std::stringstream input;
@@ -102,6 +114,7 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void testDistance( void )
   {
+    if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "H2O_HIST_distance_9_265.hxx"
       std::stringstream input;
@@ -119,6 +132,7 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void testLattice( void )
   {
+    if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "H2O_HIST_latticeLengths.hxx"
       std::stringstream input;
@@ -136,6 +150,7 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void testPressure( void )
   {
+    if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "H2O_HIST_pressure.hxx"
       std::stringstream input;
@@ -153,6 +168,7 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void testTemperature( void )
   {
+    if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "H2O_HIST_temperature.hxx"
       std::stringstream input;
@@ -170,6 +186,7 @@ class HistMDPlot : public CxxTest::TestSuite
 
   void testVolume( void )
   {
+    if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "H2O_HIST_volume.hxx"
       std::stringstream input;

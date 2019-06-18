@@ -452,7 +452,9 @@ void Window::loopStep() {
     const float camtheta = _optionf["camtheta"];
     const float camphi   = _optionf["camphi"];
     geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
+#ifdef HAVE_GL
     glTranslatef(totalfactor*_optionf["shiftOriginX"],totalfactor*_optionf["shiftOriginY"],0.);
+#endif
     this->lookAt(totalfactor,0,0,0);
 
 
@@ -1071,8 +1073,10 @@ void Window::lookAt(double zoom, double centerX, double centerY, double centerZ)
   M[11] = 0;
   M[15] = 1;
 
+#ifdef HAVE_GL
   glMultMatrixf(M);
   glTranslated(-eyeX, -eyeY, -eyeZ);
+#endif
 
 }
 

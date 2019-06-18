@@ -1,6 +1,8 @@
 #include <cxxtest/TestSuite.h>
 #include "base/geometry.hpp"
 #include "base/mendeleev.hpp"
+#include "base/utils.hpp"
+#include <sstream>
 
 Agate::mendeleev Agate::Mendeleev;
 

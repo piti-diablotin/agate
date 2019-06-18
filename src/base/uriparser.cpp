@@ -50,7 +50,12 @@ UriParser::~UriParser() {
 
 
 bool UriParser::parse(const std::string &uri) {
+#if GCC_VERSION >= 40900 
   std::regex rg("(http|https|sftp|ftp|scp)://(([^/: ]*)(:([^/ :]*))?@)?([^/ :]*)(:([0-9]+))?(/.*)?");
+#else 
+  std::regex rg("(http|https|sftp|ftp|scp)://");
+#endif
+
   /** Result should look like this
  	 * 0 [sftp://user:passe@url.ext:22/path]
 	 * 1 [sftp]
@@ -67,6 +72,10 @@ bool UriParser::parse(const std::string &uri) {
   std::regex_match(uri.c_str(),cm,rg);
   if ( cm.size() == 0 ) return false;
   if ( cm.size() != 10 ) throw EXCEPTION("Unable to parse URI",ERRDIV);
+
+#if GCC_VERSION < 40900 
+  throw EXCEPTION("Detected URI but regex support does not allow to parse the URI",ERRDIV);
+#endif
 
   /*
   for (unsigned i = 0 ; i < cm.size() ; ++i ) {

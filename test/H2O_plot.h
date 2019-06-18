@@ -1,6 +1,7 @@
 #include <cxxtest/TestSuite.h>
 #include "base/mendeleev.hpp"
 #include "hist/histdata.hpp"
+#include "base/utils.hpp"
 #include <fstream>
 #include <sstream>
 #include "diff_files.h"

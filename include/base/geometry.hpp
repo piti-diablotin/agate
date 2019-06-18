@@ -259,6 +259,21 @@ namespace geometry {
         mat[2]*vec[0]+mat[5]*vec[1]+mat[8]*vec[2],
         }});
   }
+
+  /** 
+   * Cross product of 2 vectors
+   * @param vec1 first vector
+   * @param vec2 second vector
+   * @return vec3 the cross product v1 x v2
+   */
+  inline vec3d operator*(const vec3d& v1, const vec3d& v2) {
+    return vec3d({{
+        v1[1]*v2[2]-v1[2]*v2[1],
+       -v1[0]*v2[2]+v1[2]*v2[0],
+        v1[0]*v2[1]-v1[1]*v2[0],
+        }});
+  }
+
   /** 
   * Multiply a matrix by a scalar(double) 
   * @param mat The mat3d 

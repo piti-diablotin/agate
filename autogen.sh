@@ -265,7 +265,7 @@ EOF
   bin=''
   for f in `ls *.h`;
   do
-    bin="$bin\n${f%%_*}"
+    bin="$bin$IFS${f%%_*}"
   done;
   bin=$(echo $bin | sort -u)
   echo "check_PROGRAMS = \\" >> Makefile.am

@@ -243,6 +243,24 @@ int CanvasDensity::tbegin() const { return _ibegin; }
 
 int CanvasDensity::tend() const { return _iend-1; }
 
+AbiBin::gridDirection CanvasDensity::normal() const
+{
+    return _normal;
+}
+
+AbiBin::getDen CanvasDensity::dispDen() const {
+    return _dispDen;
+}
+
+CanvasDensity::scaleFunc CanvasDensity::scaleFunction() const {
+    return _scaleFunction;
+}
+
+double CanvasDensity::scaleValues() const
+{
+    return _scaleValues;
+}
+
 void CanvasDensity::my_alter(std::string token, std::istringstream &stream) {
   bool update = false;
 

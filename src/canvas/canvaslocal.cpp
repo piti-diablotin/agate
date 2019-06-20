@@ -492,6 +492,18 @@ void CanvasLocal::convertOctahedra() {
 }
 
 
+bool CanvasLocal::baseCart() const {
+  return _baseCart;
+}
+
+const float* CanvasLocal::octacolor() const {
+  return _octacolor;
+}
+
+CanvasLocal::LocalView CanvasLocal::view() const {
+  return _view;
+}
+
 void CanvasLocal::resetBase() {
   if ( _histdata == nullptr ) return;
   const double *rprimd = _histdata->getRprimd(0);

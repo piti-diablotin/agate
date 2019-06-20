@@ -212,6 +212,7 @@ void Canvas::nextFrame(const int count) {
     if ( _itime >= _tend ) {
       if ( ++_iLoop < _nLoop || _nLoop == -2 || _nLoop == -1 ) {
         _itime = ( _nLoop == -2 ? _tend-2 : _tbegin );
+        if ( _itime < _tbegin ) _itime = _tbegin;
         if ( _nLoop == -2 ) _dir = -1;
       }
       else {

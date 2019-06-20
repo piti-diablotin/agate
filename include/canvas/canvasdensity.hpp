@@ -45,9 +45,10 @@
  */
 class CanvasDensity :public CanvasPos {
 
-  private :
-
+  public:
     enum scaleFunc { linear, sqrt, log }; ///< How to scale the values when displaying. Apply none, sqrt or log function.
+
+  private :
 
     int _origin;           ///< indice of the origin along the normal.
     int _npoints;          ///< number of points along the normal.
@@ -162,6 +163,10 @@ class CanvasDensity :public CanvasPos {
      * @param out the stream to write the help message
      */
     static void help(std::ostream &out);
+    AbiBin::gridDirection normal() const;
+    AbiBin::getDen dispDen() const;
+    scaleFunc scaleFunction() const;
+    double scaleValues() const;
 };
 
 #endif  // CANVASDENSITY_HPP

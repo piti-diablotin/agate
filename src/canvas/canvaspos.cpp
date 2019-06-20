@@ -151,7 +151,6 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
       _octahedra[i].reset(tmpocta);
     }
   }
-
 }
 
 //

@@ -46,8 +46,10 @@
  */
 class CanvasLocal : public CanvasPos {
 
-  private :
+  public:
     enum LocalView { ANGLES, LENGTHS };
+
+  private :
 
     bool                    _baseCart;     ///< Set to true if octahedra are in the cart basis, false if in the basis defined by the octahedra set by the first time step
     float                   _octacolor[6]; ///< Store the two colors for plotting the cubes representing the rotations.
@@ -113,6 +115,9 @@ class CanvasLocal : public CanvasPos {
      */
     static void help(std::ostream &out);
 
+    bool baseCart() const;
+    const float* octacolor() const;
+    LocalView view() const;
 };
 
 #endif  // CANVASROT_HPP

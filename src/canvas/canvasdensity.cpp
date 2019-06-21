@@ -261,6 +261,10 @@ double CanvasDensity::scaleValues() const
     return _scaleValues;
 }
 
+const float (*CanvasDensity::colors() const )[3] {
+  return _colors;
+}
+
 void CanvasDensity::my_alter(std::string token, std::istringstream &stream) {
   bool update = false;
 

@@ -167,6 +167,7 @@ class CanvasDensity :public CanvasPos {
     AbiBin::getDen dispDen() const;
     scaleFunc scaleFunction() const;
     double scaleValues() const;
+    const float (*colors() const )[3];
 };
 
 #endif  // CANVASDENSITY_HPP

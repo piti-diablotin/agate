@@ -42,13 +42,6 @@
 
 #include <chrono>
 #include <locale>
-#ifdef HAVE_GL
-# ifdef __APPLE__
-#  include <OpenGL/gl.h>
-# else
-#  include <GL/gl.h>
-# endif
-#endif
 
 #include "canvas/canvaspos.hpp"
 #include "canvas/canvasdensity.hpp"
@@ -60,6 +53,17 @@ using std::abs;
 int runSnake();
 
 std::queue<unsigned int> Window::_inputChar; ///< Store all character dropped by the glfw callback function.
+
+#ifdef HAVE_GL
+void GLAPIENTRY Window::errorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
+  std::cerr << "GL CALLBACK: "
+            << ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" )
+            << "type = 0x" << std::hex << type
+            << "severity = 0x" << std::hex << severity
+            << ", message = " << message;
+  (void) userParam;
+}
+#endif
 
 Window::Window(pCanvas &canvas, const int width, const int height) :
   _exit(false),

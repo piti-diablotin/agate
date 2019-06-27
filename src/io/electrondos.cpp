@@ -74,5 +74,7 @@ void ElectronDos::readFromFile(std::istream &stream)
   stream >> tmp >> tmp; // energy :
   stream >> _efermi;
 
+
+
 }
 

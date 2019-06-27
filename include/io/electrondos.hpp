@@ -48,6 +48,7 @@ class ElectronDos {
   private :
     int _nsppol;
     int _natom;
+    double _efermi;
     std::vector<double> _energies;
     std::vector<double> _dosTotal;
     std::vector<double> _dosProjected;

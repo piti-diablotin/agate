@@ -344,7 +344,7 @@ void Window::snapshot() {
     }
 
     glPixelStorei(GL_PACK_ALIGNMENT,1);
-    glReadBuffer(GL_BACK_LEFT);
+    glReadBuffer(GL_BACK);
     glReadPixels(0,0,_width,_height,GL_RGB,GL_UNSIGNED_BYTE,_imageBuffer);
 
     _image.save(_width,_height,_imageBuffer,str);

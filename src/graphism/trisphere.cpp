@@ -262,7 +262,6 @@ void TriSphere::push() {
       glNormalPointer(GL_FLOAT, 0, 0);
 
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_vbos[1]);
-      glIndexPointer(GL_UNSIGNED_INT, 0, 0);
       break;
 #endif
     default :

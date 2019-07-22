@@ -28,7 +28,7 @@
 #include <cmath>
 
 using namespace Agate;
-const char mendeleev::name[119][4] = {
+const char mendeleev::name[NELEMT][4] = {
   { "XXX"},  // The first is empty so we can call name directly without reindexing
   { "H  "},
   { "He "},
@@ -147,7 +147,8 @@ const char mendeleev::name[119][4] = {
   { "Mc "},
   { "Lv "},
   { "Ts "},
-  { "Og "}
+  { "Og "},
+  { "Lwf"}
 };
 
 mendeleev::mendeleev() :
@@ -272,6 +273,7 @@ mass{
   260.0e0     ,
   260.0e0     ,
   260.0e0     ,
+    1.0e0
 },
 /** Define the color of each specie. */
 color{
@@ -394,6 +396,7 @@ color{
   {1.000f, 1.000f, 1.000f}       , 
   {1.000f, 1.000f, 1.000f}       , 
   {1.000f, 1.000f, 1.000f}       , 
+  {0.996f, 0.235f, 1.000f}       , 
 },
 
 radius{
@@ -515,7 +518,8 @@ radius{
   1.42e0 ,
   1.42e0 ,
   1.42e0 ,
-  1.42e0 
+  1.42e0 ,
+  1.42e0 ,
 },
 
 rcov{
@@ -637,7 +641,8 @@ rcov{
   1.42e0 ,
   1.42e0 ,
   1.42e0 ,
-  1.42e0 
+  1.42e0 ,
+  1.42e0 ,
 }
 {
   ;
@@ -651,7 +656,7 @@ unsigned mendeleev::znucl(const std::string &inname) {
   std::string locname = utils::tolower(inname);
   locname[0] = std::toupper(locname[0],loc);
   utils::trim(locname);
-  for ( unsigned sp = 1 ; sp < 119 ; ++sp ) {
+  for ( unsigned sp = 1 ; sp < NELEMT ; ++sp ) {
     std::string specie(mendeleev::name[sp]);
     utils::rtrim(specie);
     if ( locname.compare(specie) == 0 ) {
@@ -666,7 +671,7 @@ unsigned mendeleev::znucl(const std::string &inname) {
  * find the znucl corresponding to a mass
  */
 unsigned mendeleev::znucl(const double inmass) {
-  for ( unsigned sp = 1 ; sp < 119 ; ++sp ) {
+  for ( unsigned sp = 1 ; sp < NELEMT ; ++sp ) {
     if( fabs( (Mendeleev.mass[sp]-inmass)/Mendeleev.mass[sp] ) < 1e-3){
       return sp;
     }

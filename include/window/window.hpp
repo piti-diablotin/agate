@@ -46,6 +46,13 @@
 #include "graphism/imagesaver.hpp"
 #include "graphism/textrender.hpp"
 #include "graphism/triarrow.hpp"
+#ifdef HAVE_GL
+# ifdef __APPLE__
+#  include <OpenGL/gl.h>
+# else
+#  include <GL/gl.h>
+# endif
+#endif
 
 /** 
  * Basic class to handle a window. 
@@ -56,6 +63,10 @@ class Window {
   public :
 
     enum ImageSuffix { convert, animate };
+
+#ifdef HAVE_GL
+    static void GLAPIENTRY errorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
+#endif
 
   private :
 

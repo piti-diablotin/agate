@@ -32,6 +32,8 @@
 #include <locale>
 #include <memory>
 
+#define NELEMT 120
+
 namespace Agate {
 /**
  * A public structure to access some general data that can be tuned.
@@ -40,19 +42,19 @@ namespace Agate {
 struct mendeleev {
 
  /** Define the name of each specie. */
- static const char name[119][4];
+ static const char name[NELEMT][4];
 
  /** Define the mass of each specie. */
- double mass[119];
+ double mass[NELEMT];
 
  /** Define the color of each specie. */
- float color[119][3];
+ float color[NELEMT][3];
 
  /** Define the radius of each specie. */
- double radius[119];
+ double radius[NELEMT];
 
  /** Define the covalent radius of each specie. */
- double rcov[119];
+ double rcov[NELEMT];
 
  mendeleev();
 

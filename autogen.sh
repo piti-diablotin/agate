@@ -261,13 +261,13 @@ EOF
     echo "  files/$f \\" >> Makefile.am
   done
   sed -i -e '$s/\\//' Makefile.am
-  
+
   bin=''
   for f in `ls *.h`;
   do
     bin="$bin$IFS${f%%_*}"
   done;
-  bin=$(echo $bin | sort -u)
+  bin=$(echo $bin | xargs -n1 | sort -u)
   echo "check_PROGRAMS = \\" >> Makefile.am
   for b in $bin
   do

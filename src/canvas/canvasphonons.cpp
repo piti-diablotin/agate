@@ -31,6 +31,7 @@
 #include "plot/gnuplot.hpp"
 #include <algorithm>
 #include "base/unitconverter.hpp"
+#include "base/fraction.hpp"
 
 //
 CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
@@ -270,11 +271,11 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
             )
           );
       _qptModes = it.first;
-      out << "Q-point " << qpt[0] << " " << qpt[1] << " " << qpt[2] << " added";
+      out << "Q-point " << Fraction(qpt[0]).toString() << " " << Fraction(qpt[1]).toString() << " " << Fraction(qpt[2]).toString() << " added";
       rebuild = true;
     }
     else 
-      out << "Q-point " << qpt[0] << " " << qpt[1] << " " << qpt[2] << " selected";
+      out << "Q-point " << Fraction(qpt[0]).toString() << " " << Fraction(qpt[1]).toString() << " " << Fraction(qpt[2]).toString() << " selected";
     throw EXCEPTION(out.str(),ERRCOM);
   }
   else if ( token == "add" ) {
@@ -432,7 +433,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       std::sort(iqpt->second.begin(),iqpt->second.end(),
           [](DispDB::qMode v1,DispDB::qMode v2) { return v1.imode < v2.imode; }
           );
-      std::cout << "Qpt : " << iqpt->first[0] << "  " << iqpt->first[1] << "  " <<iqpt->first[2] << std::endl;
+      std::cout << "Qpt : " << Fraction(iqpt->first[0]).toString() << "  " << Fraction(iqpt->first[1]).toString() << "  " << Fraction(iqpt->first[2]).toString() << std::endl;
       std::cout << "  Modes      : ";
       for ( auto imode : iqpt->second ) 
         std::cout << std::setw(12) << imode.imode+1 << "  ";
@@ -553,7 +554,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     unsigned nmodes = 0;
     for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
       std::ostringstream qlabel;
-      qlabel << "[" << qpt->first[0] << "," << qpt->first[1] << "," << qpt->first[2] << "] ";
+      qlabel << "[" << Fraction(qpt->first[0]).toString() << "," << Fraction(qpt->first[1]).toString() << "," << Fraction(qpt->first[2]).toString() << "] ";
       for ( auto& vib : qpt->second ) {
         labels.push_back(qlabel.str()+utils::to_string(vib.imode+1));
         nmodes++;
@@ -655,7 +656,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     unsigned nqpt = amp.size();
     for ( auto& qpt : amp ) {
       std::ostringstream qlabel;
-      qlabel << "[" << qpt[0] << "," << qpt[1] << "," << qpt[2] << "]";
+      qlabel << "[" << Fraction(qpt[0]).toString() << "," << Fraction(qpt[1]).toString() << "," << Fraction(qpt[2]).toString() << "]";
       labels.push_back(qlabel.str());
     }
     //labels.push_back("Norm");

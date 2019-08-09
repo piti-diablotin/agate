@@ -18,8 +18,11 @@ AC_CONFIG_HEADER([agate.h])
 # Check for c++ preprocessor and compiler
 CPPFLAGS="$CPPFLAGS -I/usr/include -I/usr/local/include"
 LDFLAGS="$LDFLAGS -L/usr/lib"
-if test -d "-L/usr/local/lib"; then
+if test -d "/usr/local/lib"; then
   LDFLAGS="$LDFLAGS -L/usr/local/lib"
+fi
+if test -d "/usr/lib64"; then
+  LDFLAGS="$LDFLAGS -L/usr/lib64"
 fi
 OLD_CXXFLAGS=$CXXFLAGS
 OLD_CPPFLAGS=$CPPFLAGS

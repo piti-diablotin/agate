@@ -195,7 +195,6 @@ namespace geometry {
         }});
   }
 
-
   /** 
    * Euclidean norm of the vector
    * @param vec vec3d to use
@@ -203,6 +202,15 @@ namespace geometry {
    */
   inline double norm(const vec3d& vec) {
     return std::sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
+  }
+
+  /** 
+   * Check if 2 vectors are the same at 1e-10
+   * @param vector to check against
+   * @return true if the 2 vectors are the same
+   */
+  inline bool operator==(const vec3d& vec1, const vec3d& vec2) {
+    return norm(vec1-vec2) < 1e-10;
   }
 
 

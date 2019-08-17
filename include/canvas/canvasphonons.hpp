@@ -132,6 +132,10 @@ class CanvasPhonons : public CanvasPos {
      * @param out the stream to write the help message
      */
     static void help(std::ostream &out);
+    double getAmplitudeDisplacement() const;
+    const Ddb* getDdb() const;
+    const DispDB::qptTree& getCondensedModes() const;
+    const DispDB& getDisplacements() const;
 };
 
 #endif  // CANVASPHONONS_HPP

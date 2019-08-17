@@ -145,9 +145,9 @@ void Ddb::dump(const geometry::vec3d qpt, std::string filename) {
   std::ofstream out;
 
   if ( filename == "" ) 
-    out.open(std::string("dynmat-")+utils::to_string(qpt[0])+"-"+utils::to_string(qpt[1])+"-"+utils::to_string(qpt[2])+".out");
-  else
-    out.open(filename);
+    filename = std::string("dynmat-")+utils::to_string(qpt[0])+"-"+utils::to_string(qpt[1])+"-"+utils::to_string(qpt[2])+".out";
+
+  out.open(filename);
   
   if ( !out ) throw EXCEPTION(std::string("Unable to create file ")+filename,ERRDIV);
 
@@ -170,4 +170,6 @@ void Ddb::dump(const geometry::vec3d qpt, std::string filename) {
       out << std::endl;
     }
   }
+  out.close();
+  throw EXCEPTION(std::string("Dynamical matrix written to ")+filename, ERRCOM);
 }

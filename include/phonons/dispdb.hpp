@@ -153,7 +153,7 @@ class DispDB {
      * @param qpt coordinate of the qpt
      * @result the distance from the first qpt ie "myqpt"-_qpts.begin()
      */
-    unsigned getQpt(const vec3d qpt);
+    unsigned getQpt(const vec3d qpt) const;
 
     /**
      * Get the number of atoms
@@ -174,7 +174,7 @@ class DispDB {
      * @param imode The ith mode of the _iqpt qpt
      * @return the starting point to acces de desired mode
      */
-    std::vector<DispDB::cplx>::const_iterator getMode(unsigned dq, unsigned imode);
+    std::vector<DispDB::cplx>::const_iterator getMode(unsigned dq, unsigned imode) const;
 
     /**
      * Get energy of a given mode
@@ -189,13 +189,15 @@ class DispDB {
      * @param imode The ith mode of the _iqpt qpt
      * @return the energy of the desired mode
      */
-    double getEnergyMode(unsigned dq, unsigned imode);
+    double getEnergyMode(unsigned dq, unsigned imode) const;
 
     /**
      * Concatene two objects;
      * @param disp The disp to add to current object
      */
     DispDB& operator += ( const DispDB& disp );
+
+    const std::vector<vec3d>& getQpts() const;
 };
 
 #endif  // DISPDB_HPP

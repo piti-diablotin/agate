@@ -210,7 +210,8 @@ namespace geometry {
    * @return true if the 2 vectors are the same
    */
   inline bool operator==(const vec3d& vec1, const vec3d& vec2) {
-    return norm(vec1-vec2) < 1e-10;
+    const vec3d diff = vec1-vec2;
+    return diff[0]<1e-10 && diff[1]<1e-10 && diff[2]<1e-10;
   }
 
 

@@ -19,11 +19,12 @@ int main(int argc, char** argv) {
     int length = file.tellg();
     file.seekg(0,file.beg);
     clog << filename << " is " << length << " bytes" << endl;
+    string suffix = filename.substr(0,filename.find('.'));
     unsigned char *buffer = new unsigned char[length];
     file.read((char*)buffer,length);
     file.close();
     stringstream output;
-    output << "const unsigned char file[] = {" << endl << "  ";
+    output << "const unsigned char file" << suffix << "[] = {" << endl << "  ";
     output << hex;
     for (int c = 0; c < length ; ++c ) {
       output << "0x" << setfill('0') << setw(sizeof(char)*2) << (unsigned short)buffer[c] << ", ";
@@ -34,9 +35,9 @@ int main(int argc, char** argv) {
     output << dec;
     output.seekp(-2,output.end);
     output << endl << "};" << endl;
-    output << "std::ofstream ofile(\"ref_" << filename << "\",std::ios::out|std::ios::binary);" << endl;
-    output << "ofile.write((char*)file," << length <<");" << endl;
-    output << "ofile.close();" << endl;
+    output << "std::ofstream ofile" << suffix << "(\"ref_" << filename << "\",std::ios::out|std::ios::binary);" << endl;
+    output << "ofile" << suffix << ".write((char*)file" << suffix << "," << length <<");" << endl;
+    output << "ofile" << suffix << ".close();" << endl;
     cout << output.str();
   }
   return 0;

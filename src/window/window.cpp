@@ -781,6 +781,9 @@ bool Window::userInput(std::stringstream& info) {
               _canvas.reset(new CanvasDensity(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
             }
             else throw EXCEPTION("Bad mode "+cmode,ERRDIV);
+            std::string info = _canvas->info();
+            size_t pos = info.find_last_of("/\\");
+            if ( !info.empty() && _title != info.substr(pos+1) ) this->setTitle(info.substr(pos+1));
           }
           else if ( token == "height" ) {
             int height;

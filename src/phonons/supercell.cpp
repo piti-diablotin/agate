@@ -270,12 +270,12 @@ void Supercell::findReference(const Dtset& dtset) {
             const vec3d ztrans = {{ fk*ref_rprim[2]+ytrans[0], fk*ref_rprim[5]+ytrans[1], fk*ref_rprim[8]+ytrans[2] }};
             vec3d cell = {{ fi, fj, fk }};
             vec3d vecdiff = ref_xcart[ref_iatom]+ztrans-pos;
-            vec3d vecxreddiff = invert(ref_rprim) * vecdiff;
+            vec3d vecxreddiff = invert(_rprim) * vecdiff;
             for ( auto& v : vecxreddiff ) {
               while ( v < 0.5 ) ++v;
               while ( v >= 0.5 ) --v;
             }
-            vecdiff = ref_rprim * vecxreddiff;
+            vecdiff = _rprim * vecxreddiff;
             double distance = norm(vecdiff);
             if ( distance < closest ) {
               match = ref_iatom;
@@ -552,12 +552,6 @@ std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset) {
       }
     }
   }
-  /*
-  std::sort(amplitudes.begin(),amplitudes.end(),[](std::array<double,4> &q1, std::array<double,4> &q2){
-      return q1[3]>q2[3];
-      }
-      );
-      */
   return amplitudes;
 }
 
@@ -620,7 +614,6 @@ void Supercell::fft(const std::vector<double>& dispr) {
     for ( int qy = 0 ; qy < nyh ; ++qy ) {
       double fy = ( qy == 0 || ( ny_even &&  qy == nyh-1 ) ) ? 1 : 2;
       if ( fx*fy == 4 ) fy=1;
-      //if ( nx_even && (qx == nxh-1 || qy == nyh-1 )) { fx = std::sqrt(2); fy=1; }
       for ( int qz = 0 ; qz < nzh ; ++qz ) {
         for ( int iatom = 0 ; iatom < natomUC ; ++iatom ) {
           for ( int dim = 0 ; dim < 3 ; ++dim ) {

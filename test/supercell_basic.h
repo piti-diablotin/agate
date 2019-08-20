@@ -19,6 +19,12 @@ class SupercellBasic : public CxxTest::TestSuite
 
   public:
 
+  void setUp()
+  {
+#include "files/YNO_DDB.hxx"
+#include "files/SRO_DDB.hxx"
+  }
+
   void testConstructor( void )
   {
     try {
@@ -26,7 +32,6 @@ class SupercellBasic : public CxxTest::TestSuite
       Dtset ref1;
       Dtset ref2;
       Dtset ref3;
-#include "files/YNO_DDB.hxx"
 #include "files/Supercell124.hxx"
 #include "files/Supercell222.hxx"
 #include "files/Supercell444.hxx"
@@ -55,6 +60,39 @@ class SupercellBasic : public CxxTest::TestSuite
     catch ( Exception &e ) {
       std::cerr << e.fullWhat() << std::endl;
       TS_FAIL("Unable to build Supercell");
+    }
+  }
+
+  void testMapping( void )
+  {
+    try {
+      Dtset reference;
+      reference.readFromFile("SRO_DDB");
+#include "files/SRO_222.hxx"
+#include "files/SRO_222_mapping.hxx"
+      HistData *hist = HistData::getHist("ref_SRO_222",true);
+      Supercell sc(*hist,0);
+      sc.findReference(reference);
+      std::ifstream mapping("ref_SRO_222_mapping",std::ios::in);
+      if ( !mapping ) TS_FAIL("no ref file");
+      for ( unsigned i = 0 ; i < sc.natom() ; ++i ) {
+        int aref, x,y,z;
+        int refi, refaref, refx,refy,refz;
+        sc.getRefCoord(i,aref,x,y,z);
+        mapping >> refi >> refaref >> refx >> refy >> refz;
+        std::stringstream str;
+        str << "Testing atom " << i << "of supercell";
+        TSM_ASSERT_EQUALS(str.str().c_str(),refi,i);
+        TSM_ASSERT_EQUALS(str.str().c_str(),refaref,aref);
+        TSM_ASSERT_EQUALS(str.str().c_str(),refx,x);
+        TSM_ASSERT_EQUALS(str.str().c_str(),refy,y);
+        TSM_ASSERT_EQUALS(str.str().c_str(),refz,z);
+      }
+      mapping.close();
+    }
+    catch ( Exception &e ) {
+      std::cerr << e.fullWhat() << std::endl;
+      TS_FAIL("Unable to test mapping");
     }
   }
 

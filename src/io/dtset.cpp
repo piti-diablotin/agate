@@ -916,3 +916,18 @@ void Dtset::getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<g
 #else
 #endif
 }
+
+bool Dtset::operator==(const Dtset& dtset1) const {
+
+  if ( dtset1._natom != _natom ) return false;
+
+  for ( unsigned r = 0 ; r < 9 ; ++r ) {
+    if ( std::abs(dtset1._rprim[r]-_rprim[r]) > 1e-10 ) return false;
+  }
+
+  for ( unsigned i = 0 ; i < dtset1._natom ; ++i ) {
+    if ( dtset1._znucl[dtset1._typat[i]-1] != _znucl[_typat[i]-1] ) return false;
+    if ( !(dtset1._xred[i] == _xred[i]) ) return false;
+  }
+  return true;
+}

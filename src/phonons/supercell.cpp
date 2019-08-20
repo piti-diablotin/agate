@@ -57,12 +57,14 @@ Supercell::Supercell(const Dtset& dtset, const geometry::vec3d& qpt) : Dtset(),
   const double Ry = (aqpt[1] > 1e-6 ) ? std::floor(1.0e0/aqpt[1]) : 1.0;
   const double Rz = (aqpt[2] > 1e-6 ) ? std::floor(1.0e0/aqpt[2]) : 1.0;
 
+  /*
   if ( std::abs(Rx-1.0e0/aqpt[0]) > 1e-10 ) 
     throw EXCEPTION("Unable to find supercell multiple for x direction",ERRDIV);
   if ( std::abs(Ry-1.0e0/aqpt[1]) > 1e-10 ) 
     throw EXCEPTION("Unable to find supercell multiple for y direction",ERRDIV);
   if ( std::abs(Rz-1.0e0/aqpt[2]) > 1e-10 ) 
     throw EXCEPTION("Unable to find supercell multiple for z direction",ERRDIV);
+    */
 
   *this = Supercell(dtset,(unsigned) Rx, (unsigned) Ry, (unsigned) Rz);
 }

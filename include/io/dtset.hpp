@@ -229,6 +229,8 @@ class Dtset {
      * @param symprec Precision for the symmetry finder
      */
     void getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<geometry::vec3d> &translations, double symprec) const;
+
+    bool operator==(const Dtset& dtset1) const;
 };
 
 #endif //DTSET_HPP

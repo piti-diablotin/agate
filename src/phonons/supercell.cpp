@@ -431,6 +431,7 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
       norm2_tot += v[3]*v[3];
   }
   if ( normalized == NORMALL ) norm_final = sqrt(norm2_tot);
+  if ( norm_final < 1e-10 ) norm_final = 1.; // Avoir divide by 0
   //std::cout << "Distortion amplitude [A/sqrt(amu)]: " << sqrt(norm2_tot) << std::endl;
 
   // For all qpt;
@@ -443,6 +444,7 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
     for ( unsigned iatomUC = 0 ; iatomUC < 3*_natom/(_dim[0]*_dim[1]*_dim[2]) ; ++iatomUC ) {
       norm2_qpt += mass[iatomUC/3]*std::norm(filtered[iatomUC]);
     }
+    if ( norm2_qpt < 1e-10 ) norm2_qpt = 1.; // Avoir divide by 0
     //std::cerr << "Norm qpt " << sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu << std::endl;
 
     // Renormalize for projection

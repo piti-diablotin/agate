@@ -147,12 +147,14 @@ void HistDataOutNC::readFromFile(const std::string& filename) {
   {
     size_t start[] = {0};
     size_t count[] = {_ntime*_natom*_xyz};
+    /*
     status = nc_inq_varid(ncid, "xcart", &varid);
     status += nc_get_vara_double(ncid, varid, start, count, _xcart.data());
     if ( status ) {
       nc_close(ncid);
       throw EXCEPTION(std::string("Error while reading xcart var in ")+filename,ERRDIV);
     }
+    */
     //don't delete ptrVal, internal to netcdf.
     status = nc_inq_varid(ncid, "xred", &varid);
     status += nc_get_vara_double(ncid, varid, start, count, _xred.data());
@@ -237,17 +239,26 @@ void HistDataOutNC::readFromFile(const std::string& filename) {
     _rprimd[itime*9+3] = swap1;
     _rprimd[itime*9+6] = swap2;
     _rprimd[itime*9+7] = swap3;
-  }
+    _rprimd[itime*9+0] *= _acell[itime*3+0];
+    _rprimd[itime*9+1] *= _acell[itime*3+1];
+    _rprimd[itime*9+2] *= _acell[itime*3+2];
+    _rprimd[itime*9+3] *= _acell[itime*3+0];
+    _rprimd[itime*9+4] *= _acell[itime*3+1];
+    _rprimd[itime*9+5] *= _acell[itime*3+2];
+    _rprimd[itime*9+6] *= _acell[itime*3+0];
+    _rprimd[itime*9+7] *= _acell[itime*3+1];
+    _rprimd[itime*9+8] *= _acell[itime*3+2];
 
-  _rprimd[0] *= _acell[0];
-  _rprimd[1] *= _acell[1];
-  _rprimd[2] *= _acell[2];
-  _rprimd[3] *= _acell[0];
-  _rprimd[4] *= _acell[1];
-  _rprimd[5] *= _acell[2];
-  _rprimd[6] *= _acell[0];
-  _rprimd[7] *= _acell[1];
-  _rprimd[8] *= _acell[2];
+    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+      for ( unsigned icart = 0 ; icart < 3 ; ++icart ) {
+        _xcart[itime*_natom*3+iatom*3+icart] = 0;
+        for ( unsigned dir = 0 ; dir < 3 ; ++dir ) {
+          _xcart[itime*_natom*3+iatom*3+icart] += 
+            _rprimd[itime*9+geometry::mat3dind(icart+1,dir+1)]*_xred[itime*_natom*3+iatom*3+dir];
+        }
+      }
+    }
+  }
 
   _filename = filename;
 

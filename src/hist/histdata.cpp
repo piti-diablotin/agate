@@ -592,6 +592,7 @@ HistData* HistData::getHist(const std::string& infile, bool wait){
 #else
       (void) wait;
 #endif
+      hist->basicChecks();
       return hist;
     }
   }
@@ -2308,4 +2309,29 @@ void HistData::ImgData::resize(unsigned n) {
   _rprimd.resize(9*n);
   _etotal.resize(n);
   _stress.resize(6*n);
+}
+
+//
+void HistData::basicChecks() {
+  /*
+   * This depends on time but time steps can be loaded asynchroneously ... so don't deal now with this
+  for (auto a : _acell ) {
+    if ( a < 0 ) throw EXCEPTION("acell contains a negative value.",ERRDIV);
+  }
+
+  for (unsigned i = 0 ; i < _rprimd.size() ; i+=9) {
+    if (geometry::det(&_rpimd[i]) <= 0 )
+      throw EXCEPTION("A negative det for rprimd has been found.", ERRDIV);
+  }
+  */
+  
+  for (auto t : _typat) {
+    if ( t < 1 || t > (int)_znucl.size() )
+      throw EXCEPTION("typat is out of range [1;ntypat]",ERRDIV);
+  }
+  
+  for(auto z : _znucl) {
+    if ( z < 0 || z > 119 )
+      throw EXCEPTION("znucl is out of [0;119]",ERRDIV);
+  }
 }

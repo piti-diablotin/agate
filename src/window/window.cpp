@@ -55,6 +55,7 @@ int runSnake();
 std::queue<unsigned int> Window::_inputChar; ///< Store all character dropped by the glfw callback function.
 
 #ifdef HAVE_GL
+/*
 void GLAPIENTRY Window::errorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
   std::cerr << "GL CALLBACK: "
             << ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" )
@@ -63,6 +64,7 @@ void GLAPIENTRY Window::errorCallback(GLenum source, GLenum type, GLuint id, GLe
             << ", message = " << message;
   (void) userParam;
 }
+*/
 #endif
 
 Window::Window(pCanvas &canvas, const int width, const int height) :

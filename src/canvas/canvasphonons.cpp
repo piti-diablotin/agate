@@ -321,7 +321,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 
     std::vector<unsigned> inputModes;
     if ( parser.hasToken("all") )
-      for ( int i = 0 ; i < 3*_reference.natom() ; ++ i) inputModes.push_back(i);
+      for ( unsigned i = 0 ; i < 3*_reference.natom() ; ++ i) inputModes.push_back(i);
     else {
       unsigned vib;
       while ( !stream.eof() ) {
@@ -389,7 +389,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 
     std::vector<unsigned> inputModes;
     if ( parser.hasToken("all") )
-      for ( int i = 0 ; i < 3*_reference.natom(); ++ i) inputModes.push_back(i);
+      for ( unsigned i = 0 ; i < 3*_reference.natom(); ++ i) inputModes.push_back(i);
     else {
       unsigned vib;
       while ( !stream.eof() ) {

@@ -187,7 +187,7 @@ void HistDataGSR::readFromFile(const std::string& filename) {
 
   //Scale mdtime
   for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) 
-    _time[itime] *= 0.0;
+    _time[itime] = itime;
 
 #endif
 }

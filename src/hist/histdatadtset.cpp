@@ -54,9 +54,11 @@ void HistDataDtset::readFromFile(const std::string& filename) {
     ConfigParser parser(filename);
     unsigned nimage = 0;
     unsigned imgmov = 0;
+    unsigned ndtset = 0;
     try {
       parser.parse();
-      dtset->readConfig(parser);
+      if ( parser.hasToken("ndtset") ) ndtset = parser.getToken<unsigned>("ndtset");
+      else dtset->readConfig(parser);
       try {
         nimage = parser.getToken<unsigned>(" nimage");
       }
@@ -90,6 +92,33 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         if ( ee.getReturnValue() == ERRABT ) throw ec;
       }
     }
+
+    if ( ndtset > 0 ) {
+      std::clog << "Reading " << ndtset << " dtset" << std::endl;
+      std::vector<unsigned> jdtset = parser.getToken<unsigned>("jdtset",ndtset);
+      for ( unsigned ij = 0 ; ij < jdtset.size() ; ++ij ) {
+        unsigned j = jdtset[ij];
+        Dtset dtsetj;
+        dtsetj.readConfig(parser,0,j);
+        HistDataDtset hist(dtsetj);
+        try {
+          hist._fcart = parser.getToken<double>("fcart"+utils::to_string(j),3*dtsetj.natom());
+        } catch (Exception &e)
+        {;}
+        try {
+          hist._stress = parser.getToken<double>("strten"+utils::to_string(j),6);
+        } catch (Exception &e)
+        {;}
+        try {
+          hist._etotal = parser.getToken<double>("etotal"+utils::to_string(j),1);
+        } catch (Exception &e)
+        {;}
+        if ( ij == 0 ) *this = hist;
+        else *this += hist;
+      }
+      return;
+    }
+
     if ( dtset == nullptr )
       throw ec;
 
@@ -314,53 +343,3 @@ void HistDataDtset::buildFromDtset(const Dtset& dtset) {
     }
 }
 
-//
-void HistDataDtset::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::GraphSave save) {
-  std::string function;
-  auto pos = stream.tellg();
-
-  try {
-    HistData::plot(tbegin, tend, stream, gplot, save);
-  }
-  catch ( Exception &e ) {
-    if ( e.getReturnValue() == ERRABT ) {
-      stream.clear();
-      stream.seekg(pos);
-      stream >> function;
-
-      Graph::Config config;
-      unsigned ntime = tend-tbegin;
-      std::vector<double> &x = config.x;
-      std::list<std::vector<double>> &y = config.y;
-      std::string &filename = config.filename;
-      std::string &xlabel = config.xlabel;
-      std::string &ylabel = config.ylabel;
-      std::string &title = config.title;
-      config.doSumUp = false;
-
-      xlabel = "Image";
-      x.resize(ntime);
-      for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
-
-      // Etotal
-      if ( function == "etotal" ) {
-        filename = "etotal";
-        ylabel = "Etot[Ha]";
-        title = "Total energy";
-        std::clog << std::endl << " -- Total (electronic) energy --" << std::endl;
-        y.push_back(std::vector<double>(_etotal.begin()+tbegin,_etotal.end()-(_ntime-tend)));
-      }
-
-      else {
-        throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
-      }
-
-      Graph::plot(config,gplot);
-
-    }
-    else {
-      //e.ADD("Bad things happen sometimes",ERRDIV);
-      throw e;
-    }
-  }
-}

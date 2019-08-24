@@ -482,6 +482,8 @@ class HistData {
 
     virtual bool hasEtotal() const { return false; }
 
+    virtual bool hasStress() const { return false; }
+
     virtual bool isPeriodic() const { return _isPeriodic; }
 
     /**

@@ -1512,6 +1512,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       labels.push_back("beta");
       labels.push_back("gamma");
     }
+    
     else {
       std::stringstream str;
       str << "angle_" << iatom1 
@@ -1527,6 +1528,16 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       }
       y.push_back(std::move(angle));
     }
+  }
+
+  // Etotal
+  else if ( function == "etotal" ) {
+    filename = "etotal";
+    ylabel = "Etot[Ha]";
+    if (_imgdata._imgmov > 0 ) xlabel = "Image";
+    title = "Total energy";
+    std::clog << std::endl << " -- Total (electronic) energy --" << std::endl;
+    y.push_back(std::vector<double>(_etotal.begin()+tbegin,_etotal.end()-(_ntime-tend)));
   }
 
   else if ( function == "stress" ) {

@@ -102,7 +102,7 @@ class Dtset {
      * Fill a Dtset from an input file.
      * @param parser The ConfigParser to use to get the parameters
      */
-    virtual void readConfig(ConfigParser& parser, unsigned img = 0);
+    virtual void readConfig(ConfigParser& parser, unsigned img = 0, unsigned jdtset = 0);
 
     /**
      * Creat an input file with the current Dtset.

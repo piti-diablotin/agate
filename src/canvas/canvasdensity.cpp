@@ -168,11 +168,9 @@ void CanvasDensity::refresh(const geometry::vec3d &cam, TextRender &render) {
   for ( int i = 0 ; i < _translate[0] ; ++i) {
     const GLfloat fi = (GLfloat) i;
     const GLfloat xtrans[] = { fi*fx[0], fi*fx[1], fi*fx[2] };
-    const bool ex = (i==_translate[0]-1);
     for ( int j = 0 ; j < _translate[1] ; ++j) {
       const GLfloat fj = (GLfloat) j;
       const GLfloat ytrans[] = { fj*fy[0]+xtrans[0], fj*fy[1]+xtrans[1], fj*fy[2]+xtrans[2] };
-      const bool ey = (j==_translate[1]-1); 
       for ( int k = 0 ; k < _translate[2] ; ++k ) {
         const GLfloat fk = (GLfloat) k;
         const GLfloat ztrans[] = { fk*fz[0]+ytrans[0], fk*fz[1]+ytrans[1], fk*fz[2]+ytrans[2] };

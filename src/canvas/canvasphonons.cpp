@@ -607,6 +607,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         etmp += e;
       }
     }
+    delete trajectory;
     if ( etmp.getReturnValue() != 0 ){
       etmp.ADD("Projection may be wrong or incomplete",ERRDIV);
       throw etmp;
@@ -701,6 +702,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         etmp += e;
       }
     }
+    delete trajectory;
     if ( etmp.getReturnValue() != 0 ){
       etmp.ADD("Qpt analysis may be wrong or incomplete",ERRDIV);
       throw etmp;

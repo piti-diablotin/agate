@@ -116,6 +116,7 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         if ( ij == 0 ) *this = hist;
         else *this += hist;
       }
+      _filename = filename;
       return;
     }
 

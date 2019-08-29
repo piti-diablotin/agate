@@ -109,11 +109,11 @@ void EigParserEIG::readFromFile(const std::string& filename) {
     std::string sunit(units);
     delete[] units;
     if ( sunit == "Hartree" )
-      _eunit = UnitConverter::Ha;
+      _eunit = UnitConverter(UnitConverter::Ha);
     else if ( sunit == "eV" )
-      _eunit = UnitConverter::eV;
+      _eunit = UnitConverter(UnitConverter::eV);
     else
-      _eunit = UnitConverter::Ha;
+      _eunit = UnitConverter(UnitConverter::Ha);
 
 
     for ( unsigned ispin = 0 ; ispin < nspin ; ++ispin ) {
@@ -169,8 +169,8 @@ void EigParserEIG::readFromFile(const std::string& filename) {
 
     std::getline(eig,tmp,')'); //Should be the unit inside parenthesis
     utils::trim(tmp," ()\f\t\v");
-    if ( tmp.compare("hartree") == 0 ) _eunit = UnitConverter::Ha;
-    else if ( tmp.compare("eV") == 0 ) _eunit = UnitConverter::eV;
+    if ( tmp.compare("hartree") == 0 ) _eunit = UnitConverter(UnitConverter::Ha);
+    else if ( tmp.compare("eV") == 0 ) _eunit = UnitConverter(UnitConverter::eV);
     else {
       e.ADD(std::string("Unknown energy unit ")+tmp,ERRDIV);
       throw e;

@@ -95,7 +95,21 @@ void HistDataDtset::readFromFile(const std::string& filename) {
 
     if ( ndtset > 0 ) {
       std::clog << "Reading " << ndtset << " dtset" << std::endl;
-      std::vector<unsigned> jdtset = parser.getToken<unsigned>("jdtset",ndtset);
+      std::vector<unsigned> jdtset(ndtset);
+      if ( parser.hasToken("jdtset") ) jdtset = parser.getToken<unsigned>("jdtset",ndtset);
+      else if ( parser.hasToken("udtset") ) {
+        std::vector<unsigned>udtset = parser.getToken<unsigned>("udtset",2);
+        unsigned int idtset = 0;
+        for ( unsigned i1 = 1 ; i1 <= udtset[0] ; ++i1 ) {
+          for ( unsigned i2 = 1 ; i2 <= udtset[1] ; ++i2 ) {
+            jdtset[idtset++] = i1*10+i2;
+          }
+        }
+      }
+      else {
+        for( unsigned i1 = 0 ; i1 < ndtset ; ++i1 ) jdtset[i1] = i1+1;
+      }
+
       for ( unsigned ij = 0 ; ij < jdtset.size() ; ++ij ) {
         unsigned j = jdtset[ij];
         Dtset dtsetj;

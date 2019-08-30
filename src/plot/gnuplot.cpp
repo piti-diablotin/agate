@@ -35,7 +35,7 @@ Gnuplot::Gnuplot() :
   _buffer(),
   _custom()
 {
-  _gp.reset(popen("gnuplot -persist","w"));
+  _gp.reset(popen("gnuplot","w"));
   if ( _gp.get() == nullptr )
     throw EXCEPTION("Unable to open pipe for gnuplot",ERRABT);
   _header << "reset" << std::endl;

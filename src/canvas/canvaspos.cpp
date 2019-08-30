@@ -889,7 +889,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       }
       else throw EXCEPTION("No color to define for "+name,ERRDIV);
     }
-    else if ( z > 0 && z < 119 ) {
+    else if ( z >= 0 && z < NELEMT ) {
       tomodify = &Mendeleev.color[z][0];
     }
     else throw EXCEPTION("Bad atomic number",ERRDIV);
@@ -1046,7 +1046,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       }
       else throw EXCEPTION("No radius to define for "+name,ERRDIV);
     }
-    else if ( z > 0 && z < 119 ) {
+    else if ( z > 0 && z < NELEMT ) {
       tomodify = &Mendeleev.radius[z];
     }
     else throw EXCEPTION("Bad atomic number",ERRDIV);
@@ -1079,7 +1079,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       }
       else throw EXCEPTION("No radius to define for "+name,ERRDIV);
     }
-    else if ( z > 0 && z < 119 ) {
+    else if ( z > 0 && z < NELEMT ) {
       tomodify = &Mendeleev.rcov[z];
     }
     else throw EXCEPTION("Bad atomic number",ERRDIV);
@@ -1106,7 +1106,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       }
       else throw EXCEPTION("Don't undestand "+name,ERRDIV);
     }
-    else if ( z <= 0 || z >= 119 )
+    else if ( z <= 0 || z >= NELEMT )
       throw EXCEPTION("Bad atomic number",ERRDIV);
 
     stream >> mass;

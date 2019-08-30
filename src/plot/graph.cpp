@@ -408,7 +408,9 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
       }
     }
     else if ( ndiv.size() > 0 &&  ndiv.size() != kptlabels.size()-1 ) {
-      throw EXCEPTION("Number of ndiv not compatible with number of labels",ERRDIV);
+      std::ostringstream tmp;
+      tmp << ndiv.size() << " vs " << kptlabels.size()-1;
+      throw EXCEPTION("Number of ndiv not compatible with number of labels: "+tmp.str(),ERRDIV);
     }
   }
   if ( save == Graph::GraphSave::DATA ) { 

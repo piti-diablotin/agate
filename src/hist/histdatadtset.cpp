@@ -359,12 +359,17 @@ void HistDataDtset::buildFromDtset(const Dtset& dtset) {
 }
 
 void HistDataDtset::dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
-  unsigned ntime = tend-tbegin;
+  unsigned ntime = _ntime; //tend-tbegin;
+  unsigned ndecimal = 1;
+  this->checkTimes(tbegin,tend);
+  while ((ntime/=10)>0) ++ndecimal;
   try {
     for ( unsigned iitime = tbegin ; iitime < tend ; iitime += step ) {
-      std::string output = filename+utils::to_string(iitime)+std::string(".in");
+      std::ostringstream output;
+      output << filename << std::setw(ndecimal) << std::setfill('0') << iitime << ".in";
+      std::clog << output.str() << std::endl;
       Dtset dtset(hist,iitime);
-      dtset.dump(output);
+      dtset.dump(output.c_str());
     }
   }
   catch ( Exception &e ) {

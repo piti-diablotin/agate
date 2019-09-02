@@ -227,7 +227,7 @@ EOF
 clean-local: clean-test-files
 .PHONY: clean-test-files
 clean-test-files:
-	-rm -rf *.dat *.nc
+	-rm -rf *.dat *.nc *.in ref* *DDB
 EOF
   cd ..
 

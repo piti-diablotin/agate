@@ -358,3 +358,18 @@ void HistDataDtset::buildFromDtset(const Dtset& dtset) {
     }
 }
 
+void HistDataDtset::dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
+  unsigned ntime = tend-tbegin;
+  try {
+    for ( unsigned iitime = tbegin ; iitime < tend ; iitime += step ) {
+      std::string output = filename+utils::to_string(iitime)+std::string(".in");
+      Dtset dtset(hist,iitime);
+      dtset.dump(output);
+    }
+  }
+  catch ( Exception &e ) {
+    e.ADD("Dumping failed",ERRABT);
+    throw e;
+  }
+}
+

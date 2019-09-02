@@ -1392,8 +1392,8 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       p = xy.begin();
       std::advance(p,iatom);
       for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
-        p->first[itime]= pos[(itime*_natom+iatom)*3+coordx]*dunit;
-        p->second[itime]=pos[(itime*_natom+iatom)*3+coordy]*dunit;
+        p->first[itime-tbegin]= pos[(itime*_natom+iatom)*3+coordx]*dunit;
+        p->second[itime-tbegin]=pos[(itime*_natom+iatom)*3+coordy]*dunit;
       }
     }
   }

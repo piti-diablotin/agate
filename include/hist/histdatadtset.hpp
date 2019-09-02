@@ -84,6 +84,15 @@ class HistDataDtset : public HistData {
      */
     //virtual void dump(const std::string& filename) const;
 
+    /**
+     * Dump the full history into the current format
+     * @param hist a random hist to dump in _HIST format.
+     * @param filename Name or base name of the file to creat.
+     * @param tbegin first time to start with
+     * @param tend Last time (not included) in the dumping
+     */
+    static void dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step = 1);
+
     virtual bool hasEtotal() const { return true; }
 
     virtual bool hasStress() const { return true; }

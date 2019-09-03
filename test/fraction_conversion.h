@@ -26,6 +26,8 @@ class FractionConversion : public CxxTest::TestSuite
       TS_ASSERT_EQUALS(frac.toString(), std::string("7") );
       frac = Fraction(0);
       TS_ASSERT_EQUALS(frac.toString(), std::string("0") );
+      frac = Fraction(0.08571428571428569);
+      TS_ASSERT_EQUALS(frac.toString(), std::string("0.0857143") );
     }
     void testNegativeCompute( void )
     {

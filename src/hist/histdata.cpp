@@ -80,6 +80,7 @@ HistData::HistData() :
   _ntime(0),
   _nimage(0),
   _isPeriodic(false),
+  _tryToMap(true),
   _ntimeAvail(0),
   _xcart(),
   _xred(),
@@ -110,6 +111,7 @@ HistData::HistData(const HistData& hist) :
   _ntime(hist._ntime),
   _nimage(hist._nimage),
   _isPeriodic(false),
+  _tryToMap(true),
   _ntimeAvail(hist._ntime),
   _xcart(),
   _xred(),
@@ -163,6 +165,7 @@ HistData::HistData(HistData&& hist) :
   _ntime(hist._ntime),
   _nimage(hist._nimage),
   _isPeriodic(hist._isPeriodic),
+  _tryToMap(hist._tryToMap),
   _ntimeAvail(hist._ntime),
   _xcart(),
   _xred(),
@@ -250,6 +253,7 @@ HistData& HistData::operator=(const HistData& hist) {
 #endif
 
   _isPeriodic = hist._isPeriodic;
+  _tryToMap = hist._tryToMap;
   _xcart = hist._xcart;
   _xred = hist._xred;
   _fcart = hist._fcart;
@@ -295,6 +299,7 @@ HistData& HistData::operator=(HistData&& hist) {
   _ntimeAvail = hist._ntimeAvail;
 #endif
   _isPeriodic = hist._isPeriodic;
+  _tryToMap = hist._tryToMap;
   _xcart = std::move(hist._xcart);
   _xred = std::move(hist._xred);
   _fcart = std::move(hist._fcart);
@@ -629,19 +634,22 @@ HistData& HistData::operator+=(HistData& hist) {
   hist.waitTime(hist._ntime);
 #endif
 
-  std::vector<unsigned> order(_natom,0);
   bool reorder = false;
-  try {
-    order = this->reorder(hist);
-    for ( unsigned i=0 ; i < order.size() ; ++i ) {
-      if ( i != order[i] ) {
-        reorder = true;
-        break;
+  std::vector<unsigned> order(_natom,0);
+
+  if (_tryToMap) {
+    try {
+      order = this->reorder(hist);
+      for ( unsigned i=0 ; i < order.size() ; ++i ) {
+        if ( i != order[i] ) {
+          reorder = true;
+          break;
+        }
       }
     }
-  }
-  catch ( Exception &e ){
-    e.ADD("Unable to map structures",ERRABT);
+    catch ( Exception &e ){
+      e.ADD("Unable to map structures",ERRABT);
+    }
   }
 
   const unsigned prevNtime = _ntime;
@@ -1660,6 +1668,16 @@ HistData* HistData::average(unsigned tbegin, unsigned tend) {
   return av;
 }
 
+bool HistData::getTryToMap() const
+{
+  return _tryToMap;
+}
+
+void HistData::setTryToMap(bool tryToMap)
+{
+  _tryToMap = tryToMap;
+}
+
 std::vector<double> HistData::acf(std::vector<double>::const_iterator begin, std::vector<double>::const_iterator end, const int howmany) {
   const int ntime = std::distance(begin,end)/howmany;
   unsigned ntau = ntime/2;
@@ -2250,6 +2268,7 @@ std::vector<unsigned> HistData::reorder(const HistData &hist) const {
   unsigned nimage = std::max(_nimage,(unsigned)1);
   unsigned natom = _natom/nimage;
   for ( unsigned image = 0 ; image < nimage ; ++image ) {
+#pragma omp parallel for schedule(dynamic)
     for ( unsigned mmatom = 0 ; mmatom < natom ; ++mmatom ) {
       unsigned matom = image*natom+mmatom;
       double closest = 9999999999;
@@ -2270,8 +2289,11 @@ std::vector<unsigned> HistData::reorder(const HistData &hist) const {
         auto diffcart = rprim * difference;
         double distance = norm(diffcart);
         if ( distance < closest ) {
-          order[matom] = oatom;
-          closest = distance;
+#pragma omp critical 
+          {
+            order[matom] = oatom;
+            closest = distance;
+          }
         }
       }
       if ( !testz )

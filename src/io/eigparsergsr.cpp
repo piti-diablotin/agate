@@ -53,8 +53,6 @@ void EigParserGSR::readFromFile(const std::string& filename) {
   unsigned nband;
   unsigned nspin;
   std::string tmp;
-  double kx=0.0, ky=0.0, kz=0.0;
-  double value=0.0;
 
   try {
 #ifdef HAVE_NETCDF

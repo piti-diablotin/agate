@@ -51,7 +51,7 @@ int Fraction::digits(double val)
     frac *= 10.;
   }
   factor--;
-  if ( safe == 15 ) return 0;
+  if ( safe > 13 ) return 0;
   return factor;
 }
 

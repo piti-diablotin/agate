@@ -214,18 +214,20 @@ HistDataMD& HistDataMD::operator+=(HistDataMD& hist) {
 
   std::vector<unsigned> order;
   bool reorder = false;
-  try {
-    order = this->reorder(hist);
-    for ( unsigned i ; i < order.size() ; ++i ) 
-      if ( i != order[i] ) {
-        reorder = true;
-        break;
-      }
+  if ( _tryToMap ) {
+    try {
+      order = this->reorder(hist);
+      for ( unsigned i ; i < order.size() ; ++i )
+        if ( i != order[i] ) {
+          reorder = true;
+          break;
+        }
 
-  }
-  catch ( Exception &e ){
-    // This should never happen since it has already been done before !
-    e.ADD("Unable to map structures",ERRABT);
+    }
+    catch ( Exception &e ){
+      // This should never happen since it has already been done before !
+      e.ADD("Unable to map structures",ERRABT);
+    }
   }
 
   _pressure.resize(_ntime);

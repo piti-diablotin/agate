@@ -28,6 +28,7 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include "base/phys.hpp"
 
 #if defined(HAVE_GL) && defined(HAVE_GLEXT)
 # ifdef __APPLE__
@@ -302,5 +303,32 @@ void TriArrow::push() {
     default :
       break;
   }
+#endif
+}
+
+void TriArrow::draw(const double start[3], const double end[3], const _float radius) {
+  const float n0 = end[0]-start[0];
+  const float n1 = end[1]-start[1];
+  const float n2 = end[2]-start[2];
+  const float nn = sqrt(n0*n0+n1*n1+n2*n2);
+  const float inv_nn = 1.f/nn;
+  const float nprod = sqrt(n1*n1+n0*n0);
+  const float angle = ( (n2<0) ? 180.f+180.f/phys::pi*asin(nprod*inv_nn) : -180.f/phys::pi*asin(nprod*inv_nn) );
+#if defined(HAVE_GL)
+  glPushMatrix();
+  glTranslatef(start[0],start[1],start[2]);
+  if ( nprod > 1e-6 ) {
+    glRotatef(angle,n1,-n0,0.0f);
+  }
+  else {
+    glRotatef(angle,1.f,0.f,0.0f);
+  }
+
+  this->draw(radius,nn);
+  glPopMatrix();
+#else
+  (void) start;
+  (void) end;
+  (void) radius;
 #endif
 }

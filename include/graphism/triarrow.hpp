@@ -113,6 +113,14 @@ class TriArrow : public TriObj {
     void draw(const _float radius, const _float height);
 
     /**
+     * Draw an arrow or compute it and store it
+     * @param start first point (base) of the axe of the arrow 
+     * @param end   last point (head) of the axe of the arrow 
+     * @param radius The radius of the arrow base placed at (0,0,0)
+     */
+    void draw(const double start[3], const double end[3], const _float radius);
+
+    /**
      * Pop method to do something if needed
      * It flush data if some are not drawn and release VBO if used
      */

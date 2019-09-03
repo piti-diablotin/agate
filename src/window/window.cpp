@@ -141,6 +141,7 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _optionb["paral_proj"] = true;
   _optionb["takeSnapshot"] = false;
   _optionb["axis"] = true;
+  _optionb["axisCart"] = false;
 
   _optioni["shouldExit"] = 0;
   _optioni["oldWidth"] = 0;
@@ -666,7 +667,15 @@ bool Window::userInput(std::stringstream& info) {
           else if ( token == "qa" ||  token == "quitall" ) _optioni["shouldExit"] = 2;
           else if ( token == "h" ||  token == "help" ) Window::help();
           else if ( token == "axis" ) {
-            _optionb["axis"] = !_optionb["axis"];
+            std::string axis;
+            cin >> axis;
+            if ( cin.fail() )
+              _optionb["axis"] = !_optionb["axis"];
+            else {
+              if ( axis == "cartesian" ) {_optionb["axis"] = true; _optionb["axisCart"] = true;}
+              else if ( axis == "lattice" ) {_optionb["axis"] = true; _optionb["axisCart"] = false;}
+              else _optionb["axis"] = !_optionb["axis"];
+            }
           }
           else if ( token == "bg" || token == "background" ) {
             unsigned b[3];
@@ -997,30 +1006,41 @@ void Window::drawAxis() {
 
   this->lookAt(totalfactor,0,0,0);
 
-  _arrow->push();
-  glColor3f(0.f,0.f,1.f);
-  _arrow->draw(0.1f,2.f); // Z
-  glColor3f(0.f,1.f,0.f);
-  glRotatef(-90.0f,1.f,0.f,0.f); // y
-  _arrow->draw(0.1f,2.f);
-  glColor3f(1.f,0.f,0.f);
-  glRotatef(90.f,0.f,1.f,0.0f); // X
-  _arrow->draw(0.1f,2.f);
-  _arrow->pop();
+  double start[] = {0,0,0};
+  const GLfloat color[][3] = {{1,0,0},{0,1,0},{0,0,1}};
+  double vec[][3] = {{2,0,0},{0,2,0},{0,0,2}};
+  std::string label[] = {"x","y","z"};
 
-  glRasterPos3f(0.f,-2.f,0.f);
+  if ( !_optionb["axisCart"] && _canvas->histdata() != nullptr ) {
+    const double *rprimd = _canvas->histdata()->getRprimd(_canvas->itime());
+    vec[0][0] = rprimd[0]; vec[0][1] = rprimd[3]; vec[0][2] = rprimd[6];
+    vec[1][0] = rprimd[1]; vec[1][1] = rprimd[4]; vec[1][2] = rprimd[7];
+    vec[2][0] = rprimd[2]; vec[2][1] = rprimd[5]; vec[2][2] = rprimd[8];
+    for ( unsigned i = 0 ; i < 3 ; ++i ) {
+      double norm = 0;
+      for ( unsigned j = 0 ; j < 3 ; ++j ) norm += vec[i][j]*vec[i][j];
+      norm = std::sqrt(norm*0.5);
+      for ( unsigned j = 0 ; j < 3 ; ++j ) vec[i][j] /= norm;
+    }
+        
+    label[0] = "a", label[1] = "b"; label[2] = "c";
+  }
+
+  _arrow->push();
   bool state = _render._doRender;
   _render._doRender = true;
-  _render.render("z");
-  //glDrawPixels(buffer.cols(), buffer.rows(), GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buffer.getPtr());
-  glRasterPos3f(-2.f,0.f,0.f);
-  _render.render("y");
-  //glDrawPixels(buffer.cols(), buffer.rows(), GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buffer.getPtr());
-  glRasterPos3f(0.f,0.f,2.f);
-  _render.render("x");
-  //glDrawPixels(buffer.cols(), buffer.rows(), GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buffer.getPtr());
-  /* End draw cartesian axis */
+  
+  for ( unsigned i = 0 ; i < 3 ; ++i ) {
+    glColor3fv(color[i]);
+    _arrow->draw(start,vec[i],0.1);
+  }
+  for ( unsigned i = 0 ; i < 3 ; ++i ) {
+    glRasterPos3f((GLfloat)vec[i][0],(GLfloat)vec[i][1],(GLfloat)vec[i][2]);
+    _render.render(label[i]);
+  }
   _render._doRender = state;
+  _arrow->pop();
+
 #endif
 }
 
@@ -1116,7 +1136,7 @@ void Window::help(){
 
   cout << endl << "-- Here are the commands that can be typed inside the window in command mode --" << endl;
   cout <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
-  cout << setw(40) << ":axis" << setw(59) << "Display/Hide the cartesian axis." << endl;
+  cout << setw(40) << ":axis [lattice|cartesian]" << setw(59) << "Display/Hide the axis. if lattice or cartesian is specified, display this one;" << endl;
   cout << setw(40) << ":bg or :background X Y Z" << setw(59) << "Set the background color in RGB." << endl;
   cout << setw(40) << ":fg or :forground X Y Z" << setw(59) << "Set the foreground color in RGB." << endl;
   cout << setw(40) << ":font path/to/font.ttf" << setw(59) << "Change the font to use." << endl;

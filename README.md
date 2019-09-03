@@ -53,7 +53,7 @@ Here is a small list of quantities that you can extract with **agate** from an M
   sudo apt-get install abiout
   ```
   and you are done !
-  Simply execute `agate` or `qagate` in a terminal.
+  Simply execute `agate` in a terminal.
 
 ### From the source
   First you need to install some dependancies.
@@ -96,7 +96,7 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
 ## MacOS X
   The procedure has been tested on MacOS 10.14 only and only with *Homebrew*. *Macport* should work too.
   ```
-  brew install curl cxxtest eigen fftw freetype git glwf gnuplot libpng libssh libtool libxml2 libyaml netcdf wget yaml-cpp
+  brew install curl cxxtest eigen fftw freetype git glfw gnuplot libpng libssh libtool libxml2 libyaml netcdf wget yaml-cpp
   git clone https://github.com/piti-diablotin/abiout.git
   cd abiout
   ./autogen.sh

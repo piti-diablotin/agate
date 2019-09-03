@@ -46,6 +46,7 @@ EigParserElectrons::~EigParserElectrons() {
 
 //
 void EigParserElectrons::selectLM(int l, std::vector<int> &umaskm) {
+  if  (_dtset == nullptr) return;
   if ( l >= _lmax ) 
     throw EXCEPTION("l is too large compared to _lmax",ERRDIV);
   for ( int m : umaskm )

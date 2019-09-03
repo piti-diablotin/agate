@@ -85,16 +85,17 @@ class HistDataDtset : public HistData {
     //virtual void dump(const std::string& filename) const;
 
     /**
-     * Driver to plot something 
-     * @param tbegin First time to use to plot data
-     * @param tend Last time to use to plot data
-     * @param stream The stream containing the command to parse
-     * @param gplot Pointer  to a plotter
-     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
+     * Dump the full history into the current format
+     * @param hist a random hist to dump in _HIST format.
+     * @param filename Name or base name of the file to creat.
+     * @param tbegin first time to start with
+     * @param tend Last time (not included) in the dumping
      */
-    virtual void plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::GraphSave save);
+    static void dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step = 1);
 
-    virtual bool hasEtotal() const { return _nimage > 1; }
+    virtual bool hasEtotal() const { return true; }
+
+    virtual bool hasStress() const { return true; }
 };
 
 #endif  // HISTDATADTSET_HPP

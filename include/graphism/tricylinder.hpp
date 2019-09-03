@@ -104,7 +104,7 @@ class TriCylinder : public TriObj {
 
     /**
      * Draw a cylinder or compute it and store it
-     * @param begin first point of the axe of the cylinder
+     * @param start first point of the axe of the cylinder
      * @param end   last point of the axe of the cylinder
      * @param radius The radius of the cylinder base placed at (0,0,0)
      */

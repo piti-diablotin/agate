@@ -38,6 +38,7 @@
 #include "base/exception.hpp"
 #include "hist/histdataxyz.hpp"
 #include "hist/histdatanc.hpp"
+#include "hist/histdatadtset.hpp"
 #include "io/eigparserelectrons.hpp"
 
 //
@@ -362,6 +363,34 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
       throw e;
     }
     out << "Dumping to file " << ext << " finished.";
+    throw EXCEPTION(out.str(), ERRCOM);
+  }
+  else if ( token == "ddtset" || token == "dumpdtset" ) {
+    std::string ext;
+    std::ostringstream out;
+    try {
+      stream >> ext;
+      int step = 1;
+      try {
+        step = parser.getToken<int>("step");
+      }
+      catch ( Exception & e ) {
+        if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+          throw e;
+        }
+      }
+      if ( _histdata.get() != nullptr ) {
+        HistDataDtset::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
+      }
+      else {
+        throw EXCEPTION("Nothing to dump", ERRCOM);
+      }
+    }
+    catch ( Exception &e ) {
+      e.ADD("Unable to dump history "+ext,ERRDIV);
+      throw e;
+    }
+    out << "Dumping to file " << ext << "* finished.";
     throw EXCEPTION(out.str(), ERRCOM);
   }
   else if ( token == "tbegin" || token == "time_begin" ) {

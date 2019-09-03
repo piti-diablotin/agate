@@ -418,15 +418,6 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         y.push_back(std::vector<double>(_ekin.begin()+tbegin,_ekin.end()-(_ntime-tend)));
       }
 
-      // Etotal
-      else if ( function == "etotal" ) {
-        filename = "etotal";
-        ylabel = "Etot[Ha]";
-        title = "Total energy";
-        std::clog << std::endl << " -- Total (electronic) energy --" << std::endl;
-        y.push_back(std::vector<double>(_etotal.begin()+tbegin,_etotal.end()-(_ntime-tend)));
-      }
-
       // Entropy
       else if ( function == "entropy" ) {
         filename = "entropy";

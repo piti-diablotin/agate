@@ -87,6 +87,7 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
           _labels.push_back(qpoints[iqpt]["label"].as<std::string>());
         else if ( _labels.back() != qpoints[iqpt]["label"].as<std::string>()  )
           _labels.push_back(qpoints[iqpt]["label"].as<std::string>());
+        utils::trim(_labels.back());
       }
       double length = qpoints[iqpt]["distance"].as<double>();
       auto nodeBand = qpoints[iqpt]["band"];

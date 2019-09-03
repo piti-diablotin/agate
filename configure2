@@ -59,10 +59,10 @@ echo " * GLFW.....: $have_glfw_usable"
 if test x"$have_glfw_usable" == x"yes"; then
   echo "              (version $glfw_version)"
 fi
-echo " * Qt.......: $have_qt_usable" 
-if test x"$have_qt_usable" == x"yes"; then
-  echo "              ($QT_VERSION_MAJOR)"
-fi
+#echo " * Qt.......: $have_qt_usable" 
+#if test x"$have_qt_usable" == x"yes"; then
+#  echo "              ($QT_VERSION_MAJOR)"
+#fi
 echo " * LibJPEG..: $have_libjpeg_usable"
 echo " * LibPNG...: $have_libpng_usable"
 

@@ -121,7 +121,10 @@ std::vector<unsigned> EigParserPhonons::getBandColor(const unsigned iband, const
       }
     }
 
-    std::vector<unsigned> colors(ntypat+1,0x666666);
+    std::vector<unsigned> colors(ntypat+1,
+        ((int)(255*Mendeleev.color[0][0])<<16)
+        +((int)(255*Mendeleev.color[0][1])<<8)
+        +((int)(255*Mendeleev.color[0][2])));
     for ( unsigned itypat = 0 ; itypat < ntypat ; ++itypat ) {
       unsigned r = 255*Mendeleev.color[znucl[itypat]][0];
       unsigned g = 255*Mendeleev.color[znucl[itypat]][1];

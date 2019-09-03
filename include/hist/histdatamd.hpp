@@ -243,6 +243,8 @@ class HistDataMD : public HistData {
 
     virtual bool hasEtotal() const { return true; }
 
+    virtual bool hasStress() const { return true; }
+
     /**
      * Compute the velocity autocorrelation function
      * @param tbegin First time to use to calculate mean values

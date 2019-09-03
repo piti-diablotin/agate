@@ -292,6 +292,11 @@ namespace utils {
           numerator = convertNumber(divide[0]);
           denominator = convertNumber(divide[1]);
         }
+        else {
+          throw EXCEPTION("Unable to parse number "+str,ERRDIV);
+          numerator = 0;
+          denominator = 0;
+        }
         return numerator/denominator;
       }
       else {

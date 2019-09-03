@@ -91,6 +91,10 @@ class HistDataOutNC : public HistData {
      * @param filename Name of the file
      */
     virtual void readFromFile(const std::string& filename);
+
+    virtual bool hasEtotal() const { return true; }
+
+    virtual bool hasStress() const { return true; }
 };
 
 #endif  // HISTDATAOUTNC_HPP

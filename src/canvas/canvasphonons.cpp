@@ -31,6 +31,7 @@
 #include "plot/gnuplot.hpp"
 #include <algorithm>
 #include "base/unitconverter.hpp"
+#include "base/fraction.hpp"
 
 //
 CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
@@ -228,6 +229,22 @@ void CanvasPhonons::appendFile(const std::string& filename) {
 }
 
 //
+double CanvasPhonons::getAmplitudeDisplacement() const {
+  return _amplitudeDisplacement;
+}
+
+const Ddb* CanvasPhonons::getDdb() const {
+  return _ddb.get();
+}
+
+const DispDB::qptTree& CanvasPhonons::getCondensedModes() const {
+  return _condensedModes;
+}
+
+const DispDB& CanvasPhonons::getDisplacements() const {
+  return _displacements;
+}
+
 void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   std::ostringstream out;
   bool rebuild = false;
@@ -270,11 +287,11 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
             )
           );
       _qptModes = it.first;
-      out << "Q-point " << qpt[0] << " " << qpt[1] << " " << qpt[2] << " added";
+      out << "Q-point " << Fraction(qpt[0]).toString() << " " << Fraction(qpt[1]).toString() << " " << Fraction(qpt[2]).toString() << " added";
       rebuild = true;
     }
     else 
-      out << "Q-point " << qpt[0] << " " << qpt[1] << " " << qpt[2] << " selected";
+      out << "Q-point " << Fraction(qpt[0]).toString() << " " << Fraction(qpt[1]).toString() << " " << Fraction(qpt[2]).toString() << " selected";
     throw EXCEPTION(out.str(),ERRCOM);
   }
   else if ( token == "add" ) {
@@ -304,7 +321,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 
     std::vector<unsigned> inputModes;
     if ( parser.hasToken("all") )
-      for ( int i = 0 ; i < 3*_natom ; ++ i) inputModes.push_back(i);
+      for ( unsigned i = 0 ; i < 3*_reference.natom() ; ++ i) inputModes.push_back(i);
     else {
       unsigned vib;
       while ( !stream.eof() ) {
@@ -312,7 +329,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         if ( stream.fail() ) break;
         --vib;
         inputModes.push_back(vib);
-        if ( vib >= (unsigned) _natom*3 ) {
+        if ( vib >= (unsigned) _reference.natom()*3 ) {
           throw EXCEPTION("The mode number is wrong",ERRDIV);
         }
       }
@@ -372,7 +389,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 
     std::vector<unsigned> inputModes;
     if ( parser.hasToken("all") )
-      for ( int i = 0 ; i < 3*_natom ; ++ i) inputModes.push_back(i);
+      for ( unsigned i = 0 ; i < 3*_reference.natom(); ++ i) inputModes.push_back(i);
     else {
       unsigned vib;
       while ( !stream.eof() ) {
@@ -380,7 +397,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         if ( stream.fail() ) break;
         --vib;
         inputModes.push_back(vib);
-        if ( vib >= (unsigned) _natom*3 ) {
+        if ( vib >= (unsigned) _reference.natom()*3 ) {
           throw EXCEPTION("The mode number is wrong",ERRDIV);
         }
       }
@@ -407,7 +424,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       stream >> vib;
       if ( stream.fail() ) break;
       --vib;
-      if ( vib >= (unsigned)_natom*3 ) {
+      if ( vib >= (unsigned)_reference.natom()*3 ) {
         throw EXCEPTION("The mode number is wrong",ERRDIV);
       }
       for ( auto it = myqptmodes.begin(); it != myqptmodes.end() ; ++it){
@@ -432,7 +449,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       std::sort(iqpt->second.begin(),iqpt->second.end(),
           [](DispDB::qMode v1,DispDB::qMode v2) { return v1.imode < v2.imode; }
           );
-      std::cout << "Qpt : " << iqpt->first[0] << "  " << iqpt->first[1] << "  " <<iqpt->first[2] << std::endl;
+      std::cout << "Qpt : " << Fraction(iqpt->first[0]).toString() << "  " << Fraction(iqpt->first[1]).toString() << "  " << Fraction(iqpt->first[2]).toString() << std::endl;
       std::cout << "  Modes      : ";
       for ( auto imode : iqpt->second ) 
         std::cout << std::setw(12) << imode.imode+1 << "  ";
@@ -462,7 +479,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       if ( stream.fail() ) break;
       --vib;
       ++modif;
-      if ( vib >= (unsigned)_natom*3 ) {
+      if ( vib >= (unsigned)_reference.natom()*3 ) {
         throw EXCEPTION("The mode number is wrong",ERRDIV);
       }
       for ( auto it = myqptmodes.begin(); it != myqptmodes.end() ; ++it){
@@ -553,7 +570,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     unsigned nmodes = 0;
     for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
       std::ostringstream qlabel;
-      qlabel << "[" << qpt->first[0] << "," << qpt->first[1] << "," << qpt->first[2] << "] ";
+      qlabel << "[" << Fraction(qpt->first[0]).toString() << "," << Fraction(qpt->first[1]).toString() << "," << Fraction(qpt->first[2]).toString() << "] ";
       for ( auto& vib : qpt->second ) {
         labels.push_back(qlabel.str()+utils::to_string(vib.imode+1));
         nmodes++;
@@ -561,7 +578,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
     y.resize(nmodes);
     if ( norm!=Supercell::Norming::NONE ) {
-      labels.push_back("Norm^2");
+      labels.push_back("Norm");
       y.resize(nmodes+1);
     }
     for ( auto v = y.begin() ; v != y.end() ; ++v )
@@ -590,13 +607,16 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         etmp += e;
       }
     }
+    delete trajectory;
     if ( etmp.getReturnValue() != 0 ){
       etmp.ADD("Projection may be wrong or incomplete",ERRDIV);
       throw etmp;
     }
+    /*
     if ( _gplot == nullptr )  {
       _gplot.reset(new Gnuplot);
     }
+    */
     Graph::plot(config,_gplot.get());
   }
   else if ( token == "findqpt" ) {
@@ -655,7 +675,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     unsigned nqpt = amp.size();
     for ( auto& qpt : amp ) {
       std::ostringstream qlabel;
-      qlabel << "[" << qpt[0] << "," << qpt[1] << "," << qpt[2] << "]";
+      qlabel << "[" << Fraction(qpt[0]).toString() << "," << Fraction(qpt[1]).toString() << "," << Fraction(qpt[2]).toString() << "]";
       labels.push_back(qlabel.str());
     }
     //labels.push_back("Norm");
@@ -682,13 +702,16 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         etmp += e;
       }
     }
+    delete trajectory;
     if ( etmp.getReturnValue() != 0 ){
       etmp.ADD("Qpt analysis may be wrong or incomplete",ERRDIV);
       throw etmp;
     }
+    /*
     if ( _gplot == nullptr )  {
       _gplot.reset(new Gnuplot);
     }
+    */
     Graph::plot(config,_gplot.get());
   }
   else if ( token == "lin_res_E" ) {
@@ -697,11 +720,11 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       std::vector<double> Edir = parser.getToken<double>("edir",3);
       _displacements.linearResponseE(Edir,Eamp,*_ddb.get());
       if ( this->selectQpt({{0,0,0}}) ) {
-        DispDB::qMode vibnrj {3*(unsigned)_natom,1,0};
+        DispDB::qMode vibnrj {3*(unsigned)_reference.natom(),1,0};
         _qptModes->second.push_back(vibnrj);
       }
       else {
-        DispDB::qMode vibnrj {3*(unsigned)_natom,1,0};
+        DispDB::qMode vibnrj {3*(unsigned)_reference.natom(),1,0};
         _condensedModes.insert(
         std::pair<geometry::vec3d,std::vector<DispDB::qMode>>(
           {{0,0,0}},
@@ -727,7 +750,6 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     if ( _ddb.get() == nullptr ) 
       throw EXCEPTION("You need to load a DDB first",ERRDIV);
     _ddb->dump(_qptModes->first);
-    throw EXCEPTION(std::string("Dynamical matrix written."), ERRCOM);
   }
   else if ( token == "dumpDDB" || token == "dDDB" ) {
     if ( _ddb.get() == nullptr ) 
@@ -754,9 +776,9 @@ void CanvasPhonons::buildAnimation() {
   const double tol = 1e-6;
 
   for ( auto it = _condensedModes.begin() ; it != _condensedModes.end() ; ++it ) {
-    if ( it->first[0] > tol && it->first[0] < qpt[0] ) qpt[0] = it->first[0];
-    if ( it->first[1] > tol && it->first[1] < qpt[1] ) qpt[1] = it->first[1];
-    if ( it->first[2] > tol && it->first[2] < qpt[2] ) qpt[2] = it->first[2];
+    if ( std::abs(it->first[0]) > tol && std::abs(it->first[0]) < std::abs(qpt[0]) ) qpt[0] = it->first[0];
+    if ( std::abs(it->first[1]) > tol && std::abs(it->first[1]) < std::abs(qpt[1]) ) qpt[1] = it->first[1];
+    if ( std::abs(it->first[2]) > tol && std::abs(it->first[2]) < std::abs(qpt[2]) ) qpt[2] = it->first[2];
   }
 
   HistData *hist;

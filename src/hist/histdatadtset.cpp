@@ -54,9 +54,11 @@ void HistDataDtset::readFromFile(const std::string& filename) {
     ConfigParser parser(filename);
     unsigned nimage = 0;
     unsigned imgmov = 0;
+    unsigned ndtset = 0;
     try {
       parser.parse();
-      dtset->readConfig(parser);
+      if ( parser.hasToken("ndtset") ) ndtset = parser.getToken<unsigned>("ndtset");
+      else dtset->readConfig(parser);
       try {
         nimage = parser.getToken<unsigned>(" nimage");
       }
@@ -90,6 +92,48 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         if ( ee.getReturnValue() == ERRABT ) throw ec;
       }
     }
+
+    if ( ndtset > 0 ) {
+      std::clog << "Reading " << ndtset << " dtset" << std::endl;
+      std::vector<unsigned> jdtset(ndtset);
+      if ( parser.hasToken("jdtset") ) jdtset = parser.getToken<unsigned>("jdtset",ndtset);
+      else if ( parser.hasToken("udtset") ) {
+        std::vector<unsigned>udtset = parser.getToken<unsigned>("udtset",2);
+        unsigned int idtset = 0;
+        for ( unsigned i1 = 1 ; i1 <= udtset[0] ; ++i1 ) {
+          for ( unsigned i2 = 1 ; i2 <= udtset[1] ; ++i2 ) {
+            jdtset[idtset++] = i1*10+i2;
+          }
+        }
+      }
+      else {
+        for( unsigned i1 = 0 ; i1 < ndtset ; ++i1 ) jdtset[i1] = i1+1;
+      }
+
+      for ( unsigned ij = 0 ; ij < jdtset.size() ; ++ij ) {
+        unsigned j = jdtset[ij];
+        Dtset dtsetj;
+        dtsetj.readConfig(parser,0,j);
+        HistDataDtset hist(dtsetj);
+        try {
+          hist._fcart = parser.getToken<double>("fcart"+utils::to_string(j),3*dtsetj.natom());
+        } catch (Exception &e)
+        {;}
+        try {
+          hist._stress = parser.getToken<double>("strten"+utils::to_string(j),6);
+        } catch (Exception &e)
+        {;}
+        try {
+          hist._etotal = parser.getToken<double>("etotal"+utils::to_string(j),1);
+        } catch (Exception &e)
+        {;}
+        if ( ij == 0 ) *this = hist;
+        else *this += hist;
+      }
+      _filename = filename;
+      return;
+    }
+
     if ( dtset == nullptr )
       throw ec;
 
@@ -314,53 +358,23 @@ void HistDataDtset::buildFromDtset(const Dtset& dtset) {
     }
 }
 
-//
-void HistDataDtset::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::GraphSave save) {
-  std::string function;
-  auto pos = stream.tellg();
-
+void HistDataDtset::dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
+  unsigned ntime = hist.ntime(); //tend-tbegin;
+  unsigned ndecimal = 1;
+  hist.checkTimes(tbegin,tend);
+  while ((ntime/=10)>0) ++ndecimal;
   try {
-    HistData::plot(tbegin, tend, stream, gplot, save);
+    for ( unsigned iitime = tbegin ; iitime < tend ; iitime += step ) {
+      std::ostringstream output;
+      output << filename << std::setw(ndecimal) << std::setfill('0') << iitime << ".in";
+      std::clog << output.str() << std::endl;
+      Dtset dtset(hist,iitime);
+      dtset.dump(output.str().c_str());
+    }
   }
   catch ( Exception &e ) {
-    if ( e.getReturnValue() == ERRABT ) {
-      stream.clear();
-      stream.seekg(pos);
-      stream >> function;
-
-      Graph::Config config;
-      unsigned ntime = tend-tbegin;
-      std::vector<double> &x = config.x;
-      std::list<std::vector<double>> &y = config.y;
-      std::string &filename = config.filename;
-      std::string &xlabel = config.xlabel;
-      std::string &ylabel = config.ylabel;
-      std::string &title = config.title;
-      config.doSumUp = false;
-
-      xlabel = "Image";
-      x.resize(ntime);
-      for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
-
-      // Etotal
-      if ( function == "etotal" ) {
-        filename = "etotal";
-        ylabel = "Etot[Ha]";
-        title = "Total energy";
-        std::clog << std::endl << " -- Total (electronic) energy --" << std::endl;
-        y.push_back(std::vector<double>(_etotal.begin()+tbegin,_etotal.end()-(_ntime-tend)));
-      }
-
-      else {
-        throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
-      }
-
-      Graph::plot(config,gplot);
-
-    }
-    else {
-      //e.ADD("Bad things happen sometimes",ERRDIV);
-      throw e;
-    }
+    e.ADD("Dumping failed",ERRABT);
+    throw e;
   }
 }
+

@@ -476,9 +476,13 @@ class HistData {
      */
     void checkTimes(unsigned tbegin, unsigned tend) const ;
 
+    void basicChecks();
+
     virtual bool hasThermo() const { return false; }
 
     virtual bool hasEtotal() const { return false; }
+
+    virtual bool hasStress() const { return false; }
 
     virtual bool isPeriodic() const { return _isPeriodic; }
 

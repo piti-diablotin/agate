@@ -65,7 +65,9 @@ class Window {
     enum ImageSuffix { convert, animate };
 
 #ifdef HAVE_GL
+    /*
     static void GLAPIENTRY errorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
+    */
 #endif
 
   private :

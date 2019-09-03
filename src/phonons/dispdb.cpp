@@ -39,10 +39,10 @@
 
 //
 DispDB::DispDB() :
-  _natom(-1),
-  _nqpt(0),
-  _nmode(0),
-  _iqpt(),
+    _natom(-1),
+    _nqpt(0),
+    _nmode(0),
+    _iqpt(),
   _qpts(),
   _modes(),
   _linResE(),
@@ -348,7 +348,7 @@ void DispDB::setQpt(const vec3d qpt) {
 }
 
 //
-unsigned DispDB::getQpt(const vec3d qpt) {
+unsigned DispDB::getQpt(const vec3d qpt) const {
   using geometry::operator-;
   auto myqpt = std::find_if(
       _qpts.begin(),
@@ -392,7 +392,7 @@ double DispDB::getEnergyMode(unsigned imode) {
 }
 
 //
-std::vector<DispDB::cplx>::const_iterator DispDB::getMode(unsigned dq, unsigned imode) {
+std::vector<DispDB::cplx>::const_iterator DispDB::getMode(unsigned dq, unsigned imode) const{
   if ( dq >= _qpts.size() )
     throw EXCEPTION("dq is too large",ERRDIV);
   auto iqpt = _qpts.begin();
@@ -408,7 +408,7 @@ std::vector<DispDB::cplx>::const_iterator DispDB::getMode(unsigned dq, unsigned 
 }
 
 //
-double DispDB::getEnergyMode(unsigned dq, unsigned imode) {
+double DispDB::getEnergyMode(unsigned dq, unsigned imode) const {
   if ( dq >= _qpts.size() )
     throw EXCEPTION("dq is too large",ERRDIV);
   auto iqpt = _qpts.begin();
@@ -459,4 +459,9 @@ DispDB& DispDB::operator += ( const DispDB& disp ) {
   if ( setToEnd ) _iqpt = _qpts.end();
 
   return *this;
+}
+
+const std::vector<geometry::vec3d> &DispDB::getQpts() const
+{
+    return _qpts;
 }

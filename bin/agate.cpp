@@ -117,7 +117,12 @@ void initInput(int argc, const char** argv) {
  */
 void DropCallback(GLFWwindow *win, int count, const char** paths){
   std::clog << "Dropping to window " << win << std::endl;
-  initInput(count, paths);
+  try {
+    initInput(count, paths);
+  }
+  catch (Exception& e) {
+    std::cerr << e.fullWhat() << std::endl;
+  }
 }
 #endif
 

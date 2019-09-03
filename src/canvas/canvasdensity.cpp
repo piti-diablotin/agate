@@ -161,15 +161,34 @@ void CanvasDensity::refresh(const geometry::vec3d &cam, TextRender &render) {
     }
   }
 #ifdef HAVE_GL
-  GLfloat scale = ((GLfloat)_ipoint/(GLfloat)_npoints);
-  glTranslatef((GLfloat)normal[0]*scale,(GLfloat)normal[1]*scale,(GLfloat)normal[2]*scale);
+  const double *rprimd = _histdata->getRprimd(_itime);
+  const GLfloat fx[] = {(GLfloat)rprimd[0], (GLfloat)rprimd[3], (GLfloat)rprimd[6]};
+  const GLfloat fy[] = {(GLfloat)rprimd[1], (GLfloat)rprimd[4], (GLfloat)rprimd[7]};
+  const GLfloat fz[] = {(GLfloat)rprimd[2], (GLfloat)rprimd[5], (GLfloat)rprimd[8]};
+  for ( int i = 0 ; i < _translate[0] ; ++i) {
+    const GLfloat fi = (GLfloat) i;
+    const GLfloat xtrans[] = { fi*fx[0], fi*fx[1], fi*fx[2] };
+    for ( int j = 0 ; j < _translate[1] ; ++j) {
+      const GLfloat fj = (GLfloat) j;
+      const GLfloat ytrans[] = { fj*fy[0]+xtrans[0], fj*fy[1]+xtrans[1], fj*fy[2]+xtrans[2] };
+      for ( int k = 0 ; k < _translate[2] ; ++k ) {
+        const GLfloat fk = (GLfloat) k;
+        const GLfloat ztrans[] = { fk*fz[0]+ytrans[0], fk*fz[1]+ytrans[1], fk*fz[2]+ytrans[2] };
+        glPushMatrix();
+        glTranslatef(ztrans[0],ztrans[1],ztrans[2]);
+        GLfloat scale = ((GLfloat)_ipoint/(GLfloat)_npoints);
+        glTranslatef((GLfloat)normal[0]*scale,(GLfloat)normal[1]*scale,(GLfloat)normal[2]*scale);
+        try {
+          _map.draw(values,_colors[1],_colors[2],_colors[0],_status!=PAUSE);
+        }
+        catch ( Exception &e ) {
+          std::cerr << e.fullWhat() << std::endl;
+        }
+        glPopMatrix();
+      }
+    }
+  }
 #endif
-  try {
-    _map.draw(values,_colors[1],_colors[2],_colors[0],_status!=PAUSE);
-  }
-  catch ( Exception &e ) {
-    std::cerr << e.fullWhat() << std::endl;
-  }
 }
 
 void CanvasDensity::setNTime(int ntime) {

@@ -28,6 +28,7 @@
 #include "base/exception.hpp"
 #include "base/utils.hpp"
 #include "base/phys.hpp"
+#include "base/mendeleev.hpp"
 #include "base/geometry.hpp"
 #include <algorithm>
 #ifdef HAVE_NETCDFCXX4
@@ -73,25 +74,13 @@ void HistDataOutNC::readFromFile(const std::string& filename) {
   if ( nc_open(filename.c_str(), NC_NOWRITE, &ncid)) 
     throw EXCEPTION(std::string("File ")+filename+" could not be correctly opened",ERRDIV);
 
-  if (  nc_inq_ndims(ncid, &dimid) || dimid < 5 ) {
-    nc_close(ncid);
-    throw EXCEPTION(std::string("Bad number of dimension: ")+utils::to_string(dimid)+
-        std::string(" instead of more than 5"),ERRDIV);
-  }
-
-  if ( nc_inq_nvars(ncid, &varid) || varid < 13 ) {
-    nc_close(ncid);
-    throw EXCEPTION(std::string("Bad number of variables: ")+utils::to_string(varid)+
-        std::string(" instead of more than 13"),ERRDIV);
-  }
-
   {
-    nc_inq_varid(ncid, "ndtset", &varid);
-    size_t start[] = {0};
-    int ndtset = 0;
-    if ( !nc_get_var1_int(ncid, varid, start, &ndtset ) ) {
-      nc_close(ncid);
-      throw EXCEPTION(std::string("Presence of dtset detected. Not yet available for ")+filename,ERRABT);
+    if ( !nc_inq_varid(ncid, "ndtset", &varid) ) {
+      size_t start[] = {0};
+      if ( nc_get_var1_int(ncid, varid, start, (int*)&_ntime ) ) {
+        nc_close(ncid);
+        throw EXCEPTION(std::string("Issue reading ndtset in ")+filename,ERRABT);
+      }
     }
   }
 
@@ -111,7 +100,7 @@ void HistDataOutNC::readFromFile(const std::string& filename) {
   // Allocate arrays
   _xcart  .resize(_ntime*_natom*_xyz);
   _xred   .resize(_ntime*_natom*_xyz);
-  //_fcart  .resize(_ntime*_natom*_xyz,0.);
+  _fcart  .resize(_ntime*_natom*_xyz);
   _acell  .resize(_ntime*_xyz);
   _rprimd .resize(_ntime*_xyz*_xyz);
   _time   .resize(_ntime);
@@ -143,85 +132,106 @@ void HistDataOutNC::readFromFile(const std::string& filename) {
   }
 
   // Read data.
-  int status;
-  {
-    size_t start[] = {0};
-    size_t count[] = {_ntime*_natom*_xyz};
-    status = nc_inq_varid(ncid, "xcart", &varid);
-    status += nc_get_vara_double(ncid, varid, start, count, _xcart.data());
-    if ( status ) {
-      nc_close(ncid);
-      throw EXCEPTION(std::string("Error while reading xcart var in ")+filename,ERRDIV);
-    }
-    //don't delete ptrVal, internal to netcdf.
-    status = nc_inq_varid(ncid, "xred", &varid);
-    status += nc_get_vara_double(ncid, varid, start, count, _xred.data());
-    if ( status ) {
-      nc_close(ncid);
-      throw EXCEPTION(std::string("Error while reading xred var in ")+filename,ERRDIV);
-    }
-    status = nc_inq_varid(ncid, "fcart", &varid);
-    if ( status == 0 ) {
-      _fcart  .resize(_ntime*_natom*_xyz,0.);
-      status += nc_get_vara_double(ncid, varid, start, count, _fcart.data());
-      if ( status ) _fcart.clear();
-    }
-
-    status = nc_inq_varid(ncid, "spinat", &varid);
-    if ( status == 0 ) {
-      _spinat.resize(_natom*_xyz);
-      count[0] = _natom*_xyz;
-      status += nc_get_vara_double(ncid, varid, start, count, _spinat.data());
+  for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
+    int status;
+    std::string suffix = utils::to_string(itime+1);
+    std::string token;
+    std::string tokenS;
+    {
+      token = "xred";
+      tokenS = token+suffix;
+      size_t start[] = {0};
+      size_t count[] = {_natom*_xyz};
+      status = nc_inq_varid(ncid, tokenS.c_str(), &varid);
+      if ( status ) status = nc_inq_varid(ncid, token.c_str(), &varid);
+      status += nc_get_vara_double(ncid, varid, start, count, &_xred[itime*_xyz*_natom]);
       if ( status ) {
-        _spinat.clear();
         nc_close(ncid);
-        throw EXCEPTION(std::string("Error while reading spinat var in ")+filename,ERRDIV);
+        throw EXCEPTION(std::string("Error while reading xred var in ")+filename,ERRDIV);
+      }
+
+      token = "fcart";
+      tokenS = token+suffix;
+      status = nc_inq_varid(ncid, tokenS.c_str(), &varid);
+      if ( status ) status = nc_inq_varid(ncid, token.c_str(), &varid);
+      if ( status == 0 ) {
+        status += nc_get_vara_double(ncid, varid, start, count, &_fcart[itime*_xyz*_natom]);
+        if ( status ) _fcart.clear();
+      }
+
+      token = "spinat";
+      tokenS = token+suffix;
+      status = nc_inq_varid(ncid, tokenS.c_str(), &varid);
+      if ( status ) status = nc_inq_varid(ncid, token.c_str(), &varid);
+      if ( status == 0 ) {
+        _spinat.resize(_natom*_xyz);
+        count[0] = _natom*_xyz;
+        status += nc_get_vara_double(ncid, varid, start, count, &_spinat[itime*_xyz*_natom]);
+        if ( status ) {
+          _spinat.clear();
+          nc_close(ncid);
+          throw EXCEPTION(std::string("Error while reading spinat var in ")+filename,ERRDIV);
+        }
       }
     }
-  }
-  {
-    size_t start[] = {0,0};
-    size_t count[] = {_ntime*_xyz};
-    status = nc_inq_varid(ncid, "acell", &varid);
-    status += nc_get_vara_double(ncid, varid, start, count, _acell.data() );
-    if ( status ) {
-      nc_close(ncid);
-      throw EXCEPTION(std::string("Error while reading acell var in ")+filename,ERRDIV);
+    {
+      size_t start[] = {0};
+      size_t count[] = {_xyz};
+      token = "acell";
+      tokenS = token+suffix;
+      status = nc_inq_varid(ncid, tokenS.c_str(), &varid);
+      if ( status ) status = nc_inq_varid(ncid, token.c_str(), &varid);
+      status += nc_get_vara_double(ncid, varid, start, count, &_acell[itime*_xyz] );
+      if ( status ) {
+        nc_close(ncid);
+        throw EXCEPTION(std::string("Error while reading acell var in ")+filename,ERRDIV);
+      }
     }
-  }
-  {
-    size_t start[] = {0,0,0};
-    size_t count[] = {_ntime*_xyz*_xyz};
-    status = nc_inq_varid(ncid, "rprim", &varid);
-    status += nc_get_vara_double(ncid, varid, start, count, _rprimd.data() );
-    if ( status ) {
-      nc_close(ncid);
-      throw EXCEPTION(std::string("Error while reading rprimd var in ")+filename,ERRDIV);
+    {
+      size_t start[] = {0};
+      size_t count[] = {_xyz*_xyz};
+      token = "rprim";
+      tokenS = token+suffix;
+      status = nc_inq_varid(ncid, tokenS.c_str(), &varid);
+      if ( status ) status = nc_inq_varid(ncid, token.c_str(), &varid);
+      status += nc_get_vara_double(ncid, varid, start, count, &_rprimd[itime*_xyz*_xyz] );
+      if ( status ) {
+        nc_close(ncid);
+        throw EXCEPTION(std::string("Error while reading rprimd var in ")+filename,ERRDIV);
+      }
     }
-  }
-  {
-    size_t start[] = {0};
-    size_t count[] = {_ntime};
-    status = nc_inq_varid(ncid, "etotal", &varid);
-    status += nc_get_vara_double(ncid, varid, start, count, _etotal.data() );
-    /*
-    if ( status ) {
-      nc_close(ncid);
-      throw EXCEPTION(std::string("Error while reading etotal var in ")+filename,ERRDIV);
+    {
+      size_t start[] = {0};
+      size_t count[] = {1};
+      token = "etotal";
+      tokenS = token+suffix;
+      status = nc_inq_varid(ncid, tokenS.c_str(), &varid);
+      if ( status ) status = nc_inq_varid(ncid, token.c_str(), &varid);
+      status += nc_get_vara_double(ncid, varid, start, count, &_etotal[itime] );
     }
-    */
-  }
-  {
-    size_t start[] = {0,0};
-    size_t count[] = {_ntime*6};
-    status = nc_inq_varid(ncid, "strten", &varid);
-    status += nc_get_vara_double(ncid, varid, start, count, _stress.data() );
-    /*
-    if ( status ) {
-      nc_close(ncid);
-      throw EXCEPTION(std::string("Error while reading stress var in ")+filename,ERRDIV);
+    {
+      size_t start[] = {0};
+      size_t count[] = {6};
+      token = "strten";
+      tokenS = token+suffix;
+      status = nc_inq_varid(ncid, tokenS.c_str(), &varid);
+      if ( status ) status = nc_inq_varid(ncid, token.c_str(), &varid);
+      status += nc_get_vara_double(ncid, varid, start, count, &_stress[itime*6] );
     }
-    */
+    {
+      size_t start[] = {0};
+      size_t count[] = {_znucl.size()};
+      std::vector<double> amu(_znucl.size());
+      token = "amu";
+      tokenS = token+suffix;
+      status = nc_inq_varid(ncid, tokenS.c_str(), &varid);
+      if ( status ) status = nc_inq_varid(ncid, token.c_str(), &varid);
+      status += nc_get_vara_double(ncid, varid, start, count, &amu[0] );
+      if ( status == 0 ) {
+        for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
+          Agate::Mendeleev.mass[_znucl[z]] = amu[z];
+      }
+    }
   }
 
   nc_close(ncid);
@@ -237,23 +247,33 @@ void HistDataOutNC::readFromFile(const std::string& filename) {
     _rprimd[itime*9+3] = swap1;
     _rprimd[itime*9+6] = swap2;
     _rprimd[itime*9+7] = swap3;
-  }
+    _rprimd[itime*9+0] *= _acell[itime*3+0];
+    _rprimd[itime*9+1] *= _acell[itime*3+1];
+    _rprimd[itime*9+2] *= _acell[itime*3+2];
+    _rprimd[itime*9+3] *= _acell[itime*3+0];
+    _rprimd[itime*9+4] *= _acell[itime*3+1];
+    _rprimd[itime*9+5] *= _acell[itime*3+2];
+    _rprimd[itime*9+6] *= _acell[itime*3+0];
+    _rprimd[itime*9+7] *= _acell[itime*3+1];
+    _rprimd[itime*9+8] *= _acell[itime*3+2];
 
-  _rprimd[0] *= _acell[0];
-  _rprimd[1] *= _acell[1];
-  _rprimd[2] *= _acell[2];
-  _rprimd[3] *= _acell[0];
-  _rprimd[4] *= _acell[1];
-  _rprimd[5] *= _acell[2];
-  _rprimd[6] *= _acell[0];
-  _rprimd[7] *= _acell[1];
-  _rprimd[8] *= _acell[2];
+    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+      for ( unsigned icart = 0 ; icart < 3 ; ++icart ) {
+        _xcart[itime*_natom*3+iatom*3+icart] = 0;
+        for ( unsigned dir = 0 ; dir < 3 ; ++dir ) {
+          _xcart[itime*_natom*3+iatom*3+icart] += 
+            _rprimd[itime*9+geometry::mat3dind(icart+1,dir+1)]*_xred[itime*_natom*3+iatom*3+dir];
+        }
+      }
+    }
+  }
 
   _filename = filename;
 
   //Scale mdtime
   for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) 
-    _time[itime] *= 0.0;
+    _time[itime] = itime;
 
+  _ntimeAvail = _ntime;
 #endif
 }

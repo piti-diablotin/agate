@@ -171,12 +171,12 @@ namespace utils {
     out << " * GLFW.....: no" << std::endl;
 #endif
 
-#if defined(HAVE_QT)
-    out << " * Qt.......: yes" << std::endl;
-    //out << "              (" << QT_VERSION_STR << ")" << std::endl;
-#else
-    out << " * Qt.......: no" << std::endl;
-#endif
+//#if defined(HAVE_QT)
+//    out << " * Qt.......: yes" << std::endl;
+//    //out << "              (" << QT_VERSION_STR << ")" << std::endl;
+//#else
+//    out << " * Qt.......: no" << std::endl;
+//#endif
 
 #ifdef HAVE_LIBJPEG
     out << " * LibJPEG..: yes" << std::endl;

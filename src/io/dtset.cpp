@@ -140,7 +140,7 @@ void Dtset::readFromFile(const std::string& filename) {
 
 
 //
-void Dtset::readConfig(ConfigParser& parser, unsigned img) {
+void Dtset::readConfig(ConfigParser& parser, unsigned img, unsigned jdtset) {
   std::string token;
   int tokenValueCheck; 
   unsigned step = 0;
@@ -153,7 +153,8 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
     throw e;
   }
 
-  std::string suffix = ( img == 0 ? "" : "_"+utils::to_string(img)+"img" );
+  std::string suffix_img = ( img == 0 ? "" : "_"+utils::to_string(img)+"img" );
+  std::string suffix_jdtset = ( jdtset == 0 ? "" : utils::to_string(jdtset) );
 
   try {
     token = "natom";
@@ -222,7 +223,8 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
     std::vector<double> tokenVectorCheck;
     ConfigParser::Characteristic length = ConfigParser::Characteristic::LENGTH;
     try {
-      token = "acell"/*+suffix*/;
+      token = "acell"+suffix_jdtset/*+suffix*/;
+      if ( !parser.hasToken(token) ) token = "acell";
       tokenVectorCheck = parser.getToken<double>(token,3,length);
       // Need to convert vector to array by hand.
       _acell[0] = tokenVectorCheck[0];
@@ -243,7 +245,8 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
 
     double scalecart[3] = {0.0};
     try {
-      token = "scalecart";
+      token = "scalecart"+suffix_jdtset;
+      if ( !parser.hasToken(token) ) token = "scalcart";
       tokenVectorCheck = parser.getToken<double>(token,3,length);
       // Need to convert vector to array by hand.
       scalecart[0] = tokenVectorCheck[0];
@@ -263,7 +266,8 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
     ++step;
 
     try {
-      token = "rprim"/*+suffix*/;
+      token = "rprim"+suffix_jdtset/*+suffix*/;
+      if ( !parser.hasToken(token) ) token = "rprim";
       tokenVectorCheck = parser.getToken<double>(token,3*3);
       _rprim[geometry::mat3dind(1,1)] = tokenVectorCheck[0];
       _rprim[geometry::mat3dind(2,1)] = tokenVectorCheck[3];
@@ -282,7 +286,8 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
       }
       else {
         try {
-          token = "angdeg";
+          token = "angdeg"+suffix_jdtset;
+          if ( !parser.hasToken(token) ) token = "angdeg";
           tokenVectorCheck = parser.getToken<double>(token,3);
           this->buildRprim(tokenVectorCheck.data());
         }
@@ -316,15 +321,17 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
 
     _gprim = geometry::invertTranspose(_rprim);
 
-    token = "xcart"+suffix;
     try { 
+      token = "xcart"+suffix_img+suffix_jdtset;
+      if ( !parser.hasToken(token) ) token = "xcart"+suffix_img;
       double factor = 1.0;
       try {
         tokenVectorCheck = parser.getToken<double>(token,3*_natom);
       }
       catch (Exception &e) {
         if ( e.getReturnValue() == ConfigParser::ERFOUND ) {
-          token = "xangst"+suffix;
+          token = "xangst"+suffix_img+suffix_jdtset;
+          if ( !parser.hasToken(token) ) token = "xangst"+suffix_img;
           tokenVectorCheck = parser.getToken<double>(token,3*_natom);
           factor = 1.0/phys::b2A;
         }
@@ -344,8 +351,21 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
     }
     catch (Exception& e) {
       if ( e.getReturnValue() == ConfigParser::ERFOUND ) {
-        token = "xred"+suffix;
-        tokenVectorCheck = parser.getToken<double>(token,3*_natom);
+        token = "xred"+suffix_img+suffix_jdtset;
+        if ( !parser.hasToken(token) ) token = "xred"+suffix_img;
+        try {
+          tokenVectorCheck = parser.getToken<double>(token,3*_natom);
+        }
+        catch (Exception& e) {
+          if ( e.getReturnValue() == ConfigParser::ERFOUND ) {
+            tokenVectorCheck.clear();
+            tokenVectorCheck.resize(3*_natom,0);
+          }
+          else {
+            e.ADD("Problem finding the positions of the atoms",ERRABT);
+            throw e;
+          }
+        }
         _xred.resize(_natom);
         for( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) 
           _xred[iatom] = {{tokenVectorCheck[iatom*3],tokenVectorCheck[iatom*3+1],tokenVectorCheck[iatom*3+2]}};
@@ -362,8 +382,9 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
     }
     ++step;
 
-    token = "spinat";
     try { 
+      token = "spinat"+suffix_jdtset;
+      if ( !parser.hasToken(token) ) token = "spinat";
       tokenVectorCheck = parser.getToken<double>(token,3*_natom);
       _spinat.resize(_natom);
       for( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) 
@@ -380,8 +401,9 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
     }
     ++step;
 
-    token = "supercell_latt";
     try { 
+      token = "supercell_latt"+suffix_jdtset;
+      if ( !parser.hasToken(token) ) token = "supercell_latt";
       tokenVectorCheck = parser.getToken<double>(token,9);
       if ( tokenVectorCheck[0] < 1. || tokenVectorCheck[4] < 1. || tokenVectorCheck[8] < 1. )
         throw EXCEPTION("Supercell can only be built with diagonal part",ERRABT);
@@ -396,15 +418,16 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img) {
     }
     ++step;
 
-    token = "amu";
+    token = "amu"+suffix_jdtset;
     try { 
+      if ( !parser.hasToken(token) ) token = "amu";
       tokenVectorCheck = parser.getToken<double>(token,_znucl.size());
       for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
         Mendeleev.mass[_znucl[z]] = tokenVectorCheck[z];
     }
     catch (Exception& e) {
       if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
-        e.ADD("Bad supercell_latt parameter",ERRABT);
+        e.ADD("Bad amu parameter",ERRABT);
         throw e;
       }
     }
@@ -915,4 +938,19 @@ void Dtset::getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<g
   }
 #else
 #endif
+}
+
+bool Dtset::operator==(const Dtset& dtset1) const {
+
+  if ( dtset1._natom != _natom ) return false;
+
+  for ( unsigned r = 0 ; r < 9 ; ++r ) {
+    if ( std::abs(dtset1._rprim[r]-_rprim[r]) > 1e-10 ) return false;
+  }
+
+  for ( unsigned i = 0 ; i < dtset1._natom ; ++i ) {
+    if ( dtset1._znucl[dtset1._typat[i]-1] != _znucl[_typat[i]-1] ) return false;
+    if ( !(dtset1._xred[i] == _xred[i]) ) return false;
+  }
+  return true;
 }

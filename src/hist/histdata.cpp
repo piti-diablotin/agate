@@ -592,6 +592,7 @@ HistData* HistData::getHist(const std::string& infile, bool wait){
 #else
       (void) wait;
 #endif
+      hist->basicChecks();
       return hist;
     }
   }
@@ -1391,8 +1392,8 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       p = xy.begin();
       std::advance(p,iatom);
       for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
-        p->first[itime]= pos[(itime*_natom+iatom)*3+coordx]*dunit;
-        p->second[itime]=pos[(itime*_natom+iatom)*3+coordy]*dunit;
+        p->first[itime-tbegin]= pos[(itime*_natom+iatom)*3+coordx]*dunit;
+        p->second[itime-tbegin]=pos[(itime*_natom+iatom)*3+coordy]*dunit;
       }
     }
   }
@@ -1511,6 +1512,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       labels.push_back("beta");
       labels.push_back("gamma");
     }
+    
     else {
       std::stringstream str;
       str << "angle_" << iatom1 
@@ -1526,6 +1528,16 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       }
       y.push_back(std::move(angle));
     }
+  }
+
+  // Etotal
+  else if ( function == "etotal" ) {
+    filename = "etotal";
+    ylabel = "Etot[Ha]";
+    if (_imgdata._imgmov > 0 ) xlabel = "Image";
+    title = "Total energy";
+    std::clog << std::endl << " -- Total (electronic) energy --" << std::endl;
+    y.push_back(std::vector<double>(_etotal.begin()+tbegin,_etotal.end()-(_ntime-tend)));
   }
 
   else if ( function == "stress" ) {
@@ -2308,4 +2320,29 @@ void HistData::ImgData::resize(unsigned n) {
   _rprimd.resize(9*n);
   _etotal.resize(n);
   _stress.resize(6*n);
+}
+
+//
+void HistData::basicChecks() {
+  /*
+   * This depends on time but time steps can be loaded asynchroneously ... so don't deal now with this
+  for (auto a : _acell ) {
+    if ( a < 0 ) throw EXCEPTION("acell contains a negative value.",ERRDIV);
+  }
+
+  for (unsigned i = 0 ; i < _rprimd.size() ; i+=9) {
+    if (geometry::det(&_rpimd[i]) <= 0 )
+      throw EXCEPTION("A negative det for rprimd has been found.", ERRDIV);
+  }
+  */
+  
+  for (auto t : _typat) {
+    if ( t < 1 || t > (int)_znucl.size() )
+      throw EXCEPTION("typat is out of range [1;ntypat]",ERRDIV);
+  }
+  
+  for(auto z : _znucl) {
+    if ( z < 0 || z > 119 )
+      throw EXCEPTION("znucl is out of [0;119]",ERRDIV);
+  }
 }

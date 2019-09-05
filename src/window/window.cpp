@@ -56,15 +56,15 @@ std::queue<unsigned int> Window::_inputChar; ///< Store all character dropped by
 
 #ifdef HAVE_GL
 /*
-void GLAPIENTRY Window::errorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-  std::cerr << "GL CALLBACK: "
-            << ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" )
-            << "type = 0x" << std::hex << type
-            << "severity = 0x" << std::hex << severity
-            << ", message = " << message;
-  (void) userParam;
-}
-*/
+   void GLAPIENTRY Window::errorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
+   std::cerr << "GL CALLBACK: "
+   << ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" )
+   << "type = 0x" << std::hex << type
+   << "severity = 0x" << std::hex << severity
+   << ", message = " << message;
+   (void) userParam;
+   }
+   */
 #endif
 
 Window::Window(pCanvas &canvas, const int width, const int height) :
@@ -522,22 +522,17 @@ void Window::loopStep() {
 bool Window::userInput(std::stringstream& info) {
   bool action = false;
   const float pi = (float) phys::pi;
-  const float twopi = 2.f*pi;
-  float& x0 = _optionf["x0"];
-  float& y0 = _optionf["y0"];
   bool& view_angle = _optionb["view_angle"];;
   bool& view_time = _optionb["view_time"];
   bool& view_time_input = _optionb["view_time_input"];
   bool& error = _optionb["error"];
-#ifdef HAVE_GL
-  bool& msaa = _optionb["msaa"];
-#endif
   float& campsi = _optionf["campsi"];
   float& camtheta = _optionf["camtheta"];
   float& camphi = _optionf["camphi"];
+#ifdef HAVE_GL
+  bool& msaa = _optionb["msaa"];
+#endif
   //static std::string string_static;
-  float x = 0;
-  float y = 0;
 
   const Canvas::TransDir TransAdd = Canvas::TransDir::PLUS;
   const Canvas::TransDir TransDel = Canvas::TransDir::MINUS;
@@ -547,401 +542,176 @@ bool Window::userInput(std::stringstream& info) {
   if ( _mode == mode_process ) _mode = mode_static;
 
   try {
-    while ( !_inputChar.empty() ) {
-      action = true;
-      char ic = static_cast<char>(_inputChar.front());
+    bool firstRun = true;
+    //while ( !_inputChar.empty() || firstRun ) {
+    {
+      firstRun = false;
+      while ( !_inputChar.empty() ) {
+        action = true;
+        char ic = static_cast<char>(_inputChar.front());
 
-      if ( _mode != mode_command ) {
-        if ( ic == ':' ){
-          _commandStack.push_back(std::string(":"));
-          _commandStackNo = _commandStack.size()-1;
-          _inputChar.pop();
-          _command = ":|";
-          if ( !_render._isOk && _render._doRender ) std::clog << ":";
-          _mode = mode_command;
-          continue;
-        }
+        if ( _mode != mode_command ) {
+          if ( ic == ':' ){
+            _commandStack.push_back(std::string(":"));
+            _commandStackNo = _commandStack.size()-1;
+            _inputChar.pop();
+            _command = ":|";
+            if ( !_render._isOk && _render._doRender ) std::clog << ":";
+            _mode = mode_command;
+            continue;
+          }
 
-        if ( _mode == mode_add ) {
-          switch ( ic ) {
-            case 'x': {_canvas->translateX(TransAdd);break;}
-            case 'y' : {_canvas->translateY(TransAdd);break;}
-            case 'z' : {_canvas->translateZ(TransAdd);break;}
+          if ( _mode == mode_add ) {
+            switch ( ic ) {
+              case 'x': {_canvas->translateX(TransAdd);break;}
+              case 'y' : {_canvas->translateY(TransAdd);break;}
+              case 'z' : {_canvas->translateZ(TransAdd);break;}
+            }
+            _mode = mode_static;
           }
-          _mode = mode_static;
-        }
-        else if ( _mode == mode_remove ) {
-          switch ( ic ) {
-            case 'x': {_canvas->translateX(TransDel);break;}
-            case 'y' : {_canvas->translateY(TransDel);break;}
-            case 'z' : {_canvas->translateZ(TransDel);break;}
+          else if ( _mode == mode_remove ) {
+            switch ( ic ) {
+              case 'x': {_canvas->translateX(TransDel);break;}
+              case 'y' : {_canvas->translateY(TransDel);break;}
+              case 'z' : {_canvas->translateZ(TransDel);break;}
+            }
+            _mode = mode_static;
           }
-          _mode = mode_static;
-        }
-        else if ( _mode == mode_static && _modeMouse != mode_mouse ) {
-          switch ( ic ) {
+          else if ( _mode == mode_static && _modeMouse != mode_mouse ) {
+            switch ( ic ) {
 #ifdef HAVE_GL
-            case 'A' : {
-                         msaa = !msaa;
-                         msaa ? glEnable(GL_MULTISAMPLE) : glDisable(GL_MULTISAMPLE);
-                         break;
-                       }
+              case 'A' : {
+                           msaa = !msaa;
+                           msaa ? glEnable(GL_MULTISAMPLE) : glDisable(GL_MULTISAMPLE);
+                           break;
+                         }
 #endif
-            case 'x' : {campsi = 0      ; camtheta =  0     ; camphi = 0.     ;_mode = mode_static;break;}
-            case 'y' : {campsi = 0      ; camtheta =  0     ; camphi = pi*0.5 ;_mode = mode_static;break;}
-            case 'z' : {campsi = -pi*0.5; camtheta =  0     ; camphi = -pi*0.5;_mode = mode_static;break;}
-            case '+' : {_mode = mode_add;break;}
-            case '-' : {_mode = mode_remove;break;}
-            case '*' : {_optionf["speed"] *= 2.0f;break;}
-            case '/' : {_optionf["speed"] /= (_optionf["speed"] <= 0.001 ? 1.f : 2.0f);break;}
-            case 'a' : { 
-                         if ( !_render._isOk  && _render._doRender && !view_angle )
-                           std::clog 
-                             << "psi=" << (int)(campsi/pi*180.f) 
-                             << ", theta=" << (int)(camtheta/pi*180.f)
-                             << ", phi=" << (int)(camphi/pi*180.f) << std::endl;
-                         view_angle = !view_angle;
-                         break;
-                       }
-            case 'p' : {_optionb["paral_proj"]=(!_optionb["paral_proj"]);break;}
+              case 'x' : {campsi = 0      ; camtheta =  0     ; camphi = 0.     ;_mode = mode_static;break;}
+              case 'y' : {campsi = 0      ; camtheta =  0     ; camphi = pi*0.5 ;_mode = mode_static;break;}
+              case 'z' : {campsi = -pi*0.5; camtheta =  0     ; camphi = -pi*0.5;_mode = mode_static;break;}
+              case '+' : {_mode = mode_add;break;}
+              case '-' : {_mode = mode_remove;break;}
+              case '*' : {_optionf["speed"] *= 2.0f;break;}
+              case '/' : {_optionf["speed"] /= (_optionf["speed"] <= 0.001 ? 1.f : 2.0f);break;}
+              case 'a' : { 
+                           if ( !_render._isOk  && _render._doRender && !view_angle )
+                             std::clog 
+                               << "psi=" << (int)(campsi/pi*180.f) 
+                               << ", theta=" << (int)(camtheta/pi*180.f)
+                               << ", phi=" << (int)(camphi/pi*180.f) << std::endl;
+                           view_angle = !view_angle;
+                           break;
+                         }
+              case 'p' : {_optionb["paral_proj"]=(!_optionb["paral_proj"]);break;}
 
-            case 'l' : {_canvas->switchLight();break;}
-            case ' ' : {_canvas->switchPause();break;}
-            case '<' : {_canvas->previousStep();break;}
-            case '>' : {_canvas->nextStep();break;}
-            case 'o' : {_canvas->switchDrawing();break;}
+              case 'l' : {_canvas->switchLight();break;}
+              case ' ' : {_canvas->switchPause();break;}
+              case '<' : {_canvas->previousStep();break;}
+              case '>' : {_canvas->nextStep();break;}
+              case 'o' : {_canvas->switchDrawing();break;}
 
-            case 't' :{
-                        if ( !_render._isOk && _render._doRender && !view_time_input )
-                          std::clog << "Time step: " << _canvas->itime() << "/" << _canvas->ntime()-1 << std::endl;
-                        view_time_input = !view_time_input;
-                        break;
-                      }
-            case 's' : {_optionb["takeSnapshot"] = true;break;}
-            case 'm' : {if(_canvas->ntime()>1)_movie= ! _movie;break;}
-                       //default : string_static+ic;
+              case 't' :{
+                          if ( !_render._isOk && _render._doRender && !view_time_input )
+                            std::clog << "Time step: " << _canvas->itime() << "/" << _canvas->ntime()-1 << std::endl;
+                          view_time_input = !view_time_input;
+                          break;
+                        }
+              case 's' : {_optionb["takeSnapshot"] = true;break;}
+              case 'm' : {if(_canvas->ntime()>1)_movie= ! _movie;break;}
+                         //default : string_static+ic;
+            }
           }
-        }
-        _inputChar.pop();
-      } // _mode != mode_command
-      else {
-        size_t cursor = 0; 
-        if ( (cursor = _command.find_last_of("|")) != std::string::npos ) 
-          _command.erase(cursor,1);
-        //while ( !_inputChar.empty() ) {
-        //char c = static _cast<char>(_inputChar.front());
-        if ( ic != '\n') {
           _inputChar.pop();
-          if ( _modeMouse != mode_mouse ) {
-            _command += ic;
-            if ( !_render._isOk && _render._doRender ) {std::clog << ic; std::clog.flush();}
+        } // _mode != mode_command
+        else {
+          size_t cursor = 0; 
+          if ( (cursor = _command.find_last_of("|")) != std::string::npos ) 
+            _command.erase(cursor,1);
+          //while ( !_inputChar.empty() ) {
+          //char c = static _cast<char>(_inputChar.front());
+          if ( ic != '\n') {
+            _inputChar.pop();
+            if ( _modeMouse != mode_mouse ) {
+              _command += ic;
+              if ( !_render._isOk && _render._doRender ) {std::clog << ic; std::clog.flush();}
+            }
           }
+          else 
+            process = true;
+          //}
+          _command += "|";
+          _commandStack.back() = _command;
         }
-        else 
-          process = true;
-        //}
-        _command += "|";
-        _commandStack.back() = _command;
+        if ( process ) break;
       }
-      if ( process ) break;
-    }
-    // End of while loop
+      // End of while loop
 
-    //
-    if ( _mode == mode_command ) {
-      if ( this->getChar(_keyEnter) || this->getChar(_keyKPEnter) || process ) {// enter
-        action = true;
-        _commandStack.back() = _command;
-        try {
-          if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
-          std::istringstream cin(_command.substr(1,_command.size()-2));
-          std::string token;
-          int istep;  
-          cin >> istep;
-          bool succeeded = !cin.fail();
-          cin.clear();
-          cin.seekg(0);
-          cin >> token;
-          if ( succeeded ) _canvas->step(istep);
-          else if ( token == "q" ||  token == "quit" ) _optioni["shouldExit"] = 1;
-          else if ( token == "qa" ||  token == "quitall" ) _optioni["shouldExit"] = 2;
-          else if ( token == "h" ||  token == "help" ) Window::help();
-          else if ( token == "axis" ) {
-            std::string axis;
-            cin >> axis;
-            if ( cin.fail() )
-              _optionb["axis"] = !_optionb["axis"];
-            else {
-              if ( axis == "cartesian" ) {_optionb["axis"] = true; _optionb["axisCart"] = true;}
-              else if ( axis == "lattice" ) {_optionb["axis"] = true; _optionb["axisCart"] = false;}
-              else _optionb["axis"] = !_optionb["axis"];
-            }
+      //
+      if ( _mode == mode_command ) {
+        if ( this->getChar(_keyEnter) || this->getChar(_keyKPEnter) || process ) {// enter
+          action = true;
+          _commandStack.back() = _command;
+          try {
+            if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
+            std::istringstream cin(_command.substr(1,_command.size()-2));
+            std::string token;
+            cin >> token;
+            this->my_alter(token,cin);
+            error = false;
+            _command = _canvas->info();
+          } // try process
+          catch (Exception &e) {
+            //if ( e.getReturnValue() != ERRCOM )
+            std::clog << e.fullWhat() << std::endl;
+            if ( _render._isOk ) _command = e.what("",true);
+            error = true;
           }
-          else if ( token == "bg" || token == "background" ) {
-            unsigned b[3];
-            cin >> b[0] >> b[1] >> b[2];
-            if ( !cin.fail() && b[0] < 256 && b[1] < 256 && b[2] < 256 ) {
-              _background[0] = (float) b[0]/255.f;
-              _background[1] = (float) b[1]/255.f;
-              _background[2] = (float) b[2]/255.f;
-              _render._color[0] = 255-b[0];
-              _render._color[1] = 255-b[1];
-              _render._color[2] = 255-b[2];
-            }
-          }
-          else if ( token == "fg" || token == "foreground" ) {
-            unsigned f[3];
-            cin >> f[0] >> f[1] >> f[2];
-            if ( !cin.fail() && f[0] < 256 && f[1] < 256 && f[2] < 256 ) {
-              _render._color[0] = f[0];
-              _render._color[1] = f[1];
-              _render._color[2] = f[2];
-            }
-          }
-          else if ( token == "font" ) {
-            std::string ext;
-            cin >> ext;
-            _render._render.setFont(ext);
-          }
-          else if ( token == "fs" || token == "fontsize" ) {
-            int pixel;
-            cin >> pixel;
-            _render._render.setSize(pixel);
-            _optioni["fontSize"] = pixel;
-          }
-
-          else if ( token == "img_fmt" || token == "image_format" ) {
-            std::string ext;
-            cin >> ext;
-            if ( ext == "png" ) _image.setFormat(ImageSaver::ImageType(ImageSaver::png));
-            else if ( ext == "jpeg" )  _image.setFormat(ImageSaver::ImageType(ImageSaver::jpeg));
-            else if ( ext == "ppm" ) _image.setFormat(ImageSaver::ImageType(ImageSaver::ppm));
-            else {
-             throw EXCEPTION("Unrecognize format (jpeg|png|ppm)",ERRWAR);
-            }
-          }
-          else if ( token == "img_qlt" || token == "image_quality" ) {
-            int qlt;
-            cin >> qlt;
-            if ( !cin.fail() ) _image.setQuality(qlt);
-          }
-          else if ( token == "img_suf" || token == "image_suffix" ) {
-            std::string suf;
-            cin >> suf;
-            if ( suf == "convert" ) _imageSuffixMode = convert;
-            else if ( suf == "animate" )  _imageSuffixMode = animate;
-            else {
-              throw EXCEPTION("Unrecognize suffix format (convert|animate)",ERRWAR);
-            }
-          }
-          else if ( token == "load" ) {
-            std::string filename;
-            cin >> filename;
-            if ( !cin.fail() ) {
-              // The _inputChar will be poped until next "\n" so if don't add it here te first line
-              // in filename will be poped too.
-              _inputChar.push('\n');
-              this->setParameters(filename);
-            }
-          }
-          else if ( token == "psi") {
-            float angle;
-            cin >> angle;
-            if ( !cin.fail() ) campsi = angle*pi/180.f;
-          }
-          else if ( token == "theta") {
-            float angle;
-            cin >> angle;
-            if ( !cin.fail() ) camtheta = angle*pi/180.f;
-          }
-          else if ( token == "phi" ) {
-            float angle;
-            cin >> angle;
-            if ( !cin.fail() )  camphi = angle * pi/180.f;
-          }
-          else if ( token == "s" || token == "speed" ) {
-            float speed;
-            cin >> speed; 
-            if ( !cin.fail() ) {
-              _optionf["speed"] = ( speed >= 1.0f ? floor(speed) : speed);
-              if ( _optionf["speed"] <= 0.001f ) _optionf["speed"] = 1.f;
-              throw EXCEPTION("Speed adjusted to "+utils::to_string(_optionf["speed"]),ERRCOM);
-            }
-            else
-              throw EXCEPTION("You need to set the speed",ERRCOM);
-          }
-          else if ( token == "t" || token == "title" ) {
-            cin >> _title;
-            this->setTitle(_title);
-            _image.setBasename(_title);
-            _suffix=0;
-          }
-          else if ( token == "m" || token == "mode" ) {
-            std::string cmode;
-            cin >> cmode;
-            if ( cmode == "loc" || cmode == "local" ) {
-              _canvas.reset(new CanvasLocal(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
-            }
-            else if ( cmode == "pos" || cmode == "positions" ) {
-              _canvas.reset(new CanvasPos(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
-            }
-            else if ( cmode == "ph" || cmode == "phonons" ) {
-              _canvas.reset(new CanvasPhonons(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
-            }
-            else if ( cmode == "den" || cmode == "density" ) {
-              _canvas.reset(new CanvasDensity(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
-            }
-            else throw EXCEPTION("Bad mode "+cmode,ERRDIV);
-            std::string info = _canvas->info();
-            size_t pos = info.find_last_of("/\\");
-            if ( !info.empty() && _title != info.substr(pos+1) ) this->setTitle(info.substr(pos+1));
-          }
-          else if ( token == "height" ) {
-            int height;
-            cin >> height; 
-            if ( !cin.fail() && height > 1) {
-              this->setSize(_width,height);
-              throw EXCEPTION("Height adjusted to "+utils::to_string(_height),ERRCOM);
-            }
-            else 
-              throw EXCEPTION("Height should be followed by an positive integer",ERRDIV);
-          }
-          else if ( token == "width" ) {
-            int width;
-            cin >> width; 
-            if ( !cin.fail() && width> 1) {
-              this->setSize(width,_height);
-              throw EXCEPTION("Width adjusted to "+utils::to_string(_width),ERRCOM);
-            }
-            else 
-              throw EXCEPTION("Width should be followed by an positive integer",ERRDIV);
-          }
-          else if ( token == "zoom" ) {
-            float zoom;
-            cin >> zoom; 
-            if ( !cin.fail() && zoom > 0) {
-              _optionf["zoom"] = 1.f/zoom;
-              throw EXCEPTION("zoom adjusted to "+utils::to_string(1./_optionf["zoom"]),ERRCOM);
-            }
-            else 
-              throw EXCEPTION("zoom should be followed by a positive float",ERRDIV);
-          }
-          else if ( token == "SnAkE" ) {
-#ifdef HAVE_CPPTHREAD
-            _snake.reset(new std::thread(runSnake));
-#else
-            runSnake();
-#endif
-          }
-          else {
-            _canvas->alter(token,cin);
-            view_time = view_time_input && (_canvas->ntime()>1);
-            std::string info = _canvas->info();
-            size_t pos = info.find_last_of("/\\");
-            if ( !info.empty() && _title != info.substr(pos+1) ) this->setTitle(info.substr(pos+1));
-          }
-          //if ( cin.fail() ) throw EXCEPTION("Bad line argument",ERRCOM);
-          error = false;
+          _mode = mode_process;
+          while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
+          process = false;
+        } // enter
+        else if ( this->getChar(_keyEscape) ) {
+          _mode = mode_static;
           _command = _canvas->info();
-        } // try process
-        catch (Exception &e) {
-          //if ( e.getReturnValue() != ERRCOM )
-          std::clog << e.fullWhat() << std::endl;
-          if ( _render._isOk ) _command = e.what("",true);
-          error = true;
-        }
-        _mode = mode_process;
-        while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
-
-      } // enter
-      else if ( this->getChar(_keyEscape) ) {
-        _mode = mode_static;
-        _command = _canvas->info();
-        _commandStack.pop_back();
-        _commandStackNo = _commandStack.size();
-        error = false;
-        action = true;
-        if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
-        while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
-      } // escape
-      else if ( this->getChar(_keyBackspace)  && _command.size() > 1 ){
-        _command.erase(_command.end()-2);
-        _commandStack.back() = _command;
-        if ( !_render._isOk && _render._doRender ) std::clog << "\b \b";
-        action = true;
-      } // backspace
-      else if ( this->getChar(_keyArrowUp) ) {
-        if ( (_commandStackNo - 1) < _commandStack.size()) { // _commandStackNo is unsigend so if <0 it is apriori >> _commandStack.size()
-          _command = _commandStack[--_commandStackNo];
+          _commandStack.pop_back();
+          _commandStackNo = _commandStack.size();
+          error = false;
           action = true;
-        }
-      }
-      else if ( this->getChar(_keyArrowDown) ) {
-        if ( (_commandStackNo+1) < _commandStack.size() ) {
-          _command = _commandStack[++_commandStackNo];
+          if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
+          while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
+        } // escape
+        else if ( this->getChar(_keyBackspace)  && _command.size() > 1 ){
+          _command.erase(_command.end()-2);
+          _commandStack.back() = _command;
+          if ( !_render._isOk && _render._doRender ) std::clog << "\b \b";
           action = true;
+        } // backspace
+        else if ( this->getChar(_keyArrowUp) ) {
+          if ( (_commandStackNo - 1) < _commandStack.size()) { // _commandStackNo is unsigend so if <0 it is apriori >> _commandStack.size()
+            _command = _commandStack[--_commandStackNo];
+            action = true;
+          }
         }
+        else if ( this->getChar(_keyArrowDown) ) {
+          if ( (_commandStackNo+1) < _commandStack.size() ) {
+            _command = _commandStack[++_commandStackNo];
+            action = true;
+          }
+        }
+      } // _mode == mode_command
+      else {
+        if ( this->getChar(_keyEscape) ) {// enter
+          error = false;
+          action = true;
+          while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
+          _command = "";
+        }
+        if ( !error ) _command = _canvas->info();
+        view_time = (view_time_input && _canvas->ntime()>1);
       }
-    } // _mode == mode_command
-    else {
-      if ( this->getChar(_keyEscape) ) {// enter
-        error = false;
-        action = true;
-        while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
-        _command = "";
-      }
-      if ( !error ) _command = _canvas->info();
-      view_time = (view_time_input && _canvas->ntime()>1);
     }
     // Check Mouse
-    if ( this->getMousePress(_mouseButtonLeft) ) {
-      action = true;
-      if ( _modeMouse != mode_mouse ){
-        _modeMouse = mode_mouse;
-        this->getMousePosition(x0,y0);
-      }
-      this->getMousePosition(x,y);
-      using namespace geometry;
-      //std::cerr << "start" << std::endl;
-      mat3d euler = matEuler(campsi,camtheta,camphi);
-      vec3d axe1({{euler[2],euler[5],euler[8]}});
-      vec3d axe2({{euler[1],euler[4],euler[7]}});
-      double angle1 = (x0-x)/_width*twopi;
-      double angle2 = (y0-y)/_height*twopi;
-      auto mat1 = matRotation(angle1,axe1);
-      auto mat2 = matRotation(angle2,axe2);
-      auto total = (mat1*mat2)*euler;
-      auto newangles = anglesEuler(total);
-      if ( !this->getCharPress(_keyX) )
-        campsi   = newangles[0];
-      if ( !this->getCharPress(_keyY) )
-        camtheta = newangles[1];
-      if ( !this->getCharPress(_keyZ) )
-        camphi   = newangles[2];
-      x0 = x; y0 = y;
-    }
-    else if ( this->getMousePress(_mouseButtonRight) ) {
-      action = true;
-      if ( _modeMouse != mode_mouse ){
-        _modeMouse = mode_mouse;
-        this->getMousePosition(x0,y0);
-      }
-      this->getMousePosition(x,y);
-      using namespace geometry;
-
-      const double shiftX = (x-x0)/_width;
-      const double shiftY = (y0-y)/_height;
-      _optionf["shiftOriginX"] += shiftX;
-      _optionf["shiftOriginY"] += shiftY;
-
-      x0 = x; y0 = y;
-    }
-    else if (_modeMouse == mode_mouse ) {
-      _modeMouse = mode_static;
-      this->getChar(_keyX);
-      this->getChar(_keyY);
-      this->getChar(_keyZ);
-    }
+    action |= this->handleMouse();
   }
   catch (Exception &eerror) {
     std::cerr << eerror.fullWhat() << std::endl;
@@ -1022,14 +792,14 @@ void Window::drawAxis() {
       norm = std::sqrt(norm*0.5);
       for ( unsigned j = 0 ; j < 3 ; ++j ) vec[i][j] /= norm;
     }
-        
+
     label[0] = "a", label[1] = "b"; label[2] = "c";
   }
 
   _arrow->push();
   bool state = _render._doRender;
   _render._doRender = true;
-  
+
   for ( unsigned i = 0 ; i < 3 ; ++i ) {
     glColor3fv(color[i]);
     _arrow->draw(start,vec[i],0.1);
@@ -1107,6 +877,265 @@ void Window::lookAt(double zoom, double centerX, double centerY, double centerZ)
   glTranslated(-eyeX, -eyeY, -eyeZ);
 #endif
 
+}
+
+void Window::my_alter(std::string &token, std::istringstream &cin) {
+  const float pi = (float) phys::pi;
+  float& campsi = _optionf["campsi"];
+  float& camtheta = _optionf["camtheta"];
+  float& camphi = _optionf["camphi"];
+  bool& view_time = _optionb["view_time"];
+  bool& view_time_input = _optionb["view_time_input"];
+
+  try {
+    int istep = utils::stoi(token);
+    _canvas->step(istep);
+  }
+  catch (...)
+  {;}
+
+  if ( token == "q" ||  token == "quit" ) _optioni["shouldExit"] = 1;
+  else if ( token == "qa" ||  token == "quitall" ) _optioni["shouldExit"] = 2;
+  else if ( token == "h" ||  token == "help" ) Window::help();
+  else if ( token == "axis" ) {
+    std::string axis;
+    cin >> axis;
+    if ( cin.fail() )
+      _optionb["axis"] = !_optionb["axis"];
+    else {
+      if ( axis == "cartesian" ) {_optionb["axis"] = true; _optionb["axisCart"] = true;}
+      else if ( axis == "lattice" ) {_optionb["axis"] = true; _optionb["axisCart"] = false;}
+      else _optionb["axis"] = !_optionb["axis"];
+    }
+  }
+  else if ( token == "bg" || token == "background" ) {
+    unsigned b[3];
+    cin >> b[0] >> b[1] >> b[2];
+    if ( !cin.fail() && b[0] < 256 && b[1] < 256 && b[2] < 256 ) {
+      _background[0] = (float) b[0]/255.f;
+      _background[1] = (float) b[1]/255.f;
+      _background[2] = (float) b[2]/255.f;
+      _render._color[0] = 255-b[0];
+      _render._color[1] = 255-b[1];
+      _render._color[2] = 255-b[2];
+    }
+  }
+  else if ( token == "fg" || token == "foreground" ) {
+    unsigned f[3];
+    cin >> f[0] >> f[1] >> f[2];
+    if ( !cin.fail() && f[0] < 256 && f[1] < 256 && f[2] < 256 ) {
+      _render._color[0] = f[0];
+      _render._color[1] = f[1];
+      _render._color[2] = f[2];
+    }
+  }
+  else if ( token == "font" ) {
+    std::string ext;
+    cin >> ext;
+    _render._render.setFont(ext);
+  }
+  else if ( token == "fs" || token == "fontsize" ) {
+    int pixel;
+    cin >> pixel;
+    _render._render.setSize(pixel);
+    _optioni["fontSize"] = pixel;
+  }
+
+  else if ( token == "img_fmt" || token == "image_format" ) {
+    std::string ext;
+    cin >> ext;
+    if ( ext == "png" ) _image.setFormat(ImageSaver::ImageType(ImageSaver::png));
+    else if ( ext == "jpeg" )  _image.setFormat(ImageSaver::ImageType(ImageSaver::jpeg));
+    else if ( ext == "ppm" ) _image.setFormat(ImageSaver::ImageType(ImageSaver::ppm));
+    else {
+      throw EXCEPTION("Unrecognize format (jpeg|png|ppm)",ERRWAR);
+    }
+  }
+  else if ( token == "img_qlt" || token == "image_quality" ) {
+    int qlt;
+    cin >> qlt;
+    if ( !cin.fail() ) _image.setQuality(qlt);
+  }
+  else if ( token == "img_suf" || token == "image_suffix" ) {
+    std::string suf;
+    cin >> suf;
+    if ( suf == "convert" ) _imageSuffixMode = convert;
+    else if ( suf == "animate" )  _imageSuffixMode = animate;
+    else {
+      throw EXCEPTION("Unrecognize suffix format (convert|animate)",ERRWAR);
+    }
+  }
+  else if ( token == "load" ) {
+    std::string filename;
+    cin >> filename;
+    if ( !cin.fail() ) {
+      // The _inputChar will be poped until next "\n" so if don't add it here te first line
+      // in filename will be poped too.
+      _inputChar.push('\n');
+      this->setParameters(filename);
+    }
+  }
+  else if ( token == "psi") {
+    float angle;
+    cin >> angle;
+    if ( !cin.fail() ) campsi = angle*pi/180.f;
+  }
+  else if ( token == "theta") {
+    float angle;
+    cin >> angle;
+    if ( !cin.fail() ) camtheta = angle*pi/180.f;
+  }
+  else if ( token == "phi" ) {
+    float angle;
+    cin >> angle;
+    if ( !cin.fail() )  camphi = angle * pi/180.f;
+  }
+  else if ( token == "s" || token == "speed" ) {
+    float speed;
+    cin >> speed;
+    if ( !cin.fail() ) {
+      _optionf["speed"] = ( speed >= 1.0f ? floor(speed) : speed);
+      if ( _optionf["speed"] <= 0.001f ) _optionf["speed"] = 1.f;
+      throw EXCEPTION("Speed adjusted to "+utils::to_string(_optionf["speed"]),ERRCOM);
+    }
+    else
+      throw EXCEPTION("You need to set the speed",ERRCOM);
+  }
+  else if ( token == "t" || token == "title" ) {
+    cin >> _title;
+    this->setTitle(_title);
+    _image.setBasename(_title);
+    _suffix=0;
+  }
+  else if ( token == "m" || token == "mode" ) {
+    std::string cmode;
+    cin >> cmode;
+    if ( cmode == "loc" || cmode == "local" ) {
+      _canvas.reset(new CanvasLocal(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
+    }
+    else if ( cmode == "pos" || cmode == "positions" ) {
+      _canvas.reset(new CanvasPos(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
+    }
+    else if ( cmode == "ph" || cmode == "phonons" ) {
+      _canvas.reset(new CanvasPhonons(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
+    }
+    else if ( cmode == "den" || cmode == "density" ) {
+      _canvas.reset(new CanvasDensity(std::move(*reinterpret_cast<CanvasPos*>(_canvas.get()))));
+    }
+    else throw EXCEPTION("Bad mode "+cmode,ERRDIV);
+    std::string info = _canvas->info();
+    size_t pos = info.find_last_of("/\\");
+    if ( !info.empty() && _title != info.substr(pos+1) ) this->setTitle(info.substr(pos+1));
+  }
+  else if ( token == "height" ) {
+    int height;
+    cin >> height;
+    if ( !cin.fail() && height > 1) {
+      this->setSize(_width,height);
+      throw EXCEPTION("Height adjusted to "+utils::to_string(_height),ERRCOM);
+    }
+    else
+      throw EXCEPTION("Height should be followed by an positive integer",ERRDIV);
+  }
+  else if ( token == "width" ) {
+    int width;
+    cin >> width;
+    if ( !cin.fail() && width> 1) {
+      this->setSize(width,_height);
+      throw EXCEPTION("Width adjusted to "+utils::to_string(_width),ERRCOM);
+    }
+    else
+      throw EXCEPTION("Width should be followed by an positive integer",ERRDIV);
+  }
+  else if ( token == "zoom" ) {
+    float zoom;
+    cin >> zoom;
+    if ( !cin.fail() && zoom > 0) {
+      _optionf["zoom"] = 1.f/zoom;
+      throw EXCEPTION("zoom adjusted to "+utils::to_string(1./_optionf["zoom"]),ERRCOM);
+    }
+    else
+      throw EXCEPTION("zoom should be followed by a positive float",ERRDIV);
+  }
+  else if ( token == "SnAkE" ) {
+#ifdef HAVE_CPPTHREAD
+    _snake.reset(new std::thread(runSnake));
+#else
+    runSnake();
+#endif
+  }
+  else {
+    _canvas->alter(token,cin);
+    view_time = view_time_input && (_canvas->ntime()>1);
+    std::string info = _canvas->info();
+    size_t pos = info.find_last_of("/\\");
+    if ( !info.empty() && _title != info.substr(pos+1) ) this->setTitle(info.substr(pos+1));
+  }
+
+
+}
+
+bool Window::handleMouse()
+{
+  const float pi = (float) phys::pi;
+  const float twopi = 2.f*pi;
+  float& x0 = _optionf["x0"];
+  float& y0 = _optionf["y0"];
+  float& campsi = _optionf["campsi"];
+  float& camtheta = _optionf["camtheta"];
+  float& camphi = _optionf["camphi"];
+  float x = 0;
+  float y = 0;
+  bool action = false;
+  if ( this->getMousePress(_mouseButtonLeft) ) {
+    action = true;
+    if ( _modeMouse != mode_mouse ){
+      _modeMouse = mode_mouse;
+      this->getMousePosition(x0,y0);
+    }
+    this->getMousePosition(x,y);
+    using namespace geometry;
+    //std::cerr << "start" << std::endl;
+    mat3d euler = matEuler(campsi,camtheta,camphi);
+    vec3d axe1({{euler[2],euler[5],euler[8]}});
+    vec3d axe2({{euler[1],euler[4],euler[7]}});
+    double angle1 = (x0-x)/_width*twopi;
+    double angle2 = (y0-y)/_height*twopi;
+    auto mat1 = matRotation(angle1,axe1);
+    auto mat2 = matRotation(angle2,axe2);
+    auto total = (mat1*mat2)*euler;
+    auto newangles = anglesEuler(total);
+    if ( !this->getCharPress(_keyX) )
+      campsi   = newangles[0];
+    if ( !this->getCharPress(_keyY) )
+      camtheta = newangles[1];
+    if ( !this->getCharPress(_keyZ) )
+      camphi   = newangles[2];
+    x0 = x; y0 = y;
+  }
+  else if ( this->getMousePress(_mouseButtonRight) ) {
+    action = true;
+    if ( _modeMouse != mode_mouse ){
+      _modeMouse = mode_mouse;
+      this->getMousePosition(x0,y0);
+    }
+    this->getMousePosition(x,y);
+    using namespace geometry;
+
+    const double shiftX = (x-x0)/_width;
+    const double shiftY = (y0-y)/_height;
+    _optionf["shiftOriginX"] += shiftX;
+    _optionf["shiftOriginY"] += shiftY;
+
+    x0 = x; y0 = y;
+  }
+  else if (_modeMouse == mode_mouse ) {
+    _modeMouse = mode_static;
+    this->getChar(_keyX);
+    this->getChar(_keyY);
+    this->getChar(_keyZ);
+  }
+  return action;
 }
 
 void Window::help(){

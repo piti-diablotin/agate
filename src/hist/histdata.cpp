@@ -554,6 +554,7 @@ HistData* HistData::getHist(const std::string& infile, bool wait){
   allFormat.push_back(std::make_pair(std::unique_ptr<HistData>(new HistDataPolyDtset),""));   //8
 
   std::string file = infile;
+  if (file.empty()) throw EXCEPTION("Filename is empty",ERRDIV);
   UriParser uri;
   if ( uri.parse(infile) ) {
     file = uri.getFile();

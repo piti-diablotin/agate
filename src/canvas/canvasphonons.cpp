@@ -174,7 +174,7 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
     else {
       EigParser* eig = nullptr;
       try {
-        EigParser::getEigParser(filename);
+        eig = EigParser::getEigParser(filename);
       }
       catch( Exception &e ) {
         return false;
@@ -802,6 +802,7 @@ void CanvasPhonons::buildAnimation() {
         }
         if ( itime == 0 ) {
           hist = new HistDataDtset(supercell);
+          hist->setTryToMap(false);
         }
         else {
           HistDataDtset histi(supercell);

@@ -81,6 +81,7 @@ class HistData {
     unsigned _ntime;    ///< Number of time step.
     unsigned _nimage;   ///< Number of images if used.
     bool     _isPeriodic; ///< Are the position all inside the cell or not
+    bool     _tryToMap; ///< Try to map structure when concatenating
 
 #ifdef HAVE_CPPTHREAD
     std::atomic<unsigned> _ntimeAvail;    ///< Number of time step.
@@ -497,6 +498,8 @@ class HistData {
      *
      */
     void decorrelate(unsigned tbegin, unsigned tend, unsigned ntime, double T, double mu, unsigned step);
+    bool getTryToMap() const;
+    void setTryToMap(bool tryToMap);
 };
 
 #endif  // HISTDATA_HPP

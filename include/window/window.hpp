@@ -81,6 +81,19 @@ class Window {
      */
     void lookAt(double zoom, double tx, double ty, double tz);
 
+    /**
+     * Process the command with the corresponding options
+     * @param token The corresponding token from the user
+     * @param cin The stream with all the options if needed
+     */
+    void my_alter(std::string &token, std::istringstream &cin);
+
+    /**
+     * Process mouse event
+     * @return tru if an action occured
+     */
+    bool handleMouse();
+
 
   protected :
 

@@ -46,12 +46,17 @@
 class ElectronDos {
 
   private :
+    int _prtdos;
     int _nsppol;
-    int _natom;
+    int _iatom;
+    int _nenergy;
+    bool _prtdosm;
+    bool _pawDecomposition;
     double _efermi;
     std::vector<double> _energies;
-    std::vector<double> _dosTotal;
-    std::vector<double> _dosProjected;
+    std::vector<std::vector<double>> _dos;
+    std::vector<std::vector<double>> _integrated;
+    std::vector<std::vector<double>> _lm;
 
   protected :
 
@@ -70,6 +75,20 @@ class ElectronDos {
     void readFromFile(const std::string &filename);
 
     void readFromFile(std::istream &stream);
+
+    bool isProjected() const;
+
+    bool isMResolved() const;
+
+    int prtdos() const;
+
+    int iatom() const;
+
+    int nsppol() const;
+
+    double efermi() const;
+
+    int nenergy() const;
 };
 
 #endif  // ELECTRONDOS_HPP

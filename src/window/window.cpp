@@ -542,10 +542,10 @@ bool Window::userInput(std::stringstream& info) {
   if ( _mode == mode_process ) _mode = mode_static;
 
   try {
-    bool firstRun = true;
+    //bool firstRun = true;
     //while ( !_inputChar.empty() || firstRun ) {
     {
-      firstRun = false;
+      //firstRun = false;
       while ( !_inputChar.empty() ) {
         action = true;
         char ic = static_cast<char>(_inputChar.front());

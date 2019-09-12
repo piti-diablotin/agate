@@ -630,6 +630,8 @@ a.at(i) += i;
   else
     AC_MSG_WARN([OpenMP does not seem to be working -> Not used])
   fi
+else
+  have_omp=no
 fi
 
 AC_SUBST([AM_CXXFLAGS])

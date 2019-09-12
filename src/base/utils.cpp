@@ -362,7 +362,7 @@ namespace utils {
   }
 
 #ifndef _WIN32
-  std::vector<std::pair<long int, std::string>> ls(std::string pattern) {
+  std::vector<std::pair<long int, std::string>> ls(std::string dir, std::string pattern) {
 
     DIR *dp;
     dirent *d;
@@ -370,7 +370,7 @@ namespace utils {
     std::regex search(pattern);
     std::vector<std::pair<long int, std::string>> files;
 
-    if((dp = opendir(".")) == NULL)
+    if((dp = opendir(dir.c_str())) == NULL)
       throw EXCEPTION("Unable to open current directory", ERRABT);
 
     struct stat fordate;

@@ -1415,6 +1415,9 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
 
     Graph::plotBand(*(_eigparser.get()),parser,_gplot.get(),save);
   }
+  else if ( function == "dos" ) {
+    Graph::plotDOS(parser,_gplot.get(),save);
+  }
   else if ( function == "conducti" ) {
     if ( _histdata == nullptr ) return;
     Graph::Config config;

@@ -53,6 +53,38 @@ int ElectronDos::nenergy() const
   return _nenergy;
 }
 
+const std::vector<double>&ElectronDos::dos(unsigned isppol, int tsmear) {
+  if ( tsmear != 0 && tsmear != 1 && tsmear != -1 )
+    throw EXCEPTION("Bad value for tsmear",ERRDIV);
+  if ( _prtdos != 1 && tsmear != 0 )
+    throw EXCEPTION("tsmear != 0 not allowed for prtdos 1",ERRDIV);
+  if ( isppol<1 && isppol >_nsppol )
+    throw EXCEPTION("Bad value for isppol",ERRDIV);
+
+}
+
+const std::vector<double>&ElectronDos::dos(unsigned isppol, unsigned angular, int magnetic) {
+  if ( isppol<1 && isppol >_nsppol )
+    throw EXCEPTION("Bad value for isppol",ERRDIV);
+  if ( this->isProjected() && angular >4 )
+    throw EXCEPTION("Bad value for angular",ERRDIV);
+  if ( this->isMResolved() && (magnetic > angular || magnetic < -1*(int)(angular) ) )
+    throw EXCEPTION("Bad value for magnetic",ERRDIV);
+
+}
+
+const std::vector<double>&ElectronDos::dos(unsigned isppol, unsigned angular, ElectronDos::PAWPart part) {
+  if ( isppol<1 && isppol >_nsppol )
+    throw EXCEPTION("Bad value for isppol",ERRDIV);
+
+}
+
+const std::vector<double>&ElectronDos::dos(unsigned isppol, ElectronDos::SOCProj proj) {
+  if ( isppol<1 && isppol >_nsppol )
+    throw EXCEPTION("Bad value for isppol",ERRDIV);
+
+}
+
 ElectronDos::ElectronDos() :
   _prtdos(0),
   _nsppol(1),

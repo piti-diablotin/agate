@@ -789,7 +789,7 @@ void Window::drawAxis() {
     for ( unsigned i = 0 ; i < 3 ; ++i ) {
       double norm = 0;
       for ( unsigned j = 0 ; j < 3 ; ++j ) norm += vec[i][j]*vec[i][j];
-      norm = std::sqrt(norm*0.5);
+      norm = std::sqrt(norm*0.25);
       for ( unsigned j = 0 ; j < 3 ; ++j ) vec[i][j] /= norm;
     }
 
@@ -805,8 +805,8 @@ void Window::drawAxis() {
     _arrow->draw(start,vec[i],0.1);
   }
   for ( unsigned i = 0 ; i < 3 ; ++i ) {
-    glRasterPos3f((GLfloat)vec[i][0],(GLfloat)vec[i][1],(GLfloat)vec[i][2]);
-    _render.render(label[i]);
+    glRasterPos3f((GLfloat)vec[i][0]*1.1,(GLfloat)vec[i][1]*1.1,(GLfloat)vec[i][2]*1.1);
+    _render.render(label[i],true);
   }
   _render._doRender = state;
   _arrow->pop();

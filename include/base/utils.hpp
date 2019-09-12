@@ -254,7 +254,7 @@ namespace utils {
    * @pattern Regex expression to find files.
    * @return A vector containing a pair of timestamp (modification time) and file name
    */
-  std::vector<std::pair<long int, std::string>> ls(std::string pattern=".*");
+  std::vector<std::pair<long int, std::string>> ls(std::string dir, std::string pattern=".*");
 
   template<typename T>
     T parseNumber(std::string& str) {

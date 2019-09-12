@@ -127,13 +127,15 @@ void CanvasPhonons::openFile(const std::string& filename) {
     this->clear();
     _reference = Dtset(*hist);
     _originalFile = hist->filename();
+    delete hist;
+    hist = nullptr;
     _displacements = DispDB(_reference.natom());
     _condensedModes.clear();
     bool disploaded = this->readDdb(filename);
     _qptModes = _condensedModes.end();
     this->buildAnimation();
     if ( !disploaded ) 
-      throw EXCEPTION("You need to load a DDB file",ERRWAR);
+      throw EXCEPTION("You need to load a \"DDB\" file now",ERRWAR);
   }
   catch (Exception& e) {
     if ( e.getReturnValue() != ERRWAR ) {
@@ -527,7 +529,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     try {
       config.filename = parser.getToken<std::string>("output");
     }
-    catch (Exception &e) {
+    catch (...) {
       config.filename = utils::noSuffix(filetraj)+"_Analysis";
     }
 
@@ -564,6 +566,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
     catch (Exception &e) {
       e.ADD("Unable to match reference structure with supercell",ERRDIV);
+      delete trajectory;
       throw e;
     }
 

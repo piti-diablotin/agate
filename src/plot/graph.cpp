@@ -30,6 +30,7 @@
 #include <iomanip>
 #include <algorithm>
 #include "io/eigparserelectrons.hpp"
+#include "io/electrondos.hpp"
 
 //
 Graph::Graph() : _xlabel(),
@@ -421,4 +422,33 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
   Graph::plot(config,gplot);
   if ( gplot != nullptr )
     gplot->clearCustom();
+}
+
+void Graph::plotDOS(ConfigParser &config, Graph *gplot, Graph::GraphSave save)
+{
+  std::vector<std::pair<long int, std::string>> files;
+  std::string dir;
+  try {
+    std::string prefix = config.getToken<std::string>("prefix");
+    auto pos = prefix.find_last_of("/\\");
+    dir = prefix.substr(0,pos);
+    pos = ( pos == std::string::npos ? 0 : pos+1);
+    files = std::move(utils::ls(dir,prefix.substr(pos)+"_DOS.*"));
+  }
+  catch (...) {
+    throw EXCEPTION("Problem getting file names",ERRDIV);
+  }
+  std::vector<ElectronDos> dos;
+  for ( auto f : files ) {
+    try {
+      ElectronDos edos;
+      edos.readFromFile(dir+"/"+f.second);
+      dos.push_back(edos);
+    }
+    catch(Exception &e) {
+      e.ADD("Ignoring file "+f.second,ERRWAR);
+      std::clog << e.fullWhat() << std::endl;
+    }
+  }
+  std::clog << dos.size() << std::endl;
 }

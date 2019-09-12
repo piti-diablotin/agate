@@ -179,25 +179,25 @@ class Graph {
      * Setter
      * @param lab The new value 
      */
-    virtual void setXLabel(std::string lab) { _xlabel = lab; };
+    virtual void setXLabel(std::string lab) { _xlabel = lab; }
 
     /**
      * Setter
      * @param lab The new value 
      */
-    virtual void setYLabel(std::string lab) { _ylabel = lab; };
+    virtual void setYLabel(std::string lab) { _ylabel = lab; }
 
     /**
      * Setter
      * @param lab The new value 
      */
-    virtual void setTitle(std::string lab) { _title = lab; };
+    virtual void setTitle(std::string lab) { _title = lab; }
 
     /**
      * Setter
      * @param title the new window title
      */
-    virtual void setWinTitle(std::string title) { _winTitle = title; };
+    virtual void setWinTitle(std::string title) { _winTitle = title; }
 
     /**
      * Set the range of y axis
@@ -267,6 +267,14 @@ class Graph {
      * @param save What to do with the calculated data : plot ? save to file ? save raw data?
      */
     static void plotBand(EigParser &eigparser, ConfigParser &config, Graph* gplot, Graph::GraphSave save);
+
+    /**
+     * Function to plot DOS
+     * @param parser A ConfigParser to get the parameters for the plot
+     * @param gplot The graph to plot to. If nullptr, nothing plot but data written
+     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
+     */
+    static void plotDOS(ConfigParser &config, Graph* gplot, Graph::GraphSave save);
 };
 
 #endif  // GRAPH_HPP

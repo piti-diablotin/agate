@@ -89,6 +89,17 @@ class ElectronDos {
     double efermi() const;
 
     int nenergy() const;
+
+    enum PAWPart {PW,AE,PS};
+    enum SOCProj {UU,UD,DU,DD,X,Y,Z};
+
+    const std::vector<double>& dos(unsigned isppol,int tsmear=0); // prtdos1 prtdos2
+
+    const std::vector<double>& dos(unsigned isppol, unsigned  angular, int magnetic); // prtdos 3
+
+    const std::vector<double>& dos(unsigned isppol, unsigned angular, PAWPart part); // prtdos 3
+
+    const std::vector<double>& dos(unsigned isppol, SOCProj proj); // prtdos 5
 };
 
 #endif  // ELECTRONDOS_HPP

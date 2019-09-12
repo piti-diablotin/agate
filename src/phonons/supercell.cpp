@@ -216,6 +216,8 @@ void Supercell::findReference(const Dtset& dtset) {
       || _natom != multiplicity*dtset.natom() )
     throw EXCEPTION("Volume multiplicity does not match cell multiplicity", ERRDIV);
 
+  //std::clog << _dim[0] << " " << _dim[1] << " " << _dim[2] << std::endl;
+
   auto ref_typat = dtset.typat();
   auto ref_znucl = dtset.znucl();
   auto ref_xcart = dtset.xcart();
@@ -242,7 +244,8 @@ void Supercell::findReference(const Dtset& dtset) {
 
   // Now find reference atom in the reference supercell
   // This might be very slow but is the easiest and should always work
-#pragma omp parallel for schedule(static)
+  Exception e;
+#pragma omp parallel for schedule(static), shared(e)
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) { // For each supercell atom
     vec3d pos = _xcart[iatom];
     unsigned guess[3] = {0};
@@ -250,6 +253,7 @@ void Supercell::findReference(const Dtset& dtset) {
     for ( unsigned i = 0 ; i < 3 ; ++ i ) {
       const double normvec = norm(ref_vec[i]);
       guess[i] = (unsigned) max(0.e0,dot(pos,ref_vec[i])/(normvec*normvec)-1);
+      guess[i] = (unsigned) min(guess[i],(unsigned)_dim[i]-1);
     }
     //std::cerr << "Guess " << guess[0] << " " << guess[1] << " " << guess[2] << std::endl;
 
@@ -287,10 +291,14 @@ void Supercell::findReference(const Dtset& dtset) {
       }
     }
     if ( match == (unsigned) -1 )
-      throw EXCEPTION("Error finding reference structure",ERRDIV);
+#pragma omp critical
+    {
+      e.ADD("Error finding reference atom for atom supercell "+utils::to_string(iatom+1),ERRDIV);
+    }
     _baseAtom[iatom] = match;
     _cellCoord[iatom] = R;
   }
+  if ( e.getReturnValue() != 0 ) throw e;
   //*
   std::vector<unsigned> check(dtset.natom(),0);
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {

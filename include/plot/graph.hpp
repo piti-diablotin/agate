@@ -43,6 +43,7 @@
 #include <fstream>
 #include "io/configparser.hpp"
 //#include "io/eigparser.hpp"
+#include "plot/dosdb.hpp"
 
 class EigParser;
 
@@ -274,7 +275,7 @@ class Graph {
      * @param gplot The graph to plot to. If nullptr, nothing plot but data written
      * @param save What to do with the calculated data : plot ? save to file ? save raw data?
      */
-    static void plotDOS(ConfigParser &config, Graph* gplot, Graph::GraphSave save);
+    static void plotDOS(DosDB& db, ConfigParser &config, Graph* gplot, Graph::GraphSave save);
 };
 
 #endif  // GRAPH_HPP

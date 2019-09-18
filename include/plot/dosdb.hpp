@@ -37,6 +37,7 @@
 #endif
 
 #include "io/electrondos.hpp"
+#include <unordered_map>
 
 /** 
  *
@@ -45,6 +46,7 @@ class DosDB {
 
   private :
     std::vector<ElectronDos> _db;
+    std::unordered_map<unsigned,unsigned> _ordering;
 
   protected :
 
@@ -61,6 +63,13 @@ class DosDB {
     virtual ~DosDB();
 
     void buildFromPrefix(std::string prefix);
+
+    std::vector<unsigned> list() const;
+
+    const ElectronDos& total() const;
+
+    const ElectronDos& atom(unsigned iatom) const;
+
 };
 
 #endif  // DOSDB_HPP

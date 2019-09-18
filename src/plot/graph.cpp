@@ -424,31 +424,144 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
     gplot->clearCustom();
 }
 
-void Graph::plotDOS(ConfigParser &config, Graph *gplot, Graph::GraphSave save)
+void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphSave save)
 {
-  std::vector<std::pair<long int, std::string>> files;
-  std::string dir;
-  try {
-    std::string prefix = config.getToken<std::string>("prefix");
-    auto pos = prefix.find_last_of("/\\");
-    dir = prefix.substr(0,pos);
-    pos = ( pos == std::string::npos ? 0 : pos+1);
-    files = std::move(utils::ls(dir,prefix.substr(pos)+"_DOS.*"));
+  Graph::Config config;
+  std::vector<double> &x = config.x;
+  std::list<std::vector<double>> &y = config.y;
+  std::list<std::string> &labels = config.labels;
+  std::vector<short> &colors = config.colors;
+  std::string &filename = config.filename;
+  std::string &xlabel = config.xlabel;
+  std::string &ylabel = config.ylabel;
+  std::string &title = config.title;
+  config.doSumUp = false;
+
+  title = "Density of States";
+
+  auto list = db.list();
+  if ( list.size() == 0 ) throw EXCEPTION("Empty database",ERRDIV);
+
+  if ( parser.hasToken("output") )
+    filename=parser.getToken<std::string>("output");
+
+  if ( parser.hasToken("xrange")) {
+    std::string range = parser.getToken<std::string>("xrange");
+    auto r = utils::explode(range,':');
+    if ( r.size() != 2 ) throw EXCEPTION("xrange must be like xmin:xmax",ERRDIV);
+    if ( gplot != nullptr ) gplot->setXRange(utils::parseNumber<double>(r[0]),utils::parseNumber<double>(r[1]));
   }
-  catch (...) {
-    throw EXCEPTION("Problem getting file names",ERRDIV);
+
+  if ( parser.hasToken("yrange")) {
+    std::string range = parser.getToken<std::string>("yrange");
+    auto r = utils::explode(range,':');
+    if ( r.size() != 2 ) throw EXCEPTION("yrange must be like xmin:xmax",ERRDIV);
+    if ( gplot != nullptr ) gplot->setYRange(utils::parseNumber<double>(r[0]),utils::parseNumber<double>(r[1]));
   }
-  std::vector<ElectronDos> dos;
-  for ( auto f : files ) {
+
+  UnitConverter unit(UnitConverter::Ha);
+  x = db.atom(list[0]).energies();
+  double fermi = db.atom(list[0]).efermi();
+  if ( parser.hasToken("eunit")) {
+    unit = UnitConverter::getUnit(parser.getToken<std::string>("eunit"));
+  }
+  for ( auto& xx : x ) xx =( xx - fermi ) * unit;
+
+  xlabel = std::string("Energy [")+unit.str()+std::string("]");
+  ylabel = "DOS [au]";
+
+  bool spin[] = {false,false};
+  if ( parser.hasToken("spin") ) { // Select one spin
+    int ispin = parser.getToken<int>("spin");
+    if ( ispin != 1 && ispin != 2 )
+      throw EXCEPTION("Bad value for spin. Expecting 1 or 2",ERRDIV);
+    ispin--;// 0 or 1;
+    spin[ispin] = true;
+  }
+  else {
+    spin[0] = true; spin[1] = true;
+  }
+  int nsppol = 1;
+  if ( (nsppol=db.atom(list[0]).nsppol())==1 ) spin[1]=false;
+
+  for (unsigned ispin = 0 ; ispin < 2 ; ++ispin ) {
+    if (spin[ispin] == false) continue;
+        std::string spinLabel = (nsppol==1) ? "" :
+                                              (ispin==0 ? " Spin 1" : " Spin 2");
+
+    if ( parser.hasToken("projection") ) { // Make the projections
+      std::string askedProjection = parser.getToken<std::string>("projection");
+      for ( auto proj : utils::explode(askedProjection,',')) {
+        auto params = utils::explode(proj,':');
+        if ( params.size() == 0 ) continue;
+        unsigned iatom = utils::parseNumber<unsigned>(params[0]);
+        auto it = std::find(list.begin(),list.end(),iatom);
+        if ( it == list.end() ) continue; // atom not found
+        auto dos = db.atom(iatom);
+        std::vector<double> toPlot;
+        if ( params.size() > 1 ) {
+          ElectronDos::Angular angular; bool doAng = false;
+          ElectronDos::SOCProj soc;
+          if      ( (doAng = (params[1] == "s")) ) angular = ElectronDos::s;
+          else if ( (doAng = (params[1] == "p")) ) angular = ElectronDos::p;
+          else if ( (doAng = (params[1] == "d")) ) angular = ElectronDos::d;
+          else if ( (doAng = (params[1] == "f")) ) angular = ElectronDos::f;
+          else if ( (doAng = (params[1] == "g")) ) angular = ElectronDos::g;
+          else if ( params[1] == "uu" ) soc = ElectronDos::UU;
+          else if ( params[1] == "dd" ) soc = ElectronDos::DD;
+          else if ( params[1] == "ud" ) soc = ElectronDos::UD;
+          else if ( params[1] == "du" ) soc = ElectronDos::DU;
+          else if ( params[1] == "x"  )  soc = ElectronDos::X;
+          else if ( params[1] == "y"  )  soc = ElectronDos::Y;
+          else if ( params[1] == "z"  )  soc = ElectronDos::Z;
+          else continue;
+          if ( params.size() > 2 ) {
+            // l+m projection
+            int magnetic = utils::parseNumber<unsigned>(params[2]);
+            toPlot = dos.dos(ispin+1,angular,magnetic);
+          }
+          else {
+            if ( doAng ) {
+              // l projection only
+              if ( parser.hasToken("paw") ){
+                ElectronDos::PAWPart paw;
+                std::string inpaw = parser.getToken<std::string>("paw");
+                if ( inpaw == "pw" ) paw = ElectronDos::PW;
+                else if ( inpaw == "ae" ) paw = ElectronDos::AE;
+                else if ( inpaw == "ps" ) paw = ElectronDos::PS;
+                else continue;
+                toPlot = dos.dos(ispin+1,angular,paw);
+                spinLabel += " "+inpaw;
+              }
+              else {
+                toPlot = dos.dos(ispin+1,angular);
+              }
+            }
+            else { // doSoc
+                toPlot = dos.dos(soc);
+            }
+          }
+        }
+        else {
+          toPlot = dos.dos(ispin+1);
+        }
+        y.push_back(toPlot);
+        labels.push_back(proj+spinLabel);
+      }
+    }
     try {
-      ElectronDos edos;
-      edos.readFromFile(dir+"/"+f.second);
-      dos.push_back(edos);
+      auto it = std::find(list.begin(),list.end(),0);
+      if ( it != list.end() ) {
+        const ElectronDos& total = db.total();
+        y.push_back(total.dos(ispin+1));
+        labels.push_back("Total"+spinLabel);
+      }
     }
-    catch(Exception &e) {
-      e.ADD("Ignoring file "+f.second,ERRWAR);
-      std::clog << e.fullWhat() << std::endl;
-    }
+    catch (...)
+    {}
   }
-  std::clog << dos.size() << std::endl;
+  config.save = save;
+  Graph::plot(config,gplot);
+  if ( gplot != nullptr )
+    gplot->clearCustom();
 }

@@ -26,19 +26,20 @@
 
 #include "io/electrondos.hpp"
 #include "base/exception.hpp"
+#include <numeric>
 
 //
-int ElectronDos::prtdos() const
+unsigned ElectronDos::prtdos() const
 {
     return _prtdos;
 }
 
-int ElectronDos::iatom() const
+unsigned ElectronDos::atom() const
 {
     return _iatom;
 }
 
-int ElectronDos::nsppol() const
+unsigned ElectronDos::nsppol() const
 {
     return _nsppol;
 }
@@ -48,41 +49,67 @@ double ElectronDos::efermi() const
   return _efermi;
 }
 
-int ElectronDos::nenergy() const
+unsigned ElectronDos::nenergy() const
 {
   return _nenergy;
 }
 
-const std::vector<double>&ElectronDos::dos(unsigned isppol, int tsmear) {
+std::vector<double> ElectronDos::dos(unsigned isppol, int tsmear) const {
   if ( tsmear != 0 && tsmear != 1 && tsmear != -1 )
     throw EXCEPTION("Bad value for tsmear",ERRDIV);
   if ( _prtdos != 1 && tsmear != 0 )
     throw EXCEPTION("tsmear != 0 not allowed for prtdos 1",ERRDIV);
   if ( isppol<1 && isppol >_nsppol )
     throw EXCEPTION("Bad value for isppol",ERRDIV);
+  isppol--; // isppol should be 0 or 1 not 1 or 2...
+  int ndos = (_prtdos == 1 ? 3 : 1);
+  if ( tsmear == 0 ) return _dos[ndos*isppol];
+  else if ( tsmear == 1 ) return _dos[ndos*isppol+1];
+  else return _dos[ndos*isppol+2];
+}
+
+std::vector<double> ElectronDos::dos(unsigned isppol, ElectronDos::Angular angular) const {
+  if ( isppol<1 && isppol >_nsppol )
+    throw EXCEPTION("Bad value for isppol",ERRDIV);
+  if ( !this->isProjected() )
+    throw EXCEPTION("Not a projected DOS",ERRDIV);
+  isppol--; // isppol should be 0 or 1 not 1 or 2...
+  return _dos[5*isppol+(unsigned) angular];
+
 
 }
 
-const std::vector<double>&ElectronDos::dos(unsigned isppol, unsigned angular, int magnetic) {
+std::vector<double> ElectronDos::dos(unsigned isppol, ElectronDos::Angular angular, int magnetic) const {
   if ( isppol<1 && isppol >_nsppol )
     throw EXCEPTION("Bad value for isppol",ERRDIV);
-  if ( this->isProjected() && angular >4 )
-    throw EXCEPTION("Bad value for angular",ERRDIV);
-  if ( this->isMResolved() && (magnetic > angular || magnetic < -1*(int)(angular) ) )
+  if ( !this->isProjected() )
+    throw EXCEPTION("Not a projected DOS",ERRDIV);
+  if ( this->isMResolved() && (magnetic > (int) angular || magnetic < -1*(int)(angular) ) )
     throw EXCEPTION("Bad value for magnetic",ERRDIV);
+  isppol--; // isppol should be 0 or 1 not 1 or 2...
+  int lbegin = 0;
+  for ( int il = 0 ; il < (int)(angular) ; ++il ) {
+    lbegin += (2*il+1);
+  }
+  return _lm[25*isppol+lbegin+(int)(angular)+magnetic];
+}
+
+std::vector<double> ElectronDos::dos(unsigned isppol, ElectronDos::Angular angular, ElectronDos::PAWPart part) const {
+  if ( isppol<1 && isppol >_nsppol )
+    throw EXCEPTION("Bad value for isppol",ERRDIV);
+  isppol--; // isppol should be 0 or 1 not 1 or 2...
+
+  return _dos[4*5*isppol+(unsigned)part*5+(unsigned) angular];
 
 }
 
-const std::vector<double>&ElectronDos::dos(unsigned isppol, unsigned angular, ElectronDos::PAWPart part) {
-  if ( isppol<1 && isppol >_nsppol )
-    throw EXCEPTION("Bad value for isppol",ERRDIV);
-
+std::vector<double> ElectronDos::dos(ElectronDos::SOCProj proj) const {
+  return _dos[(unsigned) proj];
 }
 
-const std::vector<double>&ElectronDos::dos(unsigned isppol, ElectronDos::SOCProj proj) {
-  if ( isppol<1 && isppol >_nsppol )
-    throw EXCEPTION("Bad value for isppol",ERRDIV);
-
+std::vector<double> ElectronDos::energies() const
+{
+  return _energies;
 }
 
 ElectronDos::ElectronDos() :
@@ -186,14 +213,11 @@ void ElectronDos::readFromFile(std::istream &stream)
       _integrated.resize(1*_nsppol);
       break;
     case 3:
-      if (this->isProjected()) {
-        _dos.resize(5*_nsppol);
-        _integrated.resize(5*_nsppol);
-      }
-      else {
+      // Suppose only the total DOS.
+      // Projected will be handle later because we don't know
+      // if this is for an atom or not
         _dos.resize(1*_nsppol);
         _integrated.resize(1*_nsppol);
-      }
       break;
     case 5: // nsppol = 1 since this is non col mag;
         _dos.resize(7);
@@ -204,7 +228,7 @@ void ElectronDos::readFromFile(std::istream &stream)
       break;
   }
 
-  for ( int isppol = 0 ; isppol < _nsppol ; ++isppol ) {
+  for ( unsigned isppol = 0 ; isppol < _nsppol ; ++isppol ) {
     // READ HEADER EXTRA
     if ( isppol == 1 ) std::getline(stream,tmp); // # empty line for spin down ...
     if ( _nsppol == 2 ) std::getline(stream,tmp); // # Spin
@@ -229,6 +253,10 @@ void ElectronDos::readFromFile(std::istream &stream)
         }
         if ( tmp.find("lm") != std::string::npos ) _prtdosm = true;
         if ( isppol == 0 && _prtdosm ) _lm.resize(25*_nsppol);
+        if ( isppol == 0 && this->isProjected()) {
+          _dos.resize(5*_nsppol);
+          _integrated.resize(5*_nsppol);
+        }
       }
       else {
         _pawDecomposition = true;
@@ -261,7 +289,7 @@ void ElectronDos::readFromFile(std::istream &stream)
       dp.resize(_nenergy);
       dm.resize(_nenergy);
       integ.resize(_nenergy);
-      for (int e = 0 ; e < _nenergy ; ++e)
+      for (unsigned e = 0 ; e < _nenergy ; ++e)
         // energy dos integ dos+tsmear/2 dos-tsmear/2
         stream >> _energies[e] >> d[e] >> integ[e] >> dp[e] >> dm[e];
 
@@ -271,7 +299,7 @@ void ElectronDos::readFromFile(std::istream &stream)
       std::vector<double> &integ = _integrated[isppol];
       d.resize(_nenergy);
       integ.resize(_nenergy);
-      for (int e = 0 ; e < _nenergy ; ++e)
+      for (unsigned e = 0 ; e < _nenergy ; ++e)
         // energy dos integ
         stream >> _energies[e] >> d[e] >> integ[e];
     }
@@ -280,7 +308,7 @@ void ElectronDos::readFromFile(std::istream &stream)
       for (auto &i : _integrated ) i.resize(_nenergy);
       for (auto &lm : _lm) lm.resize(_nenergy);
 
-      for (int e = 0 ; e < _nenergy ; ++e) {
+      for (unsigned e = 0 ; e < _nenergy ; ++e) {
         stream >> _energies[e];
         for ( unsigned d = isppol*_dos.size()/_nsppol ; d < (isppol+1)*_dos.size()/_nsppol ; ++d)
           stream >> _dos[d][e];
@@ -296,6 +324,7 @@ void ElectronDos::readFromFile(std::istream &stream)
         // energy  UU UD DU DD X Y Z -> UU UD DU DD X Y Z
       }
     }
+    std::getline(stream,tmp); // end line
   }
 }
 

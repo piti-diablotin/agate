@@ -46,10 +46,10 @@
 class ElectronDos {
 
   private :
-    int _prtdos;
-    int _nsppol;
-    int _iatom;
-    int _nenergy;
+    unsigned _prtdos;
+    unsigned _nsppol;
+    unsigned _iatom;
+    unsigned _nenergy;
     bool _prtdosm;
     bool _pawDecomposition;
     double _efermi;
@@ -80,26 +80,31 @@ class ElectronDos {
 
     bool isMResolved() const;
 
-    int prtdos() const;
+    unsigned prtdos() const;
 
-    int iatom() const;
+    unsigned atom() const;
 
-    int nsppol() const;
+    unsigned nsppol() const;
 
     double efermi() const;
 
-    int nenergy() const;
+    unsigned nenergy() const;
 
-    enum PAWPart {PW,AE,PS};
-    enum SOCProj {UU,UD,DU,DD,X,Y,Z};
+    enum PAWPart {PW=0,AE=1,PS=2};
+    enum SOCProj {UU=0,UD=1,DU=2,DD=3,X=4,Y=5,Z=6};
+    enum Angular {s=0,p=1,d=2,f=3,g=4};
 
-    const std::vector<double>& dos(unsigned isppol,int tsmear=0); // prtdos1 prtdos2
+    std::vector<double> dos(unsigned isppol,int tsmear=0) const; // prtdos1 prtdos2
 
-    const std::vector<double>& dos(unsigned isppol, unsigned  angular, int magnetic); // prtdos 3
+    std::vector<double> dos(unsigned isppol, Angular angular) const; // prtdos 3
 
-    const std::vector<double>& dos(unsigned isppol, unsigned angular, PAWPart part); // prtdos 3
+    std::vector<double> dos(unsigned isppol, Angular angular, int magnetic) const; // prtdos 3
 
-    const std::vector<double>& dos(unsigned isppol, SOCProj proj); // prtdos 5
+    std::vector<double> dos(unsigned isppol, Angular angular, PAWPart part) const; // prtdos 3
+
+    std::vector<double> dos(SOCProj proj) const; // prtdos 5
+
+    std::vector<double> energies() const;
 };
 
 #endif  // ELECTRONDOS_HPP

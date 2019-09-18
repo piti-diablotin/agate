@@ -61,6 +61,7 @@
 #include "conducti/abiopt.hpp"
 #include "conducti/conducti.hpp"
 #include "base/unitconverter.hpp"
+#include "plot/dosdb.hpp"
 
 using namespace Agate;
 
@@ -1416,7 +1417,9 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
     Graph::plotBand(*(_eigparser.get()),parser,_gplot.get(),save);
   }
   else if ( function == "dos" ) {
-    Graph::plotDOS(parser,_gplot.get(),save);
+    DosDB db;
+    db.buildFromPrefix(parser.getToken<std::string>("prefix"));
+    Graph::plotDOS(db,parser,_gplot.get(),save);
   }
   else if ( function == "conducti" ) {
     if ( _histdata == nullptr ) return;

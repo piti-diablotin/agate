@@ -31,7 +31,8 @@
 
 //
 DosDB::DosDB() :
-  _db()
+  _db(),
+  _ordering()
 {
   ;
 }
@@ -54,16 +55,41 @@ void DosDB::buildFromPrefix(std::string prefix)
   catch (...) {
     throw EXCEPTION("Problem getting file names",ERRDIV);
   }
+  int j = 0;
   for ( auto f : files ) {
     try {
       ElectronDos edos;
       edos.readFromFile(dir+"/"+f.second);
       _db.push_back(edos);
+      _ordering[edos.atom()] = j++;
     }
     catch(Exception &e) {
       e.ADD("Ignoring file "+f.second,ERRWAR);
       std::clog << e.fullWhat() << std::endl;
     }
   }
+}
+
+std::vector<unsigned> DosDB::list() const {
+  std::vector<unsigned> available(_db.size());
+  for ( unsigned i = 0 ; i < _db.size() ; ++i ) {
+    available[i] = _db[i].atom();
+  }
+  return available;
+
+}
+
+const ElectronDos& DosDB::total() const {
+  auto it = _ordering.find(0);
+  if ( it == _ordering.end() )
+    throw EXCEPTION("Total DOS not available",ERRDIV);
+  return _db[it->second];
+}
+
+const ElectronDos& DosDB::atom(unsigned iatom) const {
+  auto it = _ordering.find(iatom);
+  if ( it == _ordering.end() )
+    throw EXCEPTION("DOS for atom "+utils::to_string(iatom)+" not available",ERRDIV);
+  return _db[it->second];
 }
 

@@ -1186,7 +1186,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   std::list<std::vector<double>> &y = config.y;
   std::list<std::pair<std::vector<double>,std::vector<double>>> &xy = config.xy;
   std::list<std::string> &labels = config.labels;
-  std::vector<short> &colors = config.colors;
+  std::vector<unsigned> &colors = config.colors;
   std::string &filename = config.filename;
   std::string &xlabel = config.xlabel;
   std::string &ylabel = config.ylabel;
@@ -1386,7 +1386,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     std::vector<bool> alreadySet(_znucl.size(),false);
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom, ++p ) {
       auto typat = _typat[iatom]-1;
-      colors.push_back(typat+1);
+      colors.push_back(Graph::rgb(Agate::Mendeleev.color[_znucl[typat]]));
       if ( !alreadySet[typat] ) {
         labels.push_back(mendeleev::name[_znucl[typat]]);
         alreadySet[typat] = true;

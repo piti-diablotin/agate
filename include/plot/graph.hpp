@@ -107,7 +107,7 @@ class Graph {
       std::list<std::vector<unsigned>> rgb;
       std::list<std::pair<std::vector<double>,std::vector<double>>> xy;
       std::list<std::string> labels;
-      std::vector<short> colors;
+      std::vector<unsigned> colors;
       std::string filename;
       std::string xlabel;
       std::string ylabel;
@@ -147,14 +147,14 @@ class Graph {
      * @param y A vector with several y quantites to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<short> &colors) = 0;
+    virtual void plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<unsigned> &colors) = 0;
 
     /** 
      * Plot several quantities on the screen
      * @param xy A list of (x,y) pairs to plot
      * @param labels The labels corresponding to the y quantities.
      */
-    virtual void plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<short> &colors) = 0;
+    virtual void plot(const std::list< std::pair< std::vector<double>,std::vector<double> > > &xy, const std::list<std::string> &labels, const std::vector<unsigned> &colors) = 0;
 
     /** 
      * Plot several quantities on the screen
@@ -259,6 +259,22 @@ class Graph {
      * @param filename The name of the file to be written which contains the commands to plot the graph.
      */
     static void plot(const Config &conf, Graph* gplot);
+
+    /**
+     * Convert R G B color to unsigned value
+     * @param R red value between 0 and 255
+     * @param G red value between 0 and 255
+     * @param B red value between 0 and 255
+     * @return the integer value;
+     */
+      static unsigned rgb(unsigned R, unsigned G, unsigned B);
+
+    /**
+     * Convert R G B color to unsigned value
+     * @param rgb 3 values between 0 and 1;
+     * @return the integer value;
+     */
+      static unsigned rgb(float color[3]);
 
     /**
      * Function to plot a band structure

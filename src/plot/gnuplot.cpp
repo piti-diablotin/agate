@@ -59,7 +59,7 @@ Gnuplot::~Gnuplot() {
 }
 
 //
-void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<short> &colors) {
+void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<double>> &y, const std::list<std::string> &labels, const std::vector<unsigned> &colors) {
   using namespace std;
   std::stringstream total;
   _buffer.clear();
@@ -75,8 +75,8 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
     else {
       _buffer <<  "\"-\" t '' lw 3";
     }
-    if ( p < colors.size() )
-      _buffer << " lc " << colors[p];
+    if ( p < colors.size() && colors[p] != (unsigned) -1 )
+      _buffer << " lc rgbcolor " << colors[p];
     _buffer << ", ";
   }
 
@@ -152,7 +152,7 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
   }
 }
 
-void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<double>>> &xy, const std::list<std::string> &labels, const std::vector<short> &colors) {
+void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<double>>> &xy, const std::list<std::string> &labels, const std::vector<unsigned> &colors) {
   using namespace std;
   std::stringstream total;
   _buffer.clear();
@@ -168,8 +168,8 @@ void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<dou
     else {
       _buffer <<  "\"-\" t '' lw 3";
     }
-    if ( p < colors.size() )
-      _buffer << " lc " << colors[p];
+    if ( p < colors.size() && colors[p] != (unsigned) -1)
+      _buffer << " lc rgbcolor " << colors[p];
     _buffer << ", ";
   }
 

@@ -171,6 +171,17 @@ void Graph::plot(const Config &conf, Graph* gplot) {
   }
 }
 
+unsigned Graph::rgb(unsigned R, unsigned G, unsigned B) {
+  return 65536*R + 256*G + B;
+}
+
+unsigned Graph::rgb(float color[])
+{
+  return 65536*static_cast<unsigned>(color[0]*255)
+      + 256*static_cast<unsigned>(color[1]*255)
+      + static_cast<unsigned>(color[0]*255);
+}
+
 void Graph::setXRange(double min, double max) {
   _xrange.min = min;
   _xrange.max = max;
@@ -220,7 +231,7 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
   std::vector<double> &x = config.x;
   std::list<std::vector<double>> &y = config.y;
   std::list<std::string> &labels = config.labels;
-  std::vector<short> &colors = config.colors;
+  std::vector<unsigned> &colors = config.colors;
   std::string &filename = config.filename;
   std::string &xlabel = config.xlabel;
   std::string &ylabel = config.ylabel;
@@ -365,7 +376,7 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
     y.push_back(eigparser.getBand(iband,fermi,1));
     if ( projection )
       projectionsColor.push_back(eigparser.getBandColor(iband,1,projectionUMask));
-    colors.push_back(0);
+    colors.push_back(Graph::rgb(0,0,0));
     labels.push_back("");
   }
   if ( eigparser.isPolarized() ) {
@@ -375,7 +386,7 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
       y.push_back(eigparser.getBand(iband,fermi,2));
       if ( projection )
         projectionsColor.push_back(eigparser.getBandColor(iband,2,projectionUMask));
-      colors.push_back(1);
+      colors.push_back(Graph::rgb(255,0,0));
       labels.push_back("");
     }
     labels.pop_back();
@@ -430,7 +441,7 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
   std::vector<double> &x = config.x;
   std::list<std::vector<double>> &y = config.y;
   std::list<std::string> &labels = config.labels;
-  std::vector<short> &colors = config.colors;
+  std::vector<unsigned> &colors = config.colors;
   std::string &filename = config.filename;
   std::string &xlabel = config.xlabel;
   std::string &ylabel = config.ylabel;
@@ -438,6 +449,7 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
   config.doSumUp = false;
 
   title = "Density of States";
+  std::clog << std::endl << " -- Density of States --" << std::endl;
 
   auto list = db.list();
   if ( list.size() == 0 ) throw EXCEPTION("Empty database",ERRDIV);
@@ -484,61 +496,126 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
   int nsppol = 1;
   if ( (nsppol=db.atom(list[0]).nsppol())==1 ) spin[1]=false;
 
+  ElectronDos::PAWPart paw;
+  bool hasPaw = false;
+  std::string pawLabel;
+  if ( parser.hasToken("paw") ){
+    hasPaw = true;
+    std::string inpaw = parser.getToken<std::string>("paw");
+    if ( inpaw == "pw" ) paw = ElectronDos::PW;
+    else if ( inpaw == "ae" ) paw = ElectronDos::AE;
+    else if ( inpaw == "ps" ) paw = ElectronDos::PS;
+    pawLabel = " "+utils::toupper((const std::string)inpaw);
+  }
+
+  auto colorAndLabel = [](std::vector<std::string>& params, unsigned& color, std::string& label) {
+    color = -1;
+    if ( params.size() == 0 ) return;
+    auto it = params.begin();
+    for ( it = params.begin() ; it != params.end() ; ++it ) {
+      std::vector<std::string> testColors = utils::explode(*it,'-');
+      if ( testColors.size()==3 ) {
+        unsigned R = utils::parseNumber<unsigned>(testColors[0]);
+        unsigned G = utils::parseNumber<unsigned>(testColors[1]);
+        unsigned B = utils::parseNumber<unsigned>(testColors[2]);
+        if ( R< 256 && G < 256 && B < 256 ) {
+          color = Graph::rgb(R,G,B);
+          params.erase(it);
+          break;
+        }
+        else {
+          throw EXCEPTION("Bad value for color "+*it,ERRDIV);
+        }
+      }
+    }
+    label.clear();
+    for ( it = params.begin() ; it != params.end() ; ++it ) {
+      if ( it->front() == '"' && it->back() == '"' ) {
+        label = it->substr(1,it->size()-2);
+        for ( auto& c : label) if ( c == '_' ) c = ' ';
+        params.erase(it);
+        break;
+      }
+    }
+  };
+
   for (unsigned ispin = 0 ; ispin < 2 ; ++ispin ) {
     if (spin[ispin] == false) continue;
-        std::string spinLabel = (nsppol==1) ? "" :
-                                              (ispin==0 ? " Spin 1" : " Spin 2");
+    std::string spinLabel = (nsppol==1) ? "" :
+                                          (ispin==0 ? " Spin 1" : " Spin 2");
+    // Total DOS
+    {
+      auto it = std::find(list.begin(),list.end(),0);
+      if ( it != list.end() ) {
+        const ElectronDos& total = db.total();
+        if ( total.prtdos() == 5 && parser.hasToken("soc") ) {
+          ElectronDos::SOCProj soc;
+          std::vector<std::string> proj = utils::explode(parser.getToken<std::string>("soc"),',');
+          for ( auto& p : proj ) {
+            std::vector<std::string> params = utils::explode(p,':');
+            if ( params.size() == 0 ) continue;
+
+            unsigned color = -1;
+            std::string label;
+            colorAndLabel(params,color,label);
+
+            std::string socProj = params.front();
+            if ( label.empty() ) label = utils::toupper((const std::string)(socProj));
+            if ( socProj == "uu" ) soc = ElectronDos::UU;
+            else if ( socProj == "dd" ) soc = ElectronDos::DD;
+            else if ( socProj == "ud" ) soc = ElectronDos::UD;
+            else if ( socProj == "du" ) soc = ElectronDos::DU;
+            else if ( socProj == "x"  )  soc = ElectronDos::X;
+            else if ( socProj == "y"  )  soc = ElectronDos::Y;
+            else if ( socProj == "z"  )  soc = ElectronDos::Z;
+            else throw EXCEPTION("Bad Value for soc",ERRDIV);
+
+            y.push_back(total.dos(soc));
+            labels.push_back(label);
+            colors.push_back(color);
+          }
+        }
+        y.push_back(total.dos(ispin+1));
+        labels.push_back("Total"+spinLabel);
+        colors.push_back(rgb(100,100,100)*(ispin+1));
+      }
+    }
 
     if ( parser.hasToken("projection") ) { // Make the projections
       std::string askedProjection = parser.getToken<std::string>("projection");
       for ( auto proj : utils::explode(askedProjection,',')) {
-        auto params = utils::explode(proj,':');
+        std::vector<std::string> params = utils::explode(proj,':');
         if ( params.size() == 0 ) continue;
-        unsigned iatom = utils::parseNumber<unsigned>(params[0]);
+
+        unsigned color = -1;
+        std::string label;
+        colorAndLabel(params,color,label);
+
+        unsigned iatom = static_cast<unsigned>(utils::stoi(params[0]));
         auto it = std::find(list.begin(),list.end(),iatom);
         if ( it == list.end() ) continue; // atom not found
         auto dos = db.atom(iatom);
         std::vector<double> toPlot;
         if ( params.size() > 1 ) {
-          ElectronDos::Angular angular; bool doAng = false;
-          ElectronDos::SOCProj soc;
-          if      ( (doAng = (params[1] == "s")) ) angular = ElectronDos::s;
-          else if ( (doAng = (params[1] == "p")) ) angular = ElectronDos::p;
-          else if ( (doAng = (params[1] == "d")) ) angular = ElectronDos::d;
-          else if ( (doAng = (params[1] == "f")) ) angular = ElectronDos::f;
-          else if ( (doAng = (params[1] == "g")) ) angular = ElectronDos::g;
-          else if ( params[1] == "uu" ) soc = ElectronDos::UU;
-          else if ( params[1] == "dd" ) soc = ElectronDos::DD;
-          else if ( params[1] == "ud" ) soc = ElectronDos::UD;
-          else if ( params[1] == "du" ) soc = ElectronDos::DU;
-          else if ( params[1] == "x"  )  soc = ElectronDos::X;
-          else if ( params[1] == "y"  )  soc = ElectronDos::Y;
-          else if ( params[1] == "z"  )  soc = ElectronDos::Z;
+          ElectronDos::Angular angular;
+          if      ( params[1] == "s") angular = ElectronDos::s;
+          else if ( params[1] == "p" ) angular = ElectronDos::p;
+          else if ( params[1] == "d" ) angular = ElectronDos::d;
+          else if ( params[1] == "f" ) angular = ElectronDos::f;
+          else if ( params[1] == "g" ) angular = ElectronDos::g;
           else continue;
           if ( params.size() > 2 ) {
             // l+m projection
-            int magnetic = utils::parseNumber<unsigned>(params[2]);
+            int magnetic = utils::stoi(params[2]);
             toPlot = dos.dos(ispin+1,angular,magnetic);
           }
           else {
-            if ( doAng ) {
-              // l projection only
-              if ( parser.hasToken("paw") ){
-                ElectronDos::PAWPart paw;
-                std::string inpaw = parser.getToken<std::string>("paw");
-                if ( inpaw == "pw" ) paw = ElectronDos::PW;
-                else if ( inpaw == "ae" ) paw = ElectronDos::AE;
-                else if ( inpaw == "ps" ) paw = ElectronDos::PS;
-                else continue;
-                toPlot = dos.dos(ispin+1,angular,paw);
-                spinLabel += " "+inpaw;
-              }
-              else {
-                toPlot = dos.dos(ispin+1,angular);
-              }
+            // l projection only
+            if ( hasPaw ){
+              toPlot = dos.dos(ispin+1,angular,paw);
             }
-            else { // doSoc
-                toPlot = dos.dos(soc);
+            else {
+              toPlot = dos.dos(ispin+1,angular);
             }
           }
         }
@@ -546,19 +623,11 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
           toPlot = dos.dos(ispin+1);
         }
         y.push_back(toPlot);
-        labels.push_back(proj+spinLabel);
+        if ( label.empty() ) label = proj+spinLabel+pawLabel;
+        labels.push_back(label);
+        colors.push_back(color);
       }
     }
-    try {
-      auto it = std::find(list.begin(),list.end(),0);
-      if ( it != list.end() ) {
-        const ElectronDos& total = db.total();
-        y.push_back(total.dos(ispin+1));
-        labels.push_back("Total"+spinLabel);
-      }
-    }
-    catch (...)
-    {}
   }
   config.save = save;
   Graph::plot(config,gplot);

@@ -267,7 +267,14 @@ class Graph {
      * @param B red value between 0 and 255
      * @return the integer value;
      */
-      static unsigned rgb(unsigned R, unsigned G, unsigned B);
+    static unsigned rgb(unsigned R, unsigned G, unsigned B);
+
+    /**
+     * Convert hexa string to rgb
+     * @param str is a string in the HTML color form like #RRGGBB
+     * @return the integer value;
+     */
+    static unsigned rgb(std::string str);
 
     /**
      * Convert R G B color to unsigned value

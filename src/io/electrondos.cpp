@@ -112,6 +112,11 @@ std::vector<double> ElectronDos::energies() const
   return _energies;
 }
 
+bool ElectronDos::pawDecomposition() const
+{
+  return _pawDecomposition;
+}
+
 ElectronDos::ElectronDos() :
   _prtdos(0),
   _nsppol(1),

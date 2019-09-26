@@ -79,6 +79,11 @@ std::vector<unsigned> DosDB::list() const {
 
 }
 
+void DosDB::clear() {
+  _db.clear();
+  _ordering.clear();
+}
+
 const ElectronDos& DosDB::total() const {
   auto it = _ordering.find(0);
   if ( it == _ordering.end() )

@@ -66,6 +66,8 @@ class DosDB {
 
     std::vector<unsigned> list() const;
 
+    void clear();
+
     const ElectronDos& total() const;
 
     const ElectronDos& atom(unsigned iatom) const;

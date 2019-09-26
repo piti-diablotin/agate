@@ -175,6 +175,12 @@ unsigned Graph::rgb(unsigned R, unsigned G, unsigned B) {
   return 65536*R + 256*G + B;
 }
 
+unsigned Graph::rgb(std::string str) {
+  if ( str[0] != '#' ) return static_cast<unsigned>(-1);
+  else if ( str.size() != 7 ) return static_cast<unsigned>(-1);
+  return std::stoul(str.substr(1),nullptr,16);
+}
+
 unsigned Graph::rgb(float color[])
 {
   return 65536*static_cast<unsigned>(color[0]*255)
@@ -447,6 +453,10 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
   std::string &ylabel = config.ylabel;
   std::string &title = config.title;
   config.doSumUp = false;
+  std::array<double,2> xrange;
+  std::array<double,2> yrange;
+
+  parser.setSensitive(true);
 
   title = "Density of States";
   std::clog << std::endl << " -- Density of States --" << std::endl;
@@ -460,8 +470,10 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
   if ( parser.hasToken("xrange")) {
     std::string range = parser.getToken<std::string>("xrange");
     auto r = utils::explode(range,':');
+    xrange[0] = utils::parseNumber<double>(r[0]);
+    xrange[1] = utils::parseNumber<double>(r[1]);
     if ( r.size() != 2 ) throw EXCEPTION("xrange must be like xmin:xmax",ERRDIV);
-    if ( gplot != nullptr ) gplot->setXRange(utils::parseNumber<double>(r[0]),utils::parseNumber<double>(r[1]));
+    if ( gplot != nullptr ) gplot->setXRange(xrange[0],xrange[1]);
   }
 
   if ( parser.hasToken("yrange")) {
@@ -508,7 +520,7 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
     pawLabel = " "+utils::toupper((const std::string)inpaw);
   }
 
-  auto colorAndLabel = [](std::vector<std::string>& params, unsigned& color, std::string& label) {
+  auto colorAndLabel = [](std::vector<std::string>& params, unsigned& color, std::string& label, bool desaturate=false) {
     color = -1;
     if ( params.size() == 0 ) return;
     auto it = params.begin();
@@ -519,6 +531,12 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
         unsigned G = utils::parseNumber<unsigned>(testColors[1]);
         unsigned B = utils::parseNumber<unsigned>(testColors[2]);
         if ( R< 256 && G < 256 && B < 256 ) {
+          if (desaturate) {
+            unsigned mean = (R+G+B)/3;
+            R = std::min((R+mean)/2,static_cast<unsigned>(255));
+            G = std::min((G+mean)/2,static_cast<unsigned>(255));
+            B = std::min((B+mean)/2,static_cast<unsigned>(255));
+          }
           color = Graph::rgb(R,G,B);
           params.erase(it);
           break;
@@ -543,6 +561,9 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
     if (spin[ispin] == false) continue;
     std::string spinLabel = (nsppol==1) ? "" :
                                           (ispin==0 ? " Spin 1" : " Spin 2");
+    double factor = 1./unit;
+    if ( ispin==1 && parser.hasToken("updown")) {factor *= -1;}
+
     // Total DOS
     {
       auto it = std::find(list.begin(),list.end(),0);
@@ -571,11 +592,13 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
             else throw EXCEPTION("Bad Value for soc",ERRDIV);
 
             y.push_back(total.dos(soc));
+            for (auto &d : y.back()) d *= factor;
             labels.push_back(label);
             colors.push_back(color);
           }
         }
         y.push_back(total.dos(ispin+1));
+        for (auto &d : y.back()) d *= factor;
         labels.push_back("Total"+spinLabel);
         colors.push_back(rgb(100,100,100)*(ispin+1));
       }
@@ -589,7 +612,7 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
 
         unsigned color = -1;
         std::string label;
-        colorAndLabel(params,color,label);
+        colorAndLabel(params,color,label,ispin==1);
 
         unsigned iatom = static_cast<unsigned>(utils::stoi(params[0]));
         auto it = std::find(list.begin(),list.end(),iatom);
@@ -623,7 +646,9 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
           toPlot = dos.dos(ispin+1);
         }
         y.push_back(toPlot);
-        if ( label.empty() ) label = proj+spinLabel+pawLabel;
+        for (auto &d : y.back()) d *= factor;
+        if ( label.empty() ) label = proj+pawLabel;
+        label += spinLabel;
         labels.push_back(label);
         colors.push_back(color);
       }

@@ -105,6 +105,7 @@ class ElectronDos {
     std::vector<double> dos(SOCProj proj) const; // prtdos 5
 
     std::vector<double> energies() const;
+    bool pawDecomposition() const;
 };
 
 #endif  // ELECTRONDOS_HPP

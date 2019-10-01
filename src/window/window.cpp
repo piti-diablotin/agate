@@ -253,6 +253,7 @@ Window::Window():
   _optionf["shiftOriginY"] = 0.f;
   _optionf["speed"] = 1.f;
   _optionf["aspect"] = 1.f;
+  _optionf["perspective"] = 30.0f;
   //_optionf["distance"] = 1.1f*_canvas->typicalDim();
   _optionf["wheel"] = 0.f;
   _optionf["oldWheel"] = 0.f;
@@ -983,7 +984,10 @@ void Window::my_alter(std::string &token, std::istringstream &cin) {
   else if ( token == "perspective") {
     float angle;
     cin >> angle;
-    if ( !cin.fail() ) _optionf["perspective"] = angle;
+    if ( !cin.fail() ) {
+      if ( angle > 90 || angle < 1 )  throw EXCEPTION("Perspective must be between 1 and 90",ERRDIV);
+      _optionf["perspective"] = angle;
+    }
   }
   else if ( token == "psi") {
     float angle;

@@ -126,6 +126,7 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _optionf["camphi"] = 0.f;
   _optionf["shiftOriginX"] = 0.f;
   _optionf["shiftOriginY"] = 0.f;
+  _optionf["perspective"] = 30.0f;
   _optionf["speed"] = 1.f;
   _optionf["aspect"] = 1.f;
   //_optionf["distance"] = 1.1f*_canvas->typicalDim();
@@ -419,6 +420,7 @@ void Window::loopStep() {
 
     const float aspect = (_optionf["aspect"] = (float) _width / (float) _height);
     const float distance = (_optionf["distance"] = 1.2f*_canvas->typicalDim());
+    const float totalfactor = ( aspect > 1.f ? 1.f : 1.f/aspect ) * distance * zoom;
 
 
 #ifdef HAVE_GL
@@ -427,18 +429,18 @@ void Window::loopStep() {
     glLoadIdentity();
     if ( paral_proj )  {
       (( _height > _width ) ?
-       glOrtho(-distance*zoom,distance*zoom,-distance*zoom/aspect,distance*zoom/aspect,-10.f*distance,10.f*distance) :
-       glOrtho(-distance*zoom*aspect,distance*aspect*zoom,-distance*zoom,distance*zoom,-10.f*distance,10.f*distance));
+       glOrtho(-distance*zoom,distance*zoom,-distance*zoom/aspect,distance*zoom/aspect,-20.f*distance,20.f*distance) :
+       glOrtho(-distance*zoom*aspect,distance*aspect*zoom,-distance*zoom,distance*zoom,-20.f*distance,20.f*distance));
     }
     else {
       GLdouble fW, fH;
-      fH = tan( 60.0 / 360. * pi ) * 1.0;
+      fH = tan( _optionf["perspective"] * pi/(2.*180.) ) * 1;
       fW = fH * aspect;
-      glFrustum( -fW, fW, -fH, fH, 1.0, 200.0 );
+      glFrustum( -fW, fW, -fH, fH, 1, 100000 );
     }
 #endif
 
-    const float factor_proj = paral_proj ? 1.f : 2.f;
+    //const float factor_proj = paral_proj ? 1.f : 2.f;
 
 
     // Render output
@@ -452,17 +454,22 @@ void Window::loopStep() {
 #endif
 
 
+    /*
     const float totalfactor = ( (aspect > 1.f || paral_proj) ? 1.f : 1.f/aspect ) 
       * factor_proj * distance * ( paral_proj ? 4.f : zoom); // 4 is for the spot light
+      //* */
+    //const float totalfactor = 1;
 
     const float campsi   = _optionf["campsi"];
     const float camtheta = _optionf["camtheta"];
     const float camphi   = _optionf["camphi"];
     geometry::mat3d euler = geometry::matEuler(campsi,camtheta,camphi);
 #ifdef HAVE_GL
-    glTranslatef(totalfactor*_optionf["shiftOriginX"],totalfactor*_optionf["shiftOriginY"],0.);
+    const float transFactorX = aspect > 1 ? 2*distance*zoom*aspect : 2*distance*zoom;
+    const float transFactorY = aspect > 1 ? 2*distance*zoom : 2*distance*zoom/aspect;
+    glTranslatef(transFactorX*_optionf["shiftOriginX"],transFactorY*_optionf["shiftOriginY"],0.);
 #endif
-    this->lookAt(totalfactor,0,0,0);
+    this->lookAt(paral_proj? totalfactor : totalfactor/tan(_optionf["perspective"] * pi/(2.*180.)),0,0,0);
 
 
     bool state = _render._doRender;
@@ -760,9 +767,9 @@ void Window::drawAxis() {
   }
   else {
     GLdouble fW, fH;
-    fH = tan( 60.0 / 360. * pi ) * 1.0;
+    fH = tan( _optionf["perspective"] * pi/(2.*180.) ) * 1;
     fW = fH * aspect;
-    glFrustum( -fW, fW, -fH, fH, 1.0, 200.0 );
+    glFrustum( -fW, fW, -fH, fH, 1, 100000 );
   }
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity();
@@ -770,11 +777,9 @@ void Window::drawAxis() {
   (( _height > _width ) ?
    glTranslatef(7.5f,-7.5f/aspect,0.f) :
    glTranslatef(7.5f*aspect,-7.5f,0.f));
-  const float factor_proj = paral_proj ? 1.f : 2.f;
-  const float totalfactor = ( (paral_proj) ? 1.f : 1.f/aspect ) 
-    * factor_proj * ( paral_proj ? 4.f : 10 ); // 4 is for the spot light
+  const float totalfactor = ( aspect > 1.f ? 1.f : 1.f/aspect ) *10;
 
-  this->lookAt(totalfactor,0,0,0);
+  this->lookAt(paral_proj? totalfactor : totalfactor/tan(_optionf["perspective"] * pi/(2.*180.)),0,0,0);
 
   double start[] = {0,0,0};
   const GLfloat color[][3] = {{1,0,0},{0,1,0},{0,0,1}};
@@ -974,6 +979,11 @@ void Window::my_alter(std::string &token, std::istringstream &cin) {
       _inputChar.push('\n');
       this->setParameters(filename);
     }
+  }
+  else if ( token == "perspective") {
+    float angle;
+    cin >> angle;
+    if ( !cin.fail() ) _optionf["perspective"] = angle;
   }
   else if ( token == "psi") {
     float angle;

@@ -290,7 +290,7 @@ void Poscar::readFromFile(const std::string& filename) {
         sstr >> z;
         if ( sstr.fail() ) 
           throw EXCEPTION("Failed to read cartesian coordinate z for atom " + utils::to_string(iatom), ERRDIV) ;
-        _xcart[iatom] = {{x*_acell[0],y*_acell[0],z*_acell[0]}};
+        _xcart[iatom] = {{x*_acell[0]/phys::b2A,y*_acell[0]/phys::b2A,z*_acell[0]/phys::b2A}};
       }
 #ifdef HAVE_SHRINK_TO_FIT
       _xcart.shrink_to_fit();

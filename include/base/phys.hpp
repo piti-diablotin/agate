@@ -78,6 +78,8 @@ namespace phys {
     /**
      * Unit of the eigen energies.
      */
+
+  double BoseEinstein(double energy, double temperature);
 }
 
 namespace Units {

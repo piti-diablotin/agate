@@ -211,7 +211,7 @@ namespace geometry {
    */
   inline bool operator==(const vec3d& vec1, const vec3d& vec2) {
     const vec3d diff = vec1-vec2;
-    return diff[0]<1e-10 && diff[1]<1e-10 && diff[2]<1e-10;
+    return std::abs(diff[0])<1e-10 && std::abs(diff[1])<1e-10 && std::abs(diff[2])<1e-10;
   }
 
 
@@ -302,6 +302,18 @@ namespace geometry {
         mat1[3]*mat2[0]+mat1[4]*mat2[3]+mat1[5]*mat2[6], mat1[3]*mat2[1]+mat1[4]*mat2[4]+mat1[5]*mat2[7], mat1[3]*mat2[2]+mat1[4]*mat2[5]+mat1[5]*mat2[8],
         mat1[6]*mat2[0]+mat1[7]*mat2[3]+mat1[8]*mat2[6], mat1[6]*mat2[1]+mat1[7]*mat2[4]+mat1[8]*mat2[7], mat1[6]*mat2[2]+mat1[7]*mat2[5]+mat1[8]*mat2[8],
         }});
+  }
+
+   /** 
+   * Recenter the coordinated so the "reduced coordinates" are between [-0.5;0.5[;
+   * @param vec1 vector of reduced coordinated
+   */
+  inline void recenter(vec3d& vec) {
+    for (auto &v : vec) 
+    { 
+      while ( v < 0.5 ) ++v;
+      while ( v >= 0.5 ) --v;
+    }
   }
 
 

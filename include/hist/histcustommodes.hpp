@@ -1,7 +1,7 @@
 /**
- * @file phys.cpp
+ * @file include/./histcustommodes.hpp
  *
- * @brief Store some physical constantes
+ * @brief 
  *
  * @author Jordan Bieder <jordan.bieder@uliege.be>
  *
@@ -23,11 +23,39 @@
  * along with AbiOut.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "base/phys.hpp"
-#include "base/exception.hpp"
-#include <cmath>
 
-double phys::BoseEinstein(double energy, double temperature)
-{
-  return 1./(exp(energy/temperature)-1);
-}
+#ifndef HISTCUSTOMMODES_HPP
+#define HISTCUSTOMMODES_HPP
+
+#ifdef _WIN32
+#include "base/win32.hpp"
+#endif
+
+#ifdef HAVE_CONFIG_H
+#include "agate.h"
+#undef HAVE_CONFIG_H
+#endif
+
+/** 
+ *
+ */
+class HistCustomModes {
+
+  private :
+
+  protected :
+
+  public :
+
+    /**
+     * Constructor.
+     */
+    HistCustomModes();
+
+    /**
+     * Destructor.
+     */
+    virtual ~HistCustomModes();
+};
+
+#endif  // HISTCUSTOMMODES_HPP

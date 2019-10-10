@@ -391,6 +391,7 @@ void Window::loopStep() {
   int& initBuffer = _optioni["initBuffer"];
   float& speed = _optionf["speed"];
   if ( _canvas.get() == nullptr ) return;
+  _canvas->updateHist();
   if ( _optioni["prevNtime"] != (_optioni["ntime"] = _canvas->ntime()) ) { 
     initBuffer = 0;
     update |= true;

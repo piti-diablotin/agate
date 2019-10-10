@@ -36,12 +36,29 @@
 #undef HAVE_CONFIG_H
 #endif
 
+#include "hist/histdatadtset.hpp"
+#include "phonons/dispdb.hpp"
+
 /** 
- *
+ * This class is designe to build a Hist object with either
+ * user definied phonon modes and amplitude or with populating
+ * the phonons using a DispDB and thermal factor (see Zacharias 2016)
  */
-class HistCustomModes {
+class HistCustomModes : public HistDataDtset{
+
+  public :
+    enum SeedType {None, Time, Random, User};
+    enum InstableModes {Ignore, Absolute, Constant};
 
   private :
+    Dtset &_reference;
+    DispDB &_db;
+    std::vector<DispDB::qptTree> _condensedModes;
+    double _temperature;
+    SeedType _seedType;
+    unsigned _seed;
+    double _instableAmplitude;
+
 
   protected :
 
@@ -50,12 +67,28 @@ class HistCustomModes {
     /**
      * Constructor.
      */
-    HistCustomModes();
+    HistCustomModes(Dtset& _dtset, DispDB& _db);
 
     /**
      * Destructor.
      */
     virtual ~HistCustomModes();
+
+    double temperature() const;
+    void setTemperature(double temperature);
+
+    void buildHist(std::vector<DispDB::qptTree> inputCondensedModes=std::vector<DispDB::qptTree>());
+    void animateModes(DispDB::qptTree &condensedModes, unsigned ntime);
+    void zachariasAmplitudes(double temperature, unsigned ntime,vec3d supercell, InstableModes instable = Absolute);
+    SeedType seedType() const;
+    void setSeedType(const SeedType& seedType);
+    unsigned seed() const;
+    void setSeed(const unsigned& seed);
+    void reserve(unsigned ntime, const Dtset& dtset);
+    void insert(unsigned itime, const Dtset& dtset);
+    void push(const Dtset& dtset);
+    double instableAmplitude() const;
+    void setInstableAmplitude(double instableAmplitude);
 };
 
 #endif  // HISTCUSTOMMODES_HPP

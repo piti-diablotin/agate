@@ -232,6 +232,7 @@ void CanvasPos::setHist(HistData& hist) {
 
 //
 void CanvasPos::updateHist() {
+  if ( _histdata == nullptr ) return;
   unsigned ntimeAvail = _histdata->ntimeAvail();
   if ( _tend == _ntime ) _tend = -1;
   this->setNTime(ntimeAvail);

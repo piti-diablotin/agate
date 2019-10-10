@@ -32,6 +32,7 @@
 #include <algorithm>
 #include "base/unitconverter.hpp"
 #include "base/fraction.hpp"
+#include "hist/histcustommodes.hpp"
 
 //
 CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
@@ -765,6 +766,50 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     throw EXCEPTION(std::string("DDB file ")+filename+std::string(" written."), ERRCOM);
 
   }
+  else if ( token == "thermalPop") {
+    double temperature = parser.getToken<double>("temperature");
+    double ntime = parser.getToken<unsigned>("ntime");
+    HistCustomModes* hist = new HistCustomModes(_reference,_displacements);
+    parser.setSensitive(false);
+    if ( parser.hasToken("seedtype") ) {
+      std::string seedType = parser.getToken<std::string>("seedtype");
+      if ( seedType == "time") hist->setSeedType(HistCustomModes::Time);
+      else if ( seedType == "random") hist->setSeedType(HistCustomModes::Random);
+      else if ( seedType == "user") hist->setSeedType(HistCustomModes::User);
+      else if ( seedType == "none") hist->setSeedType(HistCustomModes::None);
+    }
+    if ( hist->seedType() == HistCustomModes::User ) {
+      if ( parser.hasToken("seed") ) {
+        double seed = parser.getToken<double>("seed");
+        hist->setSeed(seed);
+      }
+      else throw EXCEPTION("You need to specify a seed",ERRDIV);
+    }
+
+    HistCustomModes::InstableModes instableModes = HistCustomModes::Absolute;
+    if ( parser.hasToken("instable") ) {
+      std::string instable = parser.getToken<std::string>("instable");
+      if ( instable == "ignore" ) instableModes = HistCustomModes::Ignore;
+      else if ( instable == "absolute" ) instableModes = HistCustomModes::Absolute;
+      else if ( instable == "constant" ) {
+        instableModes = HistCustomModes::Constant;
+        if ( parser.hasToken("instableamplitude") ) {
+          double amplitude = parser.getToken<double>("instableamplitude");
+          hist->setInstableAmplitude(amplitude);
+        }
+      }
+    }
+
+    std::vector<double> tmp = parser.getToken<double>("qpt",3);
+    vec3d qpt = {tmp[0],tmp[1],tmp[2]};
+    hist->zachariasAmplitudes(temperature,ntime,qpt,instableModes);
+    hist->buildHist();
+    auto save = _octahedra_z;
+    this->setHist(*hist);
+    for ( auto z : save )
+      this->updateOctahedra(z);
+    this->nLoop(-1);
+  }
   else { 
     CanvasPos::my_alter(token,stream);
     return;
@@ -774,59 +819,17 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 
 //
 void CanvasPhonons::buildAnimation() {
-  // First, find smallest qpt to build the supercell
-  geometry::vec3d qpt = {{ 1.0, 1.0, 1.0 }};
-  const double tol = 1e-6;
-
-  for ( auto it = _condensedModes.begin() ; it != _condensedModes.end() ; ++it ) {
-    if ( std::abs(it->first[0]) > tol && std::abs(it->first[0]) < std::abs(qpt[0]) ) qpt[0] = it->first[0];
-    if ( std::abs(it->first[1]) > tol && std::abs(it->first[1]) < std::abs(qpt[1]) ) qpt[1] = it->first[1];
-    if ( std::abs(it->first[2]) > tol && std::abs(it->first[2]) < std::abs(qpt[2]) ) qpt[2] = it->first[2];
+  HistCustomModes *hist = new HistCustomModes(_reference,_displacements);
+  hist->animateModes(_condensedModes,_ntime);
+  if ( _ntime > 1 ) {
+    _drawSpins[3] = (_ntime > 1);
   }
-
-  HistData *hist;
-  if ( _condensedModes.empty() ) {
-    hist = new HistDataDtset(_reference);
-  }
-
-  else {
-    if ( _ntime > 1 ) { // Build an animation
-      // Now go through all mode of all qpt and make the displacement
-      _drawSpins[3] = true;
-      const double dtheta = phys::pi/(double)_ntime;
-      _supercell = Supercell(_reference,qpt);
-      for ( unsigned itime = 0 ; itime < _ntime ; ++itime ) {
-        const double theta = (double) itime*dtheta;
-        Supercell supercell(_supercell);
-        for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
-          for ( auto vib : qpt->second ) {
-            supercell.makeDisplacement(qpt->first,_displacements,vib.imode,vib.amplitude,theta);
-          }
-        }
-        if ( itime == 0 ) {
-          hist = new HistDataDtset(supercell);
-          hist->setTryToMap(false);
-        }
-        else {
-          HistDataDtset histi(supercell);
-          *hist += histi;
-        }
-      }
-    }
-    else { //Display vectors
-      _drawSpins[3] = false;
-      _supercell = Supercell(_reference,qpt);
-      for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
-        for ( auto vib : qpt->second ) {
-          _supercell.arrowDisplacement(qpt->first,_displacements,vib.imode,vib.amplitude);
-        }
-      }
-      hist = new HistDataDtset(_supercell);
-
-    }
+  else { //Display vectors
+    _drawSpins[3] = false;
   }
   auto save = _octahedra_z;
   this->setHist(*hist);
+  this->nLoop(-2);
   if ( _status == PAUSE && _histdata->ntime() > 1 ) _status = START;
   for ( auto z : save )
     this->updateOctahedra(z);

@@ -440,9 +440,9 @@ DispDB& DispDB::operator += ( const DispDB& disp ) {
     _nqpt += disp._nqpt;
   }
 
-  _qpts.resize(_nqpt);
-  _modes.resize(_nqpt*_nmode*3*_natom); // nqpt * nmode * 1vector per atom
-  _energies.resize(_nqpt*_nmode);
+  _qpts.reserve(_nqpt);
+  _modes.reserve(_nqpt*_nmode*3*_natom); // nqpt * nmode * 1vector per atom
+  _energies.reserve(_nqpt*_nmode);
   _linResE.clear();
 
   if ( empty ) {
@@ -451,11 +451,24 @@ DispDB& DispDB::operator += ( const DispDB& disp ) {
     _energies = disp._energies;
   }
   else {
-    std::copy(disp._qpts.begin(), disp._qpts.end(),_qpts.begin()+nqpt);
-    std::copy(disp._modes.begin(), disp._modes.end(),_modes.begin()+nqpt*_nmode*3*_natom);
-    std::copy(disp._energies.begin(), disp._energies.end(),_energies.begin()+nqpt*_nmode);
+    for ( unsigned iqpt = 0 ; iqpt < disp._qpts.size() ; ++iqpt ){
+      auto qpt = disp._qpts[iqpt];
+      auto f = std::find(_qpts.begin(),_qpts.end(),qpt);
+      if ( f == _qpts.end() ) {
+        int oldNqpt = _qpts.size();
+        _qpts.push_back(qpt);
+        _modes.resize((oldNqpt+1)*_nmode*_nmode);
+        std::copy(disp._modes.begin()+iqpt*_nmode*_nmode,
+                  disp._modes.begin()+(iqpt+1)*_nmode*_nmode,
+                  _modes.begin()+oldNqpt*_nmode*_nmode);
+        _energies.resize((oldNqpt+1)*_nmode);
+        std::copy(disp._energies.begin()+iqpt*_nmode,
+                  disp._energies.begin()+(iqpt+1)*_nmode,
+                  _energies.begin()+oldNqpt*_nmode);
+      }
+    }
   }
-   
+
   if ( setToEnd ) _iqpt = _qpts.end();
 
   return *this;

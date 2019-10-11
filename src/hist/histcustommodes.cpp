@@ -359,9 +359,11 @@ void HistCustomModes::insert(unsigned itime, const Dtset& dtset)
       _xred [itime*_natom*3+iatom*3  ] = xred[iatom][0];
       _xred [itime*_natom*3+iatom*3+1] = xred[iatom][1];
       _xred [itime*_natom*3+iatom*3+2] = xred[iatom][2];
-      _spinat[itime*_natom*3+3*iatom  ] = spinat[iatom][0];
-      _spinat[itime*_natom*3+3*iatom+1] = spinat[iatom][1];
-      _spinat[itime*_natom*3+3*iatom+2] = spinat[iatom][2];
+      if ( !dtset.spinat().empty() && !_spinat.empty() ) {
+        _spinat[itime*_natom*3+3*iatom  ] = spinat[iatom][0];
+        _spinat[itime*_natom*3+3*iatom+1] = spinat[iatom][1];
+        _spinat[itime*_natom*3+3*iatom+2] = spinat[iatom][2];
+      }
     }
   }
 }

@@ -454,7 +454,6 @@ void Graph::plotDOS(DosDB& db, ConfigParser &parser, Graph *gplot, Graph::GraphS
   std::string &title = config.title;
   config.doSumUp = false;
   std::array<double,2> xrange;
-  std::array<double,2> yrange;
 
   parser.setSensitive(true);
 

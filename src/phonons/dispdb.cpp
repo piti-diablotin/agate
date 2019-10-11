@@ -431,7 +431,6 @@ DispDB& DispDB::operator += ( const DispDB& disp ) {
 
   bool setToEnd = ( _iqpt == _qpts.end() );
   bool empty = false;
-  unsigned nqpt = _nqpt;
   if ( _nqpt == 0 ) {
     _nqpt = disp._nqpt;
     empty = true;

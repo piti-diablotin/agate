@@ -442,9 +442,6 @@ void Window::loopStep() {
     }
 #endif
 
-    //const float factor_proj = paral_proj ? 1.f : 2.f;
-
-
     // Render output
 #ifdef HAVE_GL
     glClearColor(_background[0], _background[1], _background[2], 0.0f);
@@ -454,13 +451,6 @@ void Window::loopStep() {
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
 #endif
-
-
-    /*
-    const float totalfactor = ( (aspect > 1.f || paral_proj) ? 1.f : 1.f/aspect ) 
-      * factor_proj * distance * ( paral_proj ? 4.f : zoom); // 4 is for the spot light
-      //* */
-    //const float totalfactor = 1;
 
     const float campsi   = _optionf["campsi"];
     const float camtheta = _optionf["camtheta"];

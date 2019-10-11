@@ -34,6 +34,7 @@
 #include "base/utils.hpp"
 #include "base/exception.hpp"
 #include "base/phys.hpp"
+#include "base/fraction.hpp"
 
 namespace geometry {
 
@@ -65,9 +66,9 @@ namespace geometry {
     out.precision(6);
     out.setf(std::ios::right, std::ios::adjustfield);
     out << "  [ " 
-      << std::setw(14) << vec[0] 
-      << std::setw(14) << vec[1] 
-      << std::setw(14) << vec[2] 
+      << std::setw(14) << Fraction(vec[0]).toString()
+      << std::setw(14) << Fraction(vec[1]).toString()
+      << std::setw(14) << Fraction(vec[2]).toString()
       << " ]" << std::endl;
   }
 

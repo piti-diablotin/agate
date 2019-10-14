@@ -557,7 +557,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
 
     config.ylabel = "Mode decomposition ";
-    config.ylabel +=  ( norm!=Supercell::Norming::NONE ? "cos(theta)" : "A*cos(theta) [A/sqrt(amu)]" );
+    config.ylabel +=  ( norm!=Supercell::Norming::NONE ? "cos(theta)" : "A*cos(theta) [A]" );
     config.title = "Phonon modes analysis";
     config.save = Graph::GraphSave::DATA;
 

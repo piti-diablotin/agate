@@ -275,10 +275,7 @@ void Supercell::findReference(const Dtset& dtset) {
             vec3d cell = {{ fi, fj, fk }};
             vec3d vecdiff = ref_xcart[ref_iatom]+ztrans-pos;
             vec3d vecxreddiff = invert(_rprim) * vecdiff;
-            for ( auto& v : vecxreddiff ) {
-              while ( v < 0.5 ) ++v;
-              while ( v >= 0.5 ) --v;
-            }
+            recenter(vecxreddiff);
             vecdiff = _rprim * vecxreddiff;
             double distance = norm(vecdiff);
             if ( distance < closest ) {
@@ -370,6 +367,7 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
 
   std::vector<double> displacements(3*_natom,0);
   std::vector<vec3d> xcart_supercell(_natom);
+  auto gprim = invert(ref_rprim_supercell);
   auto ref_xcart = dtset.xcart();
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     const double fi = _cellCoord[iatom][0];
@@ -381,26 +379,39 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
 
     vec3d position = ref_xcart[_baseAtom[iatom]]+ztrans;
     vec3d super_xcart_in_ref = ref_rprim_supercell * _xred[iatom];
+    vec3d disp = super_xcart_in_ref - position;
+    disp = gprim*disp;
+    recenter(disp);
+    disp = ref_rprim_supercell*disp;
     for ( unsigned d = 0 ; d < 3 ; ++ d )
-      displacements[iatom*3+d] = super_xcart_in_ref[d] - position[d];
+      //displacements[iatom*3+d] = super_xcart_in_ref[d] - position[d];
+      displacements[iatom*3+d] = disp[d];
   }
 
   // Compute center of mass of displacement and set it to 0
+  double norm = 0;
   double bmass[3] = {0};
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     double mass = Mendeleev.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
       bmass[d] +=  mass*displacements[iatom*3+d];
+      norm += mass*displacements[iatom*3+d]*displacements[iatom*3+d];
     }
   }
+  //std::clog << "Before Bmass norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
   //std::clog << "Bmass was at " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
+
+  norm = 0;
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     double mass = Mendeleev.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
       displacements[iatom*3+d] -= bmass[d]/(_natom*mass);
-      //std::clog << phys::b2A*displacements[iatom*3+d] << std::endl;
+      norm+=mass*displacements[iatom*3+d]*displacements[iatom*3+d];
+      //std::clog << phys::b2A*displacements[iatom*3+d] << " ";
     }
+    //std::clog << std::endl;
   }
+//  std::clog << "norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
   _fft.clear();
   return displacements;
 }
@@ -433,14 +444,14 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
 
   std::vector<double> results;
 
-  if ( normalized == NORMALL ) {
-    auto normq = this->amplitudes(dtset);
+  //if ( normalized == NORMALL ) {
+    auto normq = this->amplitudes(dtset,displacements);
     for ( auto& v : normq )
       norm2_tot += v[3]*v[3];
-  }
+  //}
   if ( normalized == NORMALL ) norm_final = sqrt(norm2_tot);
   if ( norm_final < 1e-10 ) norm_final = 1.; // Avoir divide by 0
-  //std::cout << "Distortion amplitude [A/sqrt(amu)]: " << sqrt(norm2_tot) << std::endl;
+  std::clog << "Distortion amplitude [A]: " << sqrt(norm2_tot) << std::endl;
 
   // For all qpt;
   for ( auto qpt = modes.begin() ; qpt != modes.end() ; ++qpt ) {
@@ -515,7 +526,7 @@ std::vector<std::complex<double>> Supercell::filterDisp(const geometry::vec3d& q
   return dispq;
 }
 
-std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset) {
+std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset, const std::vector<double>& displacement) {
   const int nx = (int) _dim[0];
   const int ny = (int) _dim[1];
   const int nz = (int) _dim[2];
@@ -534,19 +545,21 @@ std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset) {
       || _znucl.size() != dtset.znucl().size() )
     this->findReference(dtset);
 
-  std::vector<double> displacements;
-  try {
-    displacements = this->getDisplacement(dtset);
-  }
-  catch (Exception &e) {
-    e.ADD("Cannot compute displacements",ERRDIV);
-    throw e;
+  std::vector<double> calculatedDisplacements;
+  if (displacement.size() != 3*_natom ) {
+    try {
+      calculatedDisplacements = this->getDisplacement(dtset);
+    }
+    catch (Exception &e) {
+      e.ADD("Cannot compute displacements",ERRDIV);
+      throw e;
+    }
   }
   std::vector<double> mass(dtset.natom(),0.);
   for ( unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom ) {
     mass[iatom] = Mendeleev.mass[dtset.znucl()[dtset.typat()[iatom]-1]]*phys::amu_emass; // type starts at 1
   }
-  this->fft(displacements);
+  this->fft((displacement.size()!=3*_natom) ? calculatedDisplacements:displacement);
 
   for ( int qx = 0 ; qx < nxh ; ++qx ) {
     for ( int qy = 0 ; qy < nyh ; ++qy ) {

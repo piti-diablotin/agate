@@ -160,9 +160,11 @@ class Supercell : public Dtset{
     /**
      * Compute the amplitude of each qpt in the supercell
      * @param dtset The reference dtset only used to get the displacement
+     * @param displacement The displacement of the supercell with respect to the reference Dtset dtset. If not
+     * provided, it will be calculated.
      * @result a vector for all apt with the 3 qpt components and the corresponding amplitude (squared norm)
      */
-    std::vector<std::array<double,4>> amplitudes(const Dtset& dtset);
+    std::vector<std::array<double,4>> amplitudes(const Dtset& dtset, const std::vector<double>& displacement=std::vector<double>());
 
     /**
      * Perfor the FFT of the input real space displacement.

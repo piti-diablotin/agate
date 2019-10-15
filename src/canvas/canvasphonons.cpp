@@ -581,10 +581,10 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       }
     }
     y.resize(nmodes);
-    if ( norm!=Supercell::Norming::NONE ) {
-      labels.push_back("Norm");
+    //if ( norm!=Supercell::Norming::NONE ) {
+      labels.push_back("Norm=\\sqrt(\\sum ^2)");
       y.resize(nmodes+1);
-    }
+    //}
     for ( auto v = y.begin() ; v != y.end() ; ++v )
       v->resize(trajectory->ntimeAvail());
 

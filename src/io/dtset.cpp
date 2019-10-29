@@ -881,8 +881,10 @@ void Dtset::standardizeCell(const bool primitive, const double tolerance) {
       }
     }
     _typat.resize(natom);
+    if (!_spinat.empty()) _spinat.resize(natom);
 #ifdef HAVE_SHRINK_TO_FIT
     _typat.shrink_to_fit();
+    _spinat.shrink_to_fit();
 #endif
     _gprim = geometry::invertTranspose(_rprim);
     geometry::changeBasis(_rprim, _xcart, _xred, false);

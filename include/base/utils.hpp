@@ -69,6 +69,12 @@ namespace utils {
   void Version();
 
   /**
+   * get spglib version is available
+   * @return the string major.minor.micro
+   */
+  std::string spglibVersion();
+
+  /**
    * Init FFTW3 if needed
    */
   void fftw3Init();

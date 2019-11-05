@@ -430,10 +430,18 @@ void Version(){
   std::cout << PACKAGE_NAME << " version " << PACKAGE_VERSION << std::endl;
   utils::dumpConfig(std::clog);
 #if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
-  std::clog << "Using spglib version " << spg_get_major_version() << "." 
-    << spg_get_minor_version() << "." 
-    << spg_get_micro_version() << std::endl;
+  std::clog << "Using spglib version " << spglibVersion() << std::endl;
 #endif
+}
+
+std::string spglibVersion(){
+  std::ostringstream out;
+#if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
+  out << spg_get_major_version() << "." 
+    << spg_get_minor_version() << "." 
+    << spg_get_micro_version();
+#endif
+  return out.str();
 }
 
 void fftw3Init() {

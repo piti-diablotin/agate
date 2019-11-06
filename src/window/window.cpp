@@ -538,16 +538,24 @@ bool Window::userInput(std::stringstream& info) {
 
   _optionb["takeSnapshot"] = false;
   bool process = false;
+  const bool debug=false;
+  bool breakWhile=false;
   if ( _mode == mode_process ) _mode = mode_static;
 
+  if (debug) {
+    std::clog << "mode: " << _mode << std::endl;
+  }
   try {
     //bool firstRun = true;
     //while ( !_inputChar.empty() || firstRun ) {
     {
       //firstRun = false;
-      while ( !_inputChar.empty() ) {
+      while ( !_inputChar.empty() && !breakWhile) {
         action = true;
         char ic = static_cast<char>(_inputChar.front());
+        if (debug) {
+          std::clog << "ic: " << ic << std::endl;
+        }
 
         if ( _mode != mode_command ) {
           if ( ic == ':' ){
@@ -577,6 +585,9 @@ bool Window::userInput(std::stringstream& info) {
             _mode = mode_static;
           }
           else if ( _mode == mode_static && _modeMouse != mode_mouse ) {
+            if (debug) {
+              std::clog << "processing char: " << ic << std::endl;
+            }
             switch ( ic ) {
 #ifdef HAVE_GL
               case 'A' : {
@@ -595,9 +606,9 @@ bool Window::userInput(std::stringstream& info) {
               case 'a' : { 
                            if ( !_render._isOk  && _render._doRender && !view_angle )
                              std::clog 
-                               << "psi=" << (int)(campsi/pi*180.f) 
-                               << ", theta=" << (int)(camtheta/pi*180.f)
-                               << ", phi=" << (int)(camphi/pi*180.f) << std::endl;
+                               << "psi=" << (int)std::round(campsi/pi*180.f) 
+                               << ", theta=" << (int)std::round(camtheta/pi*180.f)
+                               << ", phi=" << (int)std::round(camphi/pi*180.f) << std::endl;
                            view_angle = !view_angle;
                            break;
                          }
@@ -619,6 +630,7 @@ bool Window::userInput(std::stringstream& info) {
               case 'm' : {if(_canvas->ntime()>1)_movie= ! _movie;break;}
                          //default : string_static+ic;
             }
+            breakWhile = true;
           }
           _inputChar.pop();
         } // _mode != mode_command
@@ -641,7 +653,7 @@ bool Window::userInput(std::stringstream& info) {
           _command += "|";
           _commandStack.back() = _command;
         }
-        if ( process ) break;
+        if ( process ) breakWhile = true;
       }
       // End of while loop
 
@@ -650,6 +662,9 @@ bool Window::userInput(std::stringstream& info) {
         if ( this->getChar(_keyEnter) || this->getChar(_keyKPEnter) || process ) {// enter
           action = true;
           _commandStack.back() = _command;
+          if (debug) {
+            std::clog << "processing: " << _command << std::endl;
+          }
           try {
             if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
             std::istringstream cin(_command.substr(1,_command.size()-2));
@@ -733,9 +748,9 @@ bool Window::userInput(std::stringstream& info) {
 
   if ( view_angle ) 
     info
-      << "psi=" << (int)(campsi/pi*180.f) 
-      << ", theta=" << (int)(camtheta/pi*180.f)
-      << ", phi=" << (int)(camphi/pi*180.f) << " ";
+      << "psi=" << (int)std::round(campsi/pi*180.f) 
+      << ", theta=" << (int)std::round(camtheta/pi*180.f)
+      << ", phi=" << (int)std::round(camphi/pi*180.f) << " ";
   if ( view_angle && view_time ) info << "| ";
   if ( view_time ) info << "Time step: " << _canvas->itime() << "/" << _canvas->ntime()-1 << " ";
   if ( _movie ) { info << "Recording ";}

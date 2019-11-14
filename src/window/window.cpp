@@ -794,7 +794,9 @@ void Window::drawAxis() {
   std::string label[] = {"x","y","z"};
 
   if ( !_optionb["axisCart"] && _canvas->histdata() != nullptr ) {
-    const double *rprimd = _canvas->histdata()->getRprimd(_canvas->itime());
+    const double *rprimd = ( dynamic_cast<CanvasDensity*>(_canvas.get()) != nullptr )
+     ? _canvas->histdata()->getRprimd(0)
+     : _canvas->histdata()->getRprimd(_canvas->itime());
     vec[0][0] = rprimd[0]; vec[0][1] = rprimd[3]; vec[0][2] = rprimd[6];
     vec[1][0] = rprimd[1]; vec[1][1] = rprimd[4]; vec[1][2] = rprimd[7];
     vec[2][0] = rprimd[2]; vec[2][1] = rprimd[5]; vec[2][2] = rprimd[8];

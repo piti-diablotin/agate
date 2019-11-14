@@ -38,7 +38,41 @@
 #endif
 
 //
-TriObj::TriObj(bool opengl) : 
+void TriObj::rgb(double value, TriObj::_float& r, TriObj::_float& g, TriObj::_float& b) {
+  r = 0;
+  g = 0;
+  b = 0;
+  if ( value < 0 ) {
+    b = 1+4*value;
+    if (b<0) b = 0;
+  }
+  else if ( value >= 0 && value <= 0.25 ) {
+    b = 1.;
+    g = 4*value;
+  }
+  else if ( value > 0.25 && value <= 0.5 ) {
+    b = 1-4*(value-0.25);
+    g = 1;
+  }
+  else if ( value > 0.5 && value <= 0.75 ) {
+    g = 1.;
+    r = 4*(value-0.5);
+
+  }
+  else if ( value > 0.75 && value <= 1 ) {
+    g = 1-4*(value-0.75);
+    r = 1;
+  }
+  else {
+    r = 1;
+    g = 4*(value-1);
+    b = 4*(value-1);
+    if (b>1) b = 1;
+    if (g>1) g = 1;
+  }
+}
+
+TriObj::TriObj(bool opengl) :
   _opengl(opengl),
   _unitVertex(nullptr),
   _unitIndex(nullptr),

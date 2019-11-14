@@ -86,6 +86,16 @@ class TriObj {
     Drawing      _drawing;  ///< How the object should be drawn
     GLMode       _mode;     ///< How to draw (VBO,VAO,VERTEX)
 
+    /**
+     * @brief rgb calculate the RBG values (float) for values between 0 and 1.
+     * It goes from blue to red though all possible combinaisons.
+     * @param value the input value to convert
+     * @param r Red float between 0 and 1
+     * @param g Green float between 0 and 1
+     * @param b Blue float between 0 and 1
+     */
+    static void rgb(double value, _float& r, _float& g, _float& b);
+
   public :
     
     /**

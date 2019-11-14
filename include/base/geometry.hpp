@@ -305,14 +305,14 @@ namespace geometry {
   }
 
    /** 
-   * Recenter the coordinated so the "reduced coordinates" are between [-0.5;0.5[;
+   * Recenter the coordinated so the "reduced coordinates" are between ]-0.5;0.5];
    * @param vec1 vector of reduced coordinated
    */
   inline void recenter(vec3d& vec) {
     for (auto &v : vec) 
     { 
-      while ( v < 0.5 ) ++v;
-      while ( v >= 0.5 ) --v;
+      while ( v <= -0.5 ) ++v;
+      while ( v > 0.5 ) --v;
     }
   }
 

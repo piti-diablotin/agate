@@ -657,8 +657,18 @@ void Dtset::reBuildStructure(const double tolerance, const bool prtcif) {
   }
 
   //CifParser::DataBlock block(cif.getDataBlock("findsym-output"));
-  CifParser::DataBlock block(cif.getDataBlock(0));
-  if ( block._dataLoops.size() !=2 ) 
+  unsigned b = 0;
+  for ( b = 0 ; b < cif.ndataBlock() ; ++b ) {
+    try {
+     cif.getDataBlock(b).getDataLoop("atom_site_fract_x");
+     break;
+    }
+    catch (Exception& e) {
+    }
+  }
+
+  CifParser::DataBlock block(cif.getDataBlock(b));
+  if ( block._dataLoops.size() < 2 )
     throw EXCEPTION("DataBlock from CIF file has not the correct number of loop_",ERRABT);
 
   CifParser::DataLoop  syms;

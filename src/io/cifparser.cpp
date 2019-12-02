@@ -81,7 +81,7 @@ void CifParser::parse(std::istream& stream) {
           dataBlock = &_dataBlocks.back();
           ++_ndataBlock;
         }
-        std::clog << "DATABLOCK " <<  dataBlock->_name << std::endl;
+        //std::clog << "DATABLOCK " <<  dataBlock->_name << std::endl;
       }
       else if ( word.size() > 1 && word[0] == '_' ) { // tag
         if ( dataBlock == nullptr ) 
@@ -91,30 +91,30 @@ void CifParser::parse(std::istream& stream) {
         char value[2048]; // max size authorized
         lstream.read(value,2048);
         std::string sval(value,static_cast<int>(lstream.gcount()));
-        std::clog << "tag " <<  sval << std::endl;
+        //std::clog << "tag " <<  sval << std::endl;
         utils::trim(sval);
         if ( sval.size() == 0 ) {
-          std::clog << "empty " << std::endl;
+          //std::clog << "empty " << std::endl;
           utils::getline(stream,line,nbLines);
           if ( line.size() == 0 ) {
-            std::clog << "next line empty" << std::endl;
+            //std::clog << "next line empty" << std::endl;
             dataBlock->_tags.insert(std::make_pair(utils::tolower(word.substr(1)),""));
             throw EXCEPTION(std::string("Missing value for tag ") + word +
                             std::string(" at line ") + utils::to_string(nbLines),ERRWAR);
           }
           else if ( line[0] == ';') {
-            std::clog << "next line with ;" << std::endl;
+            //std::clog << "next line with ;" << std::endl;
             std::string value = line.substr(1);
             while ( utils::getline(stream,line,nbLines) ){
               if (line[0] == ';') break;
               else value += line;
             }
             utils::trim(value);
-            std::clog << "value is " << value << std::endl;
+            //std::clog << "value is " << value << std::endl;
             dataBlock->_tags.insert(std::make_pair(utils::tolower(word.substr(1)),value));
           }
           else {
-            std::clog << "error ;" << std::endl;
+            //std::clog << "error ;" << std::endl;
             throw EXCEPTION("Unexpected line at line " + utils::to_string(nbLines),ERRWAR);
           }
 
@@ -128,7 +128,7 @@ void CifParser::parse(std::istream& stream) {
               + utils::to_string(nbLines),ERRABT);
         DataLoop loop;
         // Get header
-        std::clog << "loop " << std::endl;
+        //std::clog << "loop " << std::endl;
         int currentpos;
         do {
           currentpos = static_cast<int>(stream.tellg());
@@ -140,11 +140,11 @@ void CifParser::parse(std::istream& stream) {
                 utils::to_string(line.size()) + std::string(" characters which is larger than 2048"),
                 ERRABT);
           utils::tolower(line);
-          std::clog << "header " << line << std::endl;
+          //std::clog << "header " << line << std::endl;
           loop._nfield++;
           loop._header.push_back(line.substr(1));
         } while ( !stream.eof() );
-        std::clog << "nfield=" << loop._nfield << std::endl;
+        //std::clog << "nfield=" << loop._nfield << std::endl;
         stream.seekg(currentpos);
         //Get data
         while (!stream.eof()) {
@@ -162,7 +162,7 @@ void CifParser::parse(std::istream& stream) {
                 utils::to_string(nbLines) + std::string(" has ") +
                 utils::to_string(line.size()) + std::string(" characters which is larger than 2048"),
                 ERRABT);
-          std::clog << "record " << line << std::endl;
+          //std::clog << "record " << line << std::endl;
           lstream.str(line); 
           lstream.exceptions( std::ios::failbit | std::ios::badbit);
           try {
@@ -190,7 +190,7 @@ void CifParser::parse(std::istream& stream) {
             break;
           }
         }
-        std::clog << "nentry " << loop._nentry << std::endl;
+        //std::clog << "nentry " << loop._nentry << std::endl;
         dataBlock->_dataLoops.push_back(std::move(loop));
       }
       else {

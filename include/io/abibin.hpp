@@ -106,7 +106,7 @@ class AbiBin : public Dtset {
      * Getter to get the number of density we have
      * @return the number of density. Can be 1 2 or 4 in case of spin orbit coupling
      */
-    int getNspden() { return _nspden; };
+    int getNspden() { return _nspden; }
 
 };
 

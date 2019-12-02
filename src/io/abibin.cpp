@@ -156,7 +156,7 @@ double AbiBin::getData(int origin, gridDirection dir, getDen function, std::vect
             }
   }
 
-  double inv_max = 1./(*std::max_element(_fftData.begin(),_fftData.begin()+npoints));
+  //double inv_max = 1.;//(*std::max_element(_fftData.begin(),_fftData.begin()+npoints));
 
   int planSize;
   int dimV;
@@ -201,7 +201,7 @@ double AbiBin::getData(int origin, gridDirection dir, getDen function, std::vect
     case DOWN:
     case DIFF:
       shiftOrigin *= 0;
-      if ( function != SUM ) inv_max*=-2;
+      //if ( function != SUM ) inv_max*=-2;
       break;
     case UP : 
     case X :
@@ -218,19 +218,22 @@ double AbiBin::getData(int origin, gridDirection dir, getDen function, std::vect
     for ( int v = 0 ; v < _ngfft[indV] ; ++v ) {
       coord[indU] = u;
       coord[indV] = v;
-      data[u*dimV+v] = _fftData[shiftOrigin+((coord[0]*_ngfft[1]+coord[1])*_ngfft[2])+coord[2]]*inv_max;
+      data[u*dimV+v] = _fftData[shiftOrigin+((coord[0]*_ngfft[1]+coord[1])*_ngfft[2])+coord[2]]/**inv_max*/;
     }
   }
   if ( function == DOWN || function == DIFF) {
     int shiftOrigin = planSize*_ngfft[indNormal];
-    double inv_max2 = inv_max*( function == DOWN ? 1 : 2 );
+    //double inv_max2 = inv_max*( function == DOWN ? 1 : 2 );
+    double operation = ( function == DOWN ? 1 : 2 );
     for ( int u = 0 ; u < _ngfft[indU] ; ++u ) {
       for ( int v = 0 ; v < _ngfft[indV] ; ++v ) {
         coord[indU] = u;
         coord[indV] = v;
-        data[u*dimV+v] -= _fftData[shiftOrigin+((coord[0]*_ngfft[1]+coord[1])*_ngfft[2])+coord[2]]*inv_max2;
+        data[u*dimV+v] -= _fftData[shiftOrigin+((coord[0]*_ngfft[1]+coord[1])*_ngfft[2])+coord[2]]*operation/**inv_max2*/;
       }
     }
   }
-  return 1./inv_max;
+  double max = *std::max_element(_fftData.begin(),_fftData.end());
+  double min = *std::min_element(_fftData.begin(),_fftData.end());
+  return 1./((function==SUM?1:0.5)*std::max(std::abs(min),std::abs(max)));
 }

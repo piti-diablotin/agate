@@ -127,6 +127,7 @@ void TriMap::draw(std::vector<double> &values, float zero[3], float plus[3], flo
     //inv_max = std::min(std::abs(inv_max),std::abs(inv_min));
     for ( unsigned ivertex = 0 ; ivertex < _nvertex ; ++ivertex ) {
       double value = values[ivertex];//*inv_max;
+      /*
       if ( value >= 0 ) {
         _unitColor[3*ivertex+0] = zero[0] + (plus[0]-zero[0])*value;
         _unitColor[3*ivertex+1] = zero[1] + (plus[1]-zero[1])*value;
@@ -137,6 +138,9 @@ void TriMap::draw(std::vector<double> &values, float zero[3], float plus[3], flo
         _unitColor[3*ivertex+1] = zero[1] - (minus[1]-zero[0])*value; 
         _unitColor[3*ivertex+2] = zero[2] - (minus[2]-zero[0])*value;
       }
+      */
+      TriObj::rgb(value,_unitColor[3*ivertex+0],_unitColor[3*ivertex+1],_unitColor[3*ivertex+2]);
+      //TriObj::rgb((double)ivertex/(double)_nvertex,_unitColor[3*ivertex+0],_unitColor[3*ivertex+1],_unitColor[3*ivertex+2]);
     }
   }
 

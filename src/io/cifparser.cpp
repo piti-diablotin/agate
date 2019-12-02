@@ -46,9 +46,7 @@ CifParser::~CifParser() {
 void CifParser::parse(std::istream& stream) {
   unsigned int nbLines = 0;
   DataBlock *dataBlock = nullptr;
-  for ( std::string line ; std::getline(stream,line) ; ) {
-    ++nbLines;
-    utils::rtrim(line);
+  for ( std::string line ; utils::getline(stream,line,nbLines) ; ) {
     if ( line.size() > 2048 ) // 2048+\n
       throw EXCEPTION(std::string("Line ")+
           utils::to_string(nbLines) + std::string(" has ") +
@@ -70,15 +68,20 @@ void CifParser::parse(std::istream& stream) {
     if ( lstream.fail() ) continue; // nothing to do with this line.
     try { 
       if ( word.size() > 5 && word.substr(0,5).compare("data_") == 0 ) { //datablock
-        // Store the previous dataBlock
-        if ( dataBlock != nullptr ) {
-          _dataBlocks.push_back(std::move(*dataBlock));
-          delete dataBlock;
-        }
         // Suppose we store the name, the number of tags and dataloops
-        dataBlock = new DataBlock(utils::tolower(word.substr(5)));
-        ++_ndataBlock;
-        //std::clog << "DATABLOCK " <<  dataBlock->_name << std::endl;
+        dataBlock = nullptr;
+        for ( unsigned b = 0 ; b < _dataBlocks.size() ; ++b ) {
+          if ( _dataBlocks[b]._name == utils::tolower(word.substr(5))) {
+            dataBlock = &_dataBlocks[b];
+            break;
+          }
+        }
+        if ( dataBlock == nullptr ) {
+          _dataBlocks.push_back(DataBlock(utils::tolower(word.substr(5))));
+          dataBlock = &_dataBlocks.back();
+          ++_ndataBlock;
+        }
+        std::clog << "DATABLOCK " <<  dataBlock->_name << std::endl;
       }
       else if ( word.size() > 1 && word[0] == '_' ) { // tag
         if ( dataBlock == nullptr ) 
@@ -88,11 +91,36 @@ void CifParser::parse(std::istream& stream) {
         char value[2048]; // max size authorized
         lstream.read(value,2048);
         std::string sval(value,static_cast<int>(lstream.gcount()));
-        //std::clog << "tag " <<  sval << std::endl;
+        std::clog << "tag " <<  sval << std::endl;
         utils::trim(sval);
-        if ( sval.size() == 0 ) throw EXCEPTION(std::string("Missing value for tag ") + word +
-            std::string(" at line ") + utils::to_string(nbLines),ERRWAR);
-        dataBlock->_tags.insert(std::make_pair(utils::tolower(word.substr(1)),sval));
+        if ( sval.size() == 0 ) {
+          std::clog << "empty " << std::endl;
+          utils::getline(stream,line,nbLines);
+          if ( line.size() == 0 ) {
+            std::clog << "next line empty" << std::endl;
+            dataBlock->_tags.insert(std::make_pair(utils::tolower(word.substr(1)),""));
+            throw EXCEPTION(std::string("Missing value for tag ") + word +
+                            std::string(" at line ") + utils::to_string(nbLines),ERRWAR);
+          }
+          else if ( line[0] == ';') {
+            std::clog << "next line with ;" << std::endl;
+            std::string value = line.substr(1);
+            while ( utils::getline(stream,line,nbLines) ){
+              if (line[0] == ';') break;
+              else value += line;
+            }
+            utils::trim(value);
+            std::clog << "value is " << value << std::endl;
+            dataBlock->_tags.insert(std::make_pair(utils::tolower(word.substr(1)),value));
+          }
+          else {
+            std::clog << "error ;" << std::endl;
+            throw EXCEPTION("Unexpected line at line " + utils::to_string(nbLines),ERRWAR);
+          }
+
+        }
+        else
+          dataBlock->_tags.insert(std::make_pair(utils::tolower(word.substr(1)),sval));
       }
       else if ( word.size() == 5 && word.compare("loop_") == 0 ) { // dataloop
         if ( dataBlock == nullptr ) 
@@ -100,39 +128,41 @@ void CifParser::parse(std::istream& stream) {
               + utils::to_string(nbLines),ERRABT);
         DataLoop loop;
         // Get header
-        //std::clog << "loop " << std::endl;
+        std::clog << "loop " << std::endl;
         int currentpos;
         do {
           currentpos = static_cast<int>(stream.tellg());
-          std::getline(stream,line);
-          utils::trim(line);
-          if ( line[0] != '_' ) break;
-          ++nbLines;
+          utils::getline(stream,line,nbLines);
+          if ( line[0] != '_' ) {nbLines--; break;}
           if ( line.size() > 2049 ) // 2048+\n
             throw EXCEPTION(std::string("Line ")+
                 utils::to_string(nbLines) + std::string(" has ") +
                 utils::to_string(line.size()) + std::string(" characters which is larger than 2048"),
                 ERRABT);
           utils::tolower(line);
-          //std::clog << "header " << line << std::endl;
+          std::clog << "header " << line << std::endl;
           loop._nfield++;
           loop._header.push_back(line.substr(1));
         } while ( !stream.eof() );
-        //std::clog << "nfield=" << loop._nfield << std::endl;
+        std::clog << "nfield=" << loop._nfield << std::endl;
         stream.seekg(currentpos);
         //Get data
         while (!stream.eof()) {
           lstream.clear();
           currentpos = static_cast<int>(stream.tellg());
-          std::getline(stream,line);
-          ++nbLines;
-          utils::trim(line);
+          int prevNbLine = nbLines;
+          utils::getline(stream,line,nbLines);
+          if ( nbLines-prevNbLine>1 )  {
+            stream.seekg(currentpos);
+            nbLines = prevNbLine;
+            break;
+          }
           if ( line.size() > 2048 ) // 2048+\n
             throw EXCEPTION(std::string("Line ")+
                 utils::to_string(nbLines) + std::string(" has ") +
                 utils::to_string(line.size()) + std::string(" characters which is larger than 2048"),
                 ERRABT);
-          //std::clog << "record " << line << std::endl;
+          std::clog << "record " << line << std::endl;
           lstream.str(line); 
           lstream.exceptions( std::ios::failbit | std::ios::badbit);
           try {
@@ -150,18 +180,17 @@ void CifParser::parse(std::istream& stream) {
             ++loop._nentry;
           }
           catch (std::ios_base::failure e){
-            //std::clog << "nentry " << loop._nentry << std::endl;
             stream.seekg(currentpos);
             --nbLines;
             break;
           }
           catch (...) {
-            //std::clog << "nentry " << loop._nentry << std::endl;
             stream.seekg(currentpos);
             --nbLines;
             break;
           }
         }
+        std::clog << "nentry " << loop._nentry << std::endl;
         dataBlock->_dataLoops.push_back(std::move(loop));
       }
       else {
@@ -178,10 +207,6 @@ void CifParser::parse(std::istream& stream) {
         throw e;
       }
     }
-  }
-  if ( dataBlock != nullptr ) { // one dataBlock is left
-    _dataBlocks.push_back(std::move(*dataBlock));
-    delete dataBlock;
   }
 }
 

@@ -142,22 +142,30 @@ void CanvasDensity::refresh(const geometry::vec3d &cam, TextRender &render) {
   std::vector<double> values;
   auto normal = _density.getVector(_normal);
   if ( _status != PAUSE ) {
-    _density.getData(_ipoint,_normal,_dispDen,values);
+    double renorm = _density.getData(_ipoint,_normal,_dispDen,values);
+    double shift=0;
     if ( values.size() > 0 ) {
+      std::clog << _scaleFunction << std::endl;
       switch (_scaleFunction) {
         case linear : {
-                        for ( auto& v : values ) v *= _scaleValues;
-                        break;
-                      }
+            for ( auto& v : values ) v *= _scaleValues*renorm;
+            break;
+          }
         case log: {
-                        for ( auto& v : values ) v= _scaleValues*(v<0.?-1.:1.)*std::log(1+10*std::abs(v))/std::log(11);
-                        break;
-                      }
+            shift = (_dispDen==AbiBin::DIFF?2:1);
+            for ( auto& v : values ) {v = std::log(shift+_scaleValues*v*renorm)/std::log(3);}
+            break;
+          }
         case sqrt: {
-                        for ( auto& v : values ) v=_scaleValues*(v<0.?-1.:1.)*std::sqrt(std::abs(v));
-                        break;
-                      }
+            if (_dispDen==AbiBin::DIFF)
+              for ( auto& v : values ) v= _scaleValues*(v<0.?-1.:1.)*std::sqrt(std::abs(v*renorm));
+            else
+              for ( auto& v : values ) v= _scaleValues*std::sqrt(std::abs(v*renorm));
+            break;
+          }
       }
+      if (_dispDen==AbiBin::DIFF && _scaleFunction != log)
+        for ( auto& v : values ) v = (v+1)*0.5;
     }
   }
 #ifdef HAVE_GL

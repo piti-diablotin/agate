@@ -457,4 +457,17 @@ void fftw3Free() {
 
 }
 
+std::istream& getline(std::istream& cin,std::string& line, unsigned int& counter, std::string comment) {
+  do {
+    std::getline(cin,line);
+    size_t pos_com = line.find_first_of(comment);
+    if ( pos_com != std::string::npos ) {
+      line.resize(pos_com);
+    }
+    utils::trim(line);
+    counter++;
+  } while (cin && line.empty());
+  return cin;
+}
+
 }

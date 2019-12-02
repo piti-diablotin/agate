@@ -313,6 +313,8 @@ namespace utils {
   std::string base64_encode(const std::string &in);
   std::string base64_decode(const std::string &in);
 
+  std::istream& getline(std::istream& cin,std::string& line, unsigned int& counter, std::string comment="#");
+
 }
 
 #endif  // UTILS_HPP

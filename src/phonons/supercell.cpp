@@ -199,6 +199,7 @@ void Supercell::findReference(const Dtset& dtset) {
   using namespace geometry;
   using std::max;
   using std::min;
+
   // First find the dimension
   mat3d ref_rprim = dtset.rprim();
   vec3d ref_vec[3];
@@ -220,7 +221,15 @@ void Supercell::findReference(const Dtset& dtset) {
 
   auto ref_typat = dtset.typat();
   auto ref_znucl = dtset.znucl();
-  auto ref_xcart = dtset.xcart();
+  std::vector<vec3d> ref_xred(dtset.xred());
+#pragma omp for schedule(static)
+  for (unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom) {
+    auto &vec = ref_xred[iatom];
+    for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+      while ( vec[coord] >= 1.0 ) vec[coord] -= 1.0;
+      while ( vec[coord] < 0 ) vec[coord] += 1.0;
+    }
+  }
 
   //Check we have the same znucl
   if ( ref_znucl.size() != _znucl.size() )
@@ -247,12 +256,16 @@ void Supercell::findReference(const Dtset& dtset) {
   Exception e;
 #pragma omp parallel for schedule(static), shared(e)
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) { // For each supercell atom
-    vec3d pos = _xcart[iatom];
+    vec3d pos = _xred[iatom];
+    for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+      while ( pos[coord] >= 1.0 ) pos[coord] -= 1.0;
+      while ( pos[coord] < 0 ) pos[coord] += 1.0;
+    }
     unsigned guess[3] = {0};
     // Reduce search area
     for ( unsigned i = 0 ; i < 3 ; ++ i ) {
       const double normvec = norm(ref_vec[i]);
-      guess[i] = (unsigned) max(0.e0,dot(pos,ref_vec[i])/(normvec*normvec)-1);
+      guess[i] = (unsigned) max(0.e0,dot(_rprim*pos,ref_vec[i])/(normvec*normvec)-1);
       guess[i] = (unsigned) min(guess[i],(unsigned)_dim[i]-1);
     }
     //std::cerr << "Guess " << guess[0] << " " << guess[1] << " " << guess[2] << std::endl;
@@ -263,20 +276,18 @@ void Supercell::findReference(const Dtset& dtset) {
     for ( unsigned ref_iatom = 0 ; ref_iatom < dtset.natom() ; ++ref_iatom ) { // Scan each reference atom
       if ( ref2super[ref_typat[ref_iatom]] != _typat[iatom] ) continue;
 
-      for ( unsigned i = guess[0] ; i < min((unsigned)_dim[0],guess[0]+3) ; ++i) {
-        const double fi = (double) i;
-        const vec3d xtrans = {{ fi*ref_rprim[0], fi*ref_rprim[3], fi*ref_rprim[6] }};
-        for ( unsigned j = guess[1] ; j < min((unsigned)_dim[1],guess[1]+3) ; ++j) {
-          const double fj = (double) j;
-          const vec3d ytrans = {{ fj*ref_rprim[1]+xtrans[0], fj*ref_rprim[4]+xtrans[1], fj*ref_rprim[7]+xtrans[2] }};
-          for ( unsigned k = guess[2] ; k < min((unsigned)_dim[2],guess[2]+3) ; ++k ) {
-            const double fk = (double) k;
-            const vec3d ztrans = {{ fk*ref_rprim[2]+ytrans[0], fk*ref_rprim[5]+ytrans[1], fk*ref_rprim[8]+ytrans[2] }};
+      for ( unsigned i = guess[0] ; i < guess[0]+3 ; ++i) {
+        const double fi = (double) (i%(unsigned)_dim[0]);
+        for ( unsigned j = guess[1] ; j < guess[1]+3 ; ++j) {
+          const double fj = (double) (j%(unsigned)_dim[1]);
+          for ( unsigned k = guess[2] ; k < guess[2]+3 ; ++k ) {
+            const double fk = (double) (k%(unsigned)_dim[2]);
             vec3d cell = {{ fi, fj, fk }};
-            vec3d vecdiff = ref_xcart[ref_iatom]+ztrans-pos;
-            vec3d vecxreddiff = invert(_rprim) * vecdiff;
-            recenter(vecxreddiff);
-            vecdiff = _rprim * vecxreddiff;
+            vec3d vecdiff = ref_xred[ref_iatom]+cell;
+            for( int d = 0 ; d < 3 ; ++d ) vecdiff[d] /= _dim[d];
+            vecdiff = vecdiff-pos;
+            recenter(vecdiff);
+            vecdiff = _rprim * vecdiff;
             double distance = norm(vecdiff);
             if ( distance < closest ) {
               match = ref_iatom;
@@ -366,25 +377,16 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
   ref_rprim_supercell[8] *= _dim[2];
 
   std::vector<double> displacements(3*_natom,0);
-  std::vector<vec3d> xcart_supercell(_natom);
-  auto gprim = invert(ref_rprim_supercell);
-  auto ref_xcart = dtset.xcart();
+  auto& ref_xred = dtset.xred();
+#pragma omp parallel for schedule(static), shared(displacements,ref_xred)
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    const double fi = _cellCoord[iatom][0];
-    const vec3d xtrans = {{ fi*ref_rprim[0], fi*ref_rprim[3], fi*ref_rprim[6] }};
-    const double fj = _cellCoord[iatom][1];
-    const vec3d ytrans = {{ fj*ref_rprim[1]+xtrans[0], fj*ref_rprim[4]+xtrans[1], fj*ref_rprim[7]+xtrans[2] }};
-    const double fk = _cellCoord[iatom][2];
-    const vec3d ztrans = {{ fk*ref_rprim[2]+ytrans[0], fk*ref_rprim[5]+ytrans[1], fk*ref_rprim[8]+ytrans[2] }};
-
-    vec3d position = ref_xcart[_baseAtom[iatom]]+ztrans;
-    vec3d super_xcart_in_ref = ref_rprim_supercell * _xred[iatom];
-    vec3d disp = super_xcart_in_ref - position;
-    disp = gprim*disp;
+    vec3d super_xred_in_ref = _xred[iatom];
+    for ( int d = 0 ; d < 3 ; ++d )
+      super_xred_in_ref[d] = super_xred_in_ref[d]*_dim[d]-_cellCoord[iatom][d];
+    vec3d disp = super_xred_in_ref - ref_xred[_baseAtom[iatom]];
     recenter(disp);
-    disp = ref_rprim_supercell*disp;
+    disp = ref_rprim*disp;
     for ( unsigned d = 0 ; d < 3 ; ++ d )
-      //displacements[iatom*3+d] = super_xcart_in_ref[d] - position[d];
       displacements[iatom*3+d] = disp[d];
   }
 

@@ -403,6 +403,7 @@ class HistData {
     /**
      * Recompute xred and xcart so that the periodic boundaries a imposed
      * or remove periodic boundaries
+     * @param itime Specify what time step to work on. If -1 then do it for all times
      * @param toPeriodic True to impose periodicity, False to remove periodicity
      */
     virtual void periodicBoundaries(unsigned itime, bool toPeriodic);

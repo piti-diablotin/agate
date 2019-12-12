@@ -145,7 +145,7 @@ void CanvasDensity::refresh(const geometry::vec3d &cam, TextRender &render) {
     double renorm = _density.getData(_ipoint,_normal,_dispDen,values);
     double shift=0;
     if ( values.size() > 0 ) {
-      std::clog << _scaleFunction << std::endl;
+      //std::clog << _scaleFunction << std::endl;
       switch (_scaleFunction) {
         case linear : {
             for ( auto& v : values ) v *= _scaleValues*renorm;

@@ -460,8 +460,8 @@ void Window::loopStep() {
     const float transFactorX = aspect > 1 ? 2*distance*zoom*aspect : 2*distance*zoom;
     const float transFactorY = aspect > 1 ? 2*distance*zoom : 2*distance*zoom/aspect;
     glTranslatef(transFactorX*_optionf["shiftOriginX"],transFactorY*_optionf["shiftOriginY"],0.);
-#endif
     this->lookAt(paral_proj? totalfactor : totalfactor/tan(_optionf["perspective"] * pi/(2.*180.)),0,0,0);
+#endif
 
 
     bool state = _render._doRender;

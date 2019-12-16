@@ -1611,6 +1611,83 @@ void HistData::checkTimes(unsigned tbegin, unsigned tend) const {
   else if ( tend > _ntimeAvail ) throw EXCEPTION("tend cannot be greater that the number of available time steps", ERRABT);
 }
 
+void HistData::interpolate(unsigned ninter, double amplitude) {
+  if ( _nimage > 0 )
+    throw EXCEPTION("Interpolation not yet implemented for nimage > 0", ERRDIV);
+  this->waitTime(_ntime);
+  int nsegment = _ntime-1;
+  int newNTime = ninter*nsegment;
+  unsigned natom3 = 3*_natom;
+
+  _xcart.resize(natom3*newNTime);
+  _xred.resize(natom3*newNTime);
+  _acell.resize(_xyz*newNTime);
+  _rprimd.resize(_xyz*_xyz*newNTime);
+  _etotal.resize(newNTime);
+  _time.resize(newNTime);
+  _stress.resize(6*newNTime);
+  if ( !_fcart.empty() ) _fcart.resize(natom3*newNTime);
+  if ( !_spinat.empty() ) _spinat.resize(natom3*newNTime);
+
+  double alpha = (amplitude)/(ninter-1);
+  unsigned currentTime = newNTime-1;
+  for( int lastStep = _ntime-1 ; lastStep > 0 ; --lastStep ) {
+    int firstStep = lastStep-1;
+    std::vector<double> xredLast(_xred.begin()+natom3*lastStep,_xred.begin()+natom3*(lastStep+1));
+    std::vector<double> xcartLast(_xcart.begin()+natom3*lastStep,_xcart.begin()+natom3*(lastStep+1));
+    std::vector<double> spinatLast;
+    if (!_spinat.empty()) spinatLast.insert(spinatLast.begin(),_spinat.begin()+natom3*lastStep,_spinat.begin()+natom3*(lastStep+1));
+    std::vector<double> fcartLast;
+    if (!_fcart.empty()) fcartLast.insert(fcartLast.begin(),_fcart.begin()+natom3*lastStep,_fcart.begin()+natom3*(lastStep+1));
+
+    std::vector<double> acellLast(_acell.begin()+3*lastStep,_acell.begin()+3*(lastStep+1));
+    std::vector<double> rprimdLast(_rprimd.begin()+9*lastStep,_rprimd.begin()+9*(lastStep+1));
+    std::vector<double> stressLast(_stress.begin()+6*lastStep,_stress.begin()+6*(lastStep+1));
+    double etotalLast = _etotal[lastStep];
+    double timeLast =_time[lastStep];
+    std::clog << "Between " << firstStep << " and " << lastStep << std::endl;
+    for ( unsigned tinter = 0 ; tinter < ninter ; ++tinter ) {
+      double beta = tinter*alpha;
+      double gamma = 1-beta;
+      std::clog << "point " << tinter << " pour time " << currentTime << " : "  << gamma << "*last+" << beta << "*first" << std::endl;
+      for ( unsigned iatomDir = 0 ; iatomDir < natom3 ; ++iatomDir ) {
+        _xred[natom3*currentTime+iatomDir] =
+            gamma*xredLast[iatomDir]
+            +beta*_xred[natom3*firstStep+iatomDir];
+        _xcart[natom3*currentTime+iatomDir] =
+            gamma*xcartLast[iatomDir]
+            +beta*_xcart[natom3*firstStep+iatomDir];
+        if ( !_spinat.empty() )
+          _spinat[natom3*currentTime+iatomDir] =
+              gamma*spinatLast[iatomDir]
+              +beta*_spinat[natom3*firstStep+iatomDir];
+        if ( !_fcart.empty() )
+          _fcart[natom3*currentTime+iatomDir] =
+              gamma*fcartLast[iatomDir]
+              +beta*_fcart[natom3*firstStep+iatomDir];
+      }
+      for ( unsigned dir = 0 ; dir < 3 ; ++dir )
+        _acell[3*currentTime+dir] =
+            gamma*acellLast[dir]+beta*_acell[3*firstStep+dir];
+      for ( unsigned dir = 0 ; dir < 9 ; ++dir )
+        _rprimd[9*currentTime+dir] =
+            gamma*rprimdLast[dir]+beta*_rprimd[9*firstStep+dir];
+      for ( unsigned dir = 0 ; dir < 3 ; ++dir )
+        _stress[6*currentTime+dir] =
+            gamma*stressLast[dir]+beta*_stress[6*firstStep+dir];
+
+      _etotal[currentTime] =
+          gamma*etotalLast+beta*_etotal[firstStep];
+      _time[currentTime] =
+          gamma*timeLast+beta*_time[firstStep];
+
+      --currentTime;
+    }
+  }
+  _ntime = newNTime;
+  _ntimeAvail = _ntime;
+}
+
 void HistData::dump(const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) const {
   throw EXCEPTION("Dumping not available for this format",ERRDIV);
   (void) filename;

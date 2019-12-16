@@ -1365,6 +1365,18 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       throw EXCEPTION("Bad tokens for \"write\": write (dtset|poscar|cif) filename.",ERRDIV);
     }
   }
+  else if ( token == "interpolate" ) {
+    if ( _histdata == nullptr || _histdata->ntime() < 2 )
+      throw EXCEPTION("You need to load a HistData with at least 2 time steps",ERRDIV);
+
+    if ( !parser.hasToken("npoints") )
+      throw EXCEPTION("You need to specify npoints=????",ERRDIV);
+
+    unsigned niter = parser.getToken<unsigned>("npoints");
+    double amplitude = 1;
+    if ( parser.hasToken("amplitude") ) amplitude = parser.getToken<double>("amplitude");
+    _histdata->interpolate(niter,amplitude);
+  }
   else {
     throw EXCEPTION("Unknown token "+token,ERRCOM);
   }

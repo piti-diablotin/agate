@@ -731,6 +731,51 @@ std::list<std::vector<double>> HistDataMD::getPDOS(unsigned tbegin, unsigned ten
 #endif
 }
 
+void HistDataMD::interpolate(unsigned ninter, double amplitude) {
+  this->waitTime(_ntime);
+  int nsegment = _ntime-1;
+  int newNTime = ninter*nsegment;
+  unsigned natom3 = 3*_natom;
+
+  _velocities.resize(natom3*newNTime);
+  _ekin.resize(natom3*newNTime);
+  _temperature.resize(_xyz*newNTime);
+  _pressure.resize(_xyz*_xyz*newNTime);
+  _entropy.resize(newNTime);
+
+  double alpha = (amplitude)/(ninter-1);
+  unsigned currentTime = newNTime-1;
+  for( int lastStep = _ntime-1 ; lastStep > 0 ; --lastStep ) {
+    int firstStep = lastStep-1;
+    std::vector<double> velocitiesLast(_velocities.begin()+natom3*lastStep,_velocities.begin()+natom3*(lastStep+1));
+    double ekinLast = _ekin[lastStep];
+    double temperatureLast = _temperature[lastStep];
+    double pressureLast = _pressure[lastStep];
+    double entropyLast = _entropy[lastStep];
+    std::clog << "Between " << firstStep << " and " << lastStep << std::endl;
+    for ( unsigned tinter = 0 ; tinter < ninter ; ++tinter ) {
+      double beta = tinter*alpha;
+      double gamma = 1-beta;
+      std::clog << "point " << tinter << " pour time " << currentTime << " : "  << gamma << "*last+" << beta << "*first" << std::endl;
+      for ( unsigned iatomDir = 0 ; iatomDir < natom3 ; ++iatomDir ) {
+        _velocities[natom3*currentTime+iatomDir] =
+            gamma*velocitiesLast[iatomDir]
+            +beta*_velocities[natom3*firstStep+iatomDir];
+      }
+      _ekin[currentTime] =
+          gamma*ekinLast+beta*_ekin[firstStep];
+      _temperature[currentTime] =
+          gamma*temperatureLast+beta*_temperature[firstStep];
+      _pressure[currentTime] =
+          gamma*pressureLast+beta*_pressure[firstStep];
+      _entropy[currentTime] =
+          gamma*entropyLast+beta*_entropy[firstStep];
+      --currentTime;
+    }
+  }
+  HistData::interpolate(ninter,amplitude);
+}
+
 void HistDataMD::computeVelocitiesPressureTemperature(unsigned itime, double dtion) {
   if ( itime >= 2 ) { // Estimate velocities at itime-1
     for (unsigned iatom = 0 ; iatom < _natom ; ++iatom) {

@@ -259,6 +259,13 @@ class HistDataMD : public HistData {
      * @param smearing Smearing to fit the PDOS with gaussians
      */
     std::list<std::vector<double>> getPDOS(unsigned tbegin, unsigned tend, double smearing) const;
+
+    /**
+     * @brief Linear interpolation of the structures contained in the hist
+     * @param ninter The number of structures to construct between to already present
+     * structures in the HIST
+     */
+    virtual void interpolate(unsigned ninter, double amplitude);
 };
 
 #endif  // HISTDATAMD_HPP

@@ -478,6 +478,13 @@ class HistData {
      */
     void checkTimes(unsigned tbegin, unsigned tend) const ;
 
+    /**
+     * @brief Linear interpolation of the structures contained in the hist
+     * @param ninter The number of structures to construct between to already present
+     * structures in the HIST
+     */
+    virtual void interpolate(unsigned ninter, double amplitude);
+
     void basicChecks();
 
     virtual bool hasThermo() const { return false; }

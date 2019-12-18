@@ -32,17 +32,6 @@
 #include <random>
 #include <chrono>
 
-//
-double HistCustomModes::temperature() const
-{
-  return _temperature;
-}
-
-void HistCustomModes::setTemperature(double temperature)
-{
-  _temperature = temperature;
-}
-
 void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes)
 {
   std::vector<DispDB::qptTree> &condensedModes = (inputCondensedModes.empty()?_condensedModes:inputCondensedModes);
@@ -275,7 +264,6 @@ HistCustomModes::HistCustomModes(Dtset& dtset, DispDB& db) :
   _reference(dtset),
   _db(db),
   _condensedModes(),
-  _temperature(-1),
   _seedType(Random),
   _seed(42),
   _instableAmplitude(1)

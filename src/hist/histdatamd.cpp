@@ -752,11 +752,11 @@ void HistDataMD::interpolate(unsigned ninter, double amplitude) {
     double temperatureLast = _temperature[lastStep];
     double pressureLast = _pressure[lastStep];
     double entropyLast = _entropy[lastStep];
-    std::clog << "Between " << firstStep << " and " << lastStep << std::endl;
+    //std::clog << "Between " << firstStep << " and " << lastStep << std::endl;
     for ( unsigned tinter = 0 ; tinter < ninter ; ++tinter ) {
       double beta = tinter*alpha;
       double gamma = 1-beta;
-      std::clog << "point " << tinter << " pour time " << currentTime << " : "  << gamma << "*last+" << beta << "*first" << std::endl;
+      //std::clog << "point " << tinter << " pour time " << currentTime << " : "  << gamma << "*last+" << beta << "*first" << std::endl;
       for ( unsigned iatomDir = 0 ; iatomDir < natom3 ; ++iatomDir ) {
         _velocities[natom3*currentTime+iatomDir] =
             gamma*velocitiesLast[iatomDir]

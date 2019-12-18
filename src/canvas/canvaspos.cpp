@@ -76,7 +76,7 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _octahedra_z(),
   _octahedra(),
   _hasTranslations(false),
-  _display(DISP_BORDER|DISP_ATOM),
+  _display(DISP_BORDER|DISP_ATOM|DISP_CELL),
   _drawSpins(),
   _bond(2.00), 
   _bondRadius(0.15), 
@@ -588,35 +588,37 @@ void CanvasPos::drawCell() {
         (tx*x[0]+ty*y[0]+tz*z[0]),
         (tx*x[1]+ty*y[1]+tz*z[1]),
         (tx*x[2]+ty*y[2]+tz*z[2]));
-    if ( _light ) glDisable(GL_LIGHTING);
-    glBegin(GL_LINES);
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex3d(0.0,0.0,0.0);
-    glVertex3d(x[0],x[1],x[2]);
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex3d(0.0,0.0,0.0);
-    glVertex3d(y[0],y[1],y[2]);
-    glColor3f(0.0f, 0.0f, 1.0f);
-    glVertex3d(0.0,0.0,0.0);
-    glVertex3d(z[0],z[1],z[2]);
-    glColor3f(0.5f, 0.5f, 0.5f);
-    glVertex3d(x[0],x[1],x[2]);
-    glVertex3d(zx[0],zx[1],zx[2]);
-    glVertex3d(y[0],y[1],y[2]);
-    glVertex3d(yz[0],yz[1],yz[2]);
-    glEnd();
-    glBegin(GL_LINE_STRIP);
-    glVertex3d(x[0],x[1],x[2]);
-    glVertex3d(xy[0],xy[1],xy[2]);
-    glVertex3d(xyz[0],xyz[1],xyz[2]);
-    glVertex3d(zx[0],zx[1],zx[2]);
-    glVertex3d(z[0],z[1],z[2]);
-    glVertex3d(yz[0],yz[1],yz[2]);
-    glVertex3d(xyz[0],xyz[1],xyz[2]);
-    glVertex3d(xy[0],xy[1],xy[2]);
-    glVertex3d(y[0],y[1],y[2]);
-    glEnd();
-    if ( _light ) glEnable(GL_LIGHTING);
+    if ( _display & DISP_CELL ) {
+      if ( _light ) glDisable(GL_LIGHTING);
+      glBegin(GL_LINES);
+      glColor3f(1.0f, 0.0f, 0.0f);
+      glVertex3d(0.0,0.0,0.0);
+      glVertex3d(x[0],x[1],x[2]);
+      glColor3f(0.0f, 1.0f, 0.0f);
+      glVertex3d(0.0,0.0,0.0);
+      glVertex3d(y[0],y[1],y[2]);
+      glColor3f(0.0f, 0.0f, 1.0f);
+      glVertex3d(0.0,0.0,0.0);
+      glVertex3d(z[0],z[1],z[2]);
+      glColor3f(0.5f, 0.5f, 0.5f);
+      glVertex3d(x[0],x[1],x[2]);
+      glVertex3d(zx[0],zx[1],zx[2]);
+      glVertex3d(y[0],y[1],y[2]);
+      glVertex3d(yz[0],yz[1],yz[2]);
+      glEnd();
+      glBegin(GL_LINE_STRIP);
+      glVertex3d(x[0],x[1],x[2]);
+      glVertex3d(xy[0],xy[1],xy[2]);
+      glVertex3d(xyz[0],xyz[1],xyz[2]);
+      glVertex3d(zx[0],zx[1],zx[2]);
+      glVertex3d(z[0],z[1],z[2]);
+      glVertex3d(yz[0],yz[1],yz[2]);
+      glVertex3d(xyz[0],xyz[1],xyz[2]);
+      glVertex3d(xy[0],xy[1],xy[2]);
+      glVertex3d(y[0],y[1],y[2]);
+      glEnd();
+      if ( _light ) glEnable(GL_LIGHTING);
+    }
   }
   else {
     double xmean = 0.0, ymean = 0.0, zmean = 0.0;
@@ -973,6 +975,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display |= DISP_ATOM;
       else if ( what == "incircle" )
         _display |= DISP_INCIRCLE;
+      else if ( what == "cell" )
+        _display |= DISP_CELL;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }
@@ -995,6 +999,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display &= ~DISP_ATOM;
       else if ( what == "incircle" )
         _display &= ~DISP_INCIRCLE;
+      else if ( what == "cell" )
+        _display &= ~DISP_CELL;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }

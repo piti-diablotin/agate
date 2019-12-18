@@ -67,7 +67,7 @@ class Canvas {
     int  _nLoop;      ///< How many times do we play the sequence ? -1 (default) is infinite
     int  _iLoop;      ///< How many times have we already play the sequence.
     int  _dir;        ///< Direction of the animation
-    int _ndiv;
+    int  _ndiv;       ///< Number of division to draw TriObjs
     Status  _status;     ///< Start/Pause/...
     int _translate[3];   ///< Translation vector to repeat the cell
     std::string _info;   ///< Basically save the name of the file we use.

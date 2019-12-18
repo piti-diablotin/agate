@@ -94,6 +94,39 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
   }
 }
 
+void HistCustomModes::addNoiseToHist(const HistData& hist, double temperature, InstableModes instableModes, std::function<void()> callback)
+{
+  //hist.waitTime(hist._ntime);
+  unsigned ntime = hist.ntime();
+  Supercell firstTime(hist,0);
+  firstTime.findReference(_reference);
+  geometry::vec3d qpt = firstTime.getDim();
+  this->zachariasAmplitudes(temperature,ntime,qpt,instableModes);
+  this->reserve(ntime,firstTime);
+  this->setTryToMap(false);
+#ifdef HAVE_CPPTHREAD
+  _endThread = false;
+  _thread = std::thread([this,firstTime,&hist,ntime,callback](){
+#endif
+    for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
+#ifdef     HAVE_CPPTHREAD
+      if ( _endThread == true ) break;
+#endif
+      Supercell currentTime(hist,itime);
+      currentTime.setReference(firstTime);
+      for ( auto iqpt = _condensedModes[itime].begin() ; iqpt != _condensedModes[itime].end() ; ++iqpt ) {
+        for ( auto vib : iqpt->second ) {
+          currentTime.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);
+        }
+      }
+      this->push(currentTime);
+    }
+    callback();
+#ifdef HAVE_CPPTHREAD
+  });
+#endif
+}
+
 void HistCustomModes::animateModes(DispDB::qptTree& condensedModes, unsigned ntime)
 {
   // First, find smallest qpt to build the supercell

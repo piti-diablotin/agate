@@ -36,6 +36,11 @@
 using namespace Agate;
 
 //
+geometry::vec3d Supercell::getDim() const
+{
+  return _dim;
+}
+
 Supercell::Supercell() : Dtset(),
   _baseAtom(),
   _dim(),

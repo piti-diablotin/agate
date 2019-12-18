@@ -184,6 +184,11 @@ class Supercell : public Dtset{
      */
     void getRefCoord(int iatom, int &refAtom, int &x, int &y, int &z) const;
 
+    /**
+     * @brief Get the dimension of the supercell compared to the reference cell
+     * @return the diagonal part of the multiplicity matrice
+     */
+    geometry::vec3d getDim() const;
 };
 
 #endif  // SUPERCELL_HPP

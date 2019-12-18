@@ -768,7 +768,6 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   }
   else if ( token == "thermalPop") {
     double temperature = parser.getToken<double>("temperature");
-    double ntime = parser.getToken<unsigned>("ntime");
     HistCustomModes* hist = new HistCustomModes(_reference,_displacements);
     parser.setSensitive(false);
     if ( parser.hasToken("seedtype") ) {
@@ -800,15 +799,34 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       }
     }
 
-    std::vector<double> tmp = parser.getToken<double>("qpt",3);
-    vec3d qpt = {tmp[0],tmp[1],tmp[2]};
-    hist->zachariasAmplitudes(temperature,ntime,qpt,instableModes);
-    hist->buildHist();
+    try {
+      if ( parser.hasToken("qpt") ) {
+        if ( parser.hasToken("trajectory") )
+          throw EXCEPTION("Both qpt and trajectory inputs are found. Chose only one !", ERRDIV);
+        std::vector<double> tmp = parser.getToken<double>("qpt",3);
+        double ntime = parser.getToken<unsigned>("ntime");
+        vec3d qpt = {tmp[0],tmp[1],tmp[2]};
+        hist->zachariasAmplitudes(temperature,ntime,qpt,instableModes);
+        hist->buildHist();
+      }
+      else {
+        parser.setSensitive(true);
+        std::string histname = parser.getToken<std::string>("trajectory");
+        std::clog << "Loading file " << histname << std::endl;
+        HistData* trajectory = HistData::getHist(histname,true);
+        hist->addNoiseToHist(*trajectory,temperature,instableModes,[trajectory](){delete trajectory;});
+      }
+    }
+    catch( Exception &e ) {
+      e.ADD("Unable to create a random trajectory",ERRDIV);
+      throw e;
+    }
     auto save = _octahedra_z;
     this->setHist(*hist);
     for ( auto z : save )
       this->updateOctahedra(z);
     this->nLoop(-1);
+    if ( _status == PAUSE && _histdata->ntime() > 1 ) _status = START;
   }
   else { 
     CanvasPos::my_alter(token,stream);

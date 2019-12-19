@@ -243,7 +243,7 @@ namespace utils {
   /**
    * Small function to print mean value of plot function
    */
-  void sumUp(const std::list<std::vector<double>>& y, const std::list<std::string>& labels,std::ostream& sum);
+  void sumUp(const std::list<std::vector<double>>& y, const std::list<std::string>& labels,std::ostream& sum, bool ordered=false);
 
   /**
    * Remove suffix of a file name

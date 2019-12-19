@@ -39,6 +39,8 @@
 #include <ctime>
 #include <vector>
 #include "base/exception.hpp"
+#include <tuple>
+#include <algorithm>
 
 #if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
 #  ifdef __cplusplus
@@ -328,7 +330,7 @@ namespace utils {
   }
 
   //
-  void sumUp(const std::list<std::vector<double>>& y, const std::list<std::string>& labels, std::ostream& sum) {
+  void sumUp(const std::list<std::vector<double>>& y, const std::list<std::string>& labels, std::ostream& sum, bool ordered) {
     sum.setf(std::ios::scientific,std::ios::floatfield);
     sum.precision(10);
     if ( labels.size() < 2 ) {
@@ -342,16 +344,25 @@ namespace utils {
       sum << " Mean values: " ;
       auto label = labels.begin();
       auto vec = y.begin();
+      std::vector<std::tuple<std::string,double,double>> toSort;
       sum << std::endl;
       sum.precision(10);
       for ( ; vec != y.end() ; ++label, ++vec ) {
-        using namespace std;
-        sum.setf(ios::left,ios::adjustfield); 
-        sum << setw(24) << *label << ":"; 
-        sum.setf(ios::right,ios::adjustfield); 
         const double meanV = utils::mean(vec->begin(),vec->end());
         const double deviationV = utils::deviation(vec->begin(),vec->end(),meanV);
-        sum << setw(19) << meanV << " +/- " << setw(17) << deviationV << endl;
+        toSort.push_back(std::make_tuple(*label,meanV,deviationV));
+      }
+      if ( ordered ) {
+        std::sort(toSort.begin(),toSort.end(),[](std::tuple<std::string,double,double> &t1, std::tuple<std::string, double,double> &t2){
+          return std::abs(std::get<1>(t1))<std::abs(std::get<1>(t2));
+        });
+      }
+      for ( auto t = toSort.begin(); t != toSort.end() ; ++t ) {
+        using namespace std;
+        sum.setf(ios::left,ios::adjustfield);
+        sum << setw(24) << std::get<0>(*t) << ":";
+        sum.setf(ios::right,ios::adjustfield);
+        sum << setw(19) << std::get<1>(*t) << " +/- " << setw(17) << std::get<2>(*t) << endl;
       }
     }
   }

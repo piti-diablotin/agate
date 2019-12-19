@@ -81,7 +81,7 @@ void Graph::dump(const std::string& filename) const {
 void Graph::plot(const Config &conf, Graph* gplot) {
   GraphSave localSave = conf.save;
 
-  if ( conf.y.size() > 0 && conf.doSumUp ) utils::sumUp(conf.y,conf.labels,std::cout);
+  if ( conf.y.size() > 0 && conf.doSumUp ) utils::sumUp(conf.y,conf.labels,std::cout,conf.order);
 
   if ( gplot != nullptr ) {
     gplot->setXLabel(conf.xlabel);

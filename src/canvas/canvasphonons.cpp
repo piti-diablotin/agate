@@ -512,6 +512,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   else if ( token == "analyze" || token == "ana" ) {
     std::string filetraj;
     Graph::Config config;
+    config.order = true;
 
     std::list<std::vector<double>> &y = config.y;
     std::list<std::string> &labels = config.labels;
@@ -626,6 +627,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   else if ( token == "findqpt" ) {
     std::string filetraj;
     Graph::Config config;
+    config.order = true;
 
     std::list<std::vector<double>> &y = config.y;
     std::list<std::string> &labels = config.labels;

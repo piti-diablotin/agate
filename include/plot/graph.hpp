@@ -114,6 +114,7 @@ class Graph {
       std::string title;
       GraphSave save;
       bool doSumUp;
+      bool order;
 
       Config() :
         x(),
@@ -127,7 +128,8 @@ class Graph {
         ylabel(),
         title("Untitled"),
         save(NONE),
-        doSumUp(true) 
+        doSumUp(true),
+        order(false)
       {}
     } Config;
 

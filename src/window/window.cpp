@@ -904,6 +904,7 @@ void Window::my_alter(std::string &token, std::istringstream &cin) {
   try {
     int istep = utils::stoi(token);
     _canvas->step(istep);
+    return;
   }
   catch (...)
   {;}

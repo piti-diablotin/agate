@@ -326,7 +326,7 @@ void AbiHdr::readFromFile(const std::string& filename) {
   _amu.resize(dsize[4]);
   file.read((char*)(&_amu[0]),dsize[4]*sizeof(double));
   for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
-    Agate::Mendeleev.mass[_znucl[z]] = _amu[z];
+    MendeTable.mass[_znucl[z]] = _amu[z];
 
   checkMarker(-4);
 

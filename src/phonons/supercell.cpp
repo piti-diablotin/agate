@@ -399,7 +399,7 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
   double norm = 0;
   double bmass[3] = {0};
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    double mass = Mendeleev.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
+    double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
       bmass[d] +=  mass*displacements[iatom*3+d];
       norm += mass*displacements[iatom*3+d]*displacements[iatom*3+d];
@@ -410,7 +410,7 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
 
   norm = 0;
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    double mass = Mendeleev.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
+    double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
       displacements[iatom*3+d] -= bmass[d]/(_natom*mass);
       norm+=mass*displacements[iatom*3+d]*displacements[iatom*3+d];
@@ -441,7 +441,7 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
   std::vector<double> mass(dtset.natom(),0.);
   // Keep mass in atomic mass unit since eigen vectors are normalized like this.
   for ( unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom ) {
-    mass[iatom] = Mendeleev.mass[dtset.znucl()[dtset.typat()[iatom]-1]]*phys::amu_emass; // type starts at 1
+    mass[iatom] = MendeTable.mass[dtset.znucl()[dtset.typat()[iatom]-1]]*phys::amu_emass; // type starts at 1
   }
 
   double norm2_qpt = 0.;
@@ -564,7 +564,7 @@ std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset, cons
   }
   std::vector<double> mass(dtset.natom(),0.);
   for ( unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom ) {
-    mass[iatom] = Mendeleev.mass[dtset.znucl()[dtset.typat()[iatom]-1]]*phys::amu_emass; // type starts at 1
+    mass[iatom] = MendeTable.mass[dtset.znucl()[dtset.typat()[iatom]-1]]*phys::amu_emass; // type starts at 1
   }
   this->fft((displacement.size()!=3*_natom) ? calculatedDisplacements:displacement);
 

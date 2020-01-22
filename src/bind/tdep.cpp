@@ -296,7 +296,7 @@ void Tdep::tdep() {
 
      input << std::setw(20) << "amu";
      for ( auto z : _unitcell.znucl() )
-     input << std::setw(25) << Mendeleev.mass[z];
+     input << std::setw(25) << MendeTable.mass[z];
      input << std::endl;
      */
 

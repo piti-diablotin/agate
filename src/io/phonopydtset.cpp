@@ -31,7 +31,7 @@
 #include "base/mendeleev.hpp"
 #include "base/phys.hpp"
 
-using Agate::mendeleev;
+using Agate::Mendeleev;
 
 //
 PhonopyDtset::PhonopyDtset() : Dtset() {
@@ -98,7 +98,7 @@ void PhonopyDtset::readFromYAML(const YAML::Node &doc) {
       auto data = points[iatom];
       _xred[iatom] = data[coordinates].as<geometry::vec3d>();
       std::string name = data["symbol"].as<std::string>();
-      unsigned z = mendeleev::znucl(name);
+      unsigned z = Mendeleev::znucl(name);
       auto it = std::find(_znucl.begin(),_znucl.end(),z);
       if ( it != _znucl.end() ) {
         int typat = std::distance(_znucl.begin(),it);

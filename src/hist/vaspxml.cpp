@@ -160,7 +160,7 @@ void VaspXML::readFromFile(const std::string& filename) {
                       }
                       colptr = colptr->prev;
                       xmlChar *key = xmlNodeListGetString(doc,colptr->xmlChildrenNode,1);
-                      _znucl.push_back(mendeleev::znucl(std::string(reinterpret_cast<char*>(key))));
+                      _znucl.push_back(Mendeleev::znucl(std::string(reinterpret_cast<char*>(key))));
                       xmlFree(key);
                     }
                     dataptr = dataptr->next;

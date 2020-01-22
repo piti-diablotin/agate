@@ -173,7 +173,7 @@ void Multibinit::readFromFile(const std::string& filename) {
             }
             if(present==0){
               amu[iamu]=(utils::stod(reinterpret_cast<char*>(uri)));
-              _znucl[iamu] = mendeleev::znucl(amu[iamu]);
+              _znucl[iamu] = Mendeleev::znucl(amu[iamu]);
               iamu++;
             }
             // fill the typat table

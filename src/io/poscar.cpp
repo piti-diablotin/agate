@@ -37,7 +37,7 @@
 #include "base/mendeleev.hpp"
 #include "base/utils.hpp"
 
-using Agate::mendeleev;
+using Agate::Mendeleev;
 
 //
 Poscar::Poscar() : Dtset(),
@@ -53,7 +53,7 @@ Poscar::Poscar(const HistData &hist, const unsigned itime) : Dtset(hist,itime),
   if ( _znucl.size() >= 1 && _znucl[0]!=0 ) {
     _names = "    ";
     for ( auto& znucl : _znucl ) {
-      _names += mendeleev::name[znucl];
+      _names += Mendeleev::name[znucl];
       _names += " ";
     }
     _names.erase(_names.end()-1);
@@ -86,7 +86,7 @@ Poscar::Poscar(const Dtset& dtset) : Dtset(dtset),
     _znucl.resize(_ntypat);
     _names = "    ";
     for ( auto& znucl : _znucl ) {
-      _names += mendeleev::name[znucl];
+      _names += Mendeleev::name[znucl];
       _names += " ";
     }
     _names.erase(_names.end()-1);
@@ -111,7 +111,7 @@ Poscar& Poscar::operator = (const Dtset& dtset){
     _znucl.resize(_ntypat);
     _names = "    ";
     for ( auto& znucl : _znucl ) {
-      _names += mendeleev::name[znucl];
+      _names += Mendeleev::name[znucl];
       _names += " ";
     }
     _names.erase(_names.end()-1);
@@ -149,7 +149,7 @@ void Poscar::readFromFile(const std::string& filename) {
         sstr >> tmp_str;
         if ( tmp_str.empty() ) continue;
         try {
-          unsigned sp = mendeleev::znucl(tmp_str);
+          unsigned sp = Mendeleev::znucl(tmp_str);
           _znucl.push_back(sp);
         }
         catch ( Exception& e ) {
@@ -206,7 +206,7 @@ void Poscar::readFromFile(const std::string& filename) {
           sstr >> tmp_str;
           if ( tmp_str.empty() ) continue;
           try {
-            unsigned sp = mendeleev::znucl(tmp_str);
+            unsigned sp = Mendeleev::znucl(tmp_str);
             znucl_tmp.push_back(sp);
           }
           catch ( Exception& e ) {
@@ -236,7 +236,7 @@ void Poscar::readFromFile(const std::string& filename) {
       _znucl.resize(_ntypat);
       _names = "    ";
       for ( auto& znucl : _znucl ) {
-        _names += mendeleev::name[znucl];
+        _names += Mendeleev::name[znucl];
         _names += " ";
       }
     }

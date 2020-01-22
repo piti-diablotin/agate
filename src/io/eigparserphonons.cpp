@@ -73,7 +73,7 @@ std::vector<std::vector<double>> EigParserPhonons::getBandProjection(const unsig
       std::advance(myband,2*_nband*iband);
       // Compute weigth for each atom which is the sum over x y and z
       for ( unsigned iatom = 0 ; iatom < natom ; ++iatom ) {
-        double mass = Mendeleev.mass[znucl[typat[iatom]-1]]*phys::amu_emass;
+        double mass = MendeTable.mass[znucl[typat[iatom]-1]]*phys::amu_emass;
         for ( unsigned idir = 0 ; idir < 3 ; ++ idir ) {
           double re = *myband;
           ++myband;
@@ -122,13 +122,13 @@ std::vector<unsigned> EigParserPhonons::getBandColor(const unsigned iband, const
     }
 
     std::vector<unsigned> colors(ntypat+1,
-        ((int)(255*Mendeleev.color[0][0])<<16)
-        +((int)(255*Mendeleev.color[0][1])<<8)
-        +((int)(255*Mendeleev.color[0][2])));
+        ((int)(255*MendeTable.color[0][0])<<16)
+        +((int)(255*MendeTable.color[0][1])<<8)
+        +((int)(255*MendeTable.color[0][2])));
     for ( unsigned itypat = 0 ; itypat < ntypat ; ++itypat ) {
-      unsigned r = 255*Mendeleev.color[znucl[itypat]][0];
-      unsigned g = 255*Mendeleev.color[znucl[itypat]][1];
-      unsigned b = 255*Mendeleev.color[znucl[itypat]][2];
+      unsigned r = 255*MendeTable.color[znucl[itypat]][0];
+      unsigned g = 255*MendeTable.color[znucl[itypat]][1];
+      unsigned b = 255*MendeTable.color[znucl[itypat]][2];
       colors[itypat+1] = (r<<16)|(g<<8)|b;
     }
 
@@ -166,7 +166,7 @@ void EigParserPhonons::renormalizeEigenDisp() {
     for ( unsigned imode = 0 ; imode < _nband ; ++imode ) {
       double norm = 0.;
       for ( unsigned iatom = 0 ; iatom < _dtset->natom() ; ++iatom ) {
-        double mass = Mendeleev.mass[znucl[typat[iatom]-1]]*phys::amu_emass;
+        double mass = MendeTable.mass[znucl[typat[iatom]-1]]*phys::amu_emass;
         for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
           double re = disp[2*_nband*imode+3*2*iatom+idir*2];
           double im = disp[2*_nband*imode+3*2*iatom+idir*2+1];

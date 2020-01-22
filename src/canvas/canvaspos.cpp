@@ -323,7 +323,7 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
   if ( _display & DISP_INCIRCLE ) {
   _sphere->push();
   const GLfloat pos[3] = {(fx[0]+fy[0]+fz[0])/(GLfloat)2.,(fx[1]+fy[1]+fz[1])/(GLfloat)2.,(fx[2]+fy[2]+fz[2])/(GLfloat)2.};
-  _sphere->draw(pos,Mendeleev.color[0],geometry::getWignerSeitzRadius(rprimd));
+  _sphere->draw(pos,MendeTable.color[0],geometry::getWignerSeitzRadius(rprimd));
   _sphere->pop();
   }
 
@@ -361,8 +361,8 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
               xcart[iatom*3+2]);
           if ( _display & (DISP_NAME | DISP_ID | DISP_ZNUCL) ) {
             std::stringstream label;
-            float radius = Mendeleev.radius[znucl];
-            if ( _display & DISP_NAME ) label << mendeleev::name[znucl];
+            float radius = MendeTable.radius[znucl];
+            if ( _display & DISP_NAME ) label << Mendeleev::name[znucl];
             else if ( _display & DISP_ID   ) label << iatom+1;
             else if ( _display & DISP_ZNUCL ) label << znucl;
             //glDisable(GL_DEPTH_TEST);
@@ -418,8 +418,8 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
                 _xcartBorders[batom*3+2]);
             if ( _display & (DISP_NAME | DISP_ID | DISP_ZNUCL) ) {
               std::stringstream label;
-              float radius = Mendeleev.radius[znucl];
-              if ( _display & DISP_NAME ) label << mendeleev::name[znucl];
+              float radius = MendeTable.radius[znucl];
+              if ( _display & DISP_NAME ) label << Mendeleev::name[znucl];
               else if ( _display & DISP_ID   ) label << _onBorders[batom].first+1;
               else if ( _display & DISP_ZNUCL ) label << znucl;
               //glDisable(GL_DEPTH_TEST);
@@ -505,8 +505,8 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
               CanvasPos::drawAtom(znucl,a.second[0],a.second[1],a.second[2]);
               if ( _display & (DISP_NAME | DISP_ID | DISP_ZNUCL) ) {
                 std::stringstream label;
-                float radius = Mendeleev.radius[znucl];
-                if ( _display & DISP_NAME ) label << mendeleev::name[znucl];
+                float radius = MendeTable.radius[znucl];
+                if ( _display & DISP_NAME ) label << Mendeleev::name[znucl];
                 else if ( _display & DISP_ID   ) label << a.first+1;
                 else if ( _display & DISP_ZNUCL ) label << znucl;
                 //glDisable(GL_DEPTH_TEST);
@@ -527,7 +527,7 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
             auto center = _octahedra[iocta.first]->center();
             if ( (_display & DISP_BORDER ) || ( center < _natom ) ) {
               float color[4];
-              float *atcolor = Mendeleev.color[_znucl[_typat[center]]];
+              float *atcolor = MendeTable.color[_znucl[_typat[center]]];
               color[0] = (_octacolor[0]+atcolor[0])/2;
               color[1] = (_octacolor[1]+atcolor[1])/2;
               color[2] = (_octacolor[2]+atcolor[2])/2;
@@ -563,7 +563,7 @@ void CanvasPos::nextFrame(const int count) {
 void CanvasPos::drawAtom(const int znucl, GLfloat posX, GLfloat posY, GLfloat posZ) {
   if ( !(_display & DISP_ATOM) ) return;
   GLfloat pos[3]={posX,posY,posZ};
-  _sphere->draw(pos,Mendeleev.color[znucl],(float)Mendeleev.radius[znucl]);
+  _sphere->draw(pos,MendeTable.color[znucl],(float)MendeTable.radius[znucl]);
 }
 
 //
@@ -625,10 +625,10 @@ void CanvasPos::drawCell() {
     double masstot = 0.0;
     const double *xcart = _histdata->getXcart(_itime);
     for ( int iatom = 0 ; iatom < _natom ; ++iatom ) {
-      masstot += Mendeleev.mass[_znucl[_typat[iatom]]];
-      xmean += (xcart[3*iatom  ]*Mendeleev.mass[_znucl[_typat[iatom]]]);
-      ymean += (xcart[3*iatom+1]*Mendeleev.mass[_znucl[_typat[iatom]]]);
-      zmean += (xcart[3*iatom+2]*Mendeleev.mass[_znucl[_typat[iatom]]]);
+      masstot += MendeTable.mass[_znucl[_typat[iatom]]];
+      xmean += (xcart[3*iatom  ]*MendeTable.mass[_znucl[_typat[iatom]]]);
+      ymean += (xcart[3*iatom+1]*MendeTable.mass[_znucl[_typat[iatom]]]);
+      zmean += (xcart[3*iatom+2]*MendeTable.mass[_znucl[_typat[iatom]]]);
     }
     xmean /= masstot;
     ymean /= masstot;
@@ -669,10 +669,10 @@ void CanvasPos::drawBonds(std::vector< std::pair<int,int> >& bonds) {
       const int i2 = hb->second;
       const unsigned t1 = _typat[i1];
       const unsigned t2 = _typat[i2];
-      const double r1 = Mendeleev.rcov[_znucl[t1]];
-      const double r2 = Mendeleev.rcov[_znucl[t2]];
-      const float *c1 = Mendeleev.color[_znucl[t1]];
-      const float *c2 = Mendeleev.color[_znucl[t2]];
+      const double r1 = MendeTable.rcov[_znucl[t1]];
+      const double r2 = MendeTable.rcov[_znucl[t2]];
+      const float *c1 = MendeTable.color[_znucl[t1]];
+      const float *c2 = MendeTable.color[_znucl[t2]];
       const double prop = 1./(r1+r2);
       const double *xcart1 = ( i1 < _natom ) ? &xcart[3*i1] : &_xcartBorders[3*(i1-_natom)];
       const double *xcart2 = ( i2 < _natom ) ? &xcart[3*i2] : &_xcartBorders[3*(i2-_natom)];
@@ -702,8 +702,8 @@ void CanvasPos::drawSpins(unsigned batom) {
     const float nn = sqrt(spinx*spinx+spiny*spiny+spinz*spinz);
     if ( nn > 0.0099 ) {
       glPushMatrix();
-      const float length = _drawSpins[3] ? 2.f*(float)Mendeleev.radius[znucl]*(1.f+nn*0.5f) // Relatif
-      : 2.f*(float)Mendeleev.radius[znucl]+nn; // Absolute
+      const float length = _drawSpins[3] ? 2.f*(float)MendeTable.radius[znucl]*(1.f+nn*0.5f) // Relatif
+      : 2.f*(float)MendeTable.radius[znucl]+nn; // Absolute
       const float inv_nn = 1.f/nn;
       const float nprod = sqrt(spiny*spiny+spinx*spinx);
       const float angle = ( (spinz<0.) ? 180.f+180.f/3.14f*asin(nprod*inv_nn) : -180.f/3.14f*asin(nprod*inv_nn) );
@@ -721,10 +721,10 @@ void CanvasPos::drawSpins(unsigned batom) {
         }
       }
       else
-          glColor3fv(&Mendeleev.color[znucl][0]);
+          glColor3fv(&MendeTable.color[znucl][0]);
 
 
-      _arrow.draw((float)Mendeleev.radius[1]/2.,length);
+      _arrow.draw((float)MendeTable.radius[1]/2.,length);
       glPopMatrix();
     }
   };
@@ -787,7 +787,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
           name = name.substr(1);
           sign = -1;
         }
-        z = sign*mendeleev::znucl(name);
+        z = sign*Mendeleev::znucl(name);
       }
       else throw EXCEPTION("Cannot find element "+name,ERRDIV);
     }
@@ -888,13 +888,13 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       else if ( name == "down" ) tomodify = &_down[0];
       else if ( name == "octa" ) tomodify = &_octacolor[0];
       else if ( !stream.fail() ) {
-        z = mendeleev::znucl(name);
-        tomodify = &Mendeleev.color[z][0];
+        z = Mendeleev::znucl(name);
+        tomodify = &MendeTable.color[z][0];
       }
       else throw EXCEPTION("No color to define for "+name,ERRDIV);
     }
     else if ( z >= 0 && z < NELEMT ) {
-      tomodify = &Mendeleev.color[z][0];
+      tomodify = &MendeTable.color[z][0];
     }
     else throw EXCEPTION("Bad atomic number",ERRDIV);
 
@@ -1048,14 +1048,14 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
           tomodify = &_bondRadius;
         }
         else {
-          z = mendeleev::znucl(name);
-          tomodify = &Mendeleev.radius[z];
+          z = Mendeleev::znucl(name);
+          tomodify = &MendeTable.radius[z];
         }
       }
       else throw EXCEPTION("No radius to define for "+name,ERRDIV);
     }
     else if ( z > 0 && z < NELEMT ) {
-      tomodify = &Mendeleev.radius[z];
+      tomodify = &MendeTable.radius[z];
     }
     else throw EXCEPTION("Bad atomic number",ERRDIV);
 
@@ -1081,14 +1081,14 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
           tomodify = &_bondRadius;
         }
         else {
-          z = mendeleev::znucl(name);
-          tomodify = &Mendeleev.rcov[z];
+          z = Mendeleev::znucl(name);
+          tomodify = &MendeTable.rcov[z];
         }
       }
       else throw EXCEPTION("No radius to define for "+name,ERRDIV);
     }
     else if ( z > 0 && z < NELEMT ) {
-      tomodify = &Mendeleev.rcov[z];
+      tomodify = &MendeTable.rcov[z];
     }
     else throw EXCEPTION("Bad atomic number",ERRDIV);
 
@@ -1110,7 +1110,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       std::string name;
       stream >> name;
       if ( !stream.fail() ) {
-        z = mendeleev::znucl(name);
+        z = Mendeleev::znucl(name);
       }
       else throw EXCEPTION("Don't undestand "+name,ERRDIV);
     }
@@ -1126,8 +1126,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       munit.rebase(UnitConverter::getUnit(unit));
       mass = mass*munit;
     }
-    Mendeleev.mass[z] = mass;
-    throw EXCEPTION("Mass of "+utils::trim(std::string(mendeleev::name[z]))+" set to "+utils::to_string(mass)+" "+munit.str(),ERRCOM);
+    MendeTable.mass[z] = mass;
+    throw EXCEPTION("Mass of "+utils::trim(std::string(Mendeleev::name[z]))+" set to "+utils::to_string(mass)+" "+munit.str(),ERRCOM);
   }
   else if ( token == "move" || token == "mv" ){
     double red[3]={0};
@@ -1666,11 +1666,11 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
     // Inside
     for ( int iatom = first ; iatom < last ; ++iatom ) {
       const unsigned typ1 = _typat[iatom];
-      const double rad1 = Mendeleev.rcov[_znucl[typ1]];
+      const double rad1 = MendeTable.rcov[_znucl[typ1]];
       geometry::vec3d pos={{ xcart[3*iatom], xcart[3*iatom+1], xcart[3*iatom+2] }};
       for ( int hatom = iatom+1 ; hatom < last ; ++hatom ) {
         unsigned typ2 = _typat[hatom];
-        const double blength = rad1 + Mendeleev.rcov[_znucl[typ2]];
+        const double blength = rad1 + MendeTable.rcov[_znucl[typ2]];
         geometry::vec3d hpos={{ xcart[3*hatom]-pos[0], xcart[3*hatom+1]-pos[1], xcart[3*hatom+2]-pos[2] }};
         double norm2 = geometry::dot(hpos,hpos);
         if ( norm2 < (blength*blength)*b2 )
@@ -1682,7 +1682,7 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
           int atomref = _onBorders[batom].first;
           if ( atomref >= first && atomref < last ) {
             unsigned typ2 = _typat[atomref];
-            const double blength = rad1 + Mendeleev.rcov[_znucl[typ2]];
+            const double blength = rad1 + MendeTable.rcov[_znucl[typ2]];
             geometry::vec3d hpos={{ _xcartBorders[3*batom]-pos[0], _xcartBorders[3*batom+1]-pos[1], _xcartBorders[3*batom+2]-pos[2] }};
             double norm2 = geometry::dot(hpos,hpos);
             if ( norm2 < (blength*blength)*b2 )
@@ -1697,14 +1697,14 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
         int atomref1 = _onBorders[batom1].first;
         if ( atomref1 >= first && atomref1 < last ) {
           const unsigned typ1 = _typat[atomref1];
-          const double rad1 = Mendeleev.rcov[_znucl[typ1]];
+          const double rad1 = MendeTable.rcov[_znucl[typ1]];
           geometry::vec3d pos={{ _xcartBorders[3*batom1], _xcartBorders[3*batom1+1], _xcartBorders[3*batom1+2] }};
           // Border - Border
           for ( unsigned batom2 = 0 ; batom2 <  _onBorders.size() ; ++batom2 ) {
             int atomref2 = _onBorders[batom2].first;
             if ( atomref2 >= first && atomref2 < last ) {
               int typ2 = _typat[atomref2];
-              const double blength = rad1 + Mendeleev.rcov[_znucl[typ2]];
+              const double blength = rad1 + MendeTable.rcov[_znucl[typ2]];
               geometry::vec3d hpos={{ _xcartBorders[3*batom2]-pos[0], _xcartBorders[3*batom2+1]-pos[1], _xcartBorders[3*batom2+2]-pos[2] }};
               double norm2 = geometry::dot(hpos,hpos);
               if ( norm2 < (blength*blength)*b2 )

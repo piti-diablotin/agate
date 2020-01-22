@@ -302,7 +302,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
       size_t start[] = {0};
       get_var(ncid,start,count,amu,"amu");
       for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
-        Mendeleev.mass[_znucl[z]] = amu[z];
+        MendeTable.mass[_znucl[z]] = amu[z];
       delete[] amu;
     }
   }
@@ -427,7 +427,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
           try {
           get_var(ncid,start,count,amu,"amu");
           for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
-            Mendeleev.mass[_znucl[z]] = amu[z];
+            MendeTable.mass[_znucl[z]] = amu[z];
           }
           catch (...) {;}
           delete[] amu;
@@ -490,7 +490,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
       const double omegaP2 = nimage * phys::kB*phys::kB * mdtemp*mdtemp / (phys::Ha*phys::Ha);/*/ ( phys::hbar*phys::hbar );*/ // In /s2
       std::vector<double> mass(natomImg);
       for ( unsigned i = 0 ; i < natomImg ; ++i ) {
-        mass[i] = Mendeleev.mass[_znucl[_typat[i]-1]]*phys::amu_emass;
+        mass[i] = MendeTable.mass[_znucl[_typat[i]-1]]*phys::amu_emass;
       }
 
       /**
@@ -838,7 +838,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
     //amu(ntypat)
     double *amu = new double[_znucl.size()];
     for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
-      amu[z] = Mendeleev.mass[_znucl[z]];
+      amu[z] = MendeTable.mass[_znucl[z]];
     dimids[0]=ntypatid;
     countp[0]=_znucl.size();
     units = "atomic units";

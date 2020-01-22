@@ -142,7 +142,7 @@ void HistDataHeff::readFromFile(const std::string& filename) {
     unsigned type = (unsigned) -1;
     for ( unsigned sp = 0 ; sp < _znucl.size() ; ++sp ) {
       const int zcomp = _znucl[sp];
-      if ( fabs(masses[iatom]-Mendeleev.mass[zcomp])/Mendeleev.mass[zcomp] < 1.e-3 ) {
+      if ( fabs(masses[iatom]-MendeTable.mass[zcomp])/MendeTable.mass[zcomp] < 1.e-3 ) {
         type = sp+1;
         break;
       }
@@ -152,7 +152,7 @@ void HistDataHeff::readFromFile(const std::string& filename) {
       type = _znucl.size()+1;
       //find new znucl
       try {
-        _znucl.push_back(mendeleev::znucl(masses[iatom]));
+        _znucl.push_back(Mendeleev::znucl(masses[iatom]));
       }
       catch ( Exception &e ) {
         std::clog << e.fullWhat() << std::endl;

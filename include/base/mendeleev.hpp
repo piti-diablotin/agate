@@ -39,39 +39,54 @@ namespace Agate {
  * A public structure to access some general data that can be tuned.
  * Basically it contains the name, mass, radius and a color for each specie.
  */
-struct mendeleev {
+class Mendeleev {
 
- /** Define the name of each specie. */
- static const char name[NELEMT][4];
+  public:
 
- /** Define the mass of each specie. */
- double mass[NELEMT];
+    /** Define the name of each specie. */
+    static const char name[NELEMT][4];
 
- /** Define the color of each specie. */
- float color[NELEMT][3];
+    /** Define the mass of each specie. */
+    double mass[NELEMT];
 
- /** Define the radius of each specie. */
- double radius[NELEMT];
+    /** Define the color of each specie. */
+    float color[NELEMT][3];
 
- /** Define the covalent radius of each specie. */
- double rcov[NELEMT];
+    /** Define the radius of each specie. */
+    double radius[NELEMT];
 
- mendeleev();
+    /** Define the covalent radius of each specie. */
+    double rcov[NELEMT];
 
- /**
-  * find the znucl corresponding to a string
-  * @param inname Symbol of the specie to find
-  * @return The znucl value correponding to the name
-  */
- static unsigned znucl(const std::string &inname);
+    /**
+    * find the znucl corresponding to a string
+    * @param inname Symbol of the specie to find
+    * @return The znucl value correponding to the name
+    */
+    static unsigned znucl(const std::string &inname);
 
- /**
-  * find the znucl corresponding to a mass
-  * @param inmass
-  * @return The znucl value correponding to the name
-  */
- static unsigned znucl(const double inmass);
+    /**
+    * find the znucl corresponding to a mass
+    * @param inmass
+    * @return The znucl value correponding to the name
+    */
+    static unsigned znucl(const double inmass);
+
+    static Mendeleev& table();
+
+    Mendeleev(const Mendeleev&) = delete;
+    Mendeleev(Mendeleev&&) = delete;
+    void operator=(const Mendeleev&) = delete;
+
+  private :
+
+    /**
+    * @brief Mendeleev build the basic variables with predefined values;
+    */
+    Mendeleev();
 };
-extern mendeleev Mendeleev;
+
+#define MendeTable Agate::Mendeleev::table()
+
 }
 #endif  // MENDELEEV_H PP

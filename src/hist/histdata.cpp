@@ -71,7 +71,7 @@ extern "C" {
 #endif
 #include <random>
 
-using Agate::mendeleev;
+using Agate::Mendeleev;
 
 //
 HistData::HistData() :
@@ -937,7 +937,7 @@ std::pair<std::vector<double>,std::vector<double>> HistData::getPDF(unsigned znu
     }
     if ( typ1.size() == 0 )
       continue;
-      //throw EXCEPTION("There is no atom of type "+utils::trim(std::string(mendeleev::name[znucl1])),ERRABT);
+      //throw EXCEPTION("There is no atom of type "+utils::trim(std::string(Mendeleev::name[znucl1])),ERRABT);
 
     // Find all indices for znucl2
     std::vector<unsigned> typ2;
@@ -946,7 +946,7 @@ std::pair<std::vector<double>,std::vector<double>> HistData::getPDF(unsigned znu
     }
     if ( typ2.size() == 0 )
       continue;
-      //throw EXCEPTION("There is no atom of type "+utils::trim(std::string(mendeleev::name[znucl2])),ERRABT);
+      //throw EXCEPTION("There is no atom of type "+utils::trim(std::string(Mendeleev::name[znucl2])),ERRABT);
 
     factor += (double)(xShift*yShift*zShift)*det(rprimd)/(double)(typ1.size()*typ2.size());
 
@@ -1263,8 +1263,8 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
         try {
           data = this->getPDF(_znucl[typ1],_znucl[typ2],rmax,dr,tbegin,tend);
           y.push_back(data.second);
-          labels.push_back(utils::trim(std::string(mendeleev::name[_znucl[typ1]]))+std::string("-")
-              +utils::trim(std::string(mendeleev::name[_znucl[typ2]])));
+          labels.push_back(utils::trim(std::string(Mendeleev::name[_znucl[typ1]]))+std::string("-")
+              +utils::trim(std::string(Mendeleev::name[_znucl[typ2]])));
         }
         catch(Exception& e) {}
       }
@@ -1292,7 +1292,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       if ( typ == 0 )
         labels.push_back("All");
       else
-        labels.push_back(utils::trim(std::string(mendeleev::name[_znucl[typ-1]])));
+        labels.push_back(utils::trim(std::string(Mendeleev::name[_znucl[typ-1]])));
     }
   }
 
@@ -1316,7 +1316,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       if ( typ == 0 )
         labels.push_back("All");
       else
-        labels.push_back(utils::trim(std::string(mendeleev::name[_znucl[typ-1]])));
+        labels.push_back(utils::trim(std::string(Mendeleev::name[_znucl[typ-1]])));
     }
   }
 
@@ -1333,7 +1333,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       for ( auto &d : *curve ) d = d*dunit*dunit;
 
     for ( unsigned typ = 0 ; typ < _znucl.size() ; ++typ ) {
-      std::string specie = utils::trim(std::string(mendeleev::name[_znucl[typ]]));
+      std::string specie = utils::trim(std::string(Mendeleev::name[_znucl[typ]]));
       labels.push_back(specie+" xx");
       labels.push_back(specie+" xy");
       labels.push_back(specie+" xz");
@@ -1386,9 +1386,9 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     std::vector<bool> alreadySet(_znucl.size(),false);
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom, ++p ) {
       auto typat = _typat[iatom]-1;
-      colors.push_back(Graph::rgb(Agate::Mendeleev.color[_znucl[typat]]));
+      colors.push_back(Graph::rgb(MendeTable.color[_znucl[typat]]));
       if ( !alreadySet[typat] ) {
-        labels.push_back(mendeleev::name[_znucl[typat]]);
+        labels.push_back(Mendeleev::name[_znucl[typat]]);
         alreadySet[typat] = true;
       }
       else

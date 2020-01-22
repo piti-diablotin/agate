@@ -77,7 +77,7 @@ void HistDataXYZ::readFromFile(const std::string& filename) {
       std::string specie;
       file >> specie;
       file.ignore(1024,'\n');
-      unsigned z = mendeleev::znucl(specie);
+      unsigned z = Mendeleev::znucl(specie);
       auto it = _znucl.end();
       if ( (it = std::find(_znucl.begin(),_znucl.end(),z)) != _znucl.end() ) {
         _typat.push_back(it-_znucl.begin()+1);
@@ -150,7 +150,7 @@ void HistDataXYZ::readFromFile(const std::string& filename) {
                 >> _xcart[itime*_natom*_xyz+iatom*_xyz+1]
                 >> _xcart[itime*_natom*_xyz+iatom*_xyz+2];
               file.ignore(1024,'\n'); // Terminate natom line
-              if ( specie != utils::trim(std::string(mendeleev::name[_znucl[_typat[iatom]-1]])) ) {
+              if ( specie != utils::trim(std::string(Mendeleev::name[_znucl[_typat[iatom]-1]])) ) {
                 _ntime = _ntimeAvail;
                 throw EXCEPTION("Only able to read XYZ file with same type of atoms for each snapshot",ERRABT);
               }
@@ -204,7 +204,7 @@ void HistDataXYZ::dump(const std::string& filename, unsigned tbegin, unsigned te
       file << itime << "/" << tend << " created by " << PACKAGE_STRING << " without any warranty" <<endl;
 
       for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-        file << mendeleev::name[_znucl[_typat[iatom]-1]];
+        file << Mendeleev::name[_znucl[_typat[iatom]-1]];
         file 
           << std::setw(23) << _xcart[itime*_natom*_xyz+iatom*_xyz  ] * phys::b2A
           << std::setw(23) << _xcart[itime*_natom*_xyz+iatom*_xyz+1] * phys::b2A
@@ -241,7 +241,7 @@ void HistDataXYZ::dump(const HistData &hist, const std::string& filename, unsign
       file << itime << "/" << tend << " created by " << PACKAGE_STRING << " without any warranty" <<endl;
 
       for ( unsigned iatom = 0 ; iatom < natom ; ++iatom ) {
-        file << mendeleev::name[_znucl[_typat[iatom]-1]];
+        file << Mendeleev::name[_znucl[_typat[iatom]-1]];
         file 
           << std::setw(23) << _xcart[itime*natom*3+iatom*3  ] * phys::b2A
           << std::setw(23) << _xcart[itime*natom*3+iatom*3+1] * phys::b2A

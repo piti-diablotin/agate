@@ -423,7 +423,7 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img, unsigned jdtset) {
       if ( !parser.hasToken(token) ) token = "amu";
       tokenVectorCheck = parser.getToken<double>(token,_znucl.size());
       for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
-        Mendeleev.mass[_znucl[z]] = tokenVectorCheck[z];
+        MendeTable.mass[_znucl[z]] = tokenVectorCheck[z];
     }
     catch (Exception& e) {
       if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
@@ -459,7 +459,7 @@ void Dtset::dump(std::ostream& out) const {
       out << std::setw(14) << "# Species";
       for ( unsigned itypat = 0 ; itypat < _ntypat ; ++itypat ) {
         if ( itypat % 10 == 0 ) out << std::endl << std::setw(14) << "#";
-        out << std::setw(4) << mendeleev::name[_znucl[itypat]];
+        out << std::setw(4) << Mendeleev::name[_znucl[itypat]];
       }
       out << std::endl;
       out << std::setw(14) << "znucl" ;
@@ -789,7 +789,7 @@ void Dtset::reBuildStructure(const double tolerance, const bool prtcif) {
   _znucl.clear();
   for( auto& elmt : symbol ) {
     try{
-      _znucl.push_back(mendeleev::znucl(elmt));
+      _znucl.push_back(Mendeleev::znucl(elmt));
     }
     catch( Exception &e ){
       _znucl.clear();

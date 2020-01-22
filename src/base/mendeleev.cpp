@@ -28,7 +28,8 @@
 #include <cmath>
 
 using namespace Agate;
-const char mendeleev::name[NELEMT][4] = {
+
+const char Mendeleev::name[NELEMT][4] = {
   { "XXX"},  // The first is empty so we can call name directly without reindexing
   { "H  "},
   { "He "},
@@ -151,7 +152,7 @@ const char mendeleev::name[NELEMT][4] = {
   { "Lwf"}
 };
 
-mendeleev::mendeleev() :
+Mendeleev::Mendeleev() :
 /** Define the mass of each specie. */
 mass{
   0.0e0       , // The first is empty so we can call name directly without reindexing
@@ -651,13 +652,13 @@ rcov{
 /**
  * find the znucl corresponding to a string
  */
-unsigned mendeleev::znucl(const std::string &inname) {
+unsigned Mendeleev::znucl(const std::string &inname) {
   std::locale loc;
   std::string locname = utils::tolower(inname);
   locname[0] = std::toupper(locname[0],loc);
   utils::trim(locname);
   for ( unsigned sp = 1 ; sp < NELEMT ; ++sp ) {
-    std::string specie(mendeleev::name[sp]);
+    std::string specie(Mendeleev::name[sp]);
     utils::rtrim(specie);
     if ( locname.compare(specie) == 0 ) {
       return sp;
@@ -670,12 +671,17 @@ unsigned mendeleev::znucl(const std::string &inname) {
 /**
  * find the znucl corresponding to a mass
  */
-unsigned mendeleev::znucl(const double inmass) {
+unsigned Mendeleev::znucl(const double inmass) {
   for ( unsigned sp = 1 ; sp < NELEMT ; ++sp ) {
-    if( fabs( (Mendeleev.mass[sp]-inmass)/Mendeleev.mass[sp] ) < 1e-3){
+    if( fabs( (MendeTable.mass[sp]-inmass)/MendeTable.mass[sp] ) < 1e-3){
       return sp;
     }
   }
   throw EXCEPTION("Unable to find znucl for "+utils::to_string(inmass),ERRDIV);
   return (unsigned)-1;
+}
+
+Mendeleev& Mendeleev::table(){
+  static Mendeleev table;
+  return table;
 }

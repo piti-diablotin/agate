@@ -448,7 +448,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
           if ( typ == 0 )
             labels.push_back("All");
           else
-            labels.push_back(utils::trim(std::string(mendeleev::name[_znucl[typ-1]])));
+            labels.push_back(utils::trim(std::string(Mendeleev::name[_znucl[typ-1]])));
         }
       }
 
@@ -491,7 +491,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
           if ( typ == 0 )
             labels.push_back("All");
           else
-            labels.push_back(utils::trim(std::string(mendeleev::name[_znucl[typ-1]])));
+            labels.push_back(utils::trim(std::string(Mendeleev::name[_znucl[typ-1]])));
         }
 
         first =_etotal.begin();
@@ -810,7 +810,7 @@ void HistDataMD::computePressureTemperature(unsigned itime) {
   // In PIMD ekin != 1/2 mv^2 So recompute from velocities
   _temperature[itime] = 0;
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    const double mass = Mendeleev.mass[_znucl[_typat[iatom]-1]]*phys::amu_emass;
+    const double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]*phys::amu_emass;
     double v2 = 0;
     for ( unsigned c = 0 ; c < 3 ; ++c ) {
       v2 += _velocities[itime*_natom*3+iatom*3+c]*_velocities[itime*_natom*3+iatom*3+c];

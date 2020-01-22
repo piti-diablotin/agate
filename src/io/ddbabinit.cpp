@@ -76,7 +76,7 @@ void DdbAbinit::readFromFile(const std::string& filename) {
     try{
       std::vector<double> amu(parser.getToken<double>("amu",_ntypat));
       for ( unsigned ityp = 0 ; ityp < _ntypat ; ++ityp ) {
-        Mendeleev.mass[_znucl[ityp]] = amu[ityp];
+        MendeTable.mass[_znucl[ityp]] = amu[ityp];
       }
     }
     catch ( Exception& e ) {

@@ -229,7 +229,7 @@ void HistDataOutNC::readFromFile(const std::string& filename) {
       status += nc_get_vara_double(ncid, varid, start, count, &amu[0] );
       if ( status == 0 ) {
         for ( unsigned z = 0 ; z < _znucl.size() ; ++z )
-          Agate::Mendeleev.mass[_znucl[z]] = amu[z];
+          MendeTable.mass[_znucl[z]] = amu[z];
       }
     }
   }

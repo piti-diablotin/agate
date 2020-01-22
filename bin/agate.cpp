@@ -41,9 +41,6 @@
 #include "window/winfake.hpp"
 #include "canvas/canvaspos.hpp"
 #include "base/utils.hpp"
-#include "base/mendeleev.hpp"
-
-Agate::mendeleev  Agate::Mendeleev;
 
 Window* ptrwin = nullptr; ///< Pointer to the window if created
 

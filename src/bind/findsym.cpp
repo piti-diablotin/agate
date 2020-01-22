@@ -44,7 +44,7 @@
 #include "base/utils.hpp"
 #include "base/mendeleev.hpp"
 
-using Agate::mendeleev;
+using Agate::Mendeleev;
 
 Findsym::Findsym() :
   _findsym(""),
@@ -241,7 +241,7 @@ void Findsym::findsym() {
     fsym_input << "P" << std::endl;
     fsym_input << utils::to_string(_natom) << std::endl;
     for ( auto typat : _typat ) 
-      fsym_input << std::setw(4) << (_mendeleev ? std::string(mendeleev::name[typat]) : utils::to_string(typat));
+      fsym_input << std::setw(4) << (_mendeleev ? std::string(Mendeleev::name[typat]) : utils::to_string(typat));
     fsym_input << std::endl;
     for ( auto& coord : _xred )
       fsym_input << std::setw(23) << coord[0] << std::setw(23) << coord[1] << std::setw(23) << coord[2] << std::endl;
@@ -310,7 +310,7 @@ void Findsym::findsym() {
         + "&atoms=" + utils::to_string(_natom)
         + "&types=";
       for ( auto typat : _typat ) {
-        post += _mendeleev ? std::string(mendeleev::name[typat]) + " " :
+        post += _mendeleev ? std::string(Mendeleev::name[typat]) + " " :
           utils::to_string(typat) + " ";
       } 
       post += "&positions=";

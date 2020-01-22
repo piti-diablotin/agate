@@ -4,14 +4,11 @@
 #endif
 
 #include <cxxtest/TestSuite.h>
-#include "base/mendeleev.hpp"
 #include "hist/histdata.hpp"
 #include "base/utils.hpp"
 #include <fstream>
 #include <sstream>
 #include "diff_files.h"
-
-Agate::mendeleev Agate::Mendeleev;
 
 class HistMDPlot : public CxxTest::TestSuite
 {

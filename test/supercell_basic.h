@@ -4,15 +4,12 @@
 #endif
 
 #include <cxxtest/TestSuite.h>
-#include "base/mendeleev.hpp"
 #include "phonons/supercell.hpp"
 #include "base/utils.hpp"
 #include <fstream>
 #include <sstream>
 #include <string>
 #include "diff_files.h"
-
-Agate::mendeleev Agate::Mendeleev;
 
 class SupercellBasic : public CxxTest::TestSuite
 {

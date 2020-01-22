@@ -1,8 +1,5 @@
 #include <cxxtest/TestSuite.h>
-#include "base/mendeleev.hpp"
 #include "base/fraction.hpp"
-
-Agate::mendeleev Agate::Mendeleev;
 
 class FractionStatic : public CxxTest::TestSuite, public Fraction
 {

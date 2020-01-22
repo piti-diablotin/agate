@@ -4,7 +4,6 @@
 #endif
 
 #include <cxxtest/TestSuite.h>
-#include "base/mendeleev.hpp"
 #include "canvas/canvasphonons.hpp"
 #include "base/utils.hpp"
 #include <fstream>

@@ -353,7 +353,7 @@ namespace utils {
         toSort.push_back(std::make_tuple(*label,meanV,deviationV));
       }
       if ( ordered ) {
-        std::sort(toSort.begin(),toSort.end(),[](std::tuple<std::string,double,double> &t1, std::tuple<std::string, double,double> &t2){
+        std::sort(toSort.begin(),toSort.end(),[](const std::tuple<std::string,double,double> &t1, const std::tuple<std::string, double,double> &t2){
           return std::abs(std::get<1>(t1))<std::abs(std::get<1>(t2));
         });
       }

@@ -4,14 +4,11 @@
 #endif
 
 #include <cxxtest/TestSuite.h>
-#include "base/mendeleev.hpp"
 #include "hist/histdata.hpp"
 #include "phonons/supercell.hpp"
 #include <algorithm>
 #include "phonons/dispdb.hpp"
 #include "io/ddbabinit.hpp"
-
-Agate::mendeleev Agate::Mendeleev;
 
 class MappingSupercell : public CxxTest::TestSuite
 {

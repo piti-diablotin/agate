@@ -71,6 +71,15 @@ class CanvasLocal : public CanvasPos {
      */
     virtual void my_alter(std::string token, std::istringstream &stream);
 
+    /**
+     * Driver to plot something 
+     * @param tbegin First time to use to plot data
+     * @param tend Last time to use to plot data
+     * @param stream The stream containing the command to parse
+     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
+     */
+    virtual void plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::GraphSave save);
+
     
     /**
      * Convert the octahedra to the correct type
@@ -110,13 +119,39 @@ class CanvasLocal : public CanvasPos {
     virtual void updateOctahedra(int z);
 
     /**
+     * Compute the average of all the rotations of the octahedra of the system 
+     * and figure out if it is more an R or M rotation 
+     * @param itime The time step to use
+     * @return 3 values for alpha, beta, gamma angles. A '-' sign means R rotation
+     */
+    std::array<double,3> getAverageRotations(unsigned itime);
+
+    /**
      * Display help message with all command that are use in this class
      * @param out the stream to write the help message
      */
     static void help(std::ostream &out);
 
+    /**
+     * Get access to the reference basis used to calculate the angles
+     * of the octahedra
+     * @return true if the basis is the cartesian basis, false if it is the first time step
+     */
     bool baseCart() const;
+
+    /**
+     * Get the colors for + and - rotations in the form of 1 dimension array like
+     * r-g-b-r-g-b for '-' anticlockwise rotations and '+' clockwise rotations
+     * @return the rgb values between [0-1]
+     */
     const float* octacolor() const;
+    
+    /**
+     * Access the type of property the canvas is displaying
+     * Currents are ANGLES or LENGTHS of the octahedra
+     * @see LocalView
+     * @return ANGLES or LENGTHS
+     */
     LocalView view() const;
 };
 

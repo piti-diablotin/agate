@@ -28,6 +28,7 @@
 #include "base/mendeleev.hpp"
 #include "shape/octaangles.hpp"
 #include "shape/octalengths.hpp"
+#include "plot/gnuplot.hpp"
 #include <iomanip>
 
 using Agate::Mendeleev;
@@ -469,6 +470,27 @@ void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
       throw EXCEPTION("Bad value. rotattions or lengths are allowed", ERRDIV);
     this->convertOctahedra();
   }
+  else if ( token == "plot" || token == "print" || token == "data" ) {
+    Graph::GraphSave save = Graph::GraphSave::NONE;
+    if ( token == "print" )
+      save = Graph::GraphSave::PRINT;
+    else if ( token == "data" )
+      save = Graph::GraphSave::DATA;
+
+    try {
+      if ( _gplot == nullptr ) 
+        _gplot.reset(new Gnuplot);
+
+      _gplot->setWinTitle(_info);
+    }
+    catch ( Exception &e ) {
+      e.ADD("Unable to plot with gnuplot.\nInstead, writing data.", ERRWAR);
+      std::cerr << e.fullWhat() << std::endl;
+      _gplot.reset(nullptr);
+    }
+
+    this->plot(_tbegin, _tend, stream,save);
+  }
   else 
     CanvasPos::my_alter(token, stream);
 }
@@ -489,6 +511,52 @@ void CanvasLocal::convertOctahedra() {
       }
       break;
   }
+}
+
+std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
+  std::array<double,3> average = {0};
+  std::array<double,3> absAverage = {0};
+  const double *rprimd0 = _histdata->getRprimd(0);
+  const double *xcart0 = _histdata->getXcart(0);
+  Octahedra::u3f angles;
+  Octahedra::u3f angles0;
+  const double *rprimd = _histdata->getRprimd(itime);
+  const double *xcart = _histdata->getXcart(itime);
+  for( auto& octa : _octahedra ){
+    OctaAngles oa(*dynamic_cast<Octahedra*>(octa.get()));
+    oa.buildCart(rprimd0,xcart0,angles0,_baseCart);
+    oa.build(rprimd,xcart,angles);
+  }
+  std::sort(angles.begin(),angles.end(),[xcart](std::pair< unsigned, std::array<float,3> >& e1, std::pair< unsigned, std::array<float,3> >& e2){
+      const unsigned iatom1 = e1.first;
+      const unsigned iatom2 = e2.first;
+      if ( xcart[3*iatom1+2] == xcart[3*iatom2+2] ) {
+        if ( xcart[3*iatom1+1] == xcart[3*iatom2+1] ) {
+          return xcart[3*iatom1+0] < xcart[3*iatom2+0];
+        }
+        else {
+          return xcart[3*iatom1+1] < xcart[3*iatom2+1];
+        }
+      }
+      else {
+        return xcart[3*iatom1+2] < xcart[3*iatom2+2];
+      }
+    }
+  );
+  for ( unsigned i = 0 ; i < angles.size() ; ++i ) {
+    for ( unsigned a = 0 ; a < 3 ; ++a ) {
+      const double tmp = angles[i].second[a];
+      average[a] += tmp;
+      absAverage[a] += std::abs(tmp);
+    }
+  }
+  for ( unsigned a = 0 ; a < 3 ; ++a ) {
+    average[a] /= angles.size();
+    absAverage[a] /= angles.size();
+    //if (std::abs((average[a]-absAverage[a]))/absAverage[a] > 0.5)
+    //  average[a] = -absAverage[a];
+  }
+  return average;
 }
 
 
@@ -533,6 +601,97 @@ void CanvasLocal::resetBase() {
         break;
     }
   }
+}
+
+void CanvasLocal::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::GraphSave save) {
+  std::string function;
+  Graph::Config config;
+
+  stream >> function;
+  unsigned ntime = tend-tbegin;
+  std::vector<double> &x = config.x;
+  std::list<std::vector<double>> &y = config.y;
+  //std::list<std::pair<std::vector<double>,std::vector<double>>> &xy = config.xy;
+  std::list<std::string> &labels = config.labels;
+  //std::vector<short> &colors = config.colors;
+  std::string &filename = config.filename;
+  std::string &xlabel = config.xlabel;
+  std::string &ylabel = config.ylabel;
+  std::string &title = config.title;
+  bool &doSumUp = config.doSumUp;
+
+  std::string line;
+  size_t pos = stream.tellg();
+  std::getline(stream,line);
+  stream.clear();
+  stream.seekg(pos);
+  ConfigParser parser;
+  parser.setSensitive(true);
+  parser.setContent(line);
+
+  try {
+    std::string tunit = parser.getToken<std::string>("tunit");
+    if ( tunit == "fs" ) {
+      xlabel = "Time [fs]";
+      x.resize(ntime);
+      for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=_histdata->getTime(i)*phys::atu2fs;
+    }
+    else if ( tunit == "step" ) {
+      xlabel = "Time [step]";
+      x.resize(ntime);
+      for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
+    }
+    else {
+      throw EXCEPTION("Unknow time unit, allowed values fs and step",ERRDIV);
+    }
+  }
+  catch (Exception &e) {
+    xlabel = "Time [step]";
+    x.resize(ntime);
+    for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
+  }
+
+  // rotations
+  if ( function == "rotations" || function == "rot" ) {
+    filename = "Rotations";
+    ylabel = "Rotations [degree]";
+    title = "Rotations";
+    std::clog << std::endl << " -- Average rotations --" << std::endl;
+
+    std::vector<double> alpha(ntime);
+    std::vector<double> beta(ntime);
+    std::vector<double> gamma(ntime);
+
+#pragma omp parallel for schedule(static)
+    for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
+      std::array<double,3> angles = this->getAverageRotations(itime);
+      alpha[itime-tbegin] = angles[0];
+      beta[itime-tbegin] = angles[1];
+      gamma[itime-tbegin] = angles[2];
+    }
+    y.push_back(std::move(alpha));
+    y.push_back(std::move(beta));
+    y.push_back(std::move(gamma));
+    labels.push_back("alpha");
+    labels.push_back("beta");
+    labels.push_back("gamma");
+    doSumUp = true;
+  }
+  else {
+    CanvasPos::plot(tbegin,tend,stream,save);
+    return;
+  }
+  config.save = save;
+  try {
+    filename = parser.getToken<std::string>("output");
+  }
+  catch (Exception &e) {
+    filename = utils::noSuffix(this->info())+std::string("_")+filename;
+  }
+  Graph::plot(config,_gplot.get());
+  if ( _gplot != nullptr )
+    _gplot->clearCustom();
+  stream.clear();
 }
 
 //

@@ -758,17 +758,16 @@ void Dtset::reBuildStructure(const double tolerance, const bool prtcif) {
       // Look for duplicate
       bool found = false;
       for ( unsigned icomp = begin ; icomp < xred.size() ; ++icomp ){
-        for ( unsigned axe = 0 ; axe < 3 ; ++axe ) {
-          if ( (xred[icomp][axe]*newcoord[axe]) < 0.0 ) newcoord[axe] += (newcoord[axe]<0.0 ? +1.0 : -1.0);
-          newcoord[axe] = fmod(newcoord[axe],1.0);
-        }
-        if ( norm(xred[icomp]-newcoord) < tolerance ) {
+        auto diff = xred[icomp]-newcoord;
+        recenter(diff);
+        if ( norm(diff) < tolerance ) {
           found = true;
           break;
         }
       }
       // Add if not found
       if ( !found ) {
+        recenter(newcoord);
         for ( unsigned axe = 0 ; axe < 3 ; ++axe ) {
           newcoord[axe] += (newcoord[axe]<0.0 ? +1.0 : 0.0);
         }

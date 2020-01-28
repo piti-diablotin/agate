@@ -526,7 +526,7 @@ std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
     oa.buildCart(rprimd0,xcart0,angles0,_baseCart);
     oa.build(rprimd,xcart,angles);
   }
-  std::sort(angles.begin(),angles.end(),[xcart](std::pair< unsigned, std::array<float,3> >& e1, std::pair< unsigned, std::array<float,3> >& e2){
+  std::sort(angles.begin(),angles.end(),[xcart](const std::pair< unsigned, std::array<float,3> >& e1, const std::pair< unsigned, std::array<float,3> >& e2){
       const unsigned iatom1 = e1.first;
       const unsigned iatom2 = e2.first;
       if ( std::abs(xcart[3*iatom1+2] - xcart[3*iatom2+2]) < 4 /*bohr*/) {

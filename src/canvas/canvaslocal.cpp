@@ -160,7 +160,6 @@ void CanvasLocal::refresh(const geometry::vec3d &cam, TextRender &render){
               angle.second[1] -= b;
               angle.second[2] -= c;
             }
-            
           }
         }
 
@@ -530,8 +529,8 @@ std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
   std::sort(angles.begin(),angles.end(),[xcart](std::pair< unsigned, std::array<float,3> >& e1, std::pair< unsigned, std::array<float,3> >& e2){
       const unsigned iatom1 = e1.first;
       const unsigned iatom2 = e2.first;
-      if ( xcart[3*iatom1+2] == xcart[3*iatom2+2] ) {
-        if ( xcart[3*iatom1+1] == xcart[3*iatom2+1] ) {
+      if ( std::abs(xcart[3*iatom1+2] - xcart[3*iatom2+2]) < 4 /*bohr*/) {
+        if ( std::abs(xcart[3*iatom1+1] - xcart[3*iatom2+1]) < 4 /*bohr*/) {
           return xcart[3*iatom1+0] < xcart[3*iatom2+0];
         }
         else {
@@ -543,19 +542,52 @@ std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
       }
     }
   );
-  for ( unsigned i = 0 ; i < angles.size() ; ++i ) {
-    for ( unsigned a = 0 ; a < 3 ; ++a ) {
-      const double tmp = angles[i].second[a];
-      average[a] += tmp;
-      absAverage[a] += std::abs(tmp);
+  /*
+  for ( auto octa:angles ) 
+    std::clog << xcart[3*octa.first+0] << "  " << xcart[3*octa.first+1] << "  " << xcart[3*octa.first+2] << std::endl;
+    */
+  unsigned nxy = 1;
+  unsigned nx = 1;
+  bool findX = false;
+  for ( unsigned iscan = 0 ; iscan < angles.size()-1 ; ++iscan ) {
+    if ( !findX && std::abs(xcart[3*angles[iscan].first+1]-xcart[3*angles[iscan+1].first+1]) < 4 /*bohr*/ ) {
+      nx++;
+    }
+    else findX = true;
+    if ( std::abs(xcart[3*angles[iscan].first+2]-xcart[3*angles[iscan+1].first+2]) < 4 /*bohr*/ ) {
+      nxy++;
+    }
+    else break;
+  }
+  unsigned ny = nxy/nx;
+  unsigned nz = angles.size()/nxy;
+  //std::clog << nx << " " << ny << " " << nz << std::endl;
+
+  double evenAv[3][2] = {0};
+  for ( unsigned iz = 0 ; iz < nz ; ++iz ) {
+    for ( unsigned iy = 0 ; iy < ny ; ++iy ) {
+      for ( unsigned ix = 0 ; ix < nx ; ++ix ) {
+        double tmpAngle[3];
+        for ( unsigned a = 0 ; a < 3 ; ++a ) {
+          const double tmp = angles[ix+(iy+iz*ny)*nx].second[a];
+          absAverage[a] += std::abs(tmp);
+          tmpAngle[a] = tmp;
+        }
+        if ( (iy+iz)%2 == 0 ) evenAv[0][ix%2==0?0:1] += tmpAngle[0];
+        else evenAv[0][ix%2==0?1:0] += tmpAngle[0];
+        if ( (iz+ix)%2 == 0 ) evenAv[1][iy%2==0?0:1] += tmpAngle[1];
+        else evenAv[0][iy%2==0?1:0] += tmpAngle[1];
+        if ( (ix+iy)%2 == 0 ) evenAv[2][iz%2==0?0:1] += tmpAngle[2];
+        else evenAv[0][iz%2==0?1:0] += tmpAngle[2];
+      }
     }
   }
-  for ( unsigned a = 0 ; a < 3 ; ++a ) {
-    average[a] /= angles.size();
-    absAverage[a] /= angles.size();
-    //if (std::abs((average[a]-absAverage[a]))/absAverage[a] > 0.5)
-    //  average[a] = -absAverage[a];
-  }
+  
+  for ( unsigned a = 0 ; a < 3 ; ++a )
+    average[a] = (evenAv[a][0]*evenAv[a][1] > 0) ? // +rotation
+      absAverage[a]/(nx*ny*nz)
+      :-absAverage[a]/(nx*ny*nz);
+
   return average;
 }
 
@@ -705,5 +737,6 @@ void CanvasLocal::help(std::ostream &out) {
   out << setw(40) << ":length filename" << setw(59) << "Dump for each octaheadra the a b and c lengths in filename." << endl;
   out << setw(40) << ":rot filename" << setw(59) << "Dump for each octaheadra the alpha, beta and gamma angles in filename." << endl;
   out << setw(49) << ":loc or :local (rotatation|length)" << setw(59) << "Select which proppertie of the octahedra is displayed" << endl;
+  out << setw(49) << ":plot (rotatations|rot)" << setw(59) << "Plot average rotations of the cell taking care of the sign" << endl;
   out << "Commands from positions mode are also available." << endl;
 }

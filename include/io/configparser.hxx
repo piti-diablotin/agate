@@ -174,6 +174,8 @@ T ConfigParser::getToken(const std::string& token, Characteristic dim) const {
             conversion = 1./phys::Ha2eV;
           else if ( readToken == "ry" )
             conversion = phys::Ry2eV/phys::Ha2eV;
+          else if ( readToken == "k" )
+            conversion = phys::K2eV/phys::Ha2eV;
           break;
         case NONE :
           conversion = 1.;

@@ -1417,8 +1417,7 @@ void CanvasPos::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph
 
   // band
   if ( function == "band" ) {
-    std::string bandfile;
-    stream >> bandfile;
+    std::string bandfile = utils::readString(stream);
     if ( stream.fail() )
       throw EXCEPTION("You need to specify a filename",ERRDIV);
 

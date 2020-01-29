@@ -166,12 +166,14 @@ T ConfigParser::getToken(const std::string& token, Characteristic dim) const {
       double conversion = 1.;
       switch( dim ) {
         case LENGTH :
-          if ( readToken == "angstrom" ) 
+          if ( readToken == "angstrom" || readtoken == "angst")
             conversion = 1./phys::b2A;
           break;
         case ENERGY :
           if ( readToken == "ev" ) 
             conversion = 1./phys::Ha2eV;
+          else if ( readToken == "ry" )
+            conversion = phys::Ry2eV/phys::Ha2eV;
           break;
         case NONE :
           conversion = 1.;

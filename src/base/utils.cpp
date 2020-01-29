@@ -481,4 +481,17 @@ std::istream& getline(std::istream& cin,std::string& line, unsigned int& counter
   return cin;
 }
 
+std::string readString(std::istream& stream) {
+  std::string fullString;
+  stream >> fullString;
+  while ( fullString.back() == '\\' && stream.good()) {
+    std::string partialString;
+    stream >> partialString;
+    fullString.back() = ' ';
+    fullString += partialString;
+  }
+  return fullString;
 }
+
+}
+

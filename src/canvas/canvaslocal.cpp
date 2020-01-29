@@ -337,7 +337,7 @@ void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
   else if ( token == "rot" ) {
     std::string ext;
     try {
-      stream >> ext;
+      ext = utils::readString(stream);
       std::ofstream file(ext,std::ios::out);
       if ( !file )
         throw EXCEPTION("Unable to open file "+ext,ERRABT);
@@ -392,7 +392,7 @@ void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
   else if ( token == "length" ) {
     std::string ext;
     try {
-      stream >> ext;
+      ext = utils::readString(stream);
       std::ofstream file(ext,std::ios::out);
       if ( !file )
         throw EXCEPTION("Unable to open file "+ext,ERRABT);

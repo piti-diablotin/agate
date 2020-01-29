@@ -517,7 +517,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     std::list<std::vector<double>> &y = config.y;
     std::list<std::string> &labels = config.labels;
 
-    stream >> filetraj;
+    filetraj = utils::readString(stream);
     if ( stream.fail() )
       throw EXCEPTION("You need to provide a filename",ERRDIV);
 
@@ -761,7 +761,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     if ( _ddb.get() == nullptr ) 
       throw EXCEPTION("You need to load a DDB first",ERRDIV);
     std::string filename;
-    stream >> filename;
+    filename = utils::readString(stream);
     if ( stream.fail() )
       throw EXCEPTION("Please specify a filename",ERRDIV);
     DdbAbinit::dump(*_ddb.get(),filename);

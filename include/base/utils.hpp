@@ -315,6 +315,12 @@ namespace utils {
 
   std::istream& getline(std::istream& cin,std::string& line, unsigned int& counter, std::string comment="#");
 
+  /**
+   * Read a string that might be divided with space represented as '\ '
+   * @param stream
+   * @return the full string
+   */
+  std::string readString(std::istream& stream);
 }
 
 #endif  // UTILS_HPP

@@ -148,8 +148,7 @@ std::vector<std::string> ConfigParser::getToken(const std::string& token, const 
   std::vector<std::string> rvector(size);
   for ( unsigned i = 0 ; i < size ; ++i ) {
     std::string value;
-    std::string str;
-    str_data >> str;
+    std::string str = utils::readString(str_data);
     // Try to convert D exp format to E format
     /* For numbers only !!
     {
@@ -230,8 +229,7 @@ std::string ConfigParser::getToken(const std::string& token, Characteristic dim)
   str_data.str(std::move(content.substr(pos)));
   std::string readToken;
   str_data >> readToken;
-  std::string rvector;
-  str_data >> rvector;
+  std::string rvector = utils::readString(str_data);
   if ( str_data.fail() ) {
     std::string str_err("Fail to read ");
     str_err +=  TypeName<std::string>::get() + " value for token \"" + token + "\"."; 

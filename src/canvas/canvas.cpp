@@ -258,8 +258,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
   parser.setSensitive(true);
   parser.setContent(stream.str());
   if ( token == "o" || token == "open" || token == "e" || token == "edit" ) {
-    std::string ext;
-    stream >> ext;
+    std::string ext = utils::readString(stream);
     try{
       this->openFile(ext);
     }
@@ -271,7 +270,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
   else if ( token == "a" || token == "append" ) {
     std::string ext;
     while (!stream.eof()) {
-      stream >> ext;
+      ext = utils::readString(stream);
       try{
         this->appendFile(ext);
       }
@@ -285,7 +284,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     std::string ext;
     std::ostringstream out;
     try {
-      stream >> ext;
+      ext = utils::readString(stream);
       int step = 1;
       try {
         step = parser.getToken<int>("step");
@@ -313,7 +312,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     std::string ext;
     std::ostringstream out;
     try {
-      stream >> ext;
+      ext = utils::readString(stream);
       int step = 1;
       try {
         step = parser.getToken<int>("step");
@@ -341,7 +340,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     std::string ext;
     std::ostringstream out;
     try {
-      stream >> ext;
+      ext = utils::readString(stream);
       int step = 1;
       try {
         step = parser.getToken<int>("step");
@@ -369,7 +368,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     std::string ext;
     std::ostringstream out;
     try {
-      stream >> ext;
+      ext = utils::readString(stream);
       int step = 1;
       try {
         step = parser.getToken<int>("step");

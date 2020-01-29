@@ -1344,7 +1344,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
           tolerance = toltry;
         }
       }
-      stream >> name;
+      name = utils::readString(stream);
       if ( stream.fail() ) throw EXCEPTION("Missing filename",ERRDIV);
       std::string primitive;
       stream >> primitive;

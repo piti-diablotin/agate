@@ -632,7 +632,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     std::list<std::vector<double>> &y = config.y;
     std::list<std::string> &labels = config.labels;
 
-    stream >> filetraj;
+    filetraj = utils::readString(stream);
     if ( stream.fail() )
       throw EXCEPTION("You need to provide a filename",ERRDIV);
 

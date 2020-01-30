@@ -513,6 +513,11 @@ void CanvasLocal::convertOctahedra() {
 }
 
 std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
+  if ( _histdata == nullptr ) 
+    throw EXCEPTION("Load a file first",ERRDIV);
+  else if ( _octahedra.size() == 0 )
+    throw EXCEPTION("First select the octahedra",ERRDIV);
+
   std::array<double,3> average = {0};
   std::array<double,3> absAverage = {0};
   const double *rprimd0 = _histdata->getRprimd(0);
@@ -521,7 +526,9 @@ std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
   Octahedra::u3f angles0;
   const double *rprimd = _histdata->getRprimd(itime);
   const double *xcart = _histdata->getXcart(itime);
+  //std::clog << "size is " << _octahedra.size() << std::endl;
   for( auto& octa : _octahedra ){
+    if ( octa->center() >= _histdata->natom() ) continue;
     OctaAngles oa(*dynamic_cast<Octahedra*>(octa.get()));
     oa.buildCart(rprimd0,xcart0,angles0,_baseCart);
     oa.build(rprimd,xcart,angles);
@@ -544,8 +551,8 @@ std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
   );
   /*
   for ( auto octa:angles ) 
-    std::clog << xcart[3*octa.first+0] << "  " << xcart[3*octa.first+1] << "  " << xcart[3*octa.first+2] << std::endl;
-    */
+    std::clog << octa.first << " -> " << xcart[3*octa.first+0] << "  " << xcart[3*octa.first+1] << "  " << xcart[3*octa.first+2] << std::endl;
+    //*/
   unsigned nxy = 1;
   unsigned nx = 1;
   bool findX = false;
@@ -693,13 +700,24 @@ void CanvasLocal::plot(unsigned tbegin, unsigned tend, std::istream &stream, Gra
     std::vector<double> alpha(ntime);
     std::vector<double> beta(ntime);
     std::vector<double> gamma(ntime);
+    Exception e;
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static), shared(e)
     for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
-      std::array<double,3> angles = this->getAverageRotations(itime);
-      alpha[itime-tbegin] = angles[0];
-      beta[itime-tbegin] = angles[1];
-      gamma[itime-tbegin] = angles[2];
+      try {
+        std::array<double,3> angles = this->getAverageRotations(itime);
+        alpha[itime-tbegin] = angles[0];
+        beta[itime-tbegin] = angles[1];
+        gamma[itime-tbegin] = angles[2];
+      }
+      catch( Exception &ee ) {
+#pragma omp critical(getAverage)
+        e += ee;
+      }
+    }
+    if ( e.getReturnValue() != 0 ) {
+      e.ADD("Unable to plot average rotations",ERRABT);
+      throw e;
     }
     y.push_back(std::move(alpha));
     y.push_back(std::move(beta));

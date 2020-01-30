@@ -581,11 +581,14 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         nmodes++;
       }
     }
-    y.resize(nmodes);
-    //if ( norm!=Supercell::Norming::NONE ) {
-      labels.push_back("Norm=\\sqrt(\\sum ^2)");
-      y.resize(nmodes+1);
-    //}
+
+    labels.push_back("Norm=\\sqrt(\\sum ^2)");
+    y.resize(nmodes+1);
+
+    if ( norm==Supercell::Norming::NONE ) {
+      labels.push_back("Total Dist ampli [A]");
+      y.resize(nmodes+2);
+    }
     for ( auto v = y.begin() ; v != y.end() ; ++v )
       v->resize(trajectory->ntimeAvail());
 
@@ -598,11 +601,6 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       supercell.setReference(superfirst);
       try {
         auto projection = supercell.projectOnModes(_reference,_displacements,_condensedModes, norm);
-        //if ( itime == 0) supercell.amplitudes(_reference);
-        double norm2 = 0;
-        for ( auto p : projection )
-          norm2 += p*p;
-        projection.push_back(std::sqrt(norm2));
         unsigned imode = 0;
         for ( auto v = y.begin() ; v != y.end() ; ++v )
           v->at(itime) = projection[imode++];

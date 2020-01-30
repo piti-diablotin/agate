@@ -528,7 +528,7 @@ std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
   const double *xcart = _histdata->getXcart(itime);
   //std::clog << "size is " << _octahedra.size() << std::endl;
   for( auto& octa : _octahedra ){
-    if ( octa->center() >= _histdata->natom() ) continue;
+    if ( (unsigned) octa->center() >= _histdata->natom() ) continue;
     OctaAngles oa(*dynamic_cast<Octahedra*>(octa.get()));
     oa.buildCart(rprimd0,xcart0,angles0,_baseCart);
     oa.build(rprimd,xcart,angles);

@@ -458,8 +458,10 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
   //}
   if ( normalized == NORMALL ) norm_final = sqrt(norm2_tot);
   if ( norm_final < 1e-10 ) norm_final = 1.; // Avoir divide by 0
-  std::clog << "Distortion amplitude [A]: " << sqrt(norm2_tot) << std::endl;
 
+  //std::clog << "Distortion amplitude [A]: " << sqrt(norm2_tot) << std::endl;
+
+  double normProjection = 0;
   // For all qpt;
   for ( auto qpt = modes.begin() ; qpt != modes.end() ; ++qpt ) {
     auto& qpoint = qpt->first;
@@ -488,9 +490,13 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
         //normE += mass[iall/3]*mymode[iall].real()*mymode[iall].real();
       }
       //std::cerr << "Norme mode " << normE << std::endl;
-      results.push_back(normalized == NORMQ ? std::abs(projection) : std::abs(projection)*std::sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu/norm_final);
+      double proj = (normalized == NORMQ ? std::abs(projection) : std::abs(projection)*std::sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu/norm_final);
+      results.push_back(proj);
+      normProjection += proj*proj;
     }
   }
+  results.push_back(std::sqrt(normProjection));
+  results.push_back(sqrt(norm2_tot));
   return results;
 }
 

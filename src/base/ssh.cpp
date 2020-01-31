@@ -137,7 +137,7 @@ bool Ssh::verifyHost(std::string &message) {
   char *hexa;
   int rc;
   std::ostringstream str;
-#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0,7,0)
+#ifdef HAVE_SSH_GET_SERVER_PUBLICKEY 
   rc = ssh_get_server_publickey(_sshSession, &srv_pubkey);
 #else
   rc = ssh_get_publickey(_sshSession, &srv_pubkey);

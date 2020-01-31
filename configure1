@@ -1169,6 +1169,9 @@ fi
 
 AC_CHECK_HEADER([libssh/sftp.h],[ssh_check_h=yes],[ssh_check_h=no])
 AC_CHECK_LIB([ssh],[sftp_new],[ssh_check_lib=yes],[ssh_check_lib=no])
+AC_CHECK_LIB([ssh],[ssh_get_server_publickey],[
+  AC_DEFINE([HAVE_SSH_GET_SERVER_PUBLICKEY],[1],[Define to 1 if SSH has ssh_get_server_publickey.])
+],[])
 
 # handle check results
 have_ssh_usable="no"

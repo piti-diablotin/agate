@@ -59,11 +59,11 @@ Here is a small list of quantities that you can extract with **agate** from an M
   First you need to install some dependancies.
   On Ubuntu <= 15.04
   ```
-  sudo apt-get install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng3-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest
+  sudo apt-get install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng3-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest git
   ```
 On Ubuntu >= 16.04 (15.10 not maintained anymore)
   ```
-  sudo apt-get install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest
+  sudo apt-get install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest git
   ```
   Then the procedure is the same.
   Compile abiout with
@@ -96,7 +96,7 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
 ## MacOS X
   The procedure has been tested on MacOS 10.14 only and only with *Homebrew*. *Macport* should work too.
   ```
-  brew install curl cxxtest eigen fftw freetype git glfw gnuplot libpng libssh libtool libxml2 libyaml netcdf wget yaml-cpp
+  brew install automake autoconf curl cxxtest eigen fftw freetype git glfw gnuplot libpng libssh libtool libxml2 libyaml netcdf wget yaml-cpp
   git clone https://github.com/piti-diablotin/abiout.git
   cd abiout
   ./autogen.sh

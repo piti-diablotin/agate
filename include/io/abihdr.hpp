@@ -38,6 +38,7 @@
 
 #include "io/dtset.hpp"
 #include "base/geometry.hpp"
+#include <string>
 
 /** 
  *
@@ -49,7 +50,7 @@ class AbiHdr : virtual public Dtset {
 
   protected :
     // <H1>
-    char _codvsn[7]; ///< 7 is \0, only 6 relevant char
+    std::string _codvsn; ///< Size of codvsn seems to change with version ...
     int _hdrform; ///< Format of the header
     int _fform; ///< Code for data inside this file.
     // <H2>
@@ -140,7 +141,7 @@ class AbiHdr : virtual public Dtset {
      */
     virtual void readFromFile(const std::string& filename);
 
-    const char* codvsn() const {return _codvsn;}
+    const char* codvsn() const {return _codvsn.c_str();}
     const int& hdrform() const {return _hdrform;}
     const int& fform() const {return _fform;}
     // <H2>                 

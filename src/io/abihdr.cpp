@@ -158,16 +158,19 @@ void AbiHdr::readFromFile(const std::string& filename) {
   * read(unit, err=10, iomsg=errmsg) hdr%codvsn,hdr%headform,fform
   */
   file.read((char*)(&marker),sizeof(int));
-  if ( marker != (6*sizeof(char)+2*sizeof(int)) )
-    throw EXCEPTION("Bad header file: <H1>",ERRDIV);
+  unsigned int nchar = marker - 2*sizeof(int);
+  //if ( marker != (6*sizeof(char)+2*sizeof(int)) )
+  //  throw EXCEPTION("Bad header file: <H1>",ERRDIV);
 
-  file.read(_codvsn,6);
-  _codvsn[6]='\0';
+  _codvsn.resize(nchar+1);
+  file.read(&_codvsn[0],nchar);
+  _codvsn[nchar]='\0';
   file.read((char*)&_hdrform,sizeof(int));
   file.read((char*)&_fform,sizeof(int));
 
+  nchar = marker;
   file.read((char*)(&marker),sizeof(int));
-  if ( marker != (6*sizeof(char)+2*sizeof(int)) )
+  if ( marker != nchar )
     throw EXCEPTION("Bad header file: </H1>",ERRABT);
 
   // Check codvsn

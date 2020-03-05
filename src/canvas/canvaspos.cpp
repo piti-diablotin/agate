@@ -1309,21 +1309,6 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       double tolerance = 0.0010; // bohr
       if ( format == "dtset" || format == "cif" ) {
         dttrial = new Dtset(*_histdata,_itime);
-        /*
-        if ( format == "cif" ) {
-        {
-          double toltry;
-          auto pos = stream.tellg();
-          stream >> toltry;
-          if ( stream.fail() ) {
-            stream.clear();
-            stream.seekg(pos);
-          }
-          else {
-            tolerance = toltry;
-          }
-        }
-        */
       }
       else if ( format == "POSCAR" || format == "poscar" ) {
         dttrial = new Poscar(*_histdata,_itime);
@@ -1332,17 +1317,9 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         throw EXCEPTION("Bad tokens for \"write\": write (dtset|poscar|cif) filename.",ERRDIV);
       }
       // Read tolerance
-      {
+      if ( parser.hasToken("tolerance") ) {
         double toltry;
-        auto pos = stream.tellg();
-        stream >> toltry;
-        if ( stream.fail() ) {
-          stream.clear();
-          stream.seekg(pos);
-        }
-        else {
-          tolerance = toltry;
-        }
+        tolerance = parser.getToken<double>("tolerance",ConfigParser::Characteristic::LENGTH);
       }
       name = utils::readString(stream);
       if ( stream.fail() ) throw EXCEPTION("Missing filename",ERRDIV);

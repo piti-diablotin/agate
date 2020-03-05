@@ -828,6 +828,31 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     this->nLoop(-1);
     if ( _status == PAUSE && _histdata->ntime() > 1 ) _status = START;
   }
+  else if ( token == "pump" ) {
+    std::string traj = parser.getToken<std::string>("structure");
+    HistData* hist = HistData::getHist(traj,true);
+    unsigned int itime = hist->ntime()-1;
+    if ( parser.hasToken("time") )
+      itime = parser.getToken<unsigned>("time");
+    Supercell structure(*hist,itime);
+    try {
+      structure.findReference(_reference);
+    }
+    catch (Exception &e) {
+      e.ADD("Unable to match reference structure with supercell",ERRDIV);
+      delete hist;
+      throw e;
+    }
+    for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
+      for ( auto vib : qpt->second ) {
+        structure.makeDisplacement(qpt->first,_displacements,vib.imode,vib.amplitude,0);
+      }
+    }
+    std::string output = (parser.hasToken("output") ? parser.getToken<std::string>("output") : utils::noSuffix(traj)+"_pumped.in");
+    structure.dump(output);
+    throw EXCEPTION("Phonons pumped to "+output,ERRCOM);
+
+  }
   else { 
     CanvasPos::my_alter(token,stream);
     return;
@@ -870,6 +895,7 @@ void CanvasPhonons::help(std::ostream &out) {
   out << setw(40) << ":madd" << setw(59) << "Freeze the mode imode at the selected qpt (or the last added)." << endl;
   out << setw(40) << ":mremove or :mrm" << setw(59) << "Remove the mode imode at the selected qpt (or the last added)." << endl;
   out << setw(40) << ":ntime N" << setw(59) << "Generate the animation for N times." << endl;
+  out << setw(40) << ":pump structure=filename [time=X] [output=filename]" << setw(59) << "Pump the current condensed phonons on top of the structure filename. In case of a trajectory, select time step with time (starts at 0)." << endl;
   out << setw(40) << ":qpt qx qy qz" << setw(59) << "Select or add the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":remove or :rm qx qy qz" << setw(59) << "Remove the q-pt from the frozen modes." << endl;
   out << setw(40) << ":reset" << setw(59) << "Reset to the initial reference structure." << endl;

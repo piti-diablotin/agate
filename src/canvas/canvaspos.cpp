@@ -1318,7 +1318,6 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       }
       // Read tolerance
       if ( parser.hasToken("tolerance") ) {
-        double toltry;
         tolerance = parser.getToken<double>("tolerance",ConfigParser::Characteristic::LENGTH);
       }
       name = utils::readString(stream);

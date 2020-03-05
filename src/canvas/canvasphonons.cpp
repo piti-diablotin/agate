@@ -873,6 +873,7 @@ void CanvasPhonons::help(std::ostream &out) {
   out << setw(40) << ":qpt qx qy qz" << setw(59) << "Select or add the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":remove or :rm qx qy qz" << setw(59) << "Remove the q-pt from the frozen modes." << endl;
   out << setw(40) << ":reset" << setw(59) << "Reset to the initial reference structure." << endl;
+  out << setw(40) << ":thermalPop temperature=XXX  [seedtype=[time|random|user|none]] [seed=XXX] [instable=[ignore|absolute|constant]] [instableamplitude=XXX] (qpt=X X X|trajectory=filename)" << setw(59) << "Add noise with phonons at temperature XXX to a trajectory or build a supercell of size qpt=X X X" << endl;
   out << setw(40) << ":lin_res_E Edir x y z A amp" << setw(59) << "Calculate linear response to an applied Electric field in dir [x y z] with Amplitude [amp]." <<endl;
   out << "Commands from positions mode are also available." << endl;
 }

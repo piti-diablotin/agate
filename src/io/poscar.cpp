@@ -354,13 +354,13 @@ void Poscar::dump(std::ostream& out) const {
 
     // type of each name
     out.setf(std::ios::left,std::ios::adjustfield);
-    out << std::setw(4) << " ";
+    out << std::setw(6) << " ";
     for ( int ntypat = 1 ; ntypat <= (int)_ntypat ; ++ntypat ) {
       unsigned total = 0;
       for ( auto type : _typat) 
         if ( type == ntypat ) ++total;
 
-      out << std::setw(4) << total;
+      out << std::setw(6) << total;
     }
     out << std::endl;
 

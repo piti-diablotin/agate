@@ -60,7 +60,7 @@ void HistDataDtset::readFromFile(const std::string& filename) {
       if ( parser.hasToken("ndtset") ) ndtset = parser.getToken<unsigned>("ndtset");
       else dtset->readConfig(parser);
       try {
-        nimage = parser.getToken<unsigned>(" nimage");
+        nimage = parser.getToken<unsigned>("nimage");
       }
       catch ( Exception &e ) {
         nimage = 0;

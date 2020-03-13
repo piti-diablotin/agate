@@ -47,6 +47,7 @@ extern "C" {
 #  endif
 #endif
 #include "phonons/supercell.hpp"
+#include "hist/histdatamd.hpp"
 
 using namespace Agate;
 
@@ -62,6 +63,7 @@ Dtset::Dtset() :
   _xcart(),   ///< No atom first so no position
   _xred(),    ///< No atom first so no position
   _spinat(),  ///< No atom first so no position
+  _velocities(), 
   _findsym()  ///< Return string by findsym so nothing first.
 {
 }
@@ -79,6 +81,7 @@ Dtset::Dtset(const HistData &hist, const unsigned itime) :
   _xcart(),   ///< No atom first so no position
   _xred(),    ///< No atom first so no position
   _spinat(),
+  _velocities(),
   _findsym()  ///< Return string by findsym so nothing first.
 {
   const unsigned ntime = hist.ntime();
@@ -111,6 +114,16 @@ Dtset::Dtset(const HistData &hist, const unsigned itime) :
     _xcart.push_back({{xcart[iatom*3], xcart[iatom*3+1], xcart[iatom*3+2]}});
     if ( spinat != nullptr ) 
       _spinat.push_back({{spinat[iatom*3], spinat[iatom*3+1], spinat[iatom*3+2]}});
+  }
+
+  try {
+    const HistDataMD& md = dynamic_cast<const HistDataMD&>(hist);
+    const double* vel = md.getVel(itime);
+    for ( unsigned iatom = 0; iatom < _natom; ++iatom ) {
+      _velocities.push_back({{vel[iatom*3], vel[iatom*3+1], vel[iatom*3+2]}});
+    }
+  }
+  catch(...) {
   }
 
   _acell[0] = hist.getAcell(itime)[0];//sqrt(_rprim[0]*_rprim[0]+_rprim[3]*_rprim[3]+_rprim[6]*_rprim[6]);
@@ -402,6 +415,25 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img, unsigned jdtset) {
     ++step;
 
     try { 
+      token = "vel"+suffix_jdtset;
+      if ( !parser.hasToken(token) ) token = "vel";
+      tokenVectorCheck = parser.getToken<double>(token,3*_natom);
+      _velocities.resize(_natom);
+      for( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) 
+        _velocities[iatom] = {{tokenVectorCheck[iatom*3],tokenVectorCheck[iatom*3+1],tokenVectorCheck[iatom*3+2]}};
+#ifdef HAVE_SHRINK_TO_FIT
+      _velocities.shrink_to_fit();
+#endif
+    }
+    catch (Exception& e) {
+      if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+        e.ADD("Bad spinat parameter",ERRABT);
+        throw e;
+      }
+    }
+    ++step;
+
+    try { 
       token = "supercell_latt"+suffix_jdtset;
       if ( !parser.hasToken(token) ) token = "supercell_latt";
       tokenVectorCheck = parser.getToken<double>(token,9);
@@ -531,6 +563,15 @@ void Dtset::dump(std::ostream& out) const {
       out.setf(std::ios::right,std::ios::adjustfield);
       for ( auto& spin : _spinat )
         out << std::setw(34) << spin[0] << std::setw(23) << spin[1] << std::setw(23) << spin[2] << std::endl;
+    }
+
+    if ( !_velocities.empty()) {
+      out.setf(std::ios::left,std::ios::adjustfield);
+      out << std::endl;
+      out << std::setw(14) << "vel" << std::endl;
+      out.setf(std::ios::right,std::ios::adjustfield);
+      for ( auto& vel : _velocities )
+        out << std::setw(34) << vel[0] << std::setw(23) << vel[1] << std::setw(23) << vel[2] << std::endl;
     }
   }
   catch (...) {

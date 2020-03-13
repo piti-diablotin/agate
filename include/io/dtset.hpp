@@ -65,6 +65,7 @@ class Dtset {
     std::vector<geometry::vec3d>    _xcart;   ///< Cartesienne coordinates of each atom.
     std::vector<geometry::vec3d>    _xred;    ///< Reduced coordinates (in rprimd)
     std::vector<geometry::vec3d>    _spinat;  ///< Spin for each atom
+    std::vector<geometry::vec3d>    _velocities; ///< Velocities for each atom
     std::string                     _findsym; ///< FINDSYM result.
 
     /**
@@ -203,6 +204,12 @@ class Dtset {
      * @return _spinat
      */
     virtual const std::vector<geometry::vec3d>& spinat() const { return _spinat; }
+
+    /**
+     * Get the velocity of each atom 
+     * @return _velocities_
+     */
+    virtual const std::vector<geometry::vec3d>& velocities() const { return _velocities; }
 
     /**
      * Clear spin -> set to 0

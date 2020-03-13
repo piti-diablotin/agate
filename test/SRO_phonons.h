@@ -92,5 +92,32 @@ class CanvasPhononsProj : public CxxTest::TestSuite
       TS_FAIL("Unable to calculate mode projection");
     }
   }
+
+  void testPumpingPhonons( void )
+  {
+#ifndef HAVE_NETCDF
+    TS_SKIP("NetCDF is needed");
+#endif
+    try {
+      std::istringstream input;
+      input.str("1/2 1/2 1/2 1 2 3 15");
+      canvas->alter(std::string("add"),input);
+#include "SRO_HIST_pumped.hxx"
+      input.clear();
+      input.seekg(0);
+      input.str("structure=SRO_HIST.nc time=2");
+      canvas->alter("pump",input);
+      std::ifstream fref("ref_SRO_HIST_pumped.dat",std::ios::in);
+      std::ifstream fnew("SRO_HIST_pumped.dat",std::ios::in);
+      DIFF_FILES(fref,fnew)
+    }
+    catch ( Exception &e ) {
+      if ( e.getReturnValue() != ERRCOM ) {
+        std::cerr << e.fullWhat() << std::endl;
+        TS_FAIL("Unable to pump phonons");
+      }
+    }
+  }
+
 };
 

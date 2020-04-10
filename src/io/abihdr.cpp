@@ -146,7 +146,7 @@ void AbiHdr::readFromFile(const std::string& filename) {
     std::clog << dfullsize*sizeof(double) << std::endl;
     */
     if ( marker != (charsize*sizeof(char)+ifullsize*sizeof(int)+ (dfullsize)*sizeof(double)) )
-      throw EXCEPTION(std::string("Bad header file: <")+(level<0?"/H":"H")+utils::to_string(std::abs(level))+">",ERRABT);
+      throw EXCEPTION(std::string("Bad header file: <")+(level<0?"/H":"H")+utils::to_string(std::abs(level))+">",ERRDIV);
     if ( level > 0 ) {
       idummy.resize(*std::max_element(isize.begin(),isize.end()));
       ddummy.resize(*std::max_element(dsize.begin(),dsize.end()));

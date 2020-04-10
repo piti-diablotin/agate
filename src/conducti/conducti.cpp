@@ -366,7 +366,7 @@ void Conducti::setParameters(ConfigParser &parser){
     this->setRange(tmp[0],tmp[1],tmp[2],tmp[3]);
   }
 
-  std::string eunit("Ha"), sunit;
+  std::string eunit("Ha"), sunit("au");
   if ( parser.hasToken("eunit") ) {
     eunit = parser.getToken<std::string>("eunit");
   }

@@ -117,8 +117,9 @@ class TriArrow : public TriObj {
      * @param start first point (base) of the axe of the arrow 
      * @param end   last point (head) of the axe of the arrow 
      * @param radius The radius of the arrow base placed at (0,0,0)
+     * @param endpoint Specify if end is the point to go to or the vector itself to use
      */
-    void draw(const double start[3], const double end[3], const _float radius);
+    void draw(const double start[3], const double end[3], const _float radius, bool endpoint=true);
 
     /**
      * Pop method to do something if needed

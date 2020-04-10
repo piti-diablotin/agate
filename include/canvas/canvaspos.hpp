@@ -89,7 +89,8 @@ class CanvasPos : public Canvas {
     float                         _down[3];    ///< Color spin down
     float                         _octacolor[4];///< Color spin down
     bool                          _octaDrawAtoms;///< Draw the additional atoms at tops of octahedra
-    float                         _maxDim;
+    float                         _maxDim;      ///< max length of the system. Used to adjust view in window for instance.
+    double                        _forceFactor; ///< Scaling factor to visualise forces
 
 
   protected :
@@ -119,6 +120,12 @@ class CanvasPos : public Canvas {
      * @param batom element of _onBorders to consider to draw the spin.
      */
     void drawSpins(unsigned batom = -1);
+
+    /**
+     * Draw the force arrows if fcarts are available and display has DISP_FORCE
+     * @param batom element of _onBorders to consider to draw the force.
+     */
+    void drawForces(unsigned batom = -1);
 
     /**
      * Simple function to clean all the data and start from fresh
@@ -165,6 +172,7 @@ class CanvasPos : public Canvas {
     static const unsigned                DISP_ATOM  = 1 << 5; ///< Parameter to construct _display : Here display the atomic name (wrt input file)
     static const unsigned                DISP_INCIRCLE= 1 << 6; ///< Parameter to construct _display : Here display the incircle of the lattice only
     static const unsigned                DISP_CELL= 1 << 7; ///< Parameter to construct _display : Here display the cell
+    static const unsigned                DISP_FORCE = 1 << 8; ///< Parameter to construct _display : Here display the cell
 
     /**
      * Constructor.
@@ -278,6 +286,17 @@ class CanvasPos : public Canvas {
      */
     static void help(std::ostream &out);
 
+    /**
+     * @brief getForceFactor Get the factor to scale forces when displayed
+     * @return The number forces are multiplied by
+     */
+    double getForceFactor() const;
+
+    /**
+     * @brief setForceFactor Set the factor to scale forces when displayed
+     * @param forceFactor the number forces are multiplied by
+     */
+    void setForceFactor(double forceFactor);
 };
 
 #endif  // CANVASPOS_HPP

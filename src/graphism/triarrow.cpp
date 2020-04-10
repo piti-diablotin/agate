@@ -306,10 +306,10 @@ void TriArrow::push() {
 #endif
 }
 
-void TriArrow::draw(const double start[3], const double end[3], const _float radius) {
-  const float n0 = end[0]-start[0];
-  const float n1 = end[1]-start[1];
-  const float n2 = end[2]-start[2];
+void TriArrow::draw(const double start[3], const double end[3], const _float radius, bool endpoint) {
+  const float n0 = endpoint ? end[0]-start[0] : end[0];
+  const float n1 = endpoint ? end[1]-start[1] : end[1];
+  const float n2 = endpoint ? end[2]-start[2] : end[2];
   const float nn = sqrt(n0*n0+n1*n1+n2*n2);
   const float inv_nn = 1.f/nn;
   const float nprod = sqrt(n1*n1+n0*n0);

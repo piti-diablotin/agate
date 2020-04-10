@@ -87,7 +87,8 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _down(),
   _octacolor(),
   _octaDrawAtoms(true),
-  _maxDim(1.1)
+  _maxDim(1.1),
+  _forceFactor(100)
 {
   _sphere = new TriSphere(_opengl);
   _up[0] = 1.0;
@@ -128,7 +129,8 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _down(),
   _octacolor(),
   _octaDrawAtoms(canvas._octaDrawAtoms),
-  _maxDim(canvas._maxDim)
+  _maxDim(canvas._maxDim),
+  _forceFactor(canvas._forceFactor)
 {
   canvas._sphere = nullptr;
   _up[0] = canvas._up[0];
@@ -376,6 +378,7 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
         }
         _sphere->pop();
         this->drawSpins();
+        this->drawForces();
         this->drawBonds(bonds);
         _sphere->push();
         // Erase color 
@@ -434,6 +437,7 @@ void CanvasPos::refresh(const geometry::vec3d &camin, TextRender &render) {
           _sphere->pop();
           for ( auto batom : drawBorder ) {
             this->drawSpins(batom);
+            this->drawForces(batom);
           }
           _sphere->push();
         }
@@ -560,6 +564,16 @@ void CanvasPos::nextFrame(const int count) {
 }
 
 //
+double CanvasPos::getForceFactor() const
+{
+  return _forceFactor;
+}
+
+void CanvasPos::setForceFactor(double forceFactor)
+{
+  _forceFactor = forceFactor;
+}
+
 void CanvasPos::drawAtom(const int znucl, GLfloat posX, GLfloat posY, GLfloat posZ) {
   if ( !(_display & DISP_ATOM) ) return;
   GLfloat pos[3]={posX,posY,posZ};
@@ -751,6 +765,44 @@ void CanvasPos::drawSpins(unsigned batom) {
             static_cast<GLfloat>(xcart[3*iatom+2]),
             _znucl[_typat[iatom]]
             );
+      }
+      _arrow.pop();
+    }
+  }
+#else
+  (void) batom;
+#endif
+}
+
+void CanvasPos::drawForces(unsigned batom) {
+  if ( (_display&DISP_FORCE) == 0) return;
+#ifdef HAVE_GL
+  if ( _histdata->getFcart(_itime) != nullptr  ) {
+    const double *xcart = _histdata->getXcart(_itime);
+    const double *fcart = _histdata->getFcart(_itime);
+    std::vector<double> scaled(fcart,fcart+3*_natom);
+    for ( auto& s : scaled) s*=_forceFactor;
+    glColor3f(1,0,0);
+    if ( batom != (unsigned)-1 ) { // Only for atoms on border
+      _arrow.push();
+      glColor3fv(&MendeTable.color[_znucl[_typat[_natom+batom]]][0]);
+
+      _arrow.draw(&_xcartBorders[3*batom],
+            &scaled[_onBorders[batom].first*3],
+            0.5,
+            false
+          );
+      _arrow.pop();
+    }
+    else {
+      _arrow.push();
+      for ( int iatom = 0 ; iatom < _natom ; ++iatom ){
+        glColor3fv(&MendeTable.color[_znucl[_typat[iatom]]][0]);
+        _arrow.draw(&xcart[3*iatom],
+            &scaled[3*iatom],
+            0.5,
+            false
+          );
       }
       _arrow.pop();
     }
@@ -977,6 +1029,8 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display |= DISP_INCIRCLE;
       else if ( what == "cell" )
         _display |= DISP_CELL;
+      else if ( what == "force" )
+        _display |= DISP_FORCE;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }
@@ -1001,9 +1055,19 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
         _display &= ~DISP_INCIRCLE;
       else if ( what == "cell" )
         _display &= ~DISP_CELL;
+      else if ( what == "force" )
+        _display &= ~DISP_FORCE;
       else
         throw EXCEPTION("Options for show not known",ERRDIV);
     }
+  }
+  else if ( token == "force_scaling" ){
+    double value;
+    stream >> value;
+    if ( !stream.bad() ) {
+      this->setForceFactor(value);
+    }
+    else throw EXCEPTION("Usage is :force_scaling FACTOR",ERRDIV);
   }
   else if ( token == "div" || token == "division" ){
     if (_opengl) {
@@ -1730,7 +1794,8 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":div or :division number" << setw(59) << "Number of division to draw spheres (>1)." << endl;
   out << setw(40) << ":dist or :distance id1 id2" << setw(59) << "Compute the distance between atom id1 and atom id2." << endl;
   out << setw(40) << ":bond factor " << setw(59) << "Factor to find the bonded atoms." << endl;
-  out << setw(40) << ":hide WHAT" << setw(59) << "Hide WHAT=(atom|border|name|znucl|id)" << endl;
+  out << setw(40) << ":force_scaling FACTOR" << setw(59) << "When forces are displayed, scale them by FACTOR" << endl;
+  out << setw(40) << ":hide WHAT" << setw(59) << "Hide WHAT=(atom|border|name|znucl|id|force)" << endl;
   out << setw(40) << ":mv or :move iatom X Y Z" << setw(59) << "Move the atom iatom at the new REDUCED coordinate (X,Y,Z)" << endl;
   out << setw(40) << ":octa_z or :octahedra_z Z A" << setw(59) << "To draw an octahedron around the atoms Z (atomic numbers or name) A=(0|1) to draw the atoms at the tops." << endl;
   out << setw(40) << ":periodic (0|1)" << setw(59) << "Move all the atoms inside the celle (1) or make a continuous trajectory (0)" << endl;
@@ -1738,7 +1803,7 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":rcov S R" << setw(59) << "Set the covalent radius of atom S (atomic number or name) to R bohr (used for bonds)." << endl;
   out << setw(40) << ":s or :speed factor" << setw(59) << "Velocity scaling factor to change the animation speed." << endl;
   out << setw(40) << ":shift X Y Z [all]" << setw(59) << "Shift the origin to the new REDUCED coordinate (X,Y,Z)" << endl;
-  out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(atom|border|name|znucl|id)" << endl;
+  out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(atom|border|name|znucl|id|force)" << endl;
   out << setw(40) << ":spin COMPONENTS" << setw(59) << "Specify what component of the spin to draw (x,y,z,xy,yz,xz,xyz)" << endl;
   out << setw(40) << ":spin_length (relative|absolute)" << setw(59) << "Specify how the arrow for spin is plotted" << endl;
   out << setw(40) << ":spg or :spacegroup [tol]" << setw(59) << "Get the space group number and name. Tol is the tolerance for the symmetry finder." << endl;

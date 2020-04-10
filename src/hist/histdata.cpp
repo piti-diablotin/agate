@@ -359,15 +359,14 @@ const double* HistData::getXred(unsigned time, unsigned* natom) const {
 
 //
 const double* HistData::getFcart(unsigned time, unsigned* natom) const {
+  if ( _ntime == 0 ) return nullptr;
   this->waitTime(time);
   if ( time >= _ntime )
     throw EXCEPTION(std::string("Out of range for time ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
-  if ( _fcart.size() == 0 )
-    throw EXCEPTION("Fcart not available",ERRDIV);
   if ( natom != nullptr )
     *natom = _natom;
-  return &_fcart[time*_natom*_xyz];
+  return _fcart.empty() ? nullptr : &_fcart[time*_natom*_xyz];
 }
 
 //

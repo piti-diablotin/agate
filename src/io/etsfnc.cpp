@@ -55,24 +55,25 @@ void EtsfNC::readFromFile(const std::string& filename) {
   int dimid = 0;
   int natomid = 0;
   int xyzid = 0;
+  int err = 0;
 
   if ( nc_open(filename.c_str(), NC_NOWRITE, &ncid)) 
     throw EXCEPTION(std::string("File ")+filename+" could not be correctly opened",ERRDIV);
 
   // Read dimensions.
   {
-    nc_inq_dimid(ncid, "number_of_atoms", &natomid);
+    err = nc_inq_dimid(ncid, "number_of_atoms", &natomid);
     size_t natom;
-    if ( nc_inq_dimlen(ncid, natomid, &natom ) ) {
+    if ( err || nc_inq_dimlen(ncid, natomid, &natom ) ) {
       nc_close(ncid);
       throw EXCEPTION(std::string("Error while reading number_of_atoms var in ")+filename,ERRDIV);
     }
     _natom = natom;
   }
   {
-    nc_inq_dimid(ncid, "number_of_vectors", &varid);
+    err = nc_inq_dimid(ncid, "number_of_vectors", &varid);
     size_t xyz;
-    if ( nc_inq_dimlen(ncid, varid, &xyz ) ) {
+    if ( err || nc_inq_dimlen(ncid, varid, &xyz ) ) {
       nc_close(ncid);
       throw EXCEPTION(std::string("Error while reading number_of_vectors var in ")+filename,ERRDIV);
     }
@@ -80,9 +81,9 @@ void EtsfNC::readFromFile(const std::string& filename) {
       throw EXCEPTION(std::string("number_of_vectors should be 3 and is ")+utils::to_string(xyz),ERRDIV);
   }
   {
-    nc_inq_dimid(ncid, "number_of_cartesian_directions", &xyzid);
+    err = nc_inq_dimid(ncid, "number_of_cartesian_directions", &xyzid);
     size_t xyz;
-    if ( nc_inq_dimlen(ncid, xyzid, &xyz ) ) {
+    if ( err || nc_inq_dimlen(ncid, xyzid, &xyz ) ) {
       nc_close(ncid);
       throw EXCEPTION(std::string("Error while reading number_of_cartesian_directions var in ")+filename,ERRDIV);
     }
@@ -96,7 +97,7 @@ void EtsfNC::readFromFile(const std::string& filename) {
   // Read data.
   {
     size_t start[] = {0};
-    nc_inq_varid(ncid, "atomic_numbers", &varid);
+    err = nc_inq_varid(ncid, "atomic_numbers", &varid);
     size_t ntypat;
     nc_inq_vardimid(ncid, varid, &dimid);
     nc_inq_dimlen(ncid, dimid, &ntypat);
@@ -104,15 +105,15 @@ void EtsfNC::readFromFile(const std::string& filename) {
 
     _znucl.resize(ntypat);
     size_t count[] = {ntypat};
-    if ( nc_get_vara_int(ncid, varid, start, count, _znucl.data()) ) {
+    if ( err || nc_get_vara_int(ncid, varid, start, count, _znucl.data()) ) {
       nc_close(ncid);
       throw EXCEPTION(std::string("Error while reading atomic_numbers var in ")+filename,ERRDIV);
     }
 
     _typat.resize(_natom);
-    nc_inq_varid(ncid, "atom_species", &varid);
+    err = nc_inq_varid(ncid, "atom_species", &varid);
     count[0] = _natom;
-    if ( nc_get_vara_int(ncid, varid, start, count, _typat.data()) ) {
+    if ( err || nc_get_vara_int(ncid, varid, start, count, _typat.data()) ) {
       nc_close(ncid);
       throw EXCEPTION(std::string("Error while reading atom_species var in ")+filename,ERRDIV);
     }

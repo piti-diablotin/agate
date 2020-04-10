@@ -171,7 +171,7 @@ void AbiHdr::readFromFile(const std::string& filename) {
   nchar = marker;
   file.read((char*)(&marker),sizeof(int));
   if ( marker != nchar )
-    throw EXCEPTION("Bad header file: </H1>",ERRABT);
+    throw EXCEPTION("Bad header file: </H1>",ERRDIV);
 
   // Check codvsn
   /*

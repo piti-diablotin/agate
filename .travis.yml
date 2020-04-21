@@ -30,6 +30,7 @@ addons:
       - libfftw3-dev 
       - libssh-dev 
       - cxxtest 
+      - libomp-dev # For clang with openmp
   homebrew:
     update: true
     packages:
@@ -74,4 +75,4 @@ jobs:
       osx_image: xcode9.4
       compiler: clang
 
-after_failure: "ls test/ && cat test/test-suite.log && ./test/fraction"
+after_failure: "ldd bin/.libs/agate ls test/ && cat test/test-suite.log"

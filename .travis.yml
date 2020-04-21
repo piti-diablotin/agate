@@ -74,3 +74,4 @@ jobs:
       osx_image: xcode9.4
       compiler: clang
 
+after_failure: "ls test/ && cat test/test-suite.log && ./test/fraction"

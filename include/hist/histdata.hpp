@@ -52,6 +52,9 @@
 #include <cmath>
 #include "plot/graph.hpp"
 
+
+class Dtset;
+
 /** 
  * Pure virtual class for HistData structure.
  */
@@ -254,6 +257,13 @@ class HistData {
      * @return the pointer to the first value of stress tensor
      */
     const double* getStress(unsigned time) const;
+
+    /**
+     * Get the 6 strain values with respect to the reference dtset
+     * @param time the step at which to calculate the strain
+     * @param dtset is the reference structure to extract the strain
+     */
+    std::array<double,6> getStrain(const unsigned time, const Dtset& dtset) const;
 
     /**
      * Get the 3 composantes of spin for each atom

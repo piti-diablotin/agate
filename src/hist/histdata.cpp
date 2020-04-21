@@ -407,6 +407,17 @@ const double* HistData::getStress(unsigned time) const {
   return &_stress[time*6];
 }
 
+std::array<double, 6> HistData::getStrain(const unsigned time, const Dtset &dtset) const
+{
+  using namespace geometry;
+  const double*  rprimTmp = this->getRprimd(time);
+  mat3d gprim = invert(dtset.rprim());
+  mat3d rprim;
+  std::copy(rprimTmp,rprimTmp+9,rprim.begin());
+  mat3d strain = rprim*gprim;
+  return {strain[mat3dind(1,1)]-1,strain[mat3dind(2,2)]-1,strain[mat3dind(3,3)]-1,strain[mat3dind(3,2)],strain[mat3dind(3,1)],strain[mat3dind(2,1)]};
+}
+
 //
 const double* HistData::getSpinat(unsigned time, unsigned* natom) const {
   if ( _ntime == 0 ) return nullptr;
@@ -1548,6 +1559,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     y.push_back(std::vector<double>(_etotal.begin()+tbegin,_etotal.end()-(_ntime-tend)));
   }
 
+  // stress
   else if ( function == "stress" ) {
     filename = "stress";
     ylabel = "Stress [GPa]";
@@ -1582,6 +1594,59 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     labels.push_back("sigma 4");
     labels.push_back("sigma 5");
     labels.push_back("sigma 6");
+  }
+
+  // strain
+  else if ( function == "strain" ) {
+    filename = "strain";
+    ylabel = "Strain [none]";
+    title = "Strain tensor";
+    std::clog << std::endl << " -- Strain tensor --" << std::endl;
+    HistData* ref = nullptr;
+    try {
+      std::string refFile = parser.getToken<std::string>("reference");
+      ref = getHist(refFile,true);
+      int time = 0;
+      if (parser.hasToken("time")) time = parser.getToken<int>("time");
+      Dtset refDtset(*ref,time);
+      delete ref;
+      ref = nullptr;
+      x.resize(_ntime);
+      std::vector<double> eta1(ntime);
+      std::vector<double> eta2(ntime);
+      std::vector<double> eta3(ntime);
+      std::vector<double> eta4(ntime);
+      std::vector<double> eta5(ntime);
+      std::vector<double> eta6(ntime);
+      x.resize(_ntime);
+#pragma omp parallel for schedule(static)
+      for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
+        auto strain = this->getStrain(itime,refDtset);
+        eta1[itime-tbegin] = strain[0];
+        eta2[itime-tbegin] = strain[1];
+        eta3[itime-tbegin] = strain[2];
+        eta4[itime-tbegin] = strain[3];
+        eta5[itime-tbegin] = strain[4];
+        eta6[itime-tbegin] = strain[5];
+      }
+      y.push_back(std::move(eta1));
+      y.push_back(std::move(eta2));
+      y.push_back(std::move(eta3));
+      y.push_back(std::move(eta4));
+      y.push_back(std::move(eta5));
+      y.push_back(std::move(eta6));
+      labels.push_back("eta 1");
+      labels.push_back("eta 2");
+      labels.push_back("eta 3");
+      labels.push_back("eta 4");
+      labels.push_back("eta 5");
+      labels.push_back("eta 6");
+    }
+    catch ( Exception &e ){
+      if ( ref != nullptr ) delete ref;
+      e.ADD("Probably a problem with the reference structure",ERRDIV);
+      throw e;
+    }
   }
 
 

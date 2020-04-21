@@ -115,6 +115,7 @@ class HistMDPlot : public CxxTest::TestSuite
     if (!hist) TS_SKIP("NetCDF is needed");
     try {
 #include "SRO_HIST_volume.hxx"
+#include "SRO_222.hxx"
       std::stringstream input;
       input << "V";
       hist->plot(0,hist->ntime(),input,nullptr,Graph::DATA);
@@ -125,6 +126,24 @@ class HistMDPlot : public CxxTest::TestSuite
     catch ( Exception &e ) {
       std::cerr << e.fullWhat() << std::endl;
       TS_FAIL("Unable to calculate volume");
+    }
+  }
+
+  void testStrain( void )
+  {
+    if (!hist) TS_SKIP("NetCDF is needed");
+    try {
+#include "SRO_HIST_strain.hxx"
+      std::stringstream input;
+      input << "strain reference=ref_SRO_222";
+      hist->plot(0,hist->ntime(),input,nullptr,Graph::DATA);
+      std::ifstream fref("ref_SRO_HIST_strain.dat",std::ios::in);
+      std::ifstream fnew("SRO_HIST_strain.dat",std::ios::in);
+      DIFF_FILES(fref,fnew)
+    }
+    catch ( Exception &e ) {
+      std::cerr << e.fullWhat() << std::endl;
+      TS_FAIL("Unable to calculate strain");
     }
   }
 };

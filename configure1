@@ -976,13 +976,13 @@ else
   AC_PATH_PROG([TAR],[tar],"none")
   if test x"$TAR" != x"none";
   then
-    $TAR xfz ${srcdir}/spglib-1.9.9.tar.gz -C ${srcdir}
-    $LN_S . ${srcdir}/spglib-1.9.9/src/spglib
-    AC_CONFIG_SUBDIRS([spglib-1.9.9])
-#CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I${top_srcdir}/spglib-1.9.9/src"
-#LDFLAGS="$AM_LDFLAGS $LDFLAGS -L./spglib-1.9.9/src/.lib/"
+    $TAR xfz ${srcdir}/spglib-1.15.0.tar.gz -C ${srcdir}
+    $LN_S . ${srcdir}/spglib-1.15.0/src/spglib
+    AC_CONFIG_SUBDIRS([spglib-1.15.0])
+#CPPFLAGS="$AM_CPPFLAGS $CPPFLAGS -I${top_srcdir}/spglib-1.15.0/src"
+#LDFLAGS="$AM_LDFLAGS $LDFLAGS -L./spglib-1.15.0/src/.lib/"
 #LIBS="$LIBS -lsymspg"
-    AM_SPGLIB="spglib-1.9.9"
+    AM_SPGLIB="spglib-1.15.0"
   else
     if test  x"$resultspglib" == x"yes" ; 
     then
@@ -1761,8 +1761,8 @@ echo "===  Creating Makefiles                                                   
 echo "================================================================================"
 if test x"$AM_SPGLIB" != x"" 
 then
-  AM_CPPFLAGS="$AM_CPPFLAGS -I\$(top_srcdir)/spglib-1.9.9/src"
-  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L\$(top_builddir)/spglib-1.9.9/src/.libs"
+  AM_CPPFLAGS="$AM_CPPFLAGS -I\$(top_srcdir)/spglib-1.15.0/src"
+  LDFLAGS="$AM_LDFLAGS $LDFLAGS -L\$(top_builddir)/spglib-1.15.0/src/.libs"
   AC_SUBST(AM_CPPFLAGS)
 #SPGLIB_LDFLAGS="$AM_LDFLAGS  -lsymspg"
   LIBS="$LIBS -lsymspg"

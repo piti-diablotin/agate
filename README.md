@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/piti-diablotin/abiout.svg?branch=master)](https://travis-ci.org/piti-diablotin/abiout)
 # Presentation
 Agate is a tool engine to visualize and post-process data from *ab-initio* codes.
 It is mainly designed to work with the [Abinit](www.abinit.org "Abinit website") DFT code. However, it can perfectly read some [VASP](www.vasp.at "VASP website") files and other commonly used format. 

@@ -1,0 +1,76 @@
+language: cpp
+script: ./autogen.sh && ./configure && make && make check
+os:
+  - linux
+compiler:
+  - gcc
+  - clang
+addons:
+  apt:
+    update: true
+    packages: 
+      - autotools-dev 
+      - automake 
+      - autoconf 
+      - m4 
+      - libtool 
+      - libncurses5-dev 
+      - libjpeg8-dev 
+      - libpng-dev 
+      - libnetcdf-dev 
+      - libcurl3-dev 
+      - libfreetype6-dev 
+      - libglfw3-dev 
+      - libeigen3-dev 
+      - fontconfig 
+      - ttf-ubuntu-font-family 
+      - libxml2-dev 
+      - gnuplot-qt 
+      - libyaml-cpp-dev 
+      - libfftw3-dev 
+      - libssh-dev 
+      - cxxtest 
+  homebrew:
+    update: true
+    packages:
+      - automake 
+      - autoconf
+      - curl
+      - cxxtest
+      - eigen
+      - fftw
+      - freetype
+      - glfw
+      - gnuplot
+      - libpng
+      - libssh
+      - libtool
+      - libxml2
+      - libyaml
+      - netcdf
+      - wget
+      - yaml-cpp
+jobs:
+  include:
+    - os: linux
+      dist: bionic
+      compiler: clang
+    - os: linux
+      dist: bionic
+      compiler: gcc
+    - os: linux
+      dist: xenial
+      compiler: clang
+    - os: linux
+      dist: xenial
+      compiler: gcc
+    - os: osx
+      osx_image: xcode11.3
+      compiler: clang
+    - os: osx
+      osx_image: xcode10.3
+      compiler: clang
+    - os: osx
+      osx_image: xcode9.4
+      compiler: clang
+

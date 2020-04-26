@@ -129,8 +129,11 @@ void Ssh::disconnect() {
 
 bool Ssh::verifyHost(std::string &message) {
 #ifdef HAVE_SSH
-  //enum ssh_server_known_e state;
+#ifdef HAVE_SSH_SESSION_IS_KNOWN_SERVER
+  enum ssh_known_hosts_e state;
+#else
   int state;
+#endif
   unsigned char *hash = nullptr;
   ssh_key srv_pubkey = nullptr;
   size_t hlen;
@@ -154,15 +157,24 @@ bool Ssh::verifyHost(std::string &message) {
     throw EXCEPTION("Unable to retrieve server public key hash SHA1",ERRDIV);
   }
   //std::string hashStr((char*)(hash));
-  //state = ssh_session_is_known_server(_sshSession);
+#ifdef HAVE_SSH_SESSION_IS_KNOWN_SERVER
+  state = ssh_session_is_known_server(_sshSession);
+#else
   state = ssh_is_server_known(_sshSession);
+#endif
   switch (state) {
-    //case SSH_KNOWN_HOSTS_OK:
+#ifdef HAVE_SSH_SESSION_IS_KNOWN_SERVER
+    case SSH_KNOWN_HOSTS_OK:
+#else
     case SSH_SERVER_KNOWN_OK:
+#endif
       /* OK */
       break;
-      //case SSH_KNOWN_HOSTS_CHANGED:
+#ifdef HAVE_SSH_SESSION_IS_KNOWN_SERVER
+    case SSH_KNOWN_HOSTS_CHANGED:
+#else
     case SSH_SERVER_KNOWN_CHANGED:
+#endif
       str << "Host key for server changed: it is now:" << std::endl;
       hexa = ssh_get_hexa(hash, hlen);
       str << hexa << std::endl
@@ -171,8 +183,11 @@ bool Ssh::verifyHost(std::string &message) {
       ssh_clean_pubkey_hash(&hash);
       message = str.str();
       return false;
-      //case SSH_KNOWN_HOSTS_OTHER:
+#ifdef HAVE_SSH_SESSION_IS_KNOWN_SERVER
+    case SSH_KNOWN_HOSTS_OTHER:
+#else
     case SSH_SERVER_FOUND_OTHER:
+#endif
       str << "The host key for this server was not found but an other"
         << " type of key exists." << std::endl
         << "An attacker might change the default server key to"
@@ -180,8 +195,11 @@ bool Ssh::verifyHost(std::string &message) {
       ssh_clean_pubkey_hash(&hash);
       message = str.str();
       return false;
-      //case SSH_KNOWN_HOSTS_NOT_FOUND:
+#ifdef HAVE_SSH_SESSION_IS_KNOWN_SERVER
+    case SSH_KNOWN_HOSTS_NOT_FOUND:
+#else
     case SSH_SERVER_FILE_NOT_FOUND:
+#endif
       str << "Could not find known host file." << std::endl
         << "If you accept the host key here, the file will be"
         "automatically created." << std::endl;
@@ -189,8 +207,11 @@ bool Ssh::verifyHost(std::string &message) {
 #if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0,7,0)
       [[fallthrough]];
 #endif
-      //case SSH_SERVER_KNOWN_HOSTS_UNKNOWN:
+#ifdef HAVE_SSH_SESSION_IS_KNOWN_SERVER
+    case SSH_SERVER_KNOWN_HOSTS_UNKNOWN:
+#else
     case SSH_SERVER_NOT_KNOWN:
+#endif
       hexa = ssh_get_hexa(hash, hlen);
       str << "The server is unknown. Do you trust the host key?" << std::endl
         << hexa << std::endl;
@@ -200,8 +221,11 @@ bool Ssh::verifyHost(std::string &message) {
 
       message = str.str();
       return false;
-      //case SSH_KNOWN_HOSTS_ERROR:
+#ifdef HAVE_SSH_SESSION_IS_KNOWN_SERVER
+    case SSH_KNOWN_HOSTS_ERROR:
+#else
     case SSH_SERVER_ERROR:
+#endif
       ssh_clean_pubkey_hash(&hash);
       throw EXCEPTION("Error during host verification:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
       return false;
@@ -215,8 +239,11 @@ bool Ssh::verifyHost(std::string &message) {
 }
 void Ssh::validateHost() {
 #ifdef HAVE_SSH
+#ifdef HAVE_SSH_SESSION_UPDATE_KNOWN_HOSTS
+  int rc = ssh_session_update_known_hosti(_sshSession);
+#else
   int rc = ssh_write_knownhost(_sshSession);
-  //int rc = ssh_session_update_known_hosti(_sshSession);
+#endif
   if (rc < 0) 
     throw EXCEPTION("Error during host validation:\n"+std::string(ssh_get_error(_sshSession)),ERRDIV);
 #else

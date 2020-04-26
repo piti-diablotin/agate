@@ -1172,6 +1172,12 @@ AC_CHECK_LIB([ssh],[sftp_new],[ssh_check_lib=yes],[ssh_check_lib=no])
 AC_CHECK_LIB([ssh],[ssh_get_server_publickey],[
   AC_DEFINE([HAVE_SSH_GET_SERVER_PUBLICKEY],[1],[Define to 1 if SSH has ssh_get_server_publickey.])
 ],[])
+AC_CHECK_LIB([ssh],[ssh_session_is_known_server],[
+  AC_DEFINE([HAVE_SSH_SESSION_IS_KNOWN_SERVER],[1],[Define to 1 if SSH has ssh_session_is_known_server.])
+],[])
+AC_CHECK_LIB([ssh],[ssh_session_update_known_hosts],[
+  AC_DEFINE([HAVE_SSH_SESSION_UPDATE_KNOWN_HOSTS],[1],[Define to 1 if SSH has ssh_session_update_known_hosts.])
+],[])
 
 # handle check results
 have_ssh_usable="no"
@@ -1268,6 +1274,7 @@ if test x"$glsupport" = x"yes"; then
   if test x"$host_vendor" == x"apple"; then
     LIBS="$LIBS -framework OpenGL"
     AC_MSG_WARN([On apple device, OpenGL support is assumed.])
+    AC_DEFINE(GL_SILENCE_DEPRECATION,1,[Define to 1 to silent OpenGL warnings])
     gl_check_lib=yes
   else
     AC_CHECK_LIB([GL],[glBegin],[gl_check_lib=yes],[gl_check_lib=no])

@@ -208,7 +208,7 @@ bool Ssh::verifyHost(std::string &message) {
       [[fallthrough]];
 #endif
 #ifdef HAVE_SSH_SESSION_IS_KNOWN_SERVER
-    case SSH_SERVER_KNOWN_HOSTS_UNKNOWN:
+    case SSH_KNOWN_HOSTS_UNKNOWN:
 #else
     case SSH_SERVER_NOT_KNOWN:
 #endif
@@ -240,7 +240,7 @@ bool Ssh::verifyHost(std::string &message) {
 void Ssh::validateHost() {
 #ifdef HAVE_SSH
 #ifdef HAVE_SSH_SESSION_UPDATE_KNOWN_HOSTS
-  int rc = ssh_session_update_known_hosti(_sshSession);
+  int rc = ssh_session_update_known_hosts(_sshSession);
 #else
   int rc = ssh_write_knownhost(_sshSession);
 #endif

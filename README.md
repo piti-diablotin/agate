@@ -71,7 +71,7 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
   ```
   git clone https://github.com/piti-diablotin/abiout.git
   cd abiout
-  ./autogent.sh
+  ./autogen.sh
   mkdir build
   cd build
   ../configure 

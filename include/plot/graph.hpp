@@ -301,6 +301,14 @@ class Graph {
      * @param save What to do with the calculated data : plot ? save to file ? save raw data?
      */
     static void plotDOS(DosDB& db, ConfigParser &config, Graph* gplot, Graph::GraphSave save);
+
+    /**
+     * Compute the FFT of the input vectors.
+     * This is just a wrapper for FFTW3
+     * @param y A std::list<std::vector<double>> of several data to FFT
+     * @return A pair of lists with for the first list the amplitude of the FFT and as the second
+     * element a list of vector of the argument.
+     */
 };
 
 #endif  // GRAPH_HPP

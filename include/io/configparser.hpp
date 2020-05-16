@@ -160,6 +160,9 @@ std::vector<std::string> ConfigParser::getToken(const std::string& token, const 
 template<>
 std::string ConfigParser::getToken(const std::string& token, Characteristic dim) const;
 
+template<>
+bool ConfigParser::getToken(const std::string& token, Characteristic dim) const;
+
 #include "io/configparser.hxx"
 
 #endif // CONFIGPARSER_HPP

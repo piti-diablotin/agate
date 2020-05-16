@@ -245,6 +245,34 @@ std::string ConfigParser::getToken(const std::string& token, Characteristic dim)
   return rvector;
 }
 
+
+//
+template<>
+bool ConfigParser::getToken(const std::string& token, Characteristic dim) const {
+  (void)(dim);
+  const std::string &content = ( _caseSensitive ? _contentOrig : _content );
+  size_t pos = _content.find(" "+token+" ");
+  if ( pos == std::string::npos ) {
+    std::string str_tmp = "Input token \"" + token + "\" could not be found";
+    throw EXCEPTION(str_tmp,ConfigParser::ERFOUND);
+  }
+
+  std::istringstream str_data;
+  str_data.str(std::move(content.substr(pos)));
+  std::string readToken;
+  str_data >> readToken;
+  str_data >> readToken;
+  if ( str_data.fail() ) {
+    std::string str_err("Failed to read ");
+    str_err +=  TypeName<bool>::get() + " value for token \"" + token + "\".";
+    throw EXCEPTION(str_err,ConfigParser::ERTYPE);
+  }
+  if ( readToken.compare("0")==0 || utils::tolower((const std::string)readToken).compare("false")==0 ) return false;
+  else if ( readToken.compare("1")==0 || utils::tolower((const std::string)readToken).compare("true")==0 ) return true;
+  throw EXCEPTION("Cannot converte "+readToken+" to boolean value",ConfigParser::ERTYPE);
+  return false;
+}
+
 bool ConfigParser::hasToken(const std::string& token) const {
   const std::string &content = ( _caseSensitive ? _contentOrig : _content );
   size_t pos = content.find(" "+token+" ");

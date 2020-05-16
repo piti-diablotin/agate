@@ -117,13 +117,13 @@ class HistDataMD : public HistData {
      * Copy constructor.
      * @param hist Supposed to be copied
      */
-    HistDataMD(const HistDataMD& hist) = delete;
+    HistDataMD(const HistDataMD& hist);
 
     /**
      * Move constructor.
      * @param hist Supposed to be moved
      */
-    HistDataMD(HistDataMD&& hist) = delete;
+    HistDataMD(HistDataMD&& hist);
 
     /**
      * Destructor.
@@ -149,14 +149,14 @@ class HistDataMD : public HistData {
      * @param hist Supposed to be copied
      * @return The supposed new hist
      */
-    HistDataMD& operator = (const HistDataMD& hist) = delete;
+    HistDataMD& operator = (const HistDataMD& hist);
 
     /**
      * Move operator
      * @param hist Supposed to be moved
      * @return The supposed new hist
      */
-    HistDataMD& operator = (HistDataMD&& hist) = delete;
+    HistDataMD& operator = (HistDataMD&& hist);
 
     /**
      * Open a file and read it to fill the data

@@ -36,14 +36,14 @@
 #undef HAVE_CONFIG_H
 #endif
 
-#include "hist/histdata.hpp"
+#include "hist/histdatamd.hpp"
 #include "io/dtset.hpp"
 
 /** 
  * Handle a basic Abinit dtset and convert it to the HistData format 
  * so the structure can be visualized.
  */
-class HistDataDtset : public HistData {
+class HistDataDtset : public HistDataMD {
 
   private :
 
@@ -91,7 +91,15 @@ class HistDataDtset : public HistData {
      * @param tbegin first time to start with
      * @param tend Last time (not included) in the dumping
      */
-    static void dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step = 1);
+    static void dump(const HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step = 1);
+
+    /**
+     * Dump the full history into the current format
+     * @param filename Name or base name of the file to creat.
+     * @param tbegin first time to start with
+     * @param tend Last time (not included) in the dumping
+     */
+    virtual void dump(const std::string& filename, unsigned tbegin, unsigned tend, unsigned step = 1) const;
 
     virtual bool hasEtotal() const { return true; }
 

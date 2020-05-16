@@ -87,6 +87,27 @@ HistDataMD::HistDataMD(HistData&& hist) : HistData(hist),
   _entropy.resize(_ntimeAvail,0.);
 }
 
+HistDataMD::HistDataMD(const HistDataMD& hist) : HistData(hist),
+  _mdtemp{hist._mdtemp[0],hist._mdtemp[1]},
+  _ekin(hist._ekin),
+  _velocities(hist._velocities),
+  _temperature(hist._temperature),
+  _pressure(hist._pressure),
+  _entropy(hist._entropy)
+{
+}
+
+//
+HistDataMD::HistDataMD(HistDataMD&& hist) : HistData(hist),
+  _mdtemp{hist._mdtemp[0],hist._mdtemp[1]},
+  _ekin(hist._ekin),
+  _velocities(hist._velocities),
+  _temperature(hist._temperature),
+  _pressure(hist._pressure),
+  _entropy(hist._entropy)
+{
+}
+
 //
 HistDataMD::~HistDataMD() {
 #ifdef HAVE_CPPTHREAD
@@ -115,6 +136,28 @@ HistDataMD& HistDataMD::operator = (const HistData& hist){
   _temperature.resize(_ntimeAvail,0.);
   _pressure.resize(_ntimeAvail,0.);
   _entropy.resize(_ntimeAvail,0.);
+
+  return *this;
+}
+
+HistDataMD& HistDataMD::operator = (HistDataMD&& hist){
+  this->HistData::operator=(hist);
+  _ekin = hist._ekin;
+  _velocities = hist._velocities;
+  _temperature = hist._temperature;
+  _pressure = hist._pressure;
+  _entropy = hist._entropy;
+
+  return *this;
+}
+
+HistDataMD& HistDataMD::operator = (const HistDataMD& hist){
+  this->HistData::operator=(hist);
+  _ekin = hist._ekin;
+  _velocities = hist._velocities;
+  _temperature = hist._temperature;
+  _pressure = hist._pressure;
+  _entropy = hist._entropy;
 
   return *this;
 }

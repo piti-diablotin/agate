@@ -31,7 +31,7 @@
 #include <fstream>
 
 //
-HistDataDtset::HistDataDtset() : HistData(){
+HistDataDtset::HistDataDtset() : HistDataMD(){
   ;
 }
 
@@ -116,10 +116,6 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         dtsetj.readConfig(parser,0,j);
         HistDataDtset hist(dtsetj);
         try {
-          hist._fcart = parser.getToken<double>("fcart"+utils::to_string(j),3*dtsetj.natom());
-        } catch (Exception &e)
-        {;}
-        try {
           hist._stress = parser.getToken<double>("strten"+utils::to_string(j),6);
         } catch (Exception &e)
         {;}
@@ -127,6 +123,7 @@ void HistDataDtset::readFromFile(const std::string& filename) {
           hist._etotal = parser.getToken<double>("etotal"+utils::to_string(j),1);
         } catch (Exception &e)
         {;}
+        if ( !hist._velocities.empty() ) hist.computePressureTemperature(0);
         if ( ij == 0 ) *this = hist;
         else *this += hist;
       }
@@ -140,10 +137,6 @@ void HistDataDtset::readFromFile(const std::string& filename) {
     this->buildFromDtset(*dtset);
     delete dtset;
     try {
-      _fcart = parser.getToken<double>("fcart",_natom*3);
-    } catch (Exception &e)
-    {;}
-    try {
       _stress = parser.getToken<double>("strten",6);
     } catch (Exception &e)
     {;}
@@ -151,6 +144,7 @@ void HistDataDtset::readFromFile(const std::string& filename) {
       _etotal[0] = parser.getToken<double>("etotal");
     } catch (Exception &e)
     {;}
+    if ( !_velocities.empty() ) this->computePressureTemperature(0);
       
     if ( nimage > 0 ) {
       bool imageIsTime = true;
@@ -317,6 +311,29 @@ void HistDataDtset::buildFromDtset(const Dtset& dtset) {
       }
     }
 
+    if ( !dtset.velocities().empty() ) {
+      _velocities.resize(_ntime*_natom*_xyz);
+      for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+        _velocities[3*iatom  ] = dtset.velocities()[iatom][0];
+        _velocities[3*iatom+1] = dtset.velocities()[iatom][1];
+        _velocities[3*iatom+2] = dtset.velocities()[iatom][2];
+      }
+    }
+
+    if ( !dtset.fcart().empty() ) {
+      _fcart.resize(_ntime*_natom*_xyz);
+      for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+        _fcart[3*iatom  ] = dtset.fcart()[iatom][0];
+        _fcart[3*iatom+1] = dtset.fcart()[iatom][1];
+        _fcart[3*iatom+2] = dtset.fcart()[iatom][2];
+      }
+    }
+
+    _ekin.resize(1,0.);
+    _temperature.resize(1,0.);
+    _pressure.resize(1,0.);
+    _entropy.resize(1,0.);
+
     _acell[0] = dtset.acell()[0];
     _acell[1] = dtset.acell()[1];
     _acell[2] = dtset.acell()[2];
@@ -358,7 +375,7 @@ void HistDataDtset::buildFromDtset(const Dtset& dtset) {
     }
 }
 
-void HistDataDtset::dump(HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
+void HistDataDtset::dump(const HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
   unsigned ntime = hist.ntime(); //tend-tbegin;
   unsigned ndecimal = 1;
   hist.checkTimes(tbegin,tend);
@@ -376,5 +393,9 @@ void HistDataDtset::dump(HistData &hist, const std::string& filename, unsigned t
     e.ADD("Dumping failed",ERRABT);
     throw e;
   }
+}
+
+void HistDataDtset::dump(const std::string &filename, unsigned tbegin, unsigned tend, unsigned step) const {
+  HistDataDtset::dump(*this,filename,tbegin,tend,step);
 }
 

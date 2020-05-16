@@ -64,6 +64,7 @@ Dtset::Dtset() :
   _xred(),    ///< No atom first so no position
   _spinat(),  ///< No atom first so no position
   _velocities(), 
+  _fcart(),
   _findsym()  ///< Return string by findsym so nothing first.
 {
 }
@@ -82,6 +83,7 @@ Dtset::Dtset(const HistData &hist, const unsigned itime) :
   _xred(),    ///< No atom first so no position
   _spinat(),
   _velocities(),
+  _fcart(),
   _findsym()  ///< Return string by findsym so nothing first.
 {
   const unsigned ntime = hist.ntime();
@@ -116,11 +118,20 @@ Dtset::Dtset(const HistData &hist, const unsigned itime) :
       _spinat.push_back({{spinat[iatom*3], spinat[iatom*3+1], spinat[iatom*3+2]}});
   }
 
+  const double* fcart = hist.getFcart(itime);
+  if ( fcart != nullptr ){
+    for ( unsigned iatom = 0; iatom < _natom; ++iatom ) {
+      _fcart.push_back({{fcart[iatom*3], fcart[iatom*3+1], fcart[iatom*3+2]}});
+    }
+  }
+
   try {
     const HistDataMD& md = dynamic_cast<const HistDataMD&>(hist);
     const double* vel = md.getVel(itime);
-    for ( unsigned iatom = 0; iatom < _natom; ++iatom ) {
-      _velocities.push_back({{vel[iatom*3], vel[iatom*3+1], vel[iatom*3+2]}});
+    if ( vel != nullptr ){
+      for ( unsigned iatom = 0; iatom < _natom; ++iatom ) {
+        _velocities.push_back({{vel[iatom*3], vel[iatom*3+1], vel[iatom*3+2]}});
+      }
     }
   }
   catch(...) {
@@ -433,6 +444,25 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img, unsigned jdtset) {
     }
     ++step;
 
+    try {
+      token = "fcart"+suffix_jdtset;
+      if ( !parser.hasToken(token) ) token = "fcart";
+      tokenVectorCheck = parser.getToken<double>(token,3*_natom);
+      _fcart.resize(_natom);
+      for( unsigned iatom = 0 ; iatom < _natom ; ++iatom )
+        _fcart[iatom] = {{tokenVectorCheck[iatom*3],tokenVectorCheck[iatom*3+1],tokenVectorCheck[iatom*3+2]}};
+#ifdef HAVE_SHRINK_TO_FIT
+      _fcart.shrink_to_fit();
+#endif
+    }
+    catch (Exception& e) {
+      if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+        e.ADD("Bad spinat parameter",ERRABT);
+        throw e;
+      }
+    }
+    ++step;
+
     try { 
       token = "supercell_latt"+suffix_jdtset;
       if ( !parser.hasToken(token) ) token = "supercell_latt";
@@ -572,6 +602,15 @@ void Dtset::dump(std::ostream& out) const {
       out.setf(std::ios::right,std::ios::adjustfield);
       for ( auto& vel : _velocities )
         out << std::setw(34) << vel[0] << std::setw(23) << vel[1] << std::setw(23) << vel[2] << std::endl;
+    }
+
+    if ( !_fcart.empty()) {
+      out.setf(std::ios::left,std::ios::adjustfield);
+      out << std::endl;
+      out << std::setw(14) << "# fcart" << std::endl;
+      out.setf(std::ios::right,std::ios::adjustfield);
+      for ( auto& fcart : _fcart)
+        out << "#" << std::setw(33) << fcart[0] << std::setw(23) << fcart[1] << std::setw(23) << fcart[2] << std::endl;
     }
   }
   catch (...) {

@@ -528,6 +528,9 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     if ( normalized == "normalized") norm = Supercell::Norming::NORMQ;
     if ( normalized == "fullnormalized") norm = Supercell::Norming::NORMALL;
 
+    double modulus = true;
+    if ( parser.hasToken("modulus") ) modulus = parser.getToken<bool>("modulus");
+
     try {
       config.filename = parser.getToken<std::string>("output");
     }
@@ -600,7 +603,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       Supercell supercell(*trajectory,itime);
       supercell.setReference(superfirst);
       try {
-        auto projection = supercell.projectOnModes(_reference,_displacements,_condensedModes, norm);
+        auto projection = supercell.projectOnModes(_reference,_displacements,_condensedModes, norm, modulus);
         unsigned imode = 0;
         for ( auto v = y.begin() ; v != y.end() ; ++v )
           v->at(itime) = projection[imode++];

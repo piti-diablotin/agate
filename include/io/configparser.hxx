@@ -160,7 +160,7 @@ T ConfigParser::getToken(const std::string& token, Characteristic dim) const {
   }
   T rvector = utils::parseNumber<T>(readToken);
   /* Try to read characteristic */
-  if ( dim != NONE && std::is_arithmetic<T>::value ) {
+  if ( dim != NONE && std::is_floating_point<T>::value ) {
     str_data >> readToken;
     if ( !str_data.fail() && !std::is_same<T,bool>::value ) {
       double conversion = 1.;

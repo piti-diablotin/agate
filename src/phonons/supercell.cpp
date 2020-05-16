@@ -423,7 +423,7 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
   return displacements;
 }
 
-std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, const DispDB::qptTree& modes,Norming normalized) {
+std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, const DispDB::qptTree& modes,Norming normalized, bool modulus) {
   using namespace geometry;
   if ( _baseAtom.size() != _natom 
       || _cellCoord.size() != _natom 
@@ -466,6 +466,10 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
   for ( auto qpt = modes.begin() ; qpt != modes.end() ; ++qpt ) {
     auto& qpoint = qpt->first;
     unsigned dq = db.getQpt(qpoint);
+    if ( !modulus && qpt->first != vec3d({0,0,0}) ) {
+      Exception e = EXCEPTION(" Projection is complex but real part only is reported (modulus==false) for qpt "+to_string(qpt->first),ERRWAR);
+      std::clog << e.fullWhat() << std::endl;
+    }
 
     auto filtered = this->filterDisp(qpoint,displacements);
     norm2_qpt = 0.;
@@ -490,7 +494,8 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
         //normE += mass[iall/3]*mymode[iall].real()*mymode[iall].real();
       }
       //std::cerr << "Norme mode " << normE << std::endl;
-      double proj = (normalized == NORMQ ? std::abs(projection) : std::abs(projection)*std::sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu/norm_final);
+      double proj = (modulus ? std::abs(projection) : projection.real());
+      proj = (normalized == NORMQ ? proj : proj*std::sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu/norm_final);
       results.push_back(proj);
       normProjection += proj*proj;
     }

@@ -79,6 +79,13 @@ namespace geometry {
    */
   void print(const vec3d& vec, std::ostream& out = std::cout);
 
+  /**
+   * Return a qpt as string
+   * @param vec vec3d to transform in string
+   * @return qpt as nicely formated string
+   */
+  std::string to_string(const vec3d& vec);
+
 
   /**
    * Calculate the determinant of the matrix.
@@ -214,6 +221,15 @@ namespace geometry {
     return std::abs(diff[0])<1e-10 && std::abs(diff[1])<1e-10 && std::abs(diff[2])<1e-10;
   }
 
+  /**
+   * Check if 2 vectors are different at 1e-10
+   * @param vector to check against
+   * @return true if the 2 vectors are different
+   */
+  inline bool operator!=(const vec3d& vec1, const vec3d& vec2) {
+    const vec3d diff = vec1-vec2;
+    return std::abs(diff[0])>=1e-10 || std::abs(diff[1])>=1e-10 || std::abs(diff[2])>=1e-10;
+  }
 
   /** 
    * Dot product of two vectors.

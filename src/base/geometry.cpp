@@ -65,11 +65,7 @@ namespace geometry {
   void print(const vec3d& vec, std::ostream& out) {
     out.precision(6);
     out.setf(std::ios::right, std::ios::adjustfield);
-    out << "  [ " 
-      << std::setw(14) << Fraction(vec[0]).toString()
-      << std::setw(14) << Fraction(vec[1]).toString()
-      << std::setw(14) << Fraction(vec[2]).toString()
-      << " ]" << std::endl;
+    out << "  " << to_string(vec) << std::endl;
   }
 
   //
@@ -291,5 +287,16 @@ namespace geometry {
     }
     return *std::min_element(length.begin(),length.end());
   }
+
+  std::string to_string(const vec3d &vec) {
+    std::ostringstream out;
+    out << "[ "
+      << std::setw(14) << Fraction(vec[0]).toString()
+      << std::setw(14) << Fraction(vec[1]).toString()
+      << std::setw(14) << Fraction(vec[2]).toString()
+      << " ]";
+    return out.str();
+  }
+
 }
 

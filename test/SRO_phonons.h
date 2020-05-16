@@ -67,6 +67,7 @@ class CanvasPhononsProj : public CxxTest::TestSuite
     try {
 #include "SRO_HIST_Analysis.hxx"
 #include "SRO_HIST_Analysis_fullnormalized.hxx"
+#include "SRO_HIST_Analysis_gamma.hxx"
       std::istringstream input;
       input.str("1/2 1/2 1/2 1 2 3 15");
       canvas->alter(std::string("add"),input);
@@ -86,6 +87,17 @@ class CanvasPhononsProj : public CxxTest::TestSuite
       DIFF_FILES(fref2,fnew2);
       fref2.close();
       fnew2.close();
+      input.clear();
+      canvas->alter(std::string("reset"),input);
+      input.str("0 0 0 all");
+      canvas->alter(std::string("add"),input);
+      input.str("SRO_HIST.nc modulus=0");
+      canvas->alter(std::string("analyze"),input);
+      std::ifstream fref3("ref_SRO_HIST_Analysis_gamma.dat",std::ios::in);
+      std::ifstream fnew3("SRO_HIST_Analysis.dat",std::ios::in);
+      DIFF_FILES(fref3,fnew3);
+      fref3.close();
+      fnew3.close();
     }
     catch ( Exception &e ) {
       std::cerr << e.fullWhat() << std::endl;

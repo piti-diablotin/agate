@@ -292,9 +292,9 @@ namespace geometry {
     std::ostringstream out;
     if (nice) {
     out << "[ "
-      << std::setw(14) << Fraction(vec[0]).toString()
-      << std::setw(14) << Fraction(vec[1]).toString()
-      << std::setw(14) << Fraction(vec[2]).toString()
+      << std::setw(6) << Fraction(vec[0]).toString()
+      << std::setw(6) << Fraction(vec[1]).toString()
+      << std::setw(6) << Fraction(vec[2]).toString()
       << " ]";
     }
     else {

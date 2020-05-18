@@ -578,7 +578,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     unsigned nmodes = 0;
     for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
       std::ostringstream qlabel;
-      qlabel << "[" << Fraction(qpt->first[0]).toString() << "," << Fraction(qpt->first[1]).toString() << "," << Fraction(qpt->first[2]).toString() << "] ";
+      qlabel << geometry::to_string(qpt->first);
       for ( auto& vib : qpt->second ) {
         labels.push_back(qlabel.str()+utils::to_string(vib.imode+1));
         nmodes++;
@@ -682,7 +682,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     unsigned nqpt = amp.size();
     for ( auto& qpt : amp ) {
       std::ostringstream qlabel;
-      qlabel << "[" << Fraction(qpt[0]).toString() << "," << Fraction(qpt[1]).toString() << "," << Fraction(qpt[2]).toString() << "]";
+      qlabel << geometry::to_string(qpt->first);
       labels.push_back(qlabel.str());
     }
     //labels.push_back("Norm");
@@ -763,7 +763,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       throw EXCEPTION("You need to load a DDB first",ERRDIV);
     std::string output = (parser.hasToken("output")
                           ? parser.getToken<std::string>("output")
-                          : "eigen_displacements_"+geometry::to_string(_qptModes->first,false)+".in");
+                          : "eigen_displacements_"+geometry::to_string(_qptModes->first,false)+".out");
     std::ofstream file(output.c_str(),std::ios::out);
     _displacements.printModes(_qptModes->first,file);
     file.close();
@@ -897,7 +897,7 @@ void CanvasPhonons::help(std::ostream &out) {
   using std::setw;
   out << endl << "-- Here are the commands related to phonons mode --" << endl;
   out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
-  out << setw(40) << ":analyze or :ana filename [[full]normalized]" << setw(59) << "Project the trajectory of filename onto the selected condensed qpt/modes. normalized is for each indivual qpt, fullnormalized is for the global displacement." << endl;
+  out << setw(40) << ":analyze or :ana filename [[full]normalized] [modulus=0|1]" << setw(59) << "Project the trajectory of filename onto the selected condensed qpt/modes. normalized is for each indivual qpt, fullnormalized is for the global displacement. modulus can be set to 0 to get the sign of the projection (only for Gamma!)" << endl;
   out << setw(40) << ":amplitude A [imode [imode ...] ]" << setw(59) << "Set the amplitude of the listed modes. If none is present then set the default amplitude" << endl;
   out << setw(40) << ":add qx qy qz imode" << setw(59) << "Freeze the mode imode at the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":a or :append filename" << setw(59) << "Use file filename to get the eigen displacements." << endl;

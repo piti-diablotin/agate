@@ -577,10 +577,9 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 
     unsigned nmodes = 0;
     for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
-      std::ostringstream qlabel;
-      qlabel << geometry::to_string(qpt->first);
+      std::string q = geometry::to_string(qpt->first)+" ";
       for ( auto& vib : qpt->second ) {
-        labels.push_back(qlabel.str()+utils::to_string(vib.imode+1));
+        labels.push_back(q+utils::to_string(vib.imode+1));
         nmodes++;
       }
     }
@@ -681,9 +680,8 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 
     unsigned nqpt = amp.size();
     for ( auto& qpt : amp ) {
-      std::ostringstream qlabel;
-      qlabel << geometry::to_string(qpt->first);
-      labels.push_back(qlabel.str());
+      geometry::vec3d q = { qpt[0], qpt[1], qpt[2] };
+      labels.push_back(geometry::to_string(q));
     }
     //labels.push_back("Norm");
     //y.resize(nmodes+1);

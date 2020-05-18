@@ -198,6 +198,13 @@ class DispDB {
     DispDB& operator += ( const DispDB& disp );
 
     const std::vector<vec3d>& getQpts() const;
+
+    /**
+     * Print the eigen displacement of the given qpt into the output stream
+     * @param qpt the Qpt tu consider
+     * @param out the output stream to write into
+     */
+    void printModes(const vec3d &qpt, std::ostream &output) const;
 };
 
 #endif  // DISPDB_HPP

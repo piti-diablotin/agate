@@ -29,6 +29,7 @@
 #include <iostream>
 #include <complex>
 #include <algorithm>
+#include <iomanip>
 #include "phonons/dispdb.hpp"
 #include "base/exception.hpp"
 #include "base/geometry.hpp"
@@ -475,5 +476,33 @@ DispDB& DispDB::operator += ( const DispDB& disp ) {
 
 const std::vector<geometry::vec3d> &DispDB::getQpts() const
 {
-    return _qpts;
+  return _qpts;
+}
+
+void DispDB::printModes(const geometry::vec3d& qpt, std::ostream &output) const {
+  if ( !this->hasQpt(qpt) )
+    throw EXCEPTION(geometry::to_string(qpt)+" cannot be found",ERRDIV);
+
+  unsigned dq = this->getQpt(qpt);
+  output.setf(std::ios::right,std::ios::adjustfield);
+  output << "#";
+  for ( auto vec = 0 ; vec < _nmode ; ++vec ) {
+    output << std::setw(vec==0?39:40) << "Mode " << std::setw(6) << vec+1;
+  }
+  output << std::endl;
+  output << "#";
+  for ( auto vec = 0 ; vec < _nmode ; ++vec ) {
+    output << std::setw(vec==0?22:23) << "Re" << std::setw(23) << "Imag";
+  }
+  output << std::endl;
+
+  output.setf(std::ios::scientific,std::ios::floatfield);
+  output.precision(14);
+  for ( auto coord = 0 ; coord < _nmode ; ++coord ) {
+    for ( auto vec = 0 ; vec < _nmode ; ++vec ) {
+      output << std::setw(23) << _modes[dq*_nmode*3*_natom+vec*3*_natom+coord].real();
+      output << std::setw(23) << _modes[dq*_nmode*3*_natom+vec*3*_natom+coord].imag();
+    }
+    output << std::endl;
+  }
 }

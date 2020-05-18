@@ -758,6 +758,17 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       throw EXCEPTION("You need to load a DDB first",ERRDIV);
     _ddb->dump(_qptModes->first);
   }
+  else if ( token == "eigendisp" ) {
+    if ( _ddb.get() == nullptr )
+      throw EXCEPTION("You need to load a DDB first",ERRDIV);
+    std::string output = (parser.hasToken("output")
+                          ? parser.getToken<std::string>("output")
+                          : "eigen_displacements_"+geometry::to_string(_qptModes->first,false)+".in");
+    std::ofstream file(output.c_str(),std::ios::out);
+    _displacements.printModes(_qptModes->first,file);
+    file.close();
+    throw EXCEPTION(std::string("Eigen Displ file ")+output+std::string(" written."), ERRCOM);
+  }
   else if ( token == "dumpDDB" || token == "dDDB" ) {
     if ( _ddb.get() == nullptr ) 
       throw EXCEPTION("You need to load a DDB first",ERRDIV);
@@ -767,7 +778,6 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       throw EXCEPTION("Please specify a filename",ERRDIV);
     DdbAbinit::dump(*_ddb.get(),filename);
     throw EXCEPTION(std::string("DDB file ")+filename+std::string(" written."), ERRCOM);
-
   }
   else if ( token == "thermalPop") {
     double temperature = parser.getToken<double>("temperature");
@@ -892,6 +902,7 @@ void CanvasPhonons::help(std::ostream &out) {
   out << setw(40) << ":add qx qy qz imode" << setw(59) << "Freeze the mode imode at the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":a or :append filename" << setw(59) << "Use file filename to get the eigen displacements." << endl;
   out << setw(40) << ":dynmat" << setw(59) << "Dump the dynamial matrix at the current q-point in reduced coordinates into dynmat-qx-qy-qz.out" << endl;
+  out << setw(40) << ":eigendisp [output=FILE]" << setw(59) << "Dump the eigen displacements at the current q-point into FILE or eigen_displacements_qx_qy_qz.out" << endl;
   out << setw(40) << ":dDDB or :dumpDDB filename" << setw(59) << "Dump all the dynamial matrix into Abinit DDB format. WARNING : header is missing !!" << endl;
   out << setw(40) << ":findqpt filename" << setw(59) << "List the square amplitudes of each Qpt in filename" << endl;
   out << setw(40) << ":list" << setw(59) << "List all the q-pt and the related frozen mode." << endl;

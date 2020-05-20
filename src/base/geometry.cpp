@@ -288,13 +288,20 @@ namespace geometry {
     return *std::min_element(length.begin(),length.end());
   }
 
-  std::string to_string(const vec3d &vec) {
+  std::string to_string(const vec3d &vec, bool nice) {
     std::ostringstream out;
+    if (nice) {
     out << "[ "
-      << std::setw(14) << Fraction(vec[0]).toString()
-      << std::setw(14) << Fraction(vec[1]).toString()
-      << std::setw(14) << Fraction(vec[2]).toString()
+      << std::setw(6) << Fraction(vec[0]).toString()
+      << std::setw(6) << Fraction(vec[1]).toString()
+      << std::setw(6) << Fraction(vec[2]).toString()
       << " ]";
+    }
+    else {
+      out << Fraction(vec[0]).toString() << "_"
+          << Fraction(vec[1]).toString() << "_"
+          << Fraction(vec[2]).toString();
+    }
     return out.str();
   }
 

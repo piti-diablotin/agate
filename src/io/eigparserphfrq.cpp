@@ -61,7 +61,7 @@ void EigParserPHFRQ::readFromFile(const std::string& filename) {
     double length;
     sline >> length;
     if ( sline.fail() )
-      throw EXCEPTION("Unable to read length",ERRABT);
+      throw EXCEPTION("Unable to read length",ERRDIV);
     _lengths.push_back(length);
     std::vector<double> values;
     while ( !sline.eof() ) {
@@ -70,7 +70,7 @@ void EigParserPHFRQ::readFromFile(const std::string& filename) {
     }
     if ( nband == (unsigned)-1 ) nband = values.size();
     if ( nband != values.size() )
-      throw EXCEPTION("Bad number of band",ERRABT);
+      throw EXCEPTION("Bad number of band",ERRDIV);
     _eigens.push_back(std::move(values));
     _kpts.push_back(kpt);
   }

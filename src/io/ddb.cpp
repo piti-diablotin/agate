@@ -145,7 +145,7 @@ void Ddb::dump(const geometry::vec3d qpt, std::string filename) {
   std::ofstream out;
 
   if ( filename == "" ) 
-    filename = std::string("dynmat-")+utils::to_string(qpt[0])+"-"+utils::to_string(qpt[1])+"-"+utils::to_string(qpt[2])+".out";
+    filename = std::string("dynmat-")+geometry::to_string(qpt,false)+".out";
 
   out.open(filename);
   

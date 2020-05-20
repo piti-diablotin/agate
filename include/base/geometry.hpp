@@ -84,7 +84,7 @@ namespace geometry {
    * @param vec vec3d to transform in string
    * @return qpt as nicely formated string
    */
-  std::string to_string(const vec3d& vec);
+  std::string to_string(const vec3d& vec, bool nice = true);
 
 
   /**

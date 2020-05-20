@@ -528,8 +528,8 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     if ( normalized == "normalized") norm = Supercell::Norming::NORMQ;
     if ( normalized == "fullnormalized") norm = Supercell::Norming::NORMALL;
 
-    double modulus = true;
-    if ( parser.hasToken("modulus") ) modulus = parser.getToken<bool>("modulus");
+    double absolute = true;
+    if ( parser.hasToken("absolute") ) absolute = parser.getToken<bool>("absolute");
 
     try {
       config.filename = parser.getToken<std::string>("output");
@@ -602,7 +602,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       Supercell supercell(*trajectory,itime);
       supercell.setReference(superfirst);
       try {
-        auto projection = supercell.projectOnModes(_reference,_displacements,_condensedModes, norm, modulus);
+        auto projection = supercell.projectOnModes(_reference,_displacements,_condensedModes, norm, absolute);
         unsigned imode = 0;
         for ( auto v = y.begin() ; v != y.end() ; ++v )
           v->at(itime) = projection[imode++];
@@ -895,7 +895,7 @@ void CanvasPhonons::help(std::ostream &out) {
   using std::setw;
   out << endl << "-- Here are the commands related to phonons mode --" << endl;
   out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
-  out << setw(40) << ":analyze or :ana filename [[full]normalized] [modulus=0|1]" << setw(59) << "Project the trajectory of filename onto the selected condensed qpt/modes. normalized is for each indivual qpt, fullnormalized is for the global displacement. modulus can be set to 0 to get the sign of the projection (only for Gamma!)" << endl;
+  out << setw(40) << ":analyze or :ana filename [[full]normalized] [absolute=0|1]" << setw(59) << "Project the trajectory of filename onto the selected condensed qpt/modes. normalized is for each indivual qpt, fullnormalized is for the global displacement. absolute can be set to 0 to get the sign of the projection (only for Gamma!)" << endl;
   out << setw(40) << ":amplitude A [imode [imode ...] ]" << setw(59) << "Set the amplitude of the listed modes. If none is present then set the default amplitude" << endl;
   out << setw(40) << ":add qx qy qz imode" << setw(59) << "Freeze the mode imode at the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":a or :append filename" << setw(59) << "Use file filename to get the eigen displacements." << endl;

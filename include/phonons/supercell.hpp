@@ -144,10 +144,10 @@ class Supercell : public Dtset{
      * @param db the displacement data base of the dtset reference structure
      * @param modes All the modes to project on.
      * @param normalized If set to true, the projection \alpha_i^2 is normalized \sum _alpha_i^2 =1, otherwise the projection is A^2*\alpha_i^2
-     * @param modulus Boolean to controle weather the modulus of the complex projection is stored (true) or the real part only (false)
+     * @param absolute Boolean to controle weather the absolute value of the complex projection is stored (true) or the real part only (false)
      * @result A vector of amplitude for each couple of qpt,mode in modes
      */
-    std::vector<double> projectOnModes(const Dtset& dtset, DispDB& db, const DispDB::qptTree& modes, Norming normalized, bool modulus);
+    std::vector<double> projectOnModes(const Dtset& dtset, DispDB& db, const DispDB::qptTree& modes, Norming normalized, bool absolute);
 
     /**
      * This routine is aimed at filtering a displacement to extract the only qpt of interest

@@ -947,6 +947,12 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
       //vel(time,natom,xyz)
       units = "bohr*Ha/hbar" ;
       mnemo = "VELocities of atoms" ;
+      if ( _velocities.size() < 3*_ntime*_natom){
+        auto f = _velocities;
+        f.resize(3*_ntime*_natom);
+        put_var(ncid,"vec",units,mnemo,NC_DOUBLE,3+addimg,dimids,countp,tstart,&f[iitime*_natom*_xyz]);
+      }
+      else
       put_var(ncid,"vel",units,mnemo,NC_DOUBLE,3+addimg,dimids,countp,tstart,&_velocities[iitime*_natom*_xyz]);
 
 

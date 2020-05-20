@@ -53,7 +53,7 @@ void EigParserPhonopy::readFromFile(const std::string& filename) {
     fulldoc = YAML::LoadFile(filename);
   }
   catch(...) {
-    throw EXCEPTION("Cannot read file",ERRABT);
+    throw EXCEPTION("Cannot read file",ERRDIV);
   }
   try {
     try {

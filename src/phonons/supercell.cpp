@@ -629,12 +629,12 @@ void Supercell::fft(const std::vector<double>& dispr) {
     }
   }
 
-#ifdef HAVE_FFTW3_THREADS
-  fftw_plan_with_nthreads(1);
-#endif
 
 #pragma omp critical (supercell_fft)
   {
+#ifdef HAVE_FFTW3_THREADS
+    fftw_plan_with_nthreads(1);
+#endif
     plan_forward = fftw_plan_many_dft_r2c(3, n, howmany, 
         fft_in, inembed, istride, idist, 
         fft_out, onembed, ostride, odist, FFTW_ESTIMATE);

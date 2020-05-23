@@ -238,7 +238,7 @@ void HistDataXYZ::dump(const HistData &hist, const std::string& filename, unsign
     file.setf(std::ios::scientific,std::ios::floatfield);
     for ( unsigned itime = tbegin ; itime < tend ; itime+=step ) { 
       file << natom << endl;
-      file << itime << "/" << tend << " created by " << PACKAGE_STRING << " without any warranty" <<endl;
+      file << itime+1 << "/" << (tend-tbegin) << " created by " << PACKAGE_STRING << " without any warranty" <<endl;
 
       for ( unsigned iatom = 0 ; iatom < natom ; ++iatom ) {
         file << Mendeleev::name[_znucl[_typat[iatom]-1]];

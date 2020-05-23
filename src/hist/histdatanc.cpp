@@ -1066,7 +1066,7 @@ void HistDataNC::dump(HistData &hist, const std::string& filename, unsigned tbeg
       histnc->_entropy_img.resize(nimage*ntime);
     }
     
-    histnc->dump(filename,tbegin,tend,step);
+    histnc->HistDataNC::dump(filename,tbegin,tend,step);
 
   }
   else {

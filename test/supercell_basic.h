@@ -60,7 +60,7 @@ class SupercellBasic : public CxxTest::TestSuite
     }
   }
 
-  void testMapping( void )
+  void testMappingSRO( void )
   {
     try {
       Dtset reference;
@@ -71,6 +71,40 @@ class SupercellBasic : public CxxTest::TestSuite
       Supercell sc(*hist,0);
       sc.findReference(reference);
       std::ifstream mapping("ref_SRO_222_mapping",std::ios::in);
+      if ( !mapping ) TS_FAIL("no ref file");
+      for ( unsigned i = 0 ; i < sc.natom() ; ++i ) {
+        int aref, x,y,z;
+        int refi, refaref, refx,refy,refz;
+        sc.getRefCoord(i,aref,x,y,z);
+        mapping >> refi >> refaref >> refx >> refy >> refz;
+        std::stringstream str;
+        str << "Testing atom " << i << "of supercell";
+        TSM_ASSERT_EQUALS(str.str().c_str(),refi,i);
+        TSM_ASSERT_EQUALS(str.str().c_str(),refaref,aref);
+        TSM_ASSERT_EQUALS(str.str().c_str(),refx,x);
+        TSM_ASSERT_EQUALS(str.str().c_str(),refy,y);
+        TSM_ASSERT_EQUALS(str.str().c_str(),refz,z);
+      }
+      mapping.close();
+    }
+    catch ( Exception &e ) {
+      std::cerr << e.fullWhat() << std::endl;
+      TS_FAIL("Unable to test mapping");
+    }
+  }
+
+  void testMappingCTO( void )
+  {
+    try {
+      Dtset reference;
+#include "files/CTO_Pnma.hxx"
+#include "files/CTO_Pnma_444.hxx"
+#include "files/CTO_444_mapping.hxx"
+      reference.readFromFile("CTO_Pnma.in");
+      HistData *hist = HistData::getHist("CTO_Pnma_444.in",true);
+      Supercell sc(*hist,0);
+      sc.findReference(reference);
+      std::ifstream mapping("ref_CTO_444_mapping",std::ios::in);
       if ( !mapping ) TS_FAIL("no ref file");
       for ( unsigned i = 0 ; i < sc.natom() ; ++i ) {
         int aref, x,y,z;

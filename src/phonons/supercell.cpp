@@ -268,24 +268,29 @@ void Supercell::findReference(const Dtset& dtset) {
     }
     unsigned guess[3] = {0};
     // Reduce search area
+    //*
     for ( unsigned i = 0 ; i < 3 ; ++ i ) {
       const double normvec = norm(ref_vec[i]);
       guess[i] = (unsigned) max(0.e0,dot(_rprim*pos,ref_vec[i])/(normvec*normvec)-1);
       guess[i] = (unsigned) min(guess[i],(unsigned)_dim[i]-1);
+      if (guess[i]==0) guess[i]=_dim[i]-1;
     }
-    //std::cerr << "Guess " << guess[0] << " " << guess[1] << " " << guess[2] << std::endl;
+    //std::clog << "Guess " << guess[0] << " " << guess[1] << " " << guess[2] << std::endl;
+    //*/
 
     unsigned match = (unsigned)(-1);
     vec3d R = {{0.e0,0.e0,0.e0}};
     double closest = 1e12;
+    //const unsigned research[3] = {(unsigned)_dim[0],(unsigned)_dim[1],(unsigned)_dim[2]};
+    const unsigned research[3] = {4,4,4};
     for ( unsigned ref_iatom = 0 ; ref_iatom < dtset.natom() ; ++ref_iatom ) { // Scan each reference atom
       if ( ref2super[ref_typat[ref_iatom]] != _typat[iatom] ) continue;
 
-      for ( unsigned i = guess[0] ; i < guess[0]+3 ; ++i) {
+      for ( unsigned i = guess[0] ; i < guess[0]+research[0] ; ++i) {
         const double fi = (double) (i%(unsigned)_dim[0]);
-        for ( unsigned j = guess[1] ; j < guess[1]+3 ; ++j) {
+        for ( unsigned j = guess[1] ; j < guess[1]+research[1] ; ++j) {
           const double fj = (double) (j%(unsigned)_dim[1]);
-          for ( unsigned k = guess[2] ; k < guess[2]+3 ; ++k ) {
+          for ( unsigned k = guess[2] ; k < guess[2]+research[2] ; ++k ) {
             const double fk = (double) (k%(unsigned)_dim[2]);
             vec3d cell = {{ fi, fj, fk }};
             vec3d vecdiff = ref_xred[ref_iatom]+cell;
@@ -316,14 +321,16 @@ void Supercell::findReference(const Dtset& dtset) {
   std::vector<unsigned> check(dtset.natom(),0);
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     ++check[_baseAtom[iatom]];
-    //std::cerr << "Atom " << iatom << ":\t" << _baseAtom[iatom] << "\t" << std::endl;
-    //print(_cellCoord[iatom]);
+    //std::clog << "Atom " << iatom << ":\t" << _baseAtom[iatom] << "\t" << std::endl;
+    //print(_cellCoord[iatom],std::clog);
   }
+  bool error = false;
   for ( auto k : check ) {
-    //std::cerr << k << " " << (double)k/(_dim[0]*_dim[1]*_dim[2]) << std::endl;
-    if ( k != (unsigned)(_dim[0]*_dim[1]*_dim[2]) ) 
-      throw EXCEPTION("Mapping on reference structure failed",ERRDIV);
+    //std::clog << k << " " << (double)k/(_dim[0]*_dim[1]*_dim[2]) << std::endl;
+    if ( k != (unsigned)(_dim[0]*_dim[1]*_dim[2]) )  error = true;
   }
+  if ( error )
+    throw EXCEPTION("Mapping on reference structure failed",ERRDIV);
   //*/
 }
 

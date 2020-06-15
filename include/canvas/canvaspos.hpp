@@ -76,7 +76,7 @@ class CanvasPos : public Canvas {
     std::vector<std::unique_ptr<Octahedra>>   _octahedra;  ///< List of octahedra to draw (should be a generic unique_ptr<polygon*> to be able to draw something else.
     bool                          _hasTranslations; ///< True if rprimd is available for translations.
     unsigned int                  _display;    ///< What labels to display on screen
-    bool                          _drawSpins[4];
+    bool                          _drawSpins[5];
 
   private :
 
@@ -264,8 +264,9 @@ class CanvasPos : public Canvas {
      * @param y true if y direction is displayed
      * @param z true if z direction is displayed
      * @param relative true if length is relative, false if absolute
+     * @param centered true if arrow is centered in the atom otherwise the arrow starts at the center of the atom
      */
-    void getSpinDirection(bool &x, bool &y, bool &z, bool &relative) const;
+    void getSpinDirection(bool &x, bool &y, bool &z, bool &relative, bool &centered) const;
 
     /**
      * Get the list of znucl around which an octahedra will be displayed

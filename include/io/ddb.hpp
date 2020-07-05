@@ -59,9 +59,8 @@ class Ddb : public Dtset {
 
     bool                       _haveMasses; ///< True if phi/sqrt(m1*m2)
     unsigned                   _nqpt;   ///< Number of qpt/block in the DDB file
-    std::map< geometry::vec3d, 
-      std::vector< d2der > > _blocks; ///< Second derivative for each qpt
-    std::vector<unsigned>            _zion;    ///< Ionic Charge of each atom. Different than _znucl because of Pseudopotentials.
+    std::map< geometry::vec3d, std::vector< d2der > >     _blocks; ///< Second derivative for each qpt
+    std::vector<unsigned>      _zion;    ///< Ionic Charge of each atom. Different than _znucl because of Pseudopotentials.
 
   public :
 
@@ -89,7 +88,7 @@ class Ddb : public Dtset {
      * It it is not normalize, then we just have phi (abinit case);
      * @return true if the masses are already included, false otherwise.
      */
-    bool isNormalized() {
+    bool isNormalized() const {
       return _haveMasses;
     }
 

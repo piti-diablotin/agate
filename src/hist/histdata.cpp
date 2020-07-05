@@ -1649,6 +1649,47 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     }
   }
 
+  else if ( function == "polarization" ) {
+    filename = "polarization";
+    ylabel = "Polarization [C/m^2]";
+    title = "Polarization vector";
+    std::clog << std::endl << " -- Polarization vector --" << std::endl;
+    const double ZPb = 3.90;
+    const double ZTi = 7.19;
+    const double ZOpa = -5.91;
+    const double ZOpe = -2.59;
+    using geometry::mat3d;
+    std::string refname = parser.getToken<std::string>("reference");
+    Dtset ref;
+    ref.readFromFile(refname);
+    mat3d Z0 = {ZPb,0,0,0,ZPb,0,0,0,ZPb};
+    mat3d Z1 = {ZTi,0,0,0,ZTi,0,0,0,ZTi};
+    mat3d Z2 = {ZOpe,0,0,0,ZOpa,0,0,0,ZOpe};
+    mat3d Z3 = {ZOpa,0,0,0,ZOpe,0,0,0,ZOpe};
+    mat3d Z4 = {ZOpe,0,0,0,ZOpe,0,0,0,ZOpa};
+    std::vector<mat3d> Zeff;
+    Zeff.push_back(Z0);
+    Zeff.push_back(Z1);
+    Zeff.push_back(Z2);
+    Zeff.push_back(Z3);
+    Zeff.push_back(Z4);
+    auto pol = this->getPolarization(ref,Zeff,tbegin,tend);
+    std::vector<double> px(pol.size()/3);
+    std::vector<double> py(pol.size()/3);
+    std::vector<double> pz(pol.size()/3);
+    for ( unsigned itime = 0 ; itime < px.size() ; ++itime ) {
+      px[itime] = pol[itime*3+0];
+      py[itime] = pol[itime*3+1];
+      pz[itime] = pol[itime*3+2];
+    }
+    y.push_back(std::move(px));
+    y.push_back(std::move(py));
+    y.push_back(std::move(pz));
+    labels.push_back("Px");
+    labels.push_back("Py");
+    labels.push_back("Pz");
+  }
+
 
   else {
     throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
@@ -2254,6 +2295,45 @@ std::list<std::vector<double>> HistData::getPACF(unsigned tbegin, unsigned tend)
   return pacf;
 }
 
+std::vector<double> HistData::getPolarization(const Dtset &ref, const std::vector<geometry::mat3d> &Zeff, unsigned tbegin, unsigned tend) const {
+  this->checkTimes(tbegin,tend);
+  if ( Zeff.size() != ref.natom() )
+    throw EXCEPTION("Wrong number of Zeff compared to natom",ERRDIV);
+  Supercell superfirst(*this,tbegin);
+  try {
+    superfirst.findReference(ref);
+  }
+  catch (Exception &e) {
+    e.ADD("Unable to match reference structure with supercell",ERRDIV);
+    throw e;
+  }
+  std::vector<double> polarization(3*(tend-tbegin));
+  const double conversion = phys::b2A*phys::A2m*phys::b2A*phys::A2m;;
+  auto multi = superfirst.getDim();
+  const double volume = geometry::det(ref.rprim())*conversion*multi[0]*multi[1]*multi[2];
+  for ( unsigned itime = 0; itime < tend-tbegin; ++itime ) {
+    Supercell supercell(*this,tbegin+itime);
+    supercell.setReference(superfirst);
+    auto displacements = supercell.getDisplacement(ref);
+    double pol[3] = {0};
+    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+      int refAtom;
+      int dx, dy, dz;
+      supercell.getRefCoord(iatom,refAtom,dx,dy,dz);
+      for ( unsigned dim = 0 ; dim < 3 ; ++dim ) {
+        for ( unsigned dir = 0 ; dir < 3 ; ++ dir ) {
+          pol[dim] += Zeff[refAtom][dim*3+dir]*displacements[3*iatom+dir];
+        }
+      }
+    }
+
+    for ( unsigned dir = 0 ; dir < 3 ; ++ dir ) {
+      polarization[itime*3+dir] = pol[dir]*phys::eV/volume;
+    }
+  }
+  return polarization;
+}
+
 //
 void HistData::decorrelate(unsigned tbegin, unsigned tend, unsigned ntime, double T, double mu, unsigned step) {
   try {
@@ -2424,10 +2504,7 @@ std::vector<unsigned> HistData::reorder(const HistData &hist) const {
             hist._xred[oatom*3+1]-_xred[matom*3+1],
             hist._xred[oatom*3+2]-_xred[matom*3+2],
         }};
-        for ( unsigned i = 0 ; i < 3 ; ++i ) {
-          while ( difference[i] < 0.5 ) ++difference[i];
-          while ( difference[i] >= 0.5 ) --difference[i];
-        }
+        recenter(difference);
         auto diffcart = rprim * difference;
         double distance = norm(diffcart);
         if ( distance < closest ) {

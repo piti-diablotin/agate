@@ -119,8 +119,9 @@ void PhononMode::computeForceCst(const geometry::vec3d& qpt, const Ddb& ddb) {
   _qpt << qpt[0], qpt[1], qpt[2];
 #endif
 
+  bool isNormalized = ddb.isNormalized();
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    _mass[iatom] = MendeTable.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]*phys::amu_emass; // type starts at 1
+    _mass[iatom] = (isNormalized?1:MendeTable.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]*phys::amu_emass); // type starts at 1
   }
 
   try {
@@ -567,8 +568,9 @@ void PhononMode::computeAllEigen(const Ddb& ddb, double *freq, complex *modes) {
          gprim[3], gprim[4], gprim[5],
          gprim[6], gprim[7], gprim[8];
 
+  bool isNormalized = ddb.isNormalized();
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    _mass[iatom] = MendeTable.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]*phys::amu_emass; // type starts at 1
+    _mass[iatom] = (isNormalized?1.:MendeTable.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]*phys::amu_emass); // type starts at 1
   }
 
   unsigned iqpt = 0;

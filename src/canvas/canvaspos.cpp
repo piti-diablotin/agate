@@ -1319,7 +1319,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       _drawSpins[4] = parser.getToken<bool>("centered");
     }
     catch(Exception &E) {
-      throw EXCEPTION("Provite the token center=(0|1)",ERRDIV);
+      throw EXCEPTION("Provite the token centered=(0|1)",ERRDIV);
     }
   }
   /*

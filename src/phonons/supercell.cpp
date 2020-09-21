@@ -405,16 +405,16 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
       norm += mass*displacements[iatom*3+d]*displacements[iatom*3+d];
     }
   }
-  //std::clog << "Before Bmass norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
-  //std::clog << "Bmass was at " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
+  std::clog << "Before Bmass norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
+  std::clog << "Bmass was at " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
 
   norm = 0;
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
-      displacements[iatom*3+d] -= bmass[d]/(_natom*mass);
+      //displacements[iatom*3+d] -= bmass[d]/(_natom*mass);
       norm+=mass*displacements[iatom*3+d]*displacements[iatom*3+d];
-      //std::clog << phys::b2A*displacements[iatom*3+d] << " ";
+      std::clog << phys::b2A*displacements[iatom*3+d] << " ";
     }
     //std::clog << std::endl;
   }

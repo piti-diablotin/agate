@@ -718,8 +718,10 @@ void CanvasPos::drawSpins(unsigned batom) {
     const float nn = sqrt(spinx*spinx+spiny*spiny+spinz*spinz);
     if ( nn > 0.0099 ) {
       glPushMatrix();
+      float nradius = ( !(_display & DISP_ATOM) ) ? 0.
+                      : _drawSpins[4] ? 2.0 : 1.0;
       const float length = _drawSpins[3] ? 2.f*(float)MendeTable.radius[znucl]*(1.f+nn*0.5f) // Relatif
-      : 2.f*(float)MendeTable.radius[znucl]+nn; // Absolute
+      : nradius*(float)MendeTable.radius[znucl]+nn; // Absolute
       const float inv_nn = 1.f/nn;
       const float nprod = sqrt(spiny*spiny+spinx*spinx);
       const float angle = ( (spinz<0.) ? 180.f+180.f/3.14f*asin(nprod*inv_nn) : -180.f/3.14f*asin(nprod*inv_nn) );

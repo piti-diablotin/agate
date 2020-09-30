@@ -927,7 +927,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
       mnemo = "atom Forces in CARTesian coordinates" ;
       if ( _fcart.size() < 3*_ntime*_natom){
         auto f = _fcart;
-        f.resize(3*_ntime*_natom);
+        f.resize(3*_ntime*_natom,0);
         put_var(ncid,"fcart",units,mnemo,NC_DOUBLE,3+addimg,dimids,countp,tstart,&f[iitime*_natom*_xyz]);
       }
       else
@@ -938,7 +938,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
       mnemo = "atom Forces in REDuced coordinates" ;
       if ( _fcart.size() < 3*_ntime*_natom){
         auto f = _fcart;
-        f.resize(3*_ntime*_natom);
+        f.resize(3*_ntime*_natom,0);
         put_var(ncid,"fred",units,mnemo,NC_DOUBLE,3+addimg,dimids,countp,tstart,&f[iitime*_natom*_xyz]);
       }
       else
@@ -949,8 +949,8 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
       mnemo = "VELocities of atoms" ;
       if ( _velocities.size() < 3*_ntime*_natom){
         auto f = _velocities;
-        f.resize(3*_ntime*_natom);
-        put_var(ncid,"vec",units,mnemo,NC_DOUBLE,3+addimg,dimids,countp,tstart,&f[iitime*_natom*_xyz]);
+        f.resize(3*_ntime*_natom,0);
+        put_var(ncid,"vel",units,mnemo,NC_DOUBLE,3+addimg,dimids,countp,tstart,&f[iitime*_natom*_xyz]);
       }
       else
       put_var(ncid,"vel",units,mnemo,NC_DOUBLE,3+addimg,dimids,countp,tstart,&_velocities[iitime*_natom*_xyz]);

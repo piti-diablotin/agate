@@ -877,9 +877,13 @@ void CanvasPhonons::buildAnimation() {
   hist->animateModes(_condensedModes,_ntime);
   if ( _ntime > 1 ) {
     _drawSpins[3] = (_ntime > 1);
+    _drawSpins[4] = true;
+    _display |= DISP_ATOM;
   }
   else { //Display vectors
     _drawSpins[3] = false;
+    _drawSpins[4] = false;
+    _display &= ~DISP_ATOM;
   }
   auto save = _octahedra_z;
   this->setHist(*hist);

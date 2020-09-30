@@ -105,6 +105,7 @@ CanvasPos::CanvasPos(bool drawing) : Canvas(drawing),
   _drawSpins[1]=true;
   _drawSpins[2]=true;
   _drawSpins[3]=true; // true = relative; false = absolute
+  _drawSpins[4]=true; // true = arrow centered in the atom; false = arrow starts at the center of the atom
 }
 
 //
@@ -147,7 +148,8 @@ CanvasPos::CanvasPos(CanvasPos &&canvas) : Canvas(std::move(canvas)),
   _drawSpins[1] = canvas._drawSpins[1];
   _drawSpins[2] = canvas._drawSpins[2];
   _drawSpins[3] = canvas._drawSpins[3];
-  
+  _drawSpins[4] = canvas._drawSpins[4];
+
   if ( !_octahedra.empty() ) {
     for ( unsigned i = 0 ; i < _octahedra.size() ; ++i ) {
       Octahedra *tmpocta = new Octahedra(std::move(*dynamic_cast<Octahedra*>(_octahedra[i].get())));
@@ -716,15 +718,20 @@ void CanvasPos::drawSpins(unsigned batom) {
     const float nn = sqrt(spinx*spinx+spiny*spiny+spinz*spinz);
     if ( nn > 0.0099 ) {
       glPushMatrix();
+      float nradius = ( !(_display & DISP_ATOM) ) ? 0.
+                      : _drawSpins[4] ? 2.0 : 1.0;
       const float length = _drawSpins[3] ? 2.f*(float)MendeTable.radius[znucl]*(1.f+nn*0.5f) // Relatif
-      : 2.f*(float)MendeTable.radius[znucl]+nn; // Absolute
+      : nradius*(float)MendeTable.radius[znucl]+nn; // Absolute
       const float inv_nn = 1.f/nn;
       const float nprod = sqrt(spiny*spiny+spinx*spinx);
       const float angle = ( (spinz<0.) ? 180.f+180.f/3.14f*asin(nprod*inv_nn) : -180.f/3.14f*asin(nprod*inv_nn) );
       const float scale=0.5f*length/nn; // OK
       const float tol = ( (std::fabs(spinx)+std::fabs(spiny)) > 0.001f ? 0.0f : 0.001f );
 
-      glTranslatef(x-spinx*scale,y-spiny*scale,z-spinz*scale); // OK
+      if (_drawSpins[4] ) // arrow centered in the atom
+        glTranslatef(x-spinx*scale,y-spiny*scale,z-spinz*scale); // OK
+      else
+        glTranslatef(x,y,z); // OK
       glRotatef(angle,spiny+tol,-spinx+tol,0.0f); // Keep the +1e-7 to avoid a rotation around (0,0,0)
       if ( colinearZ ) {
         if ( spinz > 0 ) {
@@ -1309,6 +1316,14 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       throw EXCEPTION("Bad value for spin_length", ERRDIV);
     stream.clear();
   }
+  else if ( token == "spin_origin" ) {
+    try {
+      _drawSpins[4] = parser.getToken<bool>("centered");
+    }
+    catch(Exception &E) {
+      throw EXCEPTION("Provite the token centered=(0|1)",ERRDIV);
+    }
+  }
   /*
   else if ( token == "dec" ) {
     unsigned ntime = 100;
@@ -1763,11 +1778,12 @@ void CanvasPos::getBondInfo(double& rad, double& factor) const {
   factor = _bond-1.;
 }
 
-void CanvasPos::getSpinDirection(bool &x, bool &y, bool &z, bool &relative) const {
+void CanvasPos::getSpinDirection(bool &x, bool &y, bool &z, bool &relative, bool &centered) const {
   x = _drawSpins[0];
   y = _drawSpins[1];
   z = _drawSpins[2];
   relative = _drawSpins[3];
+  centered = _drawSpins[4];
 }
 
 std::vector<int> CanvasPos::getOctahedra(bool& drawAtoms) const {
@@ -1806,6 +1822,7 @@ void CanvasPos::help(std::ostream &out) {
   out << setw(40) << ":show WHAT" << setw(59) << "Show WHAT=(atom|border|name|znucl|id|force)" << endl;
   out << setw(40) << ":spin COMPONENTS" << setw(59) << "Specify what component of the spin to draw (x,y,z,xy,yz,xz,xyz)" << endl;
   out << setw(40) << ":spin_length (relative|absolute)" << setw(59) << "Specify how the arrow for spin is plotted" << endl;
+  out << setw(40) << ":spin_origin centered=(0|1)" << setw(59) << "Specify the position of the arrow. centered means arrow is centered, whil false means origin of the arrow is at the center of the atom" << endl;
   out << setw(40) << ":spg or :spacegroup [tol]" << setw(59) << "Get the space group number and name. Tol is the tolerance for the symmetry finder." << endl;
   out << setw(40) << ":thermo or thermodynamics" << setw(59) << "Print total energy, volume, temperature, pressure averages (Only available for _HIST files)." << endl;
   out << setw(40) << ":typat iatom TYPAT" << setw(59) << "Change atom iatom to be of type TYPAT." << endl;

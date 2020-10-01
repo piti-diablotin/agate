@@ -188,6 +188,7 @@ void Supercell::arrowDisplacement(const geometry::vec3d qpt, DispDB& db, unsigne
   unsigned q = db.getQpt(qpt);
   auto mymode = db.getMode(q,imode);
 
+  _spinat.resize(_natom);
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     const vec3d R = _cellCoord[iatom];
     const unsigned iatomUC = _baseAtom[iatom];
@@ -405,13 +406,18 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
   // Compute center of mass of displacement and set it to 0
   double norm = 0;
   double bmass[3] = {0};
+  double totalMass = 0e0;
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
+    totalMass += mass;
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
       bmass[d] +=  mass*displacements[iatom*3+d];
       norm += mass*displacements[iatom*3+d]*displacements[iatom*3+d];
     }
   }
+  for ( unsigned d = 0 ; d < 3 ; ++ d )
+    bmass[d] /= totalMass;
+
   //std::clog << "Before Bmass norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
   //std::clog << "Bmass was at " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
 
@@ -419,7 +425,7 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
-      displacements[iatom*3+d] -= bmass[d]/(_natom*mass);
+      displacements[iatom*3+d] -= bmass[d];
       norm+=mass*displacements[iatom*3+d]*displacements[iatom*3+d];
       //std::clog << phys::b2A*displacements[iatom*3+d] << " ";
     }

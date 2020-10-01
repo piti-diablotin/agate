@@ -336,6 +336,12 @@ void HistCustomModes::reserve(unsigned ntime, const Dtset& dtset)
       _spinat[3*iatom+2] = dtset.spinat()[iatom][2];
     }
   }
+
+  _ekin.resize(_ntime,0.);
+  _velocities.resize(_xyz*_natom*_ntime,0.);
+  _temperature.resize(_ntime,0.);
+  _pressure.resize(_ntime,0.);
+  _entropy.resize(_ntime,0.);
 }
 
 void HistCustomModes::insert(unsigned itime, const Dtset& dtset)

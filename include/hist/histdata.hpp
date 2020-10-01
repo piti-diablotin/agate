@@ -323,7 +323,7 @@ class HistData {
      * Get the number of images.
      * @return number of images.
      */
-    int nimage() const {return std::max((const unsigned)1,_nimage);}
+    int nimage() const {return std::max(static_cast<unsigned>(1),_nimage);}
 
     /**
      * Get the name of the hist file we are actually using

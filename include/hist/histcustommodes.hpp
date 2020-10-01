@@ -45,7 +45,7 @@
  * user definied phonon modes and amplitude or with populating
  * the phonons using a DispDB and thermal factor (see Zacharias 2016)
  */
-class HistCustomModes : public HistDataDtset{
+class HistCustomModes : public HistDataDtset {
 
   public :
     /**

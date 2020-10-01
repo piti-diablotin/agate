@@ -541,7 +541,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
                 if ( has_entropy )
                   get_var(local_ncid,start,count,&_entropy[itime],"entropy");
               }
-              catch ( Exception e ) {
+              catch ( Exception &e ) {
                 e.ADD("Ignoring error",ERRWAR);
                 std::cerr << e.fullWhat() << std::endl;
                 has_entropy = false;

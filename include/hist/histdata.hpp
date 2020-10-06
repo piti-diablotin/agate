@@ -136,6 +136,14 @@ class HistData {
      */
     std::vector<unsigned> reorder(const HistData &hist) const ;
 
+    /**
+     * Compute average of the current HistData in the input pointer
+     * @param tbegin First time to consider
+     * @param tend Last time excluded to consider
+     * @param dest HistData to use to store the average.
+     */
+    void myAverage(unsigned tbegin, unsigned tend, HistData &dest) const;
+
   public :
 
 
@@ -445,7 +453,7 @@ class HistData {
      * @param tend Last time (not included) to build the average
      * @return the equivalent Dtset of the average of the current hist file.
      */
-    virtual HistData* average(unsigned tbegin, unsigned tend);
+    virtual HistData* average(unsigned tbegin, unsigned tend) const;
 
     /**
      * Compute the centroid of a hist if there are several images

@@ -266,6 +266,17 @@ class HistDataMD : public HistData {
      * structures in the HIST
      */
     virtual void interpolate(unsigned ninter, double amplitude);
+
+    /**
+     * Compute the average of all quantities and build an HistDataDtset with it
+     * Build is set as a dtset
+     * the average is build between tbegin and tend
+     * @param tbegin First time to consider
+     * @param tend Last time (not included) to build the average
+     * @return the equivalent Dtset of the average of the current hist file.
+     */
+    virtual HistData* average(unsigned tbegin, unsigned tend) const;
+
 };
 
 #endif  // HISTDATAMD_HPP

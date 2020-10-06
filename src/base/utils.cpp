@@ -69,6 +69,11 @@ namespace utils {
     out << " ~~~~~~~~~~~~~~~~~~~~" << std::endl;
     out << " * Host....: " << COMPILE_HOST << std::endl;
     out << " * Build...: " << COMPILE_BUILD << std::endl;
+#ifdef HASH_VERSION
+    out << " * Git.....: " << HASH_VERSION << std::endl;
+#else
+    out << " * Git.....: " << "unknown" << std::endl;
+#endif
     out << std::endl;
 
     out << " - Compiler options -" << std::endl;

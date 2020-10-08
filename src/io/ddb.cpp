@@ -173,3 +173,47 @@ void Ddb::dump(const geometry::vec3d qpt, std::string filename) {
   out.close();
   throw EXCEPTION(std::string("Dynamical matrix written to ")+filename, ERRCOM);
 }
+
+geometry::mat3d Ddb::getZeff(const unsigned iatom) const {
+  using namespace geometry;
+  const vec3d qpt = {{0,0,0}};
+  
+  if ( iatom >= _natom ) 
+    throw EXCEPTION("Atom "+utils::to_string(iatom)+" is not in DDB", ERRDIV);
+
+  auto data = this->getDdb(qpt);
+  mat3d zeff;
+  const double inv_2pi = 1/(2*phys::pi);
+	
+	/* Read values from ddb into _zeff*/
+	for ( auto& elt : data ) {
+    const unsigned idir1 = elt.first[0];
+    const unsigned ipert1 = elt.first[1];
+    const unsigned idir2 = elt.first[2];
+    const unsigned ipert2 = elt.first[3];
+    if ( idir1 < 3 && idir2 < 3 && 
+        ( ( ipert1 == _natom+1 && ipert2 == iatom ) 
+          || ( ipert2 == _natom+1 && ipert1 == iatom ) 
+        )
+       )
+      zeff[mat3dind( idir1+1, idir2+1)] = elt.second.real()*inv_2pi;
+	}  	
+  print(zeff);
+
+	// Change unit/add zion on diagonal axis of BEC-Tensor
+  // Diagonal
+		for ( unsigned idir1 = 1 ; idir1 <= 3 ; ++idir1 ) {
+			for ( unsigned idir2 = 1 ; idir2 <= 3; ++idir2 ) {
+					if ( std::abs(zeff[mat3dind( idir1, idir2)])  > 1e-10 && idir1 == idir2  ) {
+							zeff[mat3dind( idir1, idir2)] += _zion[_typat[iatom]-1];		
+					}
+					else if ( std::abs(zeff[mat3dind( idir1, idir2)])   > 1e-10 && idir1 != idir2 ) { 
+						zeff[mat3dind( idir1, idir2)] *= _rprim[mat3dind(idir1,idir1)]*_gprim[mat3dind(idir2,idir2)];
+					}				
+					else { 
+						zeff[mat3dind( idir1, idir2)] = 0; 
+					}	
+			}
+    		}
+	return zeff;			
+}

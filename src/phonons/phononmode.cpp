@@ -50,7 +50,6 @@ PhononMode::PhononMode() :
   _rprim(),	
   _asr(),
   _zeff(),  
-  _zion(),	
 #endif
   _mass()
 {
@@ -75,7 +74,6 @@ PhononMode::PhononMode(unsigned natom) :
   _rprim(),
   _asr(),
   _zeff(),
-  _zion(),
 #endif
   _mass(natom)
 {
@@ -155,7 +153,8 @@ const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qp
          rprim[3], rprim[4], rprim[5],
          rprim[6], rprim[7], rprim[8];
 	
-	_zion = ddb1.zion();  ///get zion 
+	auto zion = ddb1.zion();  ///get zion 
+	auto typat = ddb1.typat();  ///get zion 
 	
 	/* Read values from ddb into _zeff*/
 	for ( auto& elt : ddb2 ) {
@@ -171,7 +170,7 @@ const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qp
 		for ( unsigned idir1 = 1 ; idir1 <= 3 ; ++idir1 ) {
 			for ( unsigned idir2 = 1 ; idir2 <= 3; ++idir2 ) {
 					if ( std::abs(_zeff[ipert2][geometry::mat3dind( idir1, idir2)])  > pow(10,-10) && idir1 == idir2  ) {
-							_zeff[ipert2][geometry::mat3dind( idir1, idir2)] = ( _zeff[ipert2][geometry::mat3dind( idir1, idir2)]/(2*phys::pi)) + _zion[ipert2];		
+							_zeff[ipert2][geometry::mat3dind( idir1, idir2)] = ( _zeff[ipert2][geometry::mat3dind( idir1, idir2)]/(2*phys::pi)) + zion[typat[ipert2]-1];		
 					}
 					else if ( std::abs(_zeff[ipert2][geometry::mat3dind( idir1, idir2)])   > pow(10,-10) && idir1 != idir2 ) { 
 						_zeff[ipert2][geometry::mat3dind( idir1, idir2)] =  _zeff[ipert2][geometry::mat3dind( idir1, idir2)]*_rprim(idir1-1,idir1-1)*_gprim(idir2-1,idir2-1)/(2*phys::pi);

@@ -1760,54 +1760,61 @@ void HistData::dump(const std::string& filename, unsigned tbegin, unsigned tend,
   (void) step;
 }
 
-HistData* HistData::average(unsigned tbegin, unsigned tend) {
+HistData* HistData::average(unsigned tbegin, unsigned tend) const {
   this->checkTimes(tbegin, tend);
-  HistData *av = new HistDataDtset;
+  HistData *av = new HistDataGSR;
 
-  av->_natom = _natom;
-  av->_xyz = _xyz;
-  av->_ntime = 1;
-  av->_ntimeAvail = 1;
+  this->myAverage(tbegin,tend,*av);
 
-  av->_time.push_back(0);
-  av->_xcart.resize(_natom*3,0);
-  av->_xred.resize(_natom*3,0);
-  if ( !_fcart.empty() ) av->_fcart.resize(_natom*3,0);
-  av->_acell.resize(3,0);
-  av->_rprimd.resize(9,0);
-  av->_etotal.resize(1,0);
-  av->_stress.resize(6,0);
-  if ( !_spinat.empty() ) av->_spinat.resize(_natom*3,0);
+  return av;
+}
 
-  av->_typat = _typat;
-  av->_znucl = _znucl;
+void HistData::myAverage(unsigned tbegin, unsigned tend, HistData &dest) const {
+  this->checkTimes(tbegin, tend);
+
+  dest._natom = _natom;
+  dest._xyz = _xyz;
+  dest._ntime = 1;
+  dest._ntimeAvail = 1;
+
+  dest._time.push_back(0);
+  dest._xcart.resize(_natom*3,0);
+  dest._xred.resize(_natom*3,0);
+  if ( !_fcart.empty() ) dest._fcart.resize(_natom*3,0);
+  dest._acell.resize(3,0);
+  dest._rprimd.resize(9,0);
+  dest._etotal.resize(1,0);
+  dest._stress.resize(6,0);
+  if ( !_spinat.empty() ) dest._spinat.resize(_natom*3,0);
+
+  dest._typat = _typat;
+  dest._znucl = _znucl;
 
 #ifdef HAVE_SPGLIB
-  av->_symprec = _symprec;
+  dest._symprec = _symprec;
 #endif
 
-  av->_filename = _filename;
+  dest._filename = _filename;
   double inv_ntime = 1./static_cast<double>(tend-tbegin);
 
   for ( unsigned time = tbegin ; time < tend ; ++time ) {
     for ( unsigned val = 0 ; val < 3*_natom ; ++val ) {
-      av->_xcart[val] += _xcart[time*3*_natom+val]*inv_ntime;
-      av->_xred[val] += _xred[time*3*_natom+val]*inv_ntime;
-      if ( !_fcart.empty() ) av->_fcart[val] += _fcart[time*3*_natom+val]*inv_ntime;
-      if ( !_spinat.empty() ) av->_spinat[val] += _spinat[time*3*_natom+val]*inv_ntime;
+      dest._xcart[val] += _xcart[time*3*_natom+val]*inv_ntime;
+      dest._xred[val] += _xred[time*3*_natom+val]*inv_ntime;
+      if ( !_fcart.empty() ) dest._fcart[val] += _fcart[time*3*_natom+val]*inv_ntime;
+      if ( !_spinat.empty() ) dest._spinat[val] += _spinat[time*3*_natom+val]*inv_ntime;
     }
-    av->_etotal[0] += _etotal[time]*inv_ntime;
+    dest._etotal[0] += _etotal[time]*inv_ntime;
 
     for ( unsigned val = 0 ; val < 3 ; ++val ) 
-      av->_acell[val] += _acell[time*3+val]*inv_ntime;
+      dest._acell[val] += _acell[time*3+val]*inv_ntime;
 
     for ( unsigned val = 0 ; val < 9 ; ++val ) 
-      av->_rprimd[val] += _rprimd[time*9+val]*inv_ntime;
+      dest._rprimd[val] += _rprimd[time*9+val]*inv_ntime;
 
     for ( unsigned val = 0 ; val < 6 ; ++val ) 
-      av->_stress[val] += _stress[time*6+val]*inv_ntime;
+      dest._stress[val] += _stress[time*6+val]*inv_ntime;
   }
-  return av;
 }
 
 bool HistData::getTryToMap() const

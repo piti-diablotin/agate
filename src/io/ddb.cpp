@@ -183,6 +183,9 @@ geometry::mat3d Ddb::getZeff(const unsigned iatom) const {
 
   auto data = this->getDdb(qpt);
   mat3d zeff;
+  mat3d count;
+  for ( auto &e : count ) e = 0e0;
+  for ( auto &e : zeff ) e = 0e0;
   const double inv_2pi = 1/(2*phys::pi);
 	
 	/* Read values from ddb into _zeff*/
@@ -195,25 +198,20 @@ geometry::mat3d Ddb::getZeff(const unsigned iatom) const {
         ( ( ipert1 == _natom+1 && ipert2 == iatom ) 
           || ( ipert2 == _natom+1 && ipert1 == iatom ) 
         )
-       )
-      zeff[mat3dind( idir1+1, idir2+1)] = elt.second.real()*inv_2pi;
+       ) {
+      zeff[mat3dind( idir1+1, idir2+1)] += elt.second.real()*inv_2pi;
+      count[mat3dind( idir1+1, idir2+1)] += 1e0;
+    }
 	}  	
-  print(zeff);
+  mat3d rprimTranspose;
+  for ( unsigned i = 1 ; i < 4 ; ++i )
+    for ( unsigned j = 1 ; j < 4 ; ++j ) {
+      rprimTranspose[mat3dind(i,j)] = _rprim[mat3dind(j,i)];
+      zeff[mat3dind(i,j)] /= count[mat3dind(i,j)];
+    }
+  zeff = _gprim * (zeff * rprimTranspose);
+	for ( unsigned idir = 1 ; idir <= 3 ; ++idir ) 
+    zeff[mat3dind( idir, idir)] += _zion[_typat[iatom]-1];		
 
-	// Change unit/add zion on diagonal axis of BEC-Tensor
-  // Diagonal
-		for ( unsigned idir1 = 1 ; idir1 <= 3 ; ++idir1 ) {
-			for ( unsigned idir2 = 1 ; idir2 <= 3; ++idir2 ) {
-					if ( std::abs(zeff[mat3dind( idir1, idir2)])  > 1e-10 && idir1 == idir2  ) {
-							zeff[mat3dind( idir1, idir2)] += _zion[_typat[iatom]-1];		
-					}
-					else if ( std::abs(zeff[mat3dind( idir1, idir2)])   > 1e-10 && idir1 != idir2 ) { 
-						zeff[mat3dind( idir1, idir2)] *= _rprim[mat3dind(idir1,idir1)]*_gprim[mat3dind(idir2,idir2)];
-					}				
-					else { 
-						zeff[mat3dind( idir1, idir2)] = 0; 
-					}	
-			}
-    		}
 	return zeff;			
 }

@@ -31,6 +31,7 @@
 #include "base/mendeleev.hpp"
 #include "base/geometry.hpp"
 #include "io/configparser.hpp"
+#include "hist/histdatadtset.hpp"
 #include <algorithm>
 #include <iomanip>
 #include <fstream>
@@ -942,4 +943,32 @@ std::array<double,4> HistDataMD::computeThermoFunctionHA(std::vector<double> &pd
   C *= 3.;
   S *= 3.;
   return std::array<double,4> ({{F,E,C,S}});
+}
+
+HistData* HistDataMD::average(unsigned tbegin, unsigned tend) const {
+  this->checkTimes(tbegin, tend);
+  HistDataDtset *av = new HistDataDtset;
+
+  this->myAverage(tbegin,tend,*av);
+
+  double inv_ntime = 1./static_cast<double>(tend-tbegin);
+
+  av->_mdtemp[0] = _mdtemp[0]; 
+  av->_mdtemp[1] = _mdtemp[1]; 
+  av->_ekin.resize(1,0);
+  av->_velocities.resize(_xyz*_natom,0);
+  av->_temperature.resize(1,0);
+  av->_pressure.resize(1,0);
+  av->_entropy.resize(1,0);
+  for ( unsigned time = tbegin ; time < tend ; ++time ) {
+    for ( unsigned val = 0 ; val < 3*_natom ; ++val ) {
+      av->_velocities[val] += _velocities[time*3*_natom+val]*inv_ntime;
+    }
+    av->_ekin[0] += _ekin[time]*inv_ntime;
+    av->_temperature[0] += _temperature[time]*inv_ntime;
+    av->_pressure[0] += _pressure[time]*inv_ntime;
+    av->_entropy[0] += _entropy[time]*inv_ntime;
+  }
+
+  return av;
 }

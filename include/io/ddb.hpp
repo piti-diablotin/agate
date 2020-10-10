@@ -133,7 +133,15 @@ class Ddb : public Dtset {
     inline const std::vector<unsigned>& zion() const { return _zion; }
 
     using Dtset::dump; //Clang warning: indicate we want both dump functions
+
     virtual void dump(const geometry::vec3d qpt, std::string filename="");
+    
+    /**
+     * Return the Born effective charge matrice of the iatom atom
+     * @param iaton the indice of the atom to query the BEC
+     * @return a matrice with the BEC of the queried atom
+     */
+    virtual geometry::mat3d getZeff(const unsigned iatom) const;
 
 };
 

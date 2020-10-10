@@ -56,7 +56,7 @@ namespace geometry {
 
   /**
    * Simple function to acces vector,axe in a mat3d.
-   * @param vec vector (1, 2 or 3).
+   * @param vec vector (1=a, 2=b or 3=c).
    * @param axe axe(1=x, 2=y, 3=z).
    * @return The indice in the mat3d array.
    */

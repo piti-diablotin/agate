@@ -464,7 +464,16 @@ void HistDataNC::readFromFile(const std::string& filename) {
         _typat.clear();
         _typat.insert(_typat.begin(),_natom,1);
       }
-      e.ADD("Ignoring file "+outfilename+".\nSome data may be missing",ERRWAR);
+      std::ostringstream info;
+      info << "Ignoring file "+outfilename+"." << std::endl;
+      int missing = 0;
+      if ( !has_znucl ) { info << "znucl "; ++missing; }
+      if ( !has_typat ) { info << "typat "; ++missing; }
+      if ( !has_spinat ) { info << "spinat "; ++missing; }
+      if ( !has_dtion ) { info << "dtion "; ++missing; }
+      if ( !has_mdtemp ) { info << "mdtemp "; ++missing; }
+      info << ( missing > 1 ? "are" : "is" ) << " missing";
+      e.ADD(info.str(),ERRWAR);
       std::clog << e.fullWhat() << std::endl;;
     }
     if ( !has_spinat ) _spinat.clear();

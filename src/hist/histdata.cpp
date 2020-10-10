@@ -1654,26 +1654,13 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     ylabel = "Polarization [C/m^2]";
     title = "Polarization vector";
     std::clog << std::endl << " -- Polarization vector --" << std::endl;
-    const double ZPb = 3.90;
-    const double ZTi = 7.19;
-    const double ZOpa = -5.91;
-    const double ZOpe = -2.59;
     using geometry::mat3d;
-    std::string refname = parser.getToken<std::string>("reference");
-    Dtset ref;
-    ref.readFromFile(refname);
-    mat3d Z0 = {ZPb,0,0,0,ZPb,0,0,0,ZPb};
-    mat3d Z1 = {ZTi,0,0,0,ZTi,0,0,0,ZTi};
-    mat3d Z2 = {ZOpe,0,0,0,ZOpa,0,0,0,ZOpe};
-    mat3d Z3 = {ZOpa,0,0,0,ZOpe,0,0,0,ZOpe};
-    mat3d Z4 = {ZOpe,0,0,0,ZOpe,0,0,0,ZOpa};
+    std::string refname = parser.getToken<std::string>("ddb");
+    Ddb* ddb = Ddb::getDdb(refname);
     std::vector<mat3d> Zeff;
-    Zeff.push_back(Z0);
-    Zeff.push_back(Z1);
-    Zeff.push_back(Z2);
-    Zeff.push_back(Z3);
-    Zeff.push_back(Z4);
-    auto pol = this->getPolarization(ref,Zeff,tbegin,tend);
+    for ( unsigned iatom = 0 ; iatom < ddb->natom() ; ++iatom )
+      Zeff.push_back(ddb->getZeff(iatom));
+    auto pol = this->getPolarization(*ddb,Zeff,tbegin,tend);
     std::vector<double> px(pol.size()/3);
     std::vector<double> py(pol.size()/3);
     std::vector<double> pz(pol.size()/3);
@@ -2318,6 +2305,7 @@ std::vector<double> HistData::getPolarization(const Dtset &ref, const std::vecto
   const double conversion = phys::b2A*phys::A2m*phys::b2A*phys::A2m;;
   auto multi = superfirst.getDim();
   const double volume = geometry::det(ref.rprim())*conversion*multi[0]*multi[1]*multi[2];
+#pragma omp parallel for 
   for ( unsigned itime = 0; itime < tend-tbegin; ++itime ) {
     Supercell supercell(*this,tbegin+itime);
     supercell.setReference(superfirst);

@@ -138,10 +138,16 @@ class Ddb : public Dtset {
     
     /**
      * Return the Born effective charge matrice of the iatom atom
-     * @param iaton the indice of the atom to query the BEC
-     * @return a matrice with the BEC of the queried atom
+     * @param iatom the indice of the atom to query the BEC
+     * @return a matrice with the BEC of the queried atom in cartesian coordinates
      */
     virtual geometry::mat3d getZeff(const unsigned iatom) const;
+
+    /**
+     * Convert DDb to the static dielectric tensor.
+     * @return the static dielectric tensor Epsilon infiny in cartesian coordinates.
+     */
+    virtual geometry::mat3d getEpsInf() const;
 
 };
 

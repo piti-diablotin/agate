@@ -63,5 +63,22 @@ class DdbCrOOH : public CxxTest::TestSuite
     }
   }
 
+  void testEpsInf( void ) 
+  {
+    TS_ASSERT_DIFFERS(ddb,nullptr);
+    using geometry::mat3d, geometry::print;
+
+    mat3d ref = {{
+        5.33136769,     -0.05109183,     -0.24663052,  -0.05109183,      5.38203579,     -0.15299291,  -0.24663052,     -0.15299291,      4.67520222
+    }};
+
+    auto eps = ddb->getEpsInf();
+    for ( unsigned i = 0 ; i < 9 ; ++i ) {
+      std::ostringstream str;
+      str << "indice " << i;
+      TSM_ASSERT_DELTA(str.str().c_str(),eps[i],ref[i],1e-3);
+    }
+  }
+
 };
 

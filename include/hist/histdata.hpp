@@ -51,6 +51,7 @@
 #include <list>
 #include <cmath>
 #include "plot/graph.hpp"
+#include "base/geometry.hpp"
 
 
 class Dtset;
@@ -135,6 +136,14 @@ class HistData {
      * @return A vector of indice to explore hist to get the same order as in this.
      */
     std::vector<unsigned> reorder(const HistData &hist) const ;
+
+    /**
+     * Compute average of the current HistData in the input pointer
+     * @param tbegin First time to consider
+     * @param tend Last time excluded to consider
+     * @param dest HistData to use to store the average.
+     */
+    void myAverage(unsigned tbegin, unsigned tend, HistData &dest) const;
 
   public :
 
@@ -322,7 +331,7 @@ class HistData {
      * Get the number of images.
      * @return number of images.
      */
-    int nimage() const {return std::max((const unsigned)1,_nimage);}
+    int nimage() const {return std::max(static_cast<unsigned>(1),_nimage);}
 
     /**
      * Get the name of the hist file we are actually using
@@ -373,7 +382,7 @@ class HistData {
      * @param tend last time to use for calculation
      * @return A pair of two vector. The first one is the radius (absisses) and the second is the pair distribution function corresponding to the radius (ordonnees).
      */
-    virtual std::pair<std::vector<double>,std::vector<double>> getPDF(unsigned znucl1, unsigned znucl2, double Rmax, double dR, unsigned tbegin, unsigned tend) const;
+    std::pair<std::vector<double>,std::vector<double>> getPDF(unsigned znucl1, unsigned znucl2, double Rmax, double dR, unsigned tbegin, unsigned tend) const;
 
     /**
      * Compute the Mean Square Displacement at time itime for a specific znucl.
@@ -381,14 +390,14 @@ class HistData {
      * @param tend last time not included
      * return <(x(t)-x0)^2>
      */
-    virtual std::list<std::vector<double>> getMSD(unsigned tbegin,unsigned tend) const;
+    std::list<std::vector<double>> getMSD(unsigned tbegin,unsigned tend) const;
 
     /**
      * Compute the gyration radius tensor of each type of atoms
      * @param tbegin first time to consider
      * @param tend last time not included
      */
-    virtual std::list<std::vector<double>> getGyration(unsigned tbegin,unsigned tend) const;
+    std::list<std::vector<double>> getGyration(unsigned tbegin,unsigned tend) const;
 
     /**
      * Compute the position autocorrelation function
@@ -396,6 +405,17 @@ class HistData {
      * @param tend Last time to use to calculate mean values
      */
     std::list<std::vector<double>> getPACF(unsigned tbegin, unsigned tend) const;
+
+    /**
+     * Compute the polarization using the Born Effective Charges and the reference structure
+     * P_i = \frac{e}{V}\sum_j Z_ij \Delta x_j
+     * @param ref The reference structure to use to compute the displacements.
+     * @param Zeff A vector of length _natom containing the matrix BEC
+     * @param tbegin First time to consider
+     * @param tend Last time to consider (excluded)
+     * @return A vector containing the polarization vector of each time step P0.x P0.y P0.z P1.x P1.y....
+     */
+    std::vector<double> getPolarization(const Dtset &ref, const std::vector<geometry::mat3d> &Zeff, unsigned tbegin, unsigned tend) const;
 
     /**
      * Print basic mean information about a trajectory
@@ -408,7 +428,7 @@ class HistData {
      * @param tend Last time to use to calculate mean values
      * @param out The ostream to print data
      */
-    virtual void printThermo(unsigned tbegin, unsigned tend, std::ostream &out = std::cout);
+    void printThermo(unsigned tbegin, unsigned tend, std::ostream &out = std::cout);
 
     /**
      * Recompute xred and xcart so that the periodic boundaries a imposed
@@ -416,7 +436,7 @@ class HistData {
      * @param itime Specify what time step to work on. If -1 then do it for all times
      * @param toPeriodic True to impose periodicity, False to remove periodicity
      */
-    virtual void periodicBoundaries(unsigned itime, bool toPeriodic);
+    void periodicBoundaries(unsigned itime, bool toPeriodic);
 
     /**
      * Driver to plot something 
@@ -445,12 +465,12 @@ class HistData {
      * @param tend Last time (not included) to build the average
      * @return the equivalent Dtset of the average of the current hist file.
      */
-    virtual HistData* average(unsigned tbegin, unsigned tend);
+    virtual HistData* average(unsigned tbegin, unsigned tend) const;
 
     /**
      * Compute the centroid of a hist if there are several images
      */
-    virtual void centroid();
+    void centroid();
 
     /**
      * Change position of one atom at a given time step.

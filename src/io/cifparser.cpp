@@ -179,7 +179,7 @@ void CifParser::parse(std::istream& stream) {
             loop._data.push_back(std::move(entry));
             ++loop._nentry;
           }
-          catch (std::ios_base::failure e){
+          catch (std::ios_base::failure &e){
             stream.seekg(currentpos);
             --nbLines;
             break;

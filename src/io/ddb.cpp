@@ -35,6 +35,7 @@
 #include "io/ddbphonopy.hpp"
 #include <fstream>
 #include "base/uriparser.hpp"
+#include "base/fraction.hpp"
 
 //
 Ddb::Ddb() : Dtset(),
@@ -63,9 +64,9 @@ std::string Ddb::info() const {
   rstr.setf(std::ios::scientific, std::ios::floatfield);
   rstr.setf(std::ios::right, std::ios::adjustfield);
   for ( auto& block : _blocks ) {
-    rstr << std::endl << "Q-pt: " << std::setw(24) << block.first[0]
-      << std::setw(24) << block.first[1]
-      << std::setw(24) << block.first[2] << std::endl;
+    rstr << std::endl << "Q-pt: " << std::setw(8) << Fraction(block.first[0]).toString()
+      << std::setw(8) << Fraction(block.first[1]).toString()
+      << std::setw(8) << Fraction(block.first[2]).toString() << std::endl;
     rstr << "  # elements: " << block.second.size() << std::endl;
   }
   return rstr.str();
@@ -172,4 +173,99 @@ void Ddb::dump(const geometry::vec3d qpt, std::string filename) {
   }
   out.close();
   throw EXCEPTION(std::string("Dynamical matrix written to ")+filename, ERRCOM);
+}
+
+geometry::mat3d Ddb::getZeff(const unsigned iatom) const {
+  using namespace geometry;
+  const vec3d qpt = {{0,0,0}};
+  
+  if ( iatom >= _natom ) 
+    throw EXCEPTION("Atom "+utils::to_string(iatom)+" is not in DDB", ERRDIV);
+
+  auto data = this->getDdb(qpt);
+  mat3d zeff;
+  mat3d count;
+  for ( auto &e : count ) e = 0e0;
+  for ( auto &e : zeff ) e = 0e0;
+  const double twopi = 2*phys::pi;
+	
+	/* Read values from ddb into _zeff*/
+	for ( auto& elt : data ) {
+    const unsigned idir1 = elt.first[0];
+    const unsigned ipert1 = elt.first[1];
+    const unsigned idir2 = elt.first[2];
+    const unsigned ipert2 = elt.first[3];
+    if ( idir1 < 3 && idir2 < 3 && 
+        ( ( ipert1 == _natom+1 && ipert2 == iatom ) 
+          || ( ipert2 == _natom+1 && ipert1 == iatom ) 
+        )
+       ) {
+      // Store Efield along column and disp alon lines
+      if ( ipert1 == _natom+1 ) { 
+        zeff[mat3dind( idir1+1, idir2+1)] += elt.second.real();
+        count[mat3dind( idir1+1, idir2+1)] += 1e0;
+      }
+      else {
+        zeff[mat3dind( idir2+1, idir1+1)] += elt.second.real();
+        count[mat3dind( idir2+1, idir1+1)] += 1e0;
+      }
+    }
+	}  	
+
+  mat3d rprimTranspose;
+  for ( unsigned i = 1 ; i < 4 ; ++i )
+    for ( unsigned j = 1 ; j < 4 ; ++j ) {
+      rprimTranspose[mat3dind(i,j)] = _rprim[mat3dind(j,i)];
+      zeff[mat3dind(i,j)] /= (twopi*count[mat3dind(i,j)]);
+    }
+  
+  zeff = _gprim * (zeff * rprimTranspose);
+
+	for ( unsigned idir = 1 ; idir <= 3 ; ++idir ) 
+       zeff[mat3dind( idir, idir)] += _zion[_typat[iatom]-1];		
+
+	return zeff;			
+}
+
+geometry::mat3d Ddb::getEpsInf() const {
+  using namespace geometry;
+  const vec3d qpt = {{0,0,0}};
+  
+  auto data = this->getDdb(qpt);
+  mat3d epsinf;
+  mat3d count;
+  for ( auto &e : count ) e = 0e0;
+  for ( auto &e : epsinf ) e = 0e0;
+  const double twopi = 2*phys::pi;
+	
+	/* Read values from ddb into epsilon infiny*/
+	for ( auto& elt : data ) {
+    const unsigned idir1 = elt.first[0];
+    const unsigned ipert1 = elt.first[1];
+    const unsigned idir2 = elt.first[2];
+    const unsigned ipert2 = elt.first[3];
+    if ( idir1 < 3 && idir2 < 3 && 
+        ( ( ipert1 == _natom+1 && ipert2 == _natom+1 ) 
+          || ( ipert2 == _natom+1 && ipert1 == _natom+1 ) 
+        )
+       ) {
+      epsinf[mat3dind( idir1+1, idir2+1)] += elt.second.real();
+      count[mat3dind( idir1+1, idir2+1)] += 1e0;
+    }
+	}  	
+
+  mat3d rprimTranspose;
+  double volume = det(_rprim);
+  for ( unsigned i = 1 ; i < 4 ; ++i )
+    for ( unsigned j = 1 ; j < 4 ; ++j ) {
+      rprimTranspose[mat3dind(i,j)] = _rprim[mat3dind(j,i)];
+      epsinf[mat3dind(i,j)] /= (-phys::pi*volume*count[mat3dind(i,j)]);
+    }
+  
+  epsinf = _rprim * (epsinf * rprimTranspose);
+
+	for ( unsigned idir = 1 ; idir <= 3 ; ++idir ) 
+       epsinf[mat3dind( idir, idir)] += 1.0;
+
+	return epsinf;			
 }

@@ -68,10 +68,9 @@ void DdbAbinit::readFromFile(const std::string& filename) {
     }
    // zion is given as double so readConfig fails to read zion as unsigned.
     std::vector<double> zion(parser.getToken<double>("zion",_ntypat));
-    _zion.resize(_typat.size());                                 // resize with typat.size() to account for cases with several atoms of same type	
-    for( unsigned x = 0 ; x < _typat.size() ; ++x ) {
-        _zion[x] = static_cast<unsigned>(zion[_typat[x]-1]);     // write values into _zion
-    } 	
+    _zion.clear();
+    for( auto z : zion )
+      _zion.push_back(static_cast<unsigned>(z));
  	
     try{
       std::vector<double> amu(parser.getToken<double>("amu",_ntypat));

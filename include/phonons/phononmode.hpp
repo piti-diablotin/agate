@@ -65,7 +65,6 @@ class PhononMode {
     Eigen::Matrix3d     _rprim;      		 	///< Vector of reciprocal space
     Eigen::Matrix<complex,Eigen::Dynamic,3> _asr; ///< Acoustic Sum Rule Correction (lines=3*natom)
     std::vector<geometry::mat3d> _zeff; 		///< Vector containing Born-Effective Charge Tensor of each atom 
-    std::vector<unsigned>        _zion;         		///< Ionic charge necessary for unit conversion of BEC  
 #endif
     std::vector<double> _mass;        			///< Masses of each atom
 

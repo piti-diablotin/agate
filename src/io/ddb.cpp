@@ -212,11 +212,13 @@ geometry::mat3d Ddb::getZeff(const unsigned iatom) const {
     }
 	}  	
 
-  mat3d rprimTranspose;
+  mat3d rprimTranspose = transpose(_rprim);
   for ( unsigned i = 1 ; i < 4 ; ++i )
     for ( unsigned j = 1 ; j < 4 ; ++j ) {
-      rprimTranspose[mat3dind(i,j)] = _rprim[mat3dind(j,i)];
-      zeff[mat3dind(i,j)] /= (twopi*count[mat3dind(i,j)]);
+      if ( count[mat3dind(i,j)] == 0 )
+        throw EXCEPTION("Derivative not found for element "
+            +utils::to_string(i)+","+utils::to_string(j),ERRDIV);
+      zeff[mat3dind(j,i)] /= (twopi*count[mat3dind(j,i)]);
     }
   
   zeff = _gprim * (zeff * rprimTranspose);
@@ -236,7 +238,6 @@ geometry::mat3d Ddb::getEpsInf() const {
   mat3d count;
   for ( auto &e : count ) e = 0e0;
   for ( auto &e : epsinf ) e = 0e0;
-  const double twopi = 2*phys::pi;
 	
 	/* Read values from ddb into epsilon infiny*/
 	for ( auto& elt : data ) {
@@ -254,12 +255,14 @@ geometry::mat3d Ddb::getEpsInf() const {
     }
 	}  	
 
-  mat3d rprimTranspose;
+  mat3d rprimTranspose = transpose(_rprim);
   double volume = det(_rprim);
   for ( unsigned i = 1 ; i < 4 ; ++i )
     for ( unsigned j = 1 ; j < 4 ; ++j ) {
-      rprimTranspose[mat3dind(i,j)] = _rprim[mat3dind(j,i)];
-      epsinf[mat3dind(i,j)] /= (-phys::pi*volume*count[mat3dind(i,j)]);
+      if ( count[mat3dind(j,i)] == 0 )
+        throw EXCEPTION("Derivative not found for element "
+            +utils::to_string(i)+","+utils::to_string(j),ERRDIV);
+      epsinf[mat3dind(j,i)] /= (-phys::pi*volume*count[mat3dind(j,i)]);
     }
   
   epsinf = _rprim * (epsinf * rprimTranspose);

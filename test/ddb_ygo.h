@@ -74,5 +74,22 @@ class DdbYGO : public CxxTest::TestSuite
     }
   }
 
+  void testEpsInf( void ) 
+  {
+    TS_ASSERT_DIFFERS(ddb,nullptr);
+    using geometry::mat3d, geometry::print;
+
+    mat3d ref = {{
+      4.398885,     0.000000,     0.000000,     0.000000,     4.398885,     0.000000,      0.000000,     0.000000,     4.348030
+    }};
+
+    auto eps = ddb->getEpsInf();
+    for ( unsigned i = 0 ; i < 9 ; ++i ) {
+      std::ostringstream str;
+      str << "indice " << i;
+      TSM_ASSERT_DELTA(str.str().c_str(),eps[i],ref[i],1e-3);
+    }
+  }
+
 };
 

@@ -59,5 +59,22 @@ class DdbPTO : public CxxTest::TestSuite
     }
   }
 
+  void testEpsInf( void ) 
+  {
+    TS_ASSERT_DIFFERS(ddb,nullptr);
+    using geometry::mat3d, geometry::print;
+
+    mat3d ref = {{
+      8.5256,     0.000000,     0.000000,     0.000000,     8.5256,     0.000000,      0.000000,     0.000000,   8.5256  
+    }};
+
+    auto eps = ddb->getEpsInf();
+    for ( unsigned i = 0 ; i < 9 ; ++i ) {
+      std::ostringstream str;
+      str << "indice " << i;
+      TSM_ASSERT_DELTA(str.str().c_str(),eps[i],ref[i],1e-3);
+    }
+  }
+
 };
 

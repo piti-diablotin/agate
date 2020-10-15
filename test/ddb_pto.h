@@ -62,7 +62,8 @@ class DdbPTO : public CxxTest::TestSuite
   void testEpsInf( void ) 
   {
     TS_ASSERT_DIFFERS(ddb,nullptr);
-    using geometry::mat3d, geometry::print;
+    using geometry::mat3d;
+    using geometry::print;
 
     mat3d ref = {{
       8.5256,     0.000000,     0.000000,     0.000000,     8.5256,     0.000000,      0.000000,     0.000000,   8.5256  

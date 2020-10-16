@@ -322,15 +322,15 @@ namespace geometry {
     std::ostringstream out;
     if (nice) {
     out << "[ "
-      << std::setw(6) << Fraction(vec[0]).toString()
-      << std::setw(6) << Fraction(vec[1]).toString()
-      << std::setw(6) << Fraction(vec[2]).toString()
+      << std::setw(6) << Fraction(vec[0])
+      << std::setw(6) << Fraction(vec[1])
+      << std::setw(6) << Fraction(vec[2])
       << " ]";
     }
     else {
-      out << Fraction(vec[0]).toString() << "_"
-          << Fraction(vec[1]).toString() << "_"
-          << Fraction(vec[2]).toString();
+      out << Fraction(vec[0]) << "_"
+          << Fraction(vec[1]) << "_"
+          << Fraction(vec[2]);
     }
     return out.str();
   }

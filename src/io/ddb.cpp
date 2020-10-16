@@ -64,9 +64,9 @@ std::string Ddb::info() const {
   rstr.setf(std::ios::scientific, std::ios::floatfield);
   rstr.setf(std::ios::right, std::ios::adjustfield);
   for ( auto& block : _blocks ) {
-    rstr << std::endl << "Q-pt: " << std::setw(8) << Fraction(block.first[0]).toString()
-      << std::setw(8) << Fraction(block.first[1]).toString()
-      << std::setw(8) << Fraction(block.first[2]).toString() << std::endl;
+    rstr << std::endl << "Q-pt: " << std::setw(8) << Fraction(block.first[0])
+      << std::setw(8) << Fraction(block.first[1])
+      << std::setw(8) << Fraction(block.first[2]) << std::endl;
     rstr << "  # elements: " << block.second.size() << std::endl;
   }
   return rstr.str();

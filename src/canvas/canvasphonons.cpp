@@ -290,11 +290,11 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
             )
           );
       _qptModes = it.first;
-      out << "Q-point " << Fraction(qpt[0]).toString() << " " << Fraction(qpt[1]).toString() << " " << Fraction(qpt[2]).toString() << " added";
+      out << "Q-point " << Fraction(qpt[0]) << " " << Fraction(qpt[1]) << " " << Fraction(qpt[2]) << " added";
       rebuild = true;
     }
     else 
-      out << "Q-point " << Fraction(qpt[0]).toString() << " " << Fraction(qpt[1]).toString() << " " << Fraction(qpt[2]).toString() << " selected";
+      out << "Q-point " << Fraction(qpt[0]) << " " << Fraction(qpt[1]) << " " << Fraction(qpt[2]) << " selected";
     throw EXCEPTION(out.str(),ERRCOM);
   }
   else if ( token == "add" ) {
@@ -452,7 +452,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       std::sort(iqpt->second.begin(),iqpt->second.end(),
           [](DispDB::qMode v1,DispDB::qMode v2) { return v1.imode < v2.imode; }
           );
-      std::cout << "Qpt : " << Fraction(iqpt->first[0]).toString() << "  " << Fraction(iqpt->first[1]).toString() << "  " << Fraction(iqpt->first[2]).toString() << std::endl;
+      std::cout << "Qpt : " << Fraction(iqpt->first[0]) << "  " << Fraction(iqpt->first[1]) << "  " << Fraction(iqpt->first[2]) << std::endl;
       std::cout << "  Modes      : ";
       for ( auto imode : iqpt->second ) 
         std::cout << std::setw(12) << imode.imode+1 << "  ";

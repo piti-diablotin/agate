@@ -37,6 +37,7 @@
 #endif
 
 #include <string>
+#include <ostream>
 
 /** 
  *
@@ -82,7 +83,13 @@ class Fraction {
      */
     virtual ~Fraction();
 
-    std::string toString();
+    /**
+     * Transform the fraction to a nice string
+     * @return a string containing the well-formated fraction
+     */
+    std::string toString() const;
+
+    friend std::ostream& operator<<(std::ostream& stream, const Fraction& frac);
 
 };
 

@@ -1,5 +1,7 @@
 #include <cxxtest/TestSuite.h>
 #include "base/fraction.hpp"
+#include <iostream>
+#include <sstream>
 
 class FractionConversion : public CxxTest::TestSuite
 {
@@ -49,6 +51,14 @@ class FractionConversion : public CxxTest::TestSuite
       TS_ASSERT_EQUALS(frac.toString(), std::string("-7") );
       frac = Fraction(-0);
       TS_ASSERT_EQUALS(frac.toString(), std::string("0") );
+    }
+
+    void testString( void ) {
+      std::cout << Fraction(0.5) << std::endl;
+      std::ostringstream str;
+      str << Fraction(-0.125);
+      const char verif[] = "-1/8";
+      TS_ASSERT_SAME_DATA(verif,str.str().c_str(),str.str().size());
     }
 
 };

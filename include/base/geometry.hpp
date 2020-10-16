@@ -56,7 +56,7 @@ namespace geometry {
 
   /**
    * Simple function to acces vector,axe in a mat3d.
-   * @param vec vector (1, 2 or 3).
+   * @param vec vector (1=a, 2=b or 3=c).
    * @param axe axe(1=x, 2=y, 3=z).
    * @return The indice in the mat3d array.
    */
@@ -144,6 +144,20 @@ namespace geometry {
    */
   mat3d invertTranspose(const double mat[9]);
 
+  /**
+   * Transpose a matrix
+   * @param mat The matrix to transpose
+   * @return the transpose of the matrix.
+   */
+  mat3d transpose(const double mat[9]);
+
+
+  /**
+   * Transpose a matrix
+   * @param mat The matrix to transpose
+   * @return the transpose of the matrix.
+   */
+  mat3d transpose(const mat3d& mat);
 
   /**
    * Change some 3D vectors from basis.

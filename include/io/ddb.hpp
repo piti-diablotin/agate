@@ -59,9 +59,8 @@ class Ddb : public Dtset {
 
     bool                       _haveMasses; ///< True if phi/sqrt(m1*m2)
     unsigned                   _nqpt;   ///< Number of qpt/block in the DDB file
-    std::map< geometry::vec3d, 
-      std::vector< d2der > > _blocks; ///< Second derivative for each qpt
-    std::vector<unsigned>            _zion;    ///< Ionic Charge of each atom. Different than _znucl because of Pseudopotentials.
+    std::map< geometry::vec3d, std::vector< d2der > >     _blocks; ///< Second derivative for each qpt
+    std::vector<unsigned>      _zion;    ///< Ionic Charge of each atom. Different than _znucl because of Pseudopotentials.
 
   public :
 
@@ -89,7 +88,7 @@ class Ddb : public Dtset {
      * It it is not normalize, then we just have phi (abinit case);
      * @return true if the masses are already included, false otherwise.
      */
-    bool isNormalized() {
+    bool isNormalized() const {
       return _haveMasses;
     }
 
@@ -134,7 +133,21 @@ class Ddb : public Dtset {
     inline const std::vector<unsigned>& zion() const { return _zion; }
 
     using Dtset::dump; //Clang warning: indicate we want both dump functions
+
     virtual void dump(const geometry::vec3d qpt, std::string filename="");
+    
+    /**
+     * Return the Born effective charge matrice of the iatom atom
+     * @param iatom the indice of the atom to query the BEC
+     * @return a matrice with the BEC of the queried atom in cartesian coordinates
+     */
+    virtual geometry::mat3d getZeff(const unsigned iatom) const;
+
+    /**
+     * Convert DDb to the static dielectric tensor.
+     * @return the static dielectric tensor Epsilon infiny in cartesian coordinates.
+     */
+    virtual geometry::mat3d getEpsInf() const;
 
 };
 

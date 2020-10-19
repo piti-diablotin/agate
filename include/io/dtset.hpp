@@ -245,6 +245,11 @@ class Dtset {
     void getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<geometry::vec3d> &translations, double symprec) const;
 
     bool operator==(const Dtset& dtset1) const;
+    /**
+     * Apply a strain matrix to rprim
+     * @param Strain matrix
+     */
+    void applyStrain(geometry::mat3d strainMatrix);
 };
 
 #endif //DTSET_HPP

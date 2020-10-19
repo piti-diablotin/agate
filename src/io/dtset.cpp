@@ -1045,3 +1045,9 @@ bool Dtset::operator==(const Dtset& dtset1) const {
   }
   return true;
 }
+
+void Dtset::applyStrain(geometry::mat3d strainMatrix)
+{
+  using namespace geometry;
+  _rprim = _rprim*strainMatrix; 
+}

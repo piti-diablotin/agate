@@ -1028,8 +1028,18 @@ void Dtset::getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<g
     }
   }
 #else
+  throw EXCEPTION("spglib needed",ERRABT);
 #endif
 }
+
+
+std::array<double,6> Dtset::getStrain(const Dtset& reference) const {
+  using namespace geometry;
+  mat3d gprim = invert(reference.rprim());
+  mat3d strain = _rprim*gprim;
+  return {strain[mat3dind(1,1)]-1,strain[mat3dind(2,2)]-1,strain[mat3dind(3,3)]-1,strain[mat3dind(3,2)],strain[mat3dind(3,1)],strain[mat3dind(2,1)]};
+}
+
 
 bool Dtset::operator==(const Dtset& dtset1) const {
 

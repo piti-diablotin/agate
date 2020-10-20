@@ -33,7 +33,8 @@ class DdbYGO : public CxxTest::TestSuite
     TS_ASSERT_DIFFERS(ddb,nullptr);
     unsigned natom = ddb->natom();
     TS_ASSERT_EQUALS(natom,10);
-    using geometry::mat3d, geometry::print;
+    using geometry::mat3d;
+    using geometry::print;
 
     mat3d Y = {{
       4.043280E+00,  -8.837375E-14,   0.000000E+00,
@@ -77,7 +78,8 @@ class DdbYGO : public CxxTest::TestSuite
   void testEpsInf( void ) 
   {
     TS_ASSERT_DIFFERS(ddb,nullptr);
-    using geometry::mat3d, geometry::print;
+    using geometry::mat3d;
+    using geometry::print;
 
     mat3d ref = {{
       4.398885,     0.000000,     0.000000,     0.000000,     4.398885,     0.000000,      0.000000,     0.000000,     4.348030

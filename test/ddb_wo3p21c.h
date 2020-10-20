@@ -33,7 +33,8 @@ class DdbWO3 : public CxxTest::TestSuite
     TS_ASSERT_DIFFERS(ddb,nullptr);
     unsigned natom = ddb->natom();
     TS_ASSERT_EQUALS(natom,16);
-    using geometry::mat3d, geometry::print;
+    using geometry::mat3d;
+    using geometry::print;
 
     std::vector<mat3d> zeff;
     zeff.push_back({{
@@ -131,7 +132,8 @@ class DdbWO3 : public CxxTest::TestSuite
   void testEpsInf( void ) 
   {
     TS_ASSERT_DIFFERS(ddb,nullptr);
-    using geometry::mat3d, geometry::print;
+    using geometry::mat3d;
+    using geometry::print;
 
     mat3d ref = {{
       7.03228400,   0.00000000,   -0.01121100, 0.00000000,   6.56787400,   0.00000000, -0.01121100,   0.00000000,   5.44549800

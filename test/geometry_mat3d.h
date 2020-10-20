@@ -55,5 +55,36 @@ class GeometryMatrix : public CxxTest::TestSuite
       for ( unsigned i = 0; i < 9 ; ++i )
         TS_ASSERT_DELTA( inv[i], t[i], 1e-13 );
     }
+
+    void testTranspose( void )
+    {
+      const mat3d t = { 6,  1, 1,
+                        4, -2, 5,
+                        2,  8, 7 };
+      const mat3d trans = { 6,  4, 2,
+                        1, -2, 8,
+                        1,  5, 7 };
+      auto test = transpose(t);
+      for ( unsigned i = 0; i < 9 ; ++i )
+        TS_ASSERT_DELTA( test[i], trans[i], 1e-13 );
+
+      test = transpose(test);
+      for ( unsigned i = 0; i < 9 ; ++i )
+        TS_ASSERT_DELTA( test[i], t[i], 1e-13 );
+
+      const double tt[9] = { 6,  1, 1,
+                        4, -2, 5,
+                        2,  8, 7 };
+      const double ttrans[9] = { 6,  4, 2,
+                        1, -2, 8,
+                        1,  5, 7 };
+      auto ttest = transpose(tt);
+      for ( unsigned i = 0; i < 9 ; ++i )
+        TS_ASSERT_DELTA( ttest[i], ttrans[i], 1e-13 );
+
+      ttest = transpose(ttest);
+      for ( unsigned i = 0; i < 9 ; ++i )
+        TS_ASSERT_DELTA( ttest[i], tt[i], 1e-13 );
+    }
 };
 

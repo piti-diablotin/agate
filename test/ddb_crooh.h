@@ -33,7 +33,8 @@ class DdbCrOOH : public CxxTest::TestSuite
     TS_ASSERT_DIFFERS(ddb,nullptr);
     unsigned natom = ddb->natom();
     TS_ASSERT_EQUALS(natom,4);
-    using geometry::mat3d, geometry::print;
+    using geometry::mat3d;
+    using geometry::print;
 
     mat3d Cr = {{
       3.404827E+00, -1.195162E-01, -5.769288E-01,
@@ -66,7 +67,8 @@ class DdbCrOOH : public CxxTest::TestSuite
   void testEpsInf( void ) 
   {
     TS_ASSERT_DIFFERS(ddb,nullptr);
-    using geometry::mat3d, geometry::print;
+    using geometry::mat3d;
+    using geometry::print;
 
     mat3d ref = {{
         5.33136769,     -0.05109183,     -0.24663052,  -0.05109183,      5.38203579,     -0.15299291,  -0.24663052,     -0.15299291,      4.67520222

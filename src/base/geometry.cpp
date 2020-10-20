@@ -153,6 +153,36 @@ namespace geometry {
 
   }
 
+  //
+  mat3d transpose(const double mat[9]) {
+    mat3d transpo;
+    transpo[0] = mat[0];
+    transpo[3] = mat[1];
+    transpo[6] = mat[2];
+    transpo[1] = mat[3];
+    transpo[4] = mat[4];
+    transpo[7] = mat[5];
+    transpo[2] = mat[6];
+    transpo[5] = mat[7];
+    transpo[8] = mat[8];
+    return transpo;
+  }
+
+  //
+  mat3d transpose(const mat3d& mat) {
+    mat3d transpo;
+    transpo[0] = mat[0];
+    transpo[3] = mat[1];
+    transpo[6] = mat[2];
+    transpo[1] = mat[3];
+    transpo[4] = mat[4];
+    transpo[7] = mat[5];
+    transpo[2] = mat[6];
+    transpo[5] = mat[7];
+    transpo[8] = mat[8];
+    return transpo;
+  }
+
 
   //
   void changeBasis(const mat3d& rprim, std::vector<vec3d>& cart, std::vector<vec3d>& red, const bool C2R ) {
@@ -292,15 +322,15 @@ namespace geometry {
     std::ostringstream out;
     if (nice) {
     out << "[ "
-      << std::setw(6) << Fraction(vec[0]).toString()
-      << std::setw(6) << Fraction(vec[1]).toString()
-      << std::setw(6) << Fraction(vec[2]).toString()
+      << std::setw(6) << Fraction(vec[0])
+      << std::setw(6) << Fraction(vec[1])
+      << std::setw(6) << Fraction(vec[2])
       << " ]";
     }
     else {
-      out << Fraction(vec[0]).toString() << "_"
-          << Fraction(vec[1]).toString() << "_"
-          << Fraction(vec[2]).toString();
+      out << Fraction(vec[0]) << "_"
+          << Fraction(vec[1]) << "_"
+          << Fraction(vec[2]);
     }
     return out.str();
   }

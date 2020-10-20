@@ -244,6 +244,13 @@ class Dtset {
      */
     void getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<geometry::vec3d> &translations, double symprec) const;
 
+
+    /**
+     * Get the 6 strain values with respect to the reference dtset
+     * @param dtset is the reference structure to extract the strain
+     */
+    std::array<double,6> getStrain(const Dtset& reference) const;
+
     bool operator==(const Dtset& dtset1) const;
     /**
      * Apply a strain matrix to rprim

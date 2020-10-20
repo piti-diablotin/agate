@@ -71,6 +71,8 @@ AC_PROG_GREP
 AC_PROG_SED
 AC_PROG_LN_S
 
+AC_PATH_PROG([GIT],[git],[no])
+
 includedir='${prefix}/include/agate'
 AC_SUBST(includedir)
 
@@ -101,6 +103,15 @@ esac
 
 AC_DEFINE_UNQUOTED([COMPILE_HOST],"$host", [Host on which the code was compile])
 AC_DEFINE_UNQUOTED([COMPILE_BUILD],"$build", [Build target : on which target should run the code])
+
+if test x"$GIT" != x"n"
+then
+  HASH=$(${GIT} rev-parse --short HEAD)
+  AC_DEFINE_UNQUOTED([HASH_VERSION],"$HASH", [git short SHA1 of the current version])
+else
+  HASH="unknown"
+fi
+
 
 
 ##########################################################################

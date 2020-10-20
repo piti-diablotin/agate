@@ -19,6 +19,7 @@ echo " - Architectures -"
 echo " ~~~~~~~~~~~~~~~~~~~~"
 echo " * Host....: $host"
 echo " * Build...: $build"
+echo " * Git.....: $HASH"
 echo
 echo " - Compiler options -"
 echo " ~~~~~~~~~~~~~~~~~~~~"

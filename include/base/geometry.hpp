@@ -144,6 +144,20 @@ namespace geometry {
    */
   mat3d invertTranspose(const double mat[9]);
 
+  /**
+   * Transpose a matrix
+   * @param mat The matrix to transpose
+   * @return the transpose of the matrix.
+   */
+  mat3d transpose(const double mat[9]);
+
+
+  /**
+   * Transpose a matrix
+   * @param mat The matrix to transpose
+   * @return the transpose of the matrix.
+   */
+  mat3d transpose(const mat3d& mat);
 
   /**
    * Change some 3D vectors from basis.

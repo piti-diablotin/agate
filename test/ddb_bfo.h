@@ -34,7 +34,8 @@ class DdbBFO : public CxxTest::TestSuite
     TS_ASSERT_DIFFERS(ddb,nullptr);
     unsigned natom = ddb->natom();
     TS_ASSERT_EQUALS(natom,10);
-    using geometry::mat3d, geometry::print;
+    using geometry::mat3d;
+    using geometry::print;
 
     mat3d Bi = {{
       4.41592000,   0.00000000,   -0.00003000, 0.00004000,   4.41596000,   -0.00004000, -0.00000000,   0.00000000,   4.09208000
@@ -77,7 +78,8 @@ class DdbBFO : public CxxTest::TestSuite
   void testEpsInf( void ) 
   {
     TS_ASSERT_DIFFERS(ddb,nullptr);
-    using geometry::mat3d, geometry::print;
+    using geometry::mat3d;
+    using geometry::print;
 
     mat3d ref = {{
       7.24183300,   0.00000000,   0.00000000, 0.00000000,   7.24183300,   0.00000000, 0.00000000,   0.00000000,   6.57924200

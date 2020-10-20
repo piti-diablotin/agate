@@ -135,7 +135,7 @@ Fraction::~Fraction() {
   ;
 }
 
-std::string Fraction::toString()
+std::string Fraction::toString() const
 {
   std::ostringstream str;
   switch (_denominator) {
@@ -152,3 +152,7 @@ std::string Fraction::toString()
   return str.str();
 }
 
+std::ostream& operator<<(std::ostream& stream, const Fraction& frac) {
+  stream << frac.toString();
+  return stream;
+}

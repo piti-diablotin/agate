@@ -328,34 +328,45 @@ return strainTot;
 }
 
 
+void HistCustomModes::setStrainDir(bool x, bool y, bool z)
+{ 
+  _strainDir.clear();
+  if(x==true)  
+    _strainDir.push_back(StrainDir::x);
+  if(y==true)
+    _strainDir.push_back(StrainDir::y);
+  if(z==true)
+    _strainDir.push_back(StrainDir::z);
+}
+
 void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix)
 {   
     using namespace geometry;
+    for ( auto e : _strainDir ) std::cout << e << std::endl;
+    unsigned nchoice = _strainDir.size();
     std::default_random_engine engine;
-    std::uniform_real_distribution<int> randomDistrib(0,3);
+    std::uniform_real_distribution<int> randomDistrib(0,nchoice-1);
     engine.seed(std::chrono::system_clock::now().time_since_epoch().count());
     int rotStrain = randomDistrib(engine);
     mat3d rotMatrix ={1, 0, 0,
                       0, 1, 0,
-                      0, 0, 1};
-    switch(rotStrain){
-      case 0 : break;
-      case 1 : rotMatrix = {0, 1, 0,
-                            1, 0, 0,
-                            0, 0, 1};
-     break;
-     case 2 : rotMatrix = {0, 0, 1,
-                           0, 1, 0,
-                           1, 0, 0};
-    
-    break;
-    case 3 :  rotMatrix = {1, 0, 0,
-                          0, 0, 1,
-                          0, 1, 0};
-   break;
+                     0, 0, 1};
+    std::cout << rotStrain << std::endl;
+    switch(_strainDir[rotStrain]){
+      case x : rotMatrix = {0, 0, 1,
+                            0, 1, 0,
+                            1, 0, 0};
+      break;
+      case y : rotMatrix = {1, 0, 0,
+                            0, 0, 1,
+                            0, 1, 0}; 
+      break;
+      
+      case z : break;
    }
+    print(rotMatrix);
 
-   strainMatrix =  strainMatrix * rotMatrix;
+   strainMatrix =  rotMatrix * strainMatrix;
 
 }
 

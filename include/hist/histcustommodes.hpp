@@ -59,7 +59,7 @@ class HistCustomModes : public HistDataDtset {
    /**
      * @brief The Strain enums which strain to apply
      */
-    enum Strain {Iso, Tetra, Shear};
+    enum StrainDir {x, y, z};
 
   private :
     Dtset &_reference;                             ///< Reference structure (contained in the DDB)
@@ -69,7 +69,7 @@ class HistCustomModes : public HistDataDtset {
     unsigned _seed;                                ///< The seed if _seedType==User
     double _instableAmplitude;                     ///< The amplitude of the instable modes if treated with InstableModes::Constant @see zachariasAmplitudes
     std::vector <double> _strainAmplitudes; ///< The amplitude of the strains
-
+    std::vector <StrainDir> _strainDir;     ///< The direction(s) of the strain(s)
   protected :
 
   public :
@@ -131,11 +131,18 @@ class HistCustomModes : public HistDataDtset {
     void strainAmplitudes(double dist_min, double dist_max);
    
     /**
-     *@ brief Construct the total strain matrix to apply to rprim
+     * @brief Construct the total strain matrix to apply to rprim
      * @param Amplitudes of the different strains strainTot the matrix to construct
     */
     
      geometry::mat3d defStrainMatrix(std::vector <double>  Amplitudes);
+    
+     /**
+      * @brief set de possible directions to apply strain 
+      * @param x y z directions
+      */
+     void setStrainDir(bool x, bool y, bool z);
+
     /**
      *@ brief Apply a random rotation matrix on strainMatrix
      * @param strainMatrix 

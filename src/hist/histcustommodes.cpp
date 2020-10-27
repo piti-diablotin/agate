@@ -242,7 +242,7 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
             }
           }
           if (energy<1e-6) continue; // avoid gamma acoustic modes
-          double sigma = sqrt( (phys::BoseEinstein(energy,temperature)+0.0)/(energy*phys::amu_emass) )
+          double sigma = sqrt( (phys::BoseEinstein(energy,temperature)+0.5)/(energy*phys::amu_emass) )
                          *phys::b2A*randomDistrib(engine);
           // convert sigma to correct unit
           amplitudes.push_back({imode,sigma,energy});

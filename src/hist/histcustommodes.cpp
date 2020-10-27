@@ -345,7 +345,7 @@ void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix)
     for ( auto e : _strainDir ) std::cout << e << std::endl;
     unsigned nchoice = _strainDir.size();
     std::default_random_engine engine;
-    std::uniform_real_distribution<int> randomDistrib(0,nchoice-1);
+    std::uniform_int_distribution<int> randomDistrib(0,nchoice-1);
     engine.seed(std::chrono::system_clock::now().time_since_epoch().count());
     int rotStrain = randomDistrib(engine);
     mat3d rotMatrix ={1, 0, 0,

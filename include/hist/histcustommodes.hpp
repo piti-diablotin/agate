@@ -39,6 +39,8 @@
 #include "hist/histdatadtset.hpp"
 #include "phonons/dispdb.hpp"
 #include <functional>
+#include <bitset>
+#include <map>
 
 /** 
  * This class is designe to build a Hist object with either
@@ -56,10 +58,20 @@ class HistCustomModes : public HistDataDtset {
      * @brief The InstableModes enums how to treat the instable modes
      */
     enum InstableModes {Ignore, Absolute, Constant};
-   /**
+    /**
+     * @brief Define what strain we know
+     */
+    enum StrainType {Iso=0,Tetra=1,Shear=2};
+    /**
      * @brief The Strain enums which strain to apply
      */
-    enum StrainDir {x, y, z};
+    enum StrainDir {x, y, z, xy, xz, yz};
+
+    /**
+     * @brief Define the amplitude bounds for the strain;
+     */
+    enum StrainDistBound { IsoMin, IsoMax, TetraMin, TetraMax, ShearMin, ShearMax };
+
 
   private :
     Dtset &_reference;                             ///< Reference structure (contained in the DDB)
@@ -68,8 +80,10 @@ class HistCustomModes : public HistDataDtset {
     SeedType _seedType;                            ///< Type of seed to use when initializing the RNG
     unsigned _seed;                                ///< The seed if _seedType==User
     double _instableAmplitude;                     ///< The amplitude of the instable modes if treated with InstableModes::Constant @see zachariasAmplitudes
-    std::vector <double> _strainAmplitudes; ///< The amplitude of the strains
-    std::vector <StrainDir> _strainDir;     ///< The direction(s) of the strain(s)
+    std::bitset<3>          _strainTypes;          ///< The type of strain
+    std::vector<StrainDir>  _strainDir;            ///< The direction(s) of the strain(s)
+    std::vector<geometry::mat3d> _strainDist;      ///< The amplitude of the strains
+
   protected :
 
   public :
@@ -100,8 +114,8 @@ class HistCustomModes : public HistDataDtset {
      * @param instableModes How to treat the instable modes
      * @param callback A function that will be executed when the Hist is fully built.
      */
-    void addNoiseToHist(const HistData &hist, double temperature, double dist_min, double dist_max, InstableModes instableModes,std::function<void()> callback);
-    
+    void addNoiseToHist(const HistData &hist, double temperature, const std::map<StrainDistBound,double>& strainBounds, InstableModes instableModes,std::function<void()> callback);
+
 
     /**
      * @brief animateModes Will animate a few phonons modes with respect to the reference structure.
@@ -122,33 +136,36 @@ class HistCustomModes : public HistDataDtset {
     void zachariasAmplitudes(double temperature, unsigned ntime,vec3d supercell, InstableModes instable = Absolute);
 
     /**
-     * @brief zachariasAmplitudes build the strain amplitudes to apply at a hist time step
-     * @see Phys. Rev. B 94, 075125
+     * Build the strain amplitudes to apply at a hist time step
      * @param temperature the temperature in K
      * @param ntime Number of random amplitudes to generate
      * @param supercell Size of the supercell
      */
-    void strainAmplitudes(double dist_min, double dist_max);
-   
+    void strainDist(const std::map<StrainDistBound,double>& distBounds, unsigned ntime);
+
     /**
      * @brief Construct the total strain matrix to apply to rprim
      * @param Amplitudes of the different strains strainTot the matrix to construct
-    */
-    
-     geometry::mat3d defStrainMatrix(std::vector <double>  Amplitudes);
-    
-     /**
-      * @brief set de possible directions to apply strain 
-      * @param x y z directions
-      */
-     void setStrainDir(bool x, bool y, bool z);
+     */
+
+    geometry::mat3d getStrainMatrix(const std::array<double,3>& amplitudes);
 
     /**
-     *@ brief Apply a random rotation matrix on strainMatrix
-     * @param strainMatrix 
+     * Set de possible directions to apply strain 
+     * @param x allow tetra strain along x and shear along ??
+     * @param y allow tetra strain along x and shear along ??
+     * @param z allow tetra strain along x and shear along ??
+     */
+    void setStrainDir(bool x, bool y, bool z);
+
+    /**
+     * Apply a random rotation matrix on strainMatrix
+     * @param strainMatrix The strain matrix to be randomly rotated according to strainDir
+     * @see setStrainDir
      */
 
     void rotateStrain(geometry::mat3d &strainMatrix);
+
     /**
      * @brief seedType getter
      * @return the seedType used

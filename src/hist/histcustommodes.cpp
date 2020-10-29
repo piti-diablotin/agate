@@ -37,7 +37,7 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
 {
   std::vector<DispDB::qptTree> &condensedModes = (inputCondensedModes.empty()?_condensedModes:inputCondensedModes);
   
-  std::vector <double> &strainAmplitudes = (inputStrainAmplitudes.empty()?_strainAmplitudes:inputStrainAmplitudes);
+//  std::vector <double> &strainAmplitudes = (inputStrainAmplitudes.empty()?_strainAmplitudes:inputStrainAmplitudes);
   // First, find smallest qpt to build the supercell
   geometry::vec3d qpt = {{ 1.0, 1.0, 1.0 }};
   const double tol = 1e-6;
@@ -60,7 +60,7 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
     this->setTryToMap(false);
 #ifdef HAVE_CPPTHREAD
     _endThread = false;
-    _thread = std::thread([this,condensedModes, strainAmplitudes, supercellRef,ntime](){
+    _thread = std::thread([this,condensedModes, supercellRef,ntime](){
 #endif
       try {
         for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
@@ -73,10 +73,7 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
               supercell.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);
             }
           }
-          geometry::mat3d strainTot {};  
-          this->defStrainMatrix(strainAmplitudes);
-          //supercell.applyStrain(strainTot);
-          //this->push(supercell);
+          this->push(supercell);
         }
       }
       catch (Exception& e) {
@@ -88,21 +85,19 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
   }
 }
 
-void HistCustomModes::addNoiseToHist(const HistData& hist, double temperature, double dist_min, double dist_max, InstableModes instableModes, std::function<void()> callback)
-{
-  //hist.waitTime(hist._ntime);
+void HistCustomModes::addNoiseToHist(const HistData &hist, double temperature, const std::map<StrainDistBound,double>& strainBounds, InstableModes instableModes,std::function<void()> callback) {
+  //hist.waitTime(hist._ntime); // This is handle indirectly Dtset construtor in hist->get* functions
   unsigned ntime = hist.ntime();
   Supercell firstTime(hist,0);
   firstTime.findReference(_reference);
-  std::vector <std::vector<double>> strainAmplitudes;
-  geometry::mat3d strainTot {}; 
   geometry::vec3d qpt = firstTime.getDim();
   this->zachariasAmplitudes(temperature,ntime,qpt,instableModes);
+  this->strainDist(strainBounds,ntime);
   this->reserve(ntime,firstTime);
   this->setTryToMap(false);
 #ifdef HAVE_CPPTHREAD
   _endThread = false;
-  _thread = std::thread([this,firstTime,&hist,ntime, dist_min, dist_max, callback](){
+  _thread = std::thread([this,firstTime,&hist,ntime,callback](){
 #endif
     for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
 #ifdef     HAVE_CPPTHREAD
@@ -110,15 +105,12 @@ void HistCustomModes::addNoiseToHist(const HistData& hist, double temperature, d
 #endif
       Supercell currentTime(hist,itime);
       currentTime.setReference(firstTime);
-      geometry::mat3d strainTot {};
-      this->strainAmplitudes(dist_min, dist_max);
-      this->defStrainMatrix(_strainAmplitudes);
-      currentTime.applyStrain(strainTot);
       for ( auto iqpt = _condensedModes[itime].begin() ; iqpt != _condensedModes[itime].end() ; ++iqpt ) {
         for ( auto vib : iqpt->second ) {
           currentTime.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);
         }
       }
+      currentTime.applyStrain(_strainDist[itime]);
       this->push(currentTime);
     }
     callback();
@@ -184,6 +176,7 @@ void HistCustomModes::animateModes(DispDB::qptTree& condensedModes, unsigned nti
 
 void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, geometry::vec3d supercell, InstableModes instable)
 {
+  _condensedModes.clear();
   std::vector<vec3d> qpts;
   for ( unsigned qx = 0 ; qx <= supercell[0]/2 ; ++qx ) {
     const double ratioX = 1./supercell[0];
@@ -272,8 +265,7 @@ void HistCustomModes::setInstableAmplitude(double instableAmplitude)
 }
 
 
-void HistCustomModes::strainAmplitudes(double dist_min, double dist_max)
-{ 
+void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBounds, unsigned ntime) { 
   std::random_device rd;
   unsigned seed;
   switch(_seedType){
@@ -289,47 +281,72 @@ void HistCustomModes::strainAmplitudes(double dist_min, double dist_max)
       break;
   }
   std::default_random_engine engine;
-  std::uniform_real_distribution<double> randomDistrib(-dist_max,dist_max);
+  geometry::mat3d zero = {0};
+  _strainDist.clear();
+  _strainDist.resize(ntime,zero);
+  auto it = distBounds.end();
+
+  double isoMin, isoMax, tetraMin, tetraMax, shearMin, shearMax = 0;
+  if ( (it=distBounds.find(IsoMax)) != distBounds.end() ) {
+    isoMax = it->second;
+    it=distBounds.find(IsoMin);
+    isoMin = (it != distBounds.end()) ? it->second : -isoMax;
+  }
+
+  if ( (it=distBounds.find(TetraMax)) != distBounds.end() ) {
+    tetraMax = it->second;
+    it=distBounds.find(TetraMin);
+    tetraMin = (it != distBounds.end()) ? it->second : -tetraMax;
+  }
+
+  if ( (it=distBounds.find(ShearMax)) != distBounds.end() ) {
+    shearMax = it->second;
+    it=distBounds.find(ShearMin);
+    shearMin = (it != distBounds.end()) ? it->second : -shearMax;
+  }
+
+  std::uniform_real_distribution<double> isoRng  (isoMin,isoMax);
+  std::uniform_real_distribution<double> tetraRng(tetraMin,tetraMax);
+  std::uniform_real_distribution<double> shearRng(shearMin,shearMax);
   engine.seed(seed);
-    for ( unsigned j = 0 ; j < 3 ; ++j ) {	
-      _strainAmplitudes[j] = randomDistrib(engine);
-    
+  for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
+    std::array<double,3> amplitudes;
+    amplitudes[StrainType::Iso]   = isoRng(engine);
+    amplitudes[StrainType::Tetra] = tetraRng(engine);
+    amplitudes[StrainType::Shear] = shearRng(engine);
+    _strainDist[itime] = this->getStrainMatrix(amplitudes);
   }
 }
 
-geometry::mat3d HistCustomModes::defStrainMatrix(std::vector <double>  Amplitudes)
-{
+geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amplitudes) {
   geometry::mat3d strainTot;
-  double epsilon=Amplitudes[0];
-  double delta1 = Amplitudes[1];
-  double delta2 = Amplitudes[2];
-  geometry::mat3d strainTetra = {epsilon * delta1, 0.0 ,0.0,
-                                 0.0 , epsilon * delta1, 0.0,
-                                 0.0 , 0.0 , epsilon * (2*delta1 + delta1*delta1)/((1+delta1)*(1+delta1)) };
-  geometry::mat3d strainShear = {0.0 , delta2 , 0.0,
-                                 delta2 , 0.0 , 0.0 ,
-                                 0.0 , 0.0 , -delta2*delta2/(1-delta2*delta2) };
+  using geometry::mat3d;
+  using geometry::operator+;
+  double epsilon= amplitudes[StrainType::Iso];
+  double delta1 = amplitudes[StrainType::Tetra];
+  double delta2 = amplitudes[StrainType::Shear];
+  mat3d strainIso = {
+    epsilon, 0.0 ,0.0,
+    0.0 , epsilon, 0.0,
+    0.0 , 0.0 , epsilon};
+  mat3d strainTetra = {
+    delta1, 0.0 ,0.0,
+    0.0 , delta1, 0.0,
+    0.0 , 0.0 , (2*delta1 + delta1*delta1)/((1+delta1)*(1+delta1)) };
+  mat3d strainShear = {
+    0.0 , delta2 , 0.0,
+    delta2 , 0.0 , 0.0 ,
+    0.0 , 0.0 , -delta2*delta2/(1-delta2*delta2) };
   this->rotateStrain(strainTetra);
   this->rotateStrain(strainShear);
 
-  strainTot[geometry::mat3dind(1,1)] = strainTetra[geometry::mat3dind(1,1)] + strainShear[geometry::mat3dind(1,1)];
-  strainTot[geometry::mat3dind(1,2)] = strainTetra[geometry::mat3dind(1,2)] + strainShear[geometry::mat3dind(1,2)];
-  strainTot[geometry::mat3dind(1,3)] = strainTetra[geometry::mat3dind(1,3)] + strainShear[geometry::mat3dind(1,3)];
+  strainTot = strainIso + strainTetra + strainShear;
 
-  strainTot[geometry::mat3dind(2,1)] = strainTetra[geometry::mat3dind(2,1)] + strainShear[geometry::mat3dind(2,1)];
-  strainTot[geometry::mat3dind(2,2)] = strainTetra[geometry::mat3dind(2,2)] + strainShear[geometry::mat3dind(2,2)];
-  strainTot[geometry::mat3dind(2,3)] = strainTetra[geometry::mat3dind(2,3)] + strainShear[geometry::mat3dind(2,3)];
-
-  strainTot[geometry::mat3dind(3,1)] = strainTetra[geometry::mat3dind(3,1)] + strainShear[geometry::mat3dind(3,1)];
-  strainTot[geometry::mat3dind(3,2)] = strainTetra[geometry::mat3dind(3,2)] + strainShear[geometry::mat3dind(3,2)];
-  strainTot[geometry::mat3dind(3,3)] = strainTetra[geometry::mat3dind(3,3)] + strainShear[geometry::mat3dind(3,3)];
-
-return strainTot;
+  return strainTot;
 }
 
 
-void HistCustomModes::setStrainDir(bool x, bool y, bool z)
-{ 
+void HistCustomModes::setStrainDir(bool x, bool y, bool z) { 
   _strainDir.clear();
   if(x==true)  
     _strainDir.push_back(StrainDir::x);
@@ -339,35 +356,32 @@ void HistCustomModes::setStrainDir(bool x, bool y, bool z)
     _strainDir.push_back(StrainDir::z);
 }
 
-void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix)
-{   
-    using namespace geometry;
-    for ( auto e : _strainDir ) std::cout << e << std::endl;
-    unsigned nchoice = _strainDir.size();
-    std::default_random_engine engine;
-    std::uniform_int_distribution<int> randomDistrib(0,nchoice-1);
-    engine.seed(std::chrono::system_clock::now().time_since_epoch().count());
-    int rotStrain = randomDistrib(engine);
-    mat3d rotMatrix ={1, 0, 0,
-                      0, 1, 0,
-                     0, 0, 1};
-    std::cout << rotStrain << std::endl;
-    switch(_strainDir[rotStrain]){
-      case x : rotMatrix = {0, 0, 1,
-                            0, 1, 0,
-                            1, 0, 0};
-      break;
-      case y : rotMatrix = {1, 0, 0,
-                            0, 0, 1,
-                            0, 1, 0}; 
-      break;
-      
-      case z : break;
-   }
-    print(rotMatrix);
+void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix) {   
+  using namespace geometry;
 
-   strainMatrix =  rotMatrix * strainMatrix;
+  unsigned nchoice = _strainDir.size();
+  std::default_random_engine engine;
+  std::uniform_int_distribution<int> randomDistrib(0,nchoice-1);
+  engine.seed(std::chrono::system_clock::now().time_since_epoch().count());
 
+  int rotStrain = randomDistrib(engine);
+  mat3d rotMatrix ={1, 0, 0,
+    0, 1, 0,
+    0, 0, 1};
+  switch(_strainDir[rotStrain]){
+    case x : rotMatrix = {0, 0, 1,
+               0, 1, 0,
+               1, 0, 0};
+             break;
+    case y : rotMatrix = {1, 0, 0,
+               0, 0, 1,
+               0, 1, 0}; 
+             break;
+
+    case z : break;
+  }
+
+  strainMatrix =  rotMatrix * strainMatrix;
 }
 
 

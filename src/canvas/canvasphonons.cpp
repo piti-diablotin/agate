@@ -810,6 +810,8 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       }
     }
 
+    std::map<HistCustomModes::StrainDistBound,double> strainBounds;
+
     try {
       if ( parser.hasToken("qpt") ) {
         if ( parser.hasToken("trajectory") )
@@ -827,7 +829,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         std::string histname = parser.getToken<std::string>("trajectory");
         std::clog << "Loading file " << histname << std::endl;
         HistData* trajectory = HistData::getHist(histname,true);
-        hist->addNoiseToHist(*trajectory,temperature,dist_min,dist_max,instableModes,[trajectory](){delete trajectory;});
+        hist->addNoiseToHist(*trajectory,temperature,strainBounds,instableModes,[trajectory](){delete trajectory;});
       }
     }
     catch( Exception &e ) {

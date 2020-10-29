@@ -104,7 +104,7 @@ class HistCustomModes : public HistDataDtset {
      * @brief buildHist Build an Hist using the reference structure and the phonons to be condensed contains in inputCondensedModes
      * @param inputCondensedModes are the modes that will be condensed. The size of the vector is the number of generated structures.
      */
-    void buildHist(std::vector<DispDB::qptTree> inputCondensedModes=std::vector<DispDB::qptTree>(), std::vector <double> inputStrainAmplitudes=std::vector <double>());
+    void buildHist(const std::vector<DispDB::qptTree>& inputCondensedModes=std::vector<DispDB::qptTree>(), const std::vector<geometry::mat3d>& inputStrainMatrix=std::vector<geometry::mat3d>());
 
     /**
      * @brief addNoiseToHist to an already existing hist

@@ -33,11 +33,10 @@
 #include <random>
 #include <chrono>
 
-void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes, std::vector <double> inputStrainAmplitudes)
-{
-  std::vector<DispDB::qptTree> &condensedModes = (inputCondensedModes.empty()?_condensedModes:inputCondensedModes);
+void HistCustomModes::buildHist(const std::vector<DispDB::qptTree>& inputCondensedModes, const std::vector<geometry::mat3d>& inputStrainMatrix) {
+  const std::vector<DispDB::qptTree> &condensedModes = (inputCondensedModes.empty()?_condensedModes:inputCondensedModes);
   
-//  std::vector <double> &strainAmplitudes = (inputStrainAmplitudes.empty()?_strainAmplitudes:inputStrainAmplitudes);
+  const std::vector<geometry::mat3d> &strainMatrix = (inputStrainMatrix.empty()?_strainDist:inputStrainMatrix);
   // First, find smallest qpt to build the supercell
   geometry::vec3d qpt = {{ 1.0, 1.0, 1.0 }};
   const double tol = 1e-6;
@@ -49,18 +48,25 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
   }
 
   if ( condensedModes.empty() ) {
-    this->buildFromDtset(_reference);
+    Dtset copy(_reference);
+    if ( strainMatrix.size() > 0 ) copy.applyStrain(strainMatrix[0]);
+    this->buildFromDtset(copy);
   }
 
   else {
     unsigned ntime = condensedModes.size();
+    if ( ntime != strainMatrix.size() ) {
+      ntime = std::min(strainMatrix.size(),condensedModes.size());
+      Exception e = EXCEPTION("Modes and strains have different size.\nUsing smallest value "+utils::to_string(ntime),ERRWAR);
+      std::clog << e.fullWhat() << std::endl;
+    }
     // Now go through all mode of all qpt and make the displacement
     Supercell supercellRef(_reference,qpt);
     this->reserve(ntime,supercellRef);
     this->setTryToMap(false);
 #ifdef HAVE_CPPTHREAD
     _endThread = false;
-    _thread = std::thread([this,condensedModes, supercellRef,ntime](){
+    _thread = std::thread([this,condensedModes, strainMatrix, supercellRef,ntime](){
 #endif
       try {
         for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
@@ -73,6 +79,7 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
               supercell.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);
             }
           }
+          supercell.applyStrain(strainMatrix[itime]);
           this->push(supercell);
         }
       }
@@ -266,6 +273,11 @@ void HistCustomModes::setInstableAmplitude(double instableAmplitude)
 
 
 void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBounds, unsigned ntime) { 
+  geometry::mat3d zero = {0};
+  _strainDist.clear();
+  _strainDist.resize(ntime,zero);
+  if ( distBounds.size() == 0 ) return;
+
   std::random_device rd;
   unsigned seed;
   switch(_seedType){
@@ -281,9 +293,6 @@ void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBou
       break;
   }
   std::default_random_engine engine;
-  geometry::mat3d zero = {0};
-  _strainDist.clear();
-  _strainDist.resize(ntime,zero);
   auto it = distBounds.end();
 
   double isoMin, isoMax, tetraMin, tetraMax, shearMin, shearMax = 0;

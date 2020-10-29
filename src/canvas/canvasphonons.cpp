@@ -811,6 +811,75 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
 
     std::map<HistCustomModes::StrainDistBound,double> strainBounds;
+    if ( parser.hasToken("iso") ){
+      std::string minmax = parser.getToken<std::string>("iso");
+      auto split = utils::explode(minmax,':');
+      switch (split.size()) {
+        case 1 : {
+                   strainBounds[HistCustomModes::StrainDistBound::IsoMax] = utils::stod(split[0]);
+                   break;
+                 }
+        case 2 : {
+                   strainBounds[HistCustomModes::StrainDistBound::IsoMin] = utils::stod(split[0]);
+                   strainBounds[HistCustomModes::StrainDistBound::IsoMax] = utils::stod(split[1]);
+                   break;
+                 }
+        default: throw EXCEPTION("Expected value iso=[min:]max",ERRDIV);
+      }
+    }
+    if ( parser.hasToken("tetra") ){
+      bool tetraX,tetraY,tetraZ = false;
+      std::string full = parser.getToken<std::string>("tetra");
+      auto splitfull = utils::explode(full,',');
+      auto split = utils::explode(splitfull[0],':');
+      switch (split.size()) {
+        case 1 : {
+                   strainBounds[HistCustomModes::StrainDistBound::TetraMax] = utils::stod(split[0]);
+                   break;
+                 }
+        case 2 : {
+                   strainBounds[HistCustomModes::StrainDistBound::TetraMin] = utils::stod(split[0]);
+                   strainBounds[HistCustomModes::StrainDistBound::TetraMax] = utils::stod(split[1]);
+                   break;
+                 }
+        default: throw EXCEPTION("Expected value tetra=[min:]max[,x,y,z]",ERRDIV);
+      }
+      if ( splitfull.size() > 1 ) {
+        for ( unsigned idir = 1 ; idir < splitfull.size() ; ++idir ) {
+          if ( splitfull[idir] == "x" ) tetraX = true;
+          else if ( splitfull[idir] == "y" ) tetraY = true;
+          else if ( splitfull[idir] == "z" ) tetraZ = true;
+          else throw EXCEPTION("Unknow direction "+splitfull[idir],ERRDIV);
+        }
+      }
+      else {
+        tetraX = true;
+        tetraY = true;
+        tetraZ = true;
+      }
+      hist->setStrainDir(tetraX,tetraY,tetraZ);
+    }
+    if ( parser.hasToken("shear") ){
+      std::string full = parser.getToken<std::string>("shear");
+      auto splitfull = utils::explode(full,',');
+      auto split = utils::explode(splitfull[0],':');
+      switch (split.size()) {
+        case 1 : {
+                   strainBounds[HistCustomModes::StrainDistBound::ShearMax] = utils::stod(split[0]);
+                   break;
+                 }
+        case 2 : {
+                   strainBounds[HistCustomModes::StrainDistBound::ShearMin] = utils::stod(split[0]);
+                   strainBounds[HistCustomModes::StrainDistBound::ShearMax] = utils::stod(split[1]);
+                   break;
+                 }
+        default: throw EXCEPTION("Expected value shear=[min:]max[,xy,xz,yz]",ERRDIV);
+      }
+      if ( splitfull.size() > 1 ) {
+        Exception e = EXCEPTION("Shear not yet able to handle direction",ERRWAR);
+        std::clog << e.fullWhat() << std::endl;
+      }
+    }
 
     try {
       if ( parser.hasToken("qpt") ) {
@@ -820,11 +889,10 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         double ntime = parser.getToken<unsigned>("ntime");
         vec3d qpt = {tmp[0],tmp[1],tmp[2]};
         hist->zachariasAmplitudes(temperature,ntime,qpt,instableModes);
+        hist->strainDist(strainBounds,ntime);
         hist->buildHist();
       }
       else {
-        double dist_min = 0;
-        double dist_max = 0;
         parser.setSensitive(true);
         std::string histname = parser.getToken<std::string>("trajectory");
         std::clog << "Loading file " << histname << std::endl;

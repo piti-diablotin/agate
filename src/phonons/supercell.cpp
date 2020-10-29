@@ -427,7 +427,7 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
     for ( unsigned d = 0 ; d < 3 ; ++ d ){
       displacements[iatom*3+d] -= bmass[d];
       norm+=mass*displacements[iatom*3+d]*displacements[iatom*3+d];
-      //std::clog << phys::b2A*displacements[iatom*3+d] << " ";
+      std::clog << phys::b2A*displacements[iatom*3+d] << " ";
     }
     //std::clog << std::endl;
   }

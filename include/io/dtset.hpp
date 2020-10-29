@@ -252,6 +252,11 @@ class Dtset {
     std::array<double,6> getStrain(const Dtset& reference) const;
 
     bool operator==(const Dtset& dtset1) const;
+    /**
+     * Apply a strain matrix to rprim
+     * @param Strain matrix
+     */
+    void applyStrain(geometry::mat3d strainMatrix);
 };
 
 #endif //DTSET_HPP

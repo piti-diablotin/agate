@@ -1055,3 +1055,22 @@ bool Dtset::operator==(const Dtset& dtset1) const {
   }
   return true;
 }
+
+void Dtset::applyStrain(geometry::mat3d strainMatrix)
+{
+  using namespace geometry;
+  mat3d buffRprim = _rprim;
+  _rprim = strainMatrix*_rprim;
+  _rprim[mat3dind(1,1)] += buffRprim[mat3dind(1,1)];
+  _rprim[mat3dind(1,2)] += buffRprim[mat3dind(1,2)];
+  _rprim[mat3dind(1,3)] += buffRprim[mat3dind(1,3)];
+  
+  _rprim[mat3dind(2,1)] += buffRprim[mat3dind(2,1)];
+  _rprim[mat3dind(2,2)] += buffRprim[mat3dind(2,2)];
+  _rprim[mat3dind(2,3)] += buffRprim[mat3dind(2,3)];
+  
+  _rprim[mat3dind(3,1)] += buffRprim[mat3dind(3,1)];
+  _rprim[mat3dind(3,2)] += buffRprim[mat3dind(3,2)];
+  _rprim[mat3dind(3,3)] += buffRprim[mat3dind(3,3)];
+
+}

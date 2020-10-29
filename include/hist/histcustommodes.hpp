@@ -56,6 +56,10 @@ class HistCustomModes : public HistDataDtset {
      * @brief The InstableModes enums how to treat the instable modes
      */
     enum InstableModes {Ignore, Absolute, Constant};
+   /**
+     * @brief The Strain enums which strain to apply
+     */
+    enum StrainDir {x, y, z};
 
   private :
     Dtset &_reference;                             ///< Reference structure (contained in the DDB)
@@ -64,8 +68,8 @@ class HistCustomModes : public HistDataDtset {
     SeedType _seedType;                            ///< Type of seed to use when initializing the RNG
     unsigned _seed;                                ///< The seed if _seedType==User
     double _instableAmplitude;                     ///< The amplitude of the instable modes if treated with InstableModes::Constant @see zachariasAmplitudes
-
-
+    std::vector <double> _strainAmplitudes; ///< The amplitude of the strains
+    std::vector <StrainDir> _strainDir;     ///< The direction(s) of the strain(s)
   protected :
 
   public :
@@ -86,7 +90,7 @@ class HistCustomModes : public HistDataDtset {
      * @brief buildHist Build an Hist using the reference structure and the phonons to be condensed contains in inputCondensedModes
      * @param inputCondensedModes are the modes that will be condensed. The size of the vector is the number of generated structures.
      */
-    void buildHist(std::vector<DispDB::qptTree> inputCondensedModes=std::vector<DispDB::qptTree>());
+    void buildHist(std::vector<DispDB::qptTree> inputCondensedModes=std::vector<DispDB::qptTree>(), std::vector <double> inputStrainAmplitudes=std::vector <double>());
 
     /**
      * @brief addNoiseToHist to an already existing hist
@@ -96,7 +100,8 @@ class HistCustomModes : public HistDataDtset {
      * @param instableModes How to treat the instable modes
      * @param callback A function that will be executed when the Hist is fully built.
      */
-    void addNoiseToHist(const HistData &hist, double temperature, InstableModes instableModes,std::function<void()> callback);
+    void addNoiseToHist(const HistData &hist, double temperature, double dist_min, double dist_max, InstableModes instableModes,std::function<void()> callback);
+    
 
     /**
      * @brief animateModes Will animate a few phonons modes with respect to the reference structure.
@@ -116,6 +121,34 @@ class HistCustomModes : public HistDataDtset {
      */
     void zachariasAmplitudes(double temperature, unsigned ntime,vec3d supercell, InstableModes instable = Absolute);
 
+    /**
+     * @brief zachariasAmplitudes build the strain amplitudes to apply at a hist time step
+     * @see Phys. Rev. B 94, 075125
+     * @param temperature the temperature in K
+     * @param ntime Number of random amplitudes to generate
+     * @param supercell Size of the supercell
+     */
+    void strainAmplitudes(double dist_min, double dist_max);
+   
+    /**
+     * @brief Construct the total strain matrix to apply to rprim
+     * @param Amplitudes of the different strains strainTot the matrix to construct
+    */
+    
+     geometry::mat3d defStrainMatrix(std::vector <double>  Amplitudes);
+    
+     /**
+      * @brief set de possible directions to apply strain 
+      * @param x y z directions
+      */
+     void setStrainDir(bool x, bool y, bool z);
+
+    /**
+     *@ brief Apply a random rotation matrix on strainMatrix
+     * @param strainMatrix 
+     */
+
+    void rotateStrain(geometry::mat3d &strainMatrix);
     /**
      * @brief seedType getter
      * @return the seedType used

@@ -821,11 +821,13 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         hist->buildHist();
       }
       else {
+        double dist_min = 0;
+        double dist_max = 0;
         parser.setSensitive(true);
         std::string histname = parser.getToken<std::string>("trajectory");
         std::clog << "Loading file " << histname << std::endl;
         HistData* trajectory = HistData::getHist(histname,true);
-        hist->addNoiseToHist(*trajectory,temperature,instableModes,[trajectory](){delete trajectory;});
+        hist->addNoiseToHist(*trajectory,temperature,dist_min,dist_max,instableModes,[trajectory](){delete trajectory;});
       }
     }
     catch( Exception &e ) {

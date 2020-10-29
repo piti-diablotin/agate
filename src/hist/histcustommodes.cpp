@@ -29,13 +29,15 @@
 #include "base/unitconverter.hpp"
 #include "base/phys.hpp"
 #include "base/fraction.hpp"
+#include "io/dtset.hpp"
 #include <random>
 #include <chrono>
 
-void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes)
+void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes, std::vector <double> inputStrainAmplitudes)
 {
   std::vector<DispDB::qptTree> &condensedModes = (inputCondensedModes.empty()?_condensedModes:inputCondensedModes);
-
+  
+  std::vector <double> &strainAmplitudes = (inputStrainAmplitudes.empty()?_strainAmplitudes:inputStrainAmplitudes);
   // First, find smallest qpt to build the supercell
   geometry::vec3d qpt = {{ 1.0, 1.0, 1.0 }};
   const double tol = 1e-6;
@@ -58,7 +60,7 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
     this->setTryToMap(false);
 #ifdef HAVE_CPPTHREAD
     _endThread = false;
-    _thread = std::thread([this,condensedModes,supercellRef,ntime](){
+    _thread = std::thread([this,condensedModes, strainAmplitudes, supercellRef,ntime](){
 #endif
       try {
         for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
@@ -71,7 +73,10 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
               supercell.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);
             }
           }
-          this->push(supercell);
+          geometry::mat3d strainTot {};  
+          this->defStrainMatrix(strainAmplitudes);
+          //supercell.applyStrain(strainTot);
+          //this->push(supercell);
         }
       }
       catch (Exception& e) {
@@ -83,19 +88,21 @@ void HistCustomModes::buildHist(std::vector<DispDB::qptTree> inputCondensedModes
   }
 }
 
-void HistCustomModes::addNoiseToHist(const HistData& hist, double temperature, InstableModes instableModes, std::function<void()> callback)
+void HistCustomModes::addNoiseToHist(const HistData& hist, double temperature, double dist_min, double dist_max, InstableModes instableModes, std::function<void()> callback)
 {
   //hist.waitTime(hist._ntime);
   unsigned ntime = hist.ntime();
   Supercell firstTime(hist,0);
   firstTime.findReference(_reference);
+  std::vector <std::vector<double>> strainAmplitudes;
+  geometry::mat3d strainTot {}; 
   geometry::vec3d qpt = firstTime.getDim();
   this->zachariasAmplitudes(temperature,ntime,qpt,instableModes);
   this->reserve(ntime,firstTime);
   this->setTryToMap(false);
 #ifdef HAVE_CPPTHREAD
   _endThread = false;
-  _thread = std::thread([this,firstTime,&hist,ntime,callback](){
+  _thread = std::thread([this,firstTime,&hist,ntime, dist_min, dist_max, callback](){
 #endif
     for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
 #ifdef     HAVE_CPPTHREAD
@@ -103,6 +110,10 @@ void HistCustomModes::addNoiseToHist(const HistData& hist, double temperature, I
 #endif
       Supercell currentTime(hist,itime);
       currentTime.setReference(firstTime);
+      geometry::mat3d strainTot {};
+      this->strainAmplitudes(dist_min, dist_max);
+      this->defStrainMatrix(_strainAmplitudes);
+      currentTime.applyStrain(strainTot);
       for ( auto iqpt = _condensedModes[itime].begin() ; iqpt != _condensedModes[itime].end() ; ++iqpt ) {
         for ( auto vib : iqpt->second ) {
           currentTime.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);
@@ -115,6 +126,7 @@ void HistCustomModes::addNoiseToHist(const HistData& hist, double temperature, I
   });
 #endif
 }
+
 
 void HistCustomModes::animateModes(DispDB::qptTree& condensedModes, unsigned ntime)
 {
@@ -258,6 +270,106 @@ void HistCustomModes::setInstableAmplitude(double instableAmplitude)
 {
   _instableAmplitude = instableAmplitude;
 }
+
+
+void HistCustomModes::strainAmplitudes(double dist_min, double dist_max)
+{ 
+  std::random_device rd;
+  unsigned seed;
+  switch(_seedType){
+    case None : seed = 0;
+      break;
+    case Time : seed = std::chrono::system_clock::now().time_since_epoch().count();
+      break;
+    case Random :
+      seed = rd();
+      break;
+    case User:
+      seed = _seed;
+      break;
+  }
+  std::default_random_engine engine;
+  std::uniform_real_distribution<double> randomDistrib(-dist_max,dist_max);
+  engine.seed(seed);
+    for ( unsigned j = 0 ; j < 3 ; ++j ) {	
+      _strainAmplitudes[j] = randomDistrib(engine);
+    
+  }
+}
+
+geometry::mat3d HistCustomModes::defStrainMatrix(std::vector <double>  Amplitudes)
+{
+  geometry::mat3d strainTot;
+  double epsilon=Amplitudes[0];
+  double delta1 = Amplitudes[1];
+  double delta2 = Amplitudes[2];
+  geometry::mat3d strainTetra = {epsilon * delta1, 0.0 ,0.0,
+                                 0.0 , epsilon * delta1, 0.0,
+                                 0.0 , 0.0 , epsilon * (2*delta1 + delta1*delta1)/((1+delta1)*(1+delta1)) };
+  geometry::mat3d strainShear = {0.0 , delta2 , 0.0,
+                                 delta2 , 0.0 , 0.0 ,
+                                 0.0 , 0.0 , -delta2*delta2/(1-delta2*delta2) };
+  this->rotateStrain(strainTetra);
+  this->rotateStrain(strainShear);
+
+  strainTot[geometry::mat3dind(1,1)] = strainTetra[geometry::mat3dind(1,1)] + strainShear[geometry::mat3dind(1,1)];
+  strainTot[geometry::mat3dind(1,2)] = strainTetra[geometry::mat3dind(1,2)] + strainShear[geometry::mat3dind(1,2)];
+  strainTot[geometry::mat3dind(1,3)] = strainTetra[geometry::mat3dind(1,3)] + strainShear[geometry::mat3dind(1,3)];
+
+  strainTot[geometry::mat3dind(2,1)] = strainTetra[geometry::mat3dind(2,1)] + strainShear[geometry::mat3dind(2,1)];
+  strainTot[geometry::mat3dind(2,2)] = strainTetra[geometry::mat3dind(2,2)] + strainShear[geometry::mat3dind(2,2)];
+  strainTot[geometry::mat3dind(2,3)] = strainTetra[geometry::mat3dind(2,3)] + strainShear[geometry::mat3dind(2,3)];
+
+  strainTot[geometry::mat3dind(3,1)] = strainTetra[geometry::mat3dind(3,1)] + strainShear[geometry::mat3dind(3,1)];
+  strainTot[geometry::mat3dind(3,2)] = strainTetra[geometry::mat3dind(3,2)] + strainShear[geometry::mat3dind(3,2)];
+  strainTot[geometry::mat3dind(3,3)] = strainTetra[geometry::mat3dind(3,3)] + strainShear[geometry::mat3dind(3,3)];
+
+return strainTot;
+}
+
+
+void HistCustomModes::setStrainDir(bool x, bool y, bool z)
+{ 
+  _strainDir.clear();
+  if(x==true)  
+    _strainDir.push_back(StrainDir::x);
+  if(y==true)
+    _strainDir.push_back(StrainDir::y);
+  if(z==true)
+    _strainDir.push_back(StrainDir::z);
+}
+
+void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix)
+{   
+    using namespace geometry;
+    for ( auto e : _strainDir ) std::cout << e << std::endl;
+    unsigned nchoice = _strainDir.size();
+    std::default_random_engine engine;
+    std::uniform_int_distribution<int> randomDistrib(0,nchoice-1);
+    engine.seed(std::chrono::system_clock::now().time_since_epoch().count());
+    int rotStrain = randomDistrib(engine);
+    mat3d rotMatrix ={1, 0, 0,
+                      0, 1, 0,
+                     0, 0, 1};
+    std::cout << rotStrain << std::endl;
+    switch(_strainDir[rotStrain]){
+      case x : rotMatrix = {0, 0, 1,
+                            0, 1, 0,
+                            1, 0, 0};
+      break;
+      case y : rotMatrix = {1, 0, 0,
+                            0, 0, 1,
+                            0, 1, 0}; 
+      break;
+      
+      case z : break;
+   }
+    print(rotMatrix);
+
+   strainMatrix =  rotMatrix * strainMatrix;
+
+}
+
 
 HistCustomModes::HistCustomModes(Dtset& dtset, DispDB& db) :
   HistDataDtset(),
@@ -405,4 +517,3 @@ void HistCustomModes::push(const Dtset& dtset)
 HistCustomModes::~HistCustomModes() {
   ;
 }
-

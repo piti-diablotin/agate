@@ -1060,6 +1060,5 @@ void Dtset::applyStrain(const geometry::mat3d& strainMatrix) {
   using namespace geometry;
   const mat3d buffRprim(_rprim);
   _rprim = strainMatrix*_rprim;
-  for ( unsigned i = 0 ; i < 9 ; ++i )
-    _rprim[i] += buffRprim[i];
+  _rprim = _rprim + buffRprim;
 }

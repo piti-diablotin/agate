@@ -252,9 +252,9 @@ void DispDB::readFromFile(std::string filename, unsigned natom) {
 
 void DispDB::computeFromDDB(Ddb &ddb) {
   unsigned natom = ddb.natom();
-  if ( _natom != (unsigned) 0 && _natom != natom )
+  if ( _natom != 0 && _natom != natom )
     throw EXCEPTION("Band number of atoms",ERRABT);
-  if ( _natom == (unsigned) 0 ) _natom = natom;
+  if ( _natom == 0 ) _natom = natom;
 
   _qpts = ddb.getQpts();
   _nqpt = _qpts.size();

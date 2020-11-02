@@ -102,6 +102,7 @@ Canvas::Canvas(Canvas&& canvas) :
   _translate[0] = canvas._translate[0];
   _translate[1] = canvas._translate[1];
   _translate[2] = canvas._translate[2];
+  _histdata->waitTime(_ntime);
 }
 
 //

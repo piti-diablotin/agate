@@ -755,6 +755,7 @@ void HistDataNC::dump(const std::string& filename, unsigned tbegin, unsigned ten
   unsigned ntime = tend-tbegin;
   try {
     HistData::checkTimes(tbegin,tend);
+    this->waitTime(tend);
 #ifdef HAVE_NETCDF
     int ncid, natomid, ntypatid, npspid, xyzid, timeid, sixid, nimageid, twoid;
     int dimids[4]; // Maximal number of dimension for variables.

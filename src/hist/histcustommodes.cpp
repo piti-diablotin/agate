@@ -253,7 +253,7 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
         std::stringstream erreur;
         erreur << "Qpt " << Fraction(qpt[0]).toString() << "  " << Fraction(qpt[1]).toString() << "  " << Fraction(qpt[2]).toString();
         erreur << " is not in DispDB -> ignored";
-        e.ADD(erreur.str(),ERRDIV);
+        e.ADD(erreur.str(),ERRWAR);
         std::clog << e.fullWhat() << std::endl;
       }
     }
@@ -295,20 +295,31 @@ void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBou
   std::default_random_engine engine;
   auto it = distBounds.end();
 
-  double isoMin, isoMax, tetraMin, tetraMax, shearMin, shearMax = 0;
+  double isoMin = 0;
+  double isoMax = 0;
+  double tetraMin = 0; 
+  double tetraMax = 0;
+  double shearMin = 0;
+  double shearMax = 0;
+  bool iso = false;
+  bool tetra = false;
+  bool shear = false;
   if ( (it=distBounds.find(IsoMax)) != distBounds.end() ) {
+    iso = true;
     isoMax = it->second;
     it=distBounds.find(IsoMin);
     isoMin = (it != distBounds.end()) ? it->second : -isoMax;
   }
 
   if ( (it=distBounds.find(TetraMax)) != distBounds.end() ) {
+    tetra = true;
     tetraMax = it->second;
     it=distBounds.find(TetraMin);
     tetraMin = (it != distBounds.end()) ? it->second : -tetraMax;
   }
 
   if ( (it=distBounds.find(ShearMax)) != distBounds.end() ) {
+    shear = true;
     shearMax = it->second;
     it=distBounds.find(ShearMin);
     shearMin = (it != distBounds.end()) ? it->second : -shearMax;
@@ -319,10 +330,10 @@ void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBou
   std::uniform_real_distribution<double> shearRng(shearMin,shearMax);
   engine.seed(seed);
   for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
-    std::array<double,3> amplitudes;
-    amplitudes[StrainType::Iso]   = isoRng(engine);
-    amplitudes[StrainType::Tetra] = tetraRng(engine);
-    amplitudes[StrainType::Shear] = shearRng(engine);
+    std::array<double,3> amplitudes({0});
+    if ( iso ) amplitudes[StrainType::Iso]   = isoRng(engine);
+    if ( tetra ) amplitudes[StrainType::Tetra] = tetraRng(engine);
+    if ( shear) amplitudes[StrainType::Shear] = shearRng(engine);
     _strainDist[itime] = this->getStrainMatrix(amplitudes);
   }
 }
@@ -334,23 +345,29 @@ geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amp
   double epsilon= amplitudes[StrainType::Iso];
   double delta1 = amplitudes[StrainType::Tetra];
   double delta2 = amplitudes[StrainType::Shear];
-  mat3d strainIso = {
-    epsilon, 0.0 ,0.0,
-    0.0 , epsilon, 0.0,
-    0.0 , 0.0 , epsilon};
-  mat3d strainTetra = {
-    delta1, 0.0 ,0.0,
-    0.0 , delta1, 0.0,
-    0.0 , 0.0 , (2*delta1 + delta1*delta1)/((1+delta1)*(1+delta1)) };
-  mat3d strainShear = {
-    0.0 , delta2 , 0.0,
-    delta2 , 0.0 , 0.0 ,
-    0.0 , 0.0 , -delta2*delta2/(1-delta2*delta2) };
-  this->rotateStrain(strainTetra);
-  this->rotateStrain(strainShear);
-
-  strainTot = strainIso + strainTetra + strainShear;
-
+  if ( std::abs(epsilon) > 1e-10 ) {
+    mat3d strainIso = {
+      epsilon, 0.0 ,0.0,
+      0.0 , epsilon, 0.0,
+      0.0 , 0.0 , epsilon};
+    strainTot = strainIso;
+  }
+  if ( std::abs(delta1) > 1e-10 ) {
+    mat3d strainTetra = {
+      delta1, 0.0 ,0.0,
+      0.0 , delta1, 0.0,
+      0.0 , 0.0 , (2*delta1 + delta1*delta1)/((1+delta1)*(1+delta1)) };
+    this->rotateStrain(strainTetra);
+    strainTot = strainTot + strainTetra;
+  }
+  if ( std::abs(delta2) > 1e-10 ) {
+    mat3d strainShear = {
+      0.0 , delta2 , 0.0,
+      delta2 , 0.0 , 0.0 ,
+      0.0 , 0.0 , -delta2*delta2/(1-delta2*delta2) };
+    this->rotateStrain(strainShear);
+    strainTot = strainTot + strainShear;
+  }
   return strainTot;
 }
 
@@ -369,6 +386,7 @@ void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix) {
   using namespace geometry;
 
   unsigned nchoice = _strainDir.size();
+  if ( nchoice == 0 ) return;
   std::default_random_engine engine;
   std::uniform_int_distribution<int> randomDistrib(0,nchoice-1);
   engine.seed(std::chrono::system_clock::now().time_since_epoch().count());
@@ -401,7 +419,10 @@ HistCustomModes::HistCustomModes(Dtset& dtset, DispDB& db) :
   _condensedModes(),
   _seedType(Random),
   _seed(42),
-  _instableAmplitude(1)
+  _instableAmplitude(1),
+  _strainTypes(false),
+  _strainDir(),
+  _strainDist()
 {
   if (_db.natom()!=_reference.natom())
     throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);

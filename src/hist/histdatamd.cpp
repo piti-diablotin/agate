@@ -261,7 +261,7 @@ HistDataMD& HistDataMD::operator+=(HistDataMD& hist) {
   if ( _tryToMap ) {
     try {
       order = this->reorder(hist);
-      for ( unsigned i ; i < order.size() ; ++i )
+      for ( unsigned i = 0 ; i < order.size() ; ++i )
         if ( i != order[i] ) {
           reorder = true;
           break;

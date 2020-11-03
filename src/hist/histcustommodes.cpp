@@ -111,12 +111,17 @@ void HistCustomModes::addNoiseToHist(const HistData &hist, double temperature, c
 #endif
       Supercell currentTime(hist,itime);
       currentTime.setReference(firstTime);
-      for ( auto iqpt = _condensedModes[itime].begin() ; iqpt != _condensedModes[itime].end() ; ++iqpt ) {
-        for ( auto vib : iqpt->second ) {
-          currentTime.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);
+
+      if ( itime < _condensedModes.size() ) {
+        for ( auto iqpt = _condensedModes[itime].begin() ; iqpt != _condensedModes[itime].end() ; ++iqpt ) {
+          for ( auto vib : iqpt->second ) {
+            currentTime.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);
+          }
         }
       }
-      currentTime.applyStrain(_strainDist[itime]);
+      if ( itime < _strainDist.size() ) {
+        currentTime.applyStrain(_strainDist[itime]);
+      }
       this->push(currentTime);
     }
     callback();

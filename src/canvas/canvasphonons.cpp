@@ -180,6 +180,7 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
         eig = EigParser::getEigParser(filename);
       }
       catch( Exception &e ) {
+        if (eig != nullptr) delete eig;
         return false;
       }
       if ( dynamic_cast<EigParserPhonons*>(eig) ) {
@@ -188,6 +189,7 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
           disp.loadFromEigParserPhonon(*dynamic_cast<EigParserPhonons*>(eig));
           _displacements += disp;
           std::clog << "Displacements loaded" << std::endl;
+          if (eig != nullptr) delete eig;
           return true;
         }
         catch (Exception& ee ) {
@@ -195,6 +197,7 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
           std::clog << e.fullWhat() << std::endl;
         }
       }
+      if (eig != nullptr) delete eig;
     }
     return false;
   }
@@ -933,8 +936,8 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
     std::string output = (parser.hasToken("output") ? parser.getToken<std::string>("output") : utils::noSuffix(traj)+"_pumped.in");
     structure.dump(output);
+    delete hist;
     throw EXCEPTION("Phonons pumped to "+output,ERRCOM);
-
   }
   else { 
     CanvasPos::my_alter(token,stream);

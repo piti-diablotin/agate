@@ -38,9 +38,11 @@
 
 #include "hist/histdatadtset.hpp"
 #include "phonons/dispdb.hpp"
+#include "phonons/supercell.hpp"
 #include <functional>
 #include <bitset>
 #include <map>
+#include <random>
 
 /** 
  * This class is designe to build a Hist object with either
@@ -84,8 +86,11 @@ class HistCustomModes : public HistDataDtset {
     std::vector<StrainDir>  _strainTetraDir;       ///< The direction(s) of the tetra strain(s)
     std::vector<StrainDir>  _strainShearDir;       ///< The direction(s) of the shear strain(s)
     std::vector<geometry::mat3d> _strainDist;      ///< The amplitude of the strains
+    std::default_random_engine _randomEngine;      ///< Engine to generate random numbers;
 
   protected :
+
+    void initRandomEngine();
 
   public :
 
@@ -103,19 +108,24 @@ class HistCustomModes : public HistDataDtset {
 
     /**
      * @brief buildHist Build an Hist using the reference structure and the phonons to be condensed contains in inputCondensedModes
-     * @param inputCondensedModes are the modes that will be condensed. The size of the vector is the number of generated structures.
+     * @param qptGrid The qpt grid to use
+     * @param temperature The temperature in K to use to populate the phonons.
+     * @param strainBounds The bounds to generate strain. If no max value is provided then this type of strain is not used. @see StrainDistBound
+     * @param instableModes How to treat the instable modes
+     * @param ntime Number of structures to generate
      */
-    void buildHist(const std::vector<DispDB::qptTree>& inputCondensedModes=std::vector<DispDB::qptTree>(), const std::vector<geometry::mat3d>& inputStrainMatrix=std::vector<geometry::mat3d>());
+    void buildHist(const geometry::vec3d& qptGrid, const double temperature, const std::map<StrainDistBound,double>& strainBounds, InstableModes instableModes, unsigned ntime);
 
     /**
      * @brief addNoiseToHist to an already existing hist
      * @warning xred and xcart are modified but not the forces, velocities or any other thermodynamical values.
      * @param hist The trajectory to add noise to.
      * @param temperature The temperature in K to use to populate the phonons.
+     * @param strainBounds The bounds to generate strain. If no max value is provided then this type of strain is not used. @see StrainDistBound
      * @param instableModes How to treat the instable modes
      * @param callback A function that will be executed when the Hist is fully built.
      */
-    void addNoiseToHist(const HistData &hist, double temperature, const std::map<StrainDistBound,double>& strainBounds, InstableModes instableModes,std::function<void()> callback);
+    void addNoiseToHist(const HistData &hist, const double temperature, const std::map<StrainDistBound,double>& strainBounds, InstableModes instableModes,std::function<void()> callback);
 
 
     /**
@@ -224,6 +234,16 @@ class HistCustomModes : public HistDataDtset {
     void push(const Dtset& dtset);
 
     /**
+     * @brief Build the supercell with respecto to _condensedModes and _strainDist for time itime 
+     * and push the structure into the hist
+     * The memory must be available.
+     * @see push to know how it is pushed
+     * @param supercell The supercell to build (add displacement and strain)
+     * @param itime time step in which to insert the new structure
+     */
+    void buildInsert(Supercell& supercell, const unsigned itime);
+
+    /**
      * @brief instableAmplitude Getter for the amplitude used for the instable modes
      * @return  the amplitude in A
      */
@@ -234,6 +254,7 @@ class HistCustomModes : public HistDataDtset {
      * @param instableAmplitude The amplitude in A.
      */
     void setInstableAmplitude(double instableAmplitude);
+
 };
 
 #endif  // HISTCUSTOMMODES_HPP

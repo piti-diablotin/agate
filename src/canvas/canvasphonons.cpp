@@ -903,9 +903,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         std::vector<double> tmp = parser.getToken<double>("qpt",3);
         double ntime = parser.getToken<unsigned>("ntime");
         vec3d qpt = {tmp[0],tmp[1],tmp[2]};
-        hist->zachariasAmplitudes(temperature,ntime,qpt,instableModes);
-        hist->strainDist(strainBounds,ntime);
-        hist->buildHist();
+        hist->buildHist(qpt,temperature,strainBounds,instableModes,ntime);
       }
       else {
         parser.setSensitive(true);

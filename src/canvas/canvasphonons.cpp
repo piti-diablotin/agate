@@ -863,6 +863,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       hist->setStrainTetraDir(tetraX,tetraY,tetraZ);
     }
     if ( parser.hasToken("shear") ){
+      bool shearXY, shearXZ,shearYZ= false;
       std::string full = parser.getToken<std::string>("shear");
       auto splitfull = utils::explode(full,',');
       auto split = utils::explode(splitfull[0],':');
@@ -879,9 +880,20 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         default: throw EXCEPTION("Expected value shear=[min:]max[,xy,xz,yz]",ERRDIV);
       }
       if ( splitfull.size() > 1 ) {
-        Exception e = EXCEPTION("Shear not yet able to handle direction",ERRWAR);
-        std::clog << e.fullWhat() << std::endl;
+        for ( unsigned idir = 1 ; idir < splitfull.size() ; ++idir ) {
+          std::sort(splitfull[idir].begin(),splitfull[idir].end()); //make sure xy=yx xz=zx yz=zy by sorting
+          if ( splitfull[idir] == "xy" ) shearXY= true;
+          else if ( splitfull[idir] == "xz" ) shearXZ = true;
+          else if ( splitfull[idir] == "yz" ) shearYZ = true;
+          else throw EXCEPTION("Unknow direction "+splitfull[idir],ERRDIV);
+        }
       }
+      else {
+        shearXY = true;
+        shearXZ = true;
+        shearYZ = true;
+      }
+      hist->setStrainShearDir(shearXY,shearXZ,shearYZ);
     }
 
     try {

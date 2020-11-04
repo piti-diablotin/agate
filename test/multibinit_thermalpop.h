@@ -93,6 +93,18 @@ class ThermalPop : public CxxTest::TestSuite
     stream.clear();
     stream.seekg(0);
     TS_ASSERT_THROWS_NOTHING(canvas.alter(token,stream);)
+    stream.str("qpt=2 2 2 temperature=300 seedtype=user seed=1 ntime=1 shear=-0.02:0.01,xy");
+    stream.clear();
+    stream.seekg(0);
+    TS_ASSERT_THROWS_NOTHING(canvas.alter(token,stream);)
+    stream.str("qpt=2 2 2 temperature=300 seedtype=user seed=1 ntime=1 shear=-0.02:0.01,yx,zx");
+    stream.clear();
+    stream.seekg(0);
+    TS_ASSERT_THROWS_NOTHING(canvas.alter(token,stream);)
+    stream.str("qpt=2 2 2 temperature=300 seedtype=user seed=1 ntime=1 shear=-0.02:0.01,zy,yx,xz");
+    stream.clear();
+    stream.seekg(0);
+    TS_ASSERT_THROWS_NOTHING(canvas.alter(token,stream);)
   }
 
   void testPhononsStrain( void )

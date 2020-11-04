@@ -831,7 +831,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       }
     }
     if ( parser.hasToken("tetra") ){
-      bool tetraX,tetraY,tetraZ = false;
+      bool tetraX, tetraY,tetraZ = false;
       std::string full = parser.getToken<std::string>("tetra");
       auto splitfull = utils::explode(full,',');
       auto split = utils::explode(splitfull[0],':');
@@ -860,7 +860,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         tetraY = true;
         tetraZ = true;
       }
-      hist->setStrainDir(tetraX,tetraY,tetraZ);
+      hist->setStrainTetraDir(tetraX,tetraY,tetraZ);
     }
     if ( parser.hasToken("shear") ){
       std::string full = parser.getToken<std::string>("shear");

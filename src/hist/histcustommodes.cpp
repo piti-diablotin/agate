@@ -363,7 +363,7 @@ geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amp
       delta1, 0.0 ,0.0,
       0.0 , delta1, 0.0,
       0.0 , 0.0 , (2*delta1 + delta1*delta1)/((1+delta1)*(1+delta1)) };
-    this->rotateStrain(strainTetra);
+    this->rotateStrain(strainTetra,Tetra);
     strainTot = strainTot + strainTetra;
   }
   if ( std::abs(delta2) > 1e-10 ) {
@@ -371,27 +371,50 @@ geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amp
       0.0 , delta2 , 0.0,
       delta2 , 0.0 , 0.0 ,
       0.0 , 0.0 , -delta2*delta2/(1-delta2*delta2) };
-    this->rotateStrain(strainShear);
+    this->rotateStrain(strainShear,Shear);
     strainTot = strainTot + strainShear;
   }
   return strainTot;
 }
 
 
-void HistCustomModes::setStrainDir(bool x, bool y, bool z) { 
-  _strainDir.clear();
+void HistCustomModes::setStrainTetraDir(bool x, bool y, bool z) { 
+  _strainTetraDir.clear();
   if(x==true)  
-    _strainDir.push_back(StrainDir::x);
+    _strainTetraDir.push_back(StrainDir::x);
   if(y==true)
-    _strainDir.push_back(StrainDir::y);
+    _strainTetraDir.push_back(StrainDir::y);
   if(z==true)
-    _strainDir.push_back(StrainDir::z);
+    _strainTetraDir.push_back(StrainDir::z);
 }
 
-void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix) {   
+void HistCustomModes::setStrainShearDir(bool xy, bool xz, bool yz) { 
+  _strainShearDir.clear();
+  if(xy==true)  
+    _strainShearDir.push_back(StrainDir::xy);
+  if(xz==true)
+    _strainShearDir.push_back(StrainDir::xz);
+  if(yz==true)
+    _strainShearDir.push_back(StrainDir::yz);
+}
+
+void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix, const StrainType type) {   
   using namespace geometry;
 
-  unsigned nchoice = _strainDir.size();
+  std::vector<StrainDir>* direction = nullptr;
+  switch(type) {
+    case Tetra : {
+                    direction = &_strainTetraDir;
+                    break;
+                 }
+    case Shear : {
+                    direction = &_strainShearDir;
+                    break;
+                 }
+    default:
+                 throw EXCEPTION("Rotation not allowed for this type of strain",ERRDIV);
+  }
+  unsigned nchoice = direction->size();
   if ( nchoice == 0 ) return;
   std::default_random_engine engine;
   std::uniform_int_distribution<int> randomDistrib(0,nchoice-1);
@@ -401,20 +424,32 @@ void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix) {
   mat3d rotMatrix ={1, 0, 0,
     0, 1, 0,
     0, 0, 1};
-  switch(_strainDir[rotStrain]){
-    case x : rotMatrix = {0, 0, 1,
-               0, 1, 0,
-               1, 0, 0};
-             break;
-    case y : rotMatrix = {1, 0, 0,
-               0, 0, 1,
-               0, 1, 0}; 
-             break;
+  switch(direction->at(rotStrain)){
+    case x : 
+    case yz:
+      rotMatrix = {
+        0, 0, 1,
+        0, 1, 0,
+        1, 0, 0
+      };
+      break;
+    case y : 
+    case xz : 
+      rotMatrix = {
+        1, 0, 0,
+        0, 0, 1,
+        0, 1, 0
+      }; 
+      break;
 
-    case z : break;
+    case z : 
+    case xy :
+      break;
   }
 
   strainMatrix =  rotMatrix * strainMatrix;
+  if ( type == Shear ) strainMatrix = strainMatrix * rotMatrix;
+
 }
 
 
@@ -427,7 +462,8 @@ HistCustomModes::HistCustomModes(Dtset& dtset, DispDB& db) :
   _seed(42),
   _instableAmplitude(1),
   _strainTypes(false),
-  _strainDir(),
+  _strainTetraDir(),
+  _strainShearDir(),
   _strainDist()
 {
   if (_db.natom()!=_reference.natom())

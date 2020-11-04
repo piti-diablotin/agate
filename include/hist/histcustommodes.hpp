@@ -81,7 +81,8 @@ class HistCustomModes : public HistDataDtset {
     unsigned _seed;                                ///< The seed if _seedType==User
     double _instableAmplitude;                     ///< The amplitude of the instable modes if treated with InstableModes::Constant @see zachariasAmplitudes
     std::bitset<3>          _strainTypes;          ///< The type of strain
-    std::vector<StrainDir>  _strainDir;            ///< The direction(s) of the strain(s)
+    std::vector<StrainDir>  _strainTetraDir;       ///< The direction(s) of the tetra strain(s)
+    std::vector<StrainDir>  _strainShearDir;       ///< The direction(s) of the shear strain(s)
     std::vector<geometry::mat3d> _strainDist;      ///< The amplitude of the strains
 
   protected :
@@ -151,20 +152,29 @@ class HistCustomModes : public HistDataDtset {
     geometry::mat3d getStrainMatrix(const std::array<double,3>& amplitudes);
 
     /**
-     * Set de possible directions to apply strain 
-     * @param x allow tetra strain along x and shear along ??
-     * @param y allow tetra strain along x and shear along ??
-     * @param z allow tetra strain along x and shear along ??
+     * Set de possible directions to apply tetra strain 
+     * @param x allow tetra strain along x
+     * @param y allow tetra strain along y
+     * @param z allow tetra strain along z
      */
-    void setStrainDir(bool x, bool y, bool z);
+    void setStrainTetraDir(bool x, bool y, bool z);
+
+    /**
+     * Set de possible directions to apply shear strain 
+     * @param xy allow shear strain along xy
+     * @param xz allow shear strain along xz
+     * @param yz allow shear strain along yz
+     */
+    void setStrainShearDir(bool xy, bool xz, bool yz);
 
     /**
      * Apply a random rotation matrix on strainMatrix
      * @param strainMatrix The strain matrix to be randomly rotated according to strainDir
+     * @param type The type of strain to be rotated can only be Tetra or Shear
      * @see setStrainDir
      */
 
-    void rotateStrain(geometry::mat3d &strainMatrix);
+    void rotateStrain(geometry::mat3d &strainMatrix, const StrainType type);
 
     /**
      * @brief seedType getter

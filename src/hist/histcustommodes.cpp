@@ -116,6 +116,8 @@ void HistCustomModes::animateModes(DispDB::qptTree& condensedModes, unsigned nti
   }
 
   else {
+    if (_db.natom()!=_reference.natom())
+      throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);
     Supercell supercellRef(_reference,qpt);
     if ( ntime > 1 ) { // Build an animation
       this->setTryToMap(false);
@@ -157,6 +159,10 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
 {
   _condensedModes.clear();
   if ( temperature < 1e-3 ) return;
+
+  if (_db.natom()!=_reference.natom())
+    throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);
+
   std::vector<vec3d> qpts;
   for ( unsigned qx = 0 ; qx <= supercell[0]/2 ; ++qx ) {
     const double ratioX = 1./supercell[0];
@@ -401,8 +407,6 @@ HistCustomModes::HistCustomModes(Dtset& dtset, DispDB& db) :
   _strainDist(),
   _randomEngine()
 {
-  if (_db.natom()!=_reference.natom())
-    throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);
 }
 
 //
@@ -536,6 +540,8 @@ void HistCustomModes::push(const Dtset& dtset)
 }
 
 void HistCustomModes::buildInsert(Supercell& supercell, const unsigned itime) {
+  if (_db.natom()!=_reference.natom())
+    throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);
   if ( itime < _condensedModes.size() ) {
     for ( auto iqpt = _condensedModes[itime].begin() ; iqpt != _condensedModes[itime].end() ; ++iqpt ) {
       for ( auto vib : iqpt->second ) {

@@ -127,14 +127,6 @@ class PhononMode {
     void computeAllEigen(const Ddb& ddb, double *freq = nullptr, complex *modes = nullptr);
 
     /**
-     * Get Born Effective Charges from ddb 
-     * @param qpt The Q - Point -> always Gamma 
-     * @param ddb1 ddb including rprim, gprim, natom and zion 
-     * @param ddb2 complete ddb  
-     */ 
-    const std::vector<geometry::mat3d> getzeff(const geometry::vec3d& qpt, const Ddb& ddb1, const std::vector<Ddb::d2der>& ddb2);
-
-    /**
      * Calculate linear response from ddb 
      * @param _qpt The Q - Point -> always GAMMA 
      * @param Edir direction vector for electric field in cartesian coordinates 

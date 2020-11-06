@@ -540,9 +540,9 @@ void HistCustomModes::push(const Dtset& dtset)
 }
 
 void HistCustomModes::buildInsert(Supercell& supercell, const unsigned itime) {
-  if (_db.natom()!=_reference.natom())
-    throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);
   if ( itime < _condensedModes.size() ) {
+    if (_db.natom()!=_reference.natom())
+      throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);
     for ( auto iqpt = _condensedModes[itime].begin() ; iqpt != _condensedModes[itime].end() ; ++iqpt ) {
       for ( auto vib : iqpt->second ) {
         supercell.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);

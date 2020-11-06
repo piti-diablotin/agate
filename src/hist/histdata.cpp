@@ -414,7 +414,21 @@ std::array<double, 6> HistData::getStrain(const unsigned time, const Dtset &dtse
   mat3d gprim = invert(dtset.rprim());
   mat3d rprim;
   std::copy(rprimTmp,rprimTmp+9,rprim.begin());
-  mat3d strain = rprim*gprim;
+  mat3d inv_multiplicity = {
+    1, 0, 0,
+    0, 1, 0,
+    0, 0, 1
+  };
+  if ( _natom != dtset.natom() ) { //Maybe a supercell
+    Supercell supercell(*this,time);
+    supercell.findReference(dtset);
+    const vec3d dim = supercell.getDim();
+    inv_multiplicity[0]=1/dim[0];
+    inv_multiplicity[4]=1/dim[1];
+    inv_multiplicity[8]=1/dim[2];
+  }
+  mat3d strain = rprim*inv_multiplicity*gprim;
+
   return {strain[mat3dind(1,1)]-1,strain[mat3dind(2,2)]-1,strain[mat3dind(3,3)]-1,strain[mat3dind(3,2)],strain[mat3dind(3,1)],strain[mat3dind(2,1)]};
 }
 

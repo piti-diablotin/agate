@@ -304,7 +304,7 @@ geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amp
     mat3d strainTetra = {
       delta1, 0.0 ,0.0,
       0.0 , delta1, 0.0,
-      0.0 , 0.0 , (2*delta1 + delta1*delta1)/((1+delta1)*(1+delta1)) };
+      0.0 , 0.0 , (-2*delta1 - (delta1*delta1))/((1+delta1)*(1+delta1)) };
     this->rotateStrain(strainTetra,Tetra);
     strainTot = strainTot + strainTetra;
   }
@@ -312,7 +312,7 @@ geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amp
     mat3d strainShear = {
       0.0 , delta2 , 0.0,
       delta2 , 0.0 , 0.0 ,
-      0.0 , 0.0 , -delta2*delta2/(1-delta2*delta2) };
+      0.0 , 0.0 , (delta2*delta2/(1-delta2*delta2)) };
     this->rotateStrain(strainShear,Shear);
     strainTot = strainTot + strainShear;
   }
@@ -540,9 +540,9 @@ void HistCustomModes::push(const Dtset& dtset)
 }
 
 void HistCustomModes::buildInsert(Supercell& supercell, const unsigned itime) {
-  if (_db.natom()!=_reference.natom())
-    throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);
   if ( itime < _condensedModes.size() ) {
+    if (_db.natom()!=_reference.natom())
+      throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);
     for ( auto iqpt = _condensedModes[itime].begin() ; iqpt != _condensedModes[itime].end() ; ++iqpt ) {
       for ( auto vib : iqpt->second ) {
         supercell.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);

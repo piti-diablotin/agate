@@ -9,7 +9,7 @@ class RotateMatrix : public CxxTest::TestSuite
 {
   public:
   void testRotateMatrix ( void )
-  { try{  
+  {  
      Dtset dtset;
      DispDB db;
      HistCustomModes hist(dtset, db);
@@ -49,31 +49,14 @@ class RotateMatrix : public CxxTest::TestSuite
  
     
 
-     mat3d RotateStrainMatrix;
-
- 
-    // hist.setStrainShearDir(true,false,false);
-    // hist.rotateStrain(strain, HistCustomModes::Tetra);
-    // print(strain);
-    // mat3d RotateStrainMatrix;
-    // RotateStrainMatrix = rotMatrixX * strainTest;
-    // print(RotateStrainMatrix);
-    // TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(1,1)], strain[mat3dind(1,1)], 1e-6 );
-    // TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,2)], strain[mat3dind(2,2)], 1e-6 );
-    // TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,3)], strain[mat3dind(3,3)], 1e-6 );
-    // TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,2)], strain[mat3dind(3,2)], 1e-6 );
-    // TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,1)], strain[mat3dind(3,1)], 1e-6 );
-    // TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,1)], strain[mat3dind(2,1)], 1e-6 );
-
+    mat3d RotateStrainMatrix;
     hist.setStrainTetraDir(true,false,false);
     strain = {1, 2, 3,
               4, 5, 6,
               7, 8, 9 };
     hist.rotateStrain(strain, HistCustomModes::Tetra);
-    print(strain);
     RotateStrainMatrix={};
     RotateStrainMatrix = rotMatrixX * strainTest;
-    print(RotateStrainMatrix);
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(1,1)], strain[mat3dind(1,1)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,2)], strain[mat3dind(2,2)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,3)], strain[mat3dind(3,3)], 1e-6 );
@@ -87,10 +70,8 @@ class RotateMatrix : public CxxTest::TestSuite
               4, 5, 6,
               7, 8, 9 };
     hist.rotateStrain(strain, HistCustomModes::Tetra);
-    print(strain);
     RotateStrainMatrix={};
     RotateStrainMatrix = rotMatrixY * strainTest;
-    print(RotateStrainMatrix);
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(1,1)], strain[mat3dind(1,1)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,2)], strain[mat3dind(2,2)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,3)], strain[mat3dind(3,3)], 1e-6 );
@@ -104,10 +85,8 @@ class RotateMatrix : public CxxTest::TestSuite
               4, 5, 6,
               7, 8, 9 };
     hist.rotateStrain(strain, HistCustomModes::Tetra);
-    print(strain);
     RotateStrainMatrix={};
     RotateStrainMatrix = rotMatrixZ * strainTest;
-    print(RotateStrainMatrix);
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(1,1)], strain[mat3dind(1,1)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,2)], strain[mat3dind(2,2)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,3)], strain[mat3dind(3,3)], 1e-6 );
@@ -121,11 +100,9 @@ class RotateMatrix : public CxxTest::TestSuite
               4, 5, 6,
               7, 8, 9 };
     hist.rotateStrain(strain, HistCustomModes::Shear);
-    print(strain);
     RotateStrainMatrix={};
     RotateStrainMatrix = rotMatrixXY * strainTest;
     RotateStrainMatrix = RotateStrainMatrix * rotMatrixXY;
-    print(RotateStrainMatrix);
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(1,1)], strain[mat3dind(1,1)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,2)], strain[mat3dind(2,2)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,3)], strain[mat3dind(3,3)], 1e-6 );
@@ -139,11 +116,9 @@ class RotateMatrix : public CxxTest::TestSuite
               4, 5, 6,
               7, 8, 9 };
     hist.rotateStrain(strain, HistCustomModes::Shear);
-    print(strain);
     RotateStrainMatrix={};
     RotateStrainMatrix = rotMatrixXZ * strainTest;
     RotateStrainMatrix = RotateStrainMatrix * rotMatrixXZ;
-    print(RotateStrainMatrix);
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(1,1)], strain[mat3dind(1,1)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,2)], strain[mat3dind(2,2)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,3)], strain[mat3dind(3,3)], 1e-6 );
@@ -157,24 +132,40 @@ class RotateMatrix : public CxxTest::TestSuite
               4, 5, 6,
               7, 8, 9 };
     hist.rotateStrain(strain, HistCustomModes::Shear);
-    print(strain);
     RotateStrainMatrix={};
     RotateStrainMatrix = rotMatrixYZ * strainTest;
     RotateStrainMatrix = RotateStrainMatrix * rotMatrixYZ;
-    print(RotateStrainMatrix);
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(1,1)], strain[mat3dind(1,1)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,2)], strain[mat3dind(2,2)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,3)], strain[mat3dind(3,3)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,2)], strain[mat3dind(3,2)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,1)], strain[mat3dind(3,1)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,1)], strain[mat3dind(2,1)], 1e-6 );
+  }
 
-
-
+  void testStrainAmplitude ( void ) {
+  //try{
+#include "CTO_Pnma_444.hxx"
+    Dtset ref;
+    ref.readFromFile("CTO_Pnma_444.in");
+    DispDB db;
+    HistCustomModes hist(ref,db);
+    const geometry::vec3d& qptGrid={1, 1, 1};
+    std::map<HistCustomModes::StrainDistBound,double> strainBounds {{HistCustomModes::IsoMin, 0.0001 }, {HistCustomModes::IsoMax, 0.1}};
+    unsigned ntime = 1;
+    const double temperature = 0;
+    hist.buildHist(qptGrid, temperature, strainBounds, HistCustomModes::Ignore, ntime);
+    auto strain = hist.getStrain(0,ref);
+    TS_ASSERT_DELTA(strain[0], strain[1], 10e-10);
+    TS_ASSERT_DELTA(strain[0], strain[2], 10e-10);
+    TS_ASSERT_DELTA(strain[1], strain[2], 10e-10 );
+    TS_ASSERT(strain[0] <= 0.1);
+    for (unsigned i=0; i<6; i++){
+    std::cout << strain[i] << '\n';
     }
 
-catch(Exception e){
-std::cout<< e.fullWhat();
-   }
-  }
+
+}
+
+
 };

@@ -149,19 +149,47 @@ class RotateMatrix : public CxxTest::TestSuite
     Dtset ref;
     ref.readFromFile("CTO_Pnma_444.in");
     DispDB db;
-    HistCustomModes hist(ref,db);
+    HistCustomModes histIso(ref,db);
     const geometry::vec3d& qptGrid={1, 1, 1};
-    std::map<HistCustomModes::StrainDistBound,double> strainBounds {{HistCustomModes::IsoMin, 0.0001 }, {HistCustomModes::IsoMax, 0.1}};
+    std::map<HistCustomModes::StrainDistBound,double> strainBoundsIso {{HistCustomModes::IsoMin, 0.0001 }, {HistCustomModes::IsoMax, 0.1}};
     unsigned ntime = 1;
     const double temperature = 0;
-    hist.buildHist(qptGrid, temperature, strainBounds, HistCustomModes::Ignore, ntime);
-    auto strain = hist.getStrain(0,ref);
-    TS_ASSERT_DELTA(strain[0], strain[1], 10e-10);
-    TS_ASSERT_DELTA(strain[0], strain[2], 10e-10);
-    TS_ASSERT_DELTA(strain[1], strain[2], 10e-10 );
-    TS_ASSERT(strain[0] <= 0.1);
+    histIso.buildHist(qptGrid, temperature, strainBoundsIso, HistCustomModes::Ignore, ntime);
+    auto strainIso = histIso.getStrain(0,ref);
+    TS_ASSERT_DELTA(strainIso[0], strainIso[1], 10e-10);
+    TS_ASSERT_DELTA(strainIso[0], strainIso[2], 10e-10);
+    TS_ASSERT_DELTA(strainIso[1], strainIso[2], 10e-10 );
+    TS_ASSERT(strainIso[0] <= 0.1);
+    TS_ASSERT(strainIso[0] >= 0.0001);
+    TS_ASSERT(strainIso[1] <= 0.1);
+    TS_ASSERT(strainIso[1] >= 0.0001);   
+    TS_ASSERT(strainIso[2] <= 0.1);
+    TS_ASSERT(strainIso[2] >= 0.0001);    
+
+
+
+    HistCustomModes histTetra(ref,db);
+    std::map<HistCustomModes::StrainDistBound,double> strainBoundsTetra {{HistCustomModes::TetraMin, 0.0001 }, {HistCustomModes::TetraMax, 0.1}};
+    histTetra.buildHist(qptGrid, temperature, strainBoundsTetra, HistCustomModes::Ignore, ntime);
+    auto strainTetra = histTetra.getStrain(0,ref);
+    TS_ASSERT(strainTetra[0] <= 0.1);
+    TS_ASSERT(strainTetra[0] >= 0.0001);
+    TS_ASSERT(strainTetra[1] <= 0.1);
+    TS_ASSERT(strainTetra[1] >= 0.0001);
+    TS_ASSERT_DELTA(strainTetra[0], strainTetra[1], 10e-10);
+    TS_ASSERT_DELTA((-2*strainTetra[0]-strainTetra[0]*strainTetra[0])/((1+strainTetra[0])*(1+strainTetra[0])), strainTetra[2], 10e-6);    
+
+
+    HistCustomModes histShear(ref,db);
+    std::map<HistCustomModes::StrainDistBound,double> strainBoundsShear {{HistCustomModes::ShearMin, 0.0001 }, {HistCustomModes::ShearMax, 0.1}};
+    histShear.buildHist(qptGrid, temperature, strainBoundsShear, HistCustomModes::Ignore, ntime);
+    auto strainShear = histShear.getStrain(0,ref);
+    TS_ASSERT(strainShear[5] <= 0.1);
+    TS_ASSERT(strainShear[5] >= 0.0001);
+    TS_ASSERT_DELTA((strainShear[5]*strainShear[5])/(1-strainShear[5]*strainShear[5]), strainShear[2], 10e-6);    
+
     for (unsigned i=0; i<6; i++){
-    std::cout << strain[i] << '\n';
+    std::cout << strainShear[i] << '\n';
     }
 
 

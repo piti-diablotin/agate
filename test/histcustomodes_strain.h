@@ -142,7 +142,7 @@ class RotateMatrix : public CxxTest::TestSuite
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(3,1)], strain[mat3dind(3,1)], 1e-6 );
     TS_ASSERT_DELTA( RotateStrainMatrix[mat3dind(2,1)], strain[mat3dind(2,1)], 1e-6 );
   }
-
+//for(unsigned j=0; j<6; j++){
   void testStrainAmplitude ( void ) {
   //try{
 #include "CTO_Pnma_444.hxx"
@@ -165,35 +165,44 @@ class RotateMatrix : public CxxTest::TestSuite
     TS_ASSERT(strainIso[1] >= 0.0001);   
     TS_ASSERT(strainIso[2] <= 0.1);
     TS_ASSERT(strainIso[2] >= 0.0001);    
-
+    std::cout << "Strain Iso : " << '\n' << '\n';
+    
+    for (unsigned i=0; i<6; i++){
+    std::cout << strainIso[i] << '\n';
+    }
 
 
     HistCustomModes histTetra(ref,db);
     std::map<HistCustomModes::StrainDistBound,double> strainBoundsTetra {{HistCustomModes::TetraMin, 0.0001 }, {HistCustomModes::TetraMax, 0.1}};
     histTetra.buildHist(qptGrid, temperature, strainBoundsTetra, HistCustomModes::Ignore, ntime);
     auto strainTetra = histTetra.getStrain(0,ref);
-    TS_ASSERT(strainTetra[0] <= 0.1);
-    TS_ASSERT(strainTetra[0] >= 0.0001);
-    TS_ASSERT(strainTetra[1] <= 0.1);
-    TS_ASSERT(strainTetra[1] >= 0.0001);
+    TS_ASSERT((strainTetra[0] <= 0.1 && strainTetra[1]<= 0.1) || (strainTetra[0] <= 0.1 && strainTetra[2]<= 0.1) || (strainTetra[1] <= 0.1 && strainTetra[2]<= 0.1));
+    TS_ASSERT((strainTetra[0]>= 0.0001 && strainTetra[1]>= 0.0001) || (strainTetra[0]>= 0.0001 && strainTetra[2]>= 0.0001) || (strainTetra[1] >= 0.0001 && strainTetra[2]>= 0.0001));
     TS_ASSERT_DELTA(strainTetra[0], strainTetra[1], 10e-10);
     TS_ASSERT_DELTA((-2*strainTetra[0]-strainTetra[0]*strainTetra[0])/((1+strainTetra[0])*(1+strainTetra[0])), strainTetra[2], 10e-6);    
 
+    std::cout <<'\n'<< "Strain Tetra" << '\n';    
+
+    for (unsigned i=0; i<6; i++){
+    std::cout << strainTetra[i] << '\n';
+    }
+   
 
     HistCustomModes histShear(ref,db);
     std::map<HistCustomModes::StrainDistBound,double> strainBoundsShear {{HistCustomModes::ShearMin, 0.0001 }, {HistCustomModes::ShearMax, 0.1}};
     histShear.buildHist(qptGrid, temperature, strainBoundsShear, HistCustomModes::Ignore, ntime);
     auto strainShear = histShear.getStrain(0,ref);
-    TS_ASSERT(strainShear[5] <= 0.1);
-    TS_ASSERT(strainShear[5] >= 0.0001);
+    TS_ASSERT((strainShear[3] <= 0.1) || (strainShear[4] <= 0.1) || (strainShear[5] <= 0.1));
+    TS_ASSERT((strainShear[3] >= 0.0001) || (strainShear[4] >= 0.0001) || (strainShear[5] >= 0.0001));
     TS_ASSERT_DELTA((strainShear[5]*strainShear[5])/(1-strainShear[5]*strainShear[5]), strainShear[2], 10e-6);    
-
+    
+    std::cout << '\n'<< "Strain Shear" << '\n';
     for (unsigned i=0; i<6; i++){
     std::cout << strainShear[i] << '\n';
     }
 
 
+//}
 }
-
 
 };

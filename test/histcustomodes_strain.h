@@ -2,7 +2,7 @@
 #include "hist/histcustommodes.hpp"
 #include "io/dtset.hpp"
 #include <sstream>
-
+#include <cmath>
 using namespace geometry;
 
 class RotateMatrix : public CxxTest::TestSuite
@@ -178,8 +178,8 @@ class RotateMatrix : public CxxTest::TestSuite
     auto strainTetra = histTetra.getStrain(0,ref);
     TS_ASSERT((strainTetra[0] <= 0.1 && strainTetra[1]<= 0.1) || (strainTetra[0] <= 0.1 && strainTetra[2]<= 0.1) || (strainTetra[1] <= 0.1 && strainTetra[2]<= 0.1));
     TS_ASSERT((strainTetra[0]>= 0.0001 && strainTetra[1]>= 0.0001) || (strainTetra[0]>= 0.0001 && strainTetra[2]>= 0.0001) || (strainTetra[1] >= 0.0001 && strainTetra[2]>= 0.0001));
-    TS_ASSERT_DELTA(strainTetra[0], strainTetra[1], 10e-10);
-    TS_ASSERT_DELTA((-2*strainTetra[0]-strainTetra[0]*strainTetra[0])/((1+strainTetra[0])*(1+strainTetra[0])), strainTetra[2], 10e-6);    
+    TS_ASSERT((abs(strainTetra[0] - strainTetra[1]) <= 10e-10) || (abs(strainTetra[0] - strainTetra[2]) <= 10e-10)|| (abs(strainTetra[1] - strainTetra[2]) <= 10e-10)) ;
+    TS_ASSERT((abs((-2*strainTetra[0]-strainTetra[0]*strainTetra[0])/((1+strainTetra[0])*(1+strainTetra[0])) - strainTetra[2]) <= 10e-6) || (abs((-2*strainTetra[0]-strainTetra[0]*strainTetra[0])/((1+strainTetra[0])*(1+strainTetra[0])) - strainTetra[1]) <= 10e-6) || (abs((-2*strainTetra[2]-strainTetra[2]*strainTetra[2])/((1+strainTetra[2])*(1+strainTetra[2])) - strainTetra[0]) <= 10e-6));    
 
     std::cout <<'\n'<< "Strain Tetra" << '\n';    
 
@@ -194,7 +194,7 @@ class RotateMatrix : public CxxTest::TestSuite
     auto strainShear = histShear.getStrain(0,ref);
     TS_ASSERT((strainShear[3] <= 0.1) || (strainShear[4] <= 0.1) || (strainShear[5] <= 0.1));
     TS_ASSERT((strainShear[3] >= 0.0001) || (strainShear[4] >= 0.0001) || (strainShear[5] >= 0.0001));
-    TS_ASSERT_DELTA((strainShear[5]*strainShear[5])/(1-strainShear[5]*strainShear[5]), strainShear[2], 10e-6);    
+    TS_ASSERT((abs((strainShear[5]*strainShear[5])/(1-strainShear[5]*strainShear[5]) - strainShear[2]) <= 10e-6)|| (abs((strainShear[4]*strainShear[4])/(1-strainShear[4]*strainShear[4]) - strainShear[1]) <= 10e-6) || (abs((strainShear[3]*strainShear[3])/(1-strainShear[3]*strainShear[3]) - strainShear[0]) <= 10e-6));    
     
     std::cout << '\n'<< "Strain Shear" << '\n';
     for (unsigned i=0; i<6; i++){

@@ -284,12 +284,13 @@ void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBou
     if ( shear) amplitudes[StrainType::Shear] = shearRng(_randomEngine);
     _strainDist[itime] = this->getStrainMatrix(amplitudes);
   }
+  
 }
 
 geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amplitudes) {
-  geometry::mat3d strainTot;
   using geometry::mat3d;
   using geometry::operator+;
+  geometry::mat3d strainTot={0};
   double epsilon= amplitudes[StrainType::Iso];
   double delta1 = amplitudes[StrainType::Tetra];
   double delta2 = amplitudes[StrainType::Shear];
@@ -315,7 +316,7 @@ geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amp
       0.0 , 0.0 , (delta2*delta2/(1-delta2*delta2)) };
     this->rotateStrain(strainShear,Shear);
     strainTot = strainTot + strainShear;
-  }
+    }
   return strainTot;
 }
 
@@ -386,10 +387,9 @@ void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix, const StrainTy
     case xy :
       break;
   }
-
+  
   strainMatrix =  rotMatrix * strainMatrix;
-  if ( type == Shear ) strainMatrix = strainMatrix * rotMatrix;
-
+  strainMatrix = strainMatrix * rotMatrix; 
 }
 
 

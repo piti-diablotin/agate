@@ -388,8 +388,7 @@ void HistCustomModes::rotateStrain(geometry::mat3d &strainMatrix, const StrainTy
       break;
   }
   
-  strainMatrix =  rotMatrix * strainMatrix;
-  strainMatrix = strainMatrix * rotMatrix; 
+  strainMatrix =  rotMatrix * (strainMatrix * rotMatrix);
 }
 
 

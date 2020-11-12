@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/piti-diablotin/abiout.svg?branch=master)](https://travis-ci.org/piti-diablotin/abiout)
+[![Build Status](https://travis-ci.org/piti-diablotin/agate.svg?branch=master)](https://travis-ci.org/piti-diablotin/agate)
 # Presentation
 Agate is a tool engine to visualize and post-process data from *ab-initio* codes.
 It is mainly designed to work with the [Abinit](www.abinit.org "Abinit website") DFT code. However, it can perfectly read some [VASP](www.vasp.at "VASP website") files and other commonly used format. 
@@ -41,7 +41,7 @@ Here is a small list of quantities that you can extract with **agate** from an M
   - Construct your own structure with condensed phonons  
 
 # How to install
-  Altough the **abiout** package is available on Windows, MacOS and Linux, only the Linux and MacOS under Hombrew procedures will be presented.
+  Altough the package is available on Windows, MacOS and Linux, only the Linux and MacOS under Hombrew procedures will be presented.
 
 ## Ubuntu 
 
@@ -51,7 +51,7 @@ Here is a small list of quantities that you can extract with **agate** from an M
   ```
   sudo add-apt-repository ppa:piti-diablotin/abiout
   sudo apt-get update
-  sudo apt-get install abiout
+  sudo apt-get install agate
   ```
   and you are done !
   Simply execute `agate` in a terminal.
@@ -67,10 +67,10 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
   sudo apt-get install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest git
   ```
   Then the procedure is the same.
-  Compile abiout with
+  Compile agate with
   ```
-  git clone https://github.com/piti-diablotin/abiout.git
-  cd abiout
+  git clone https://github.com/piti-diablotin/agate.git
+  cd agate 
   ./autogen.sh
   mkdir build
   cd build
@@ -85,8 +85,8 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
   ```
   sudo su
   yum install autoconf automake m4 libjpeg-turbo-devel libpng-devel netcdf-devel libcurl-devel freetype-devel glfw-devel eigen3-devel fontconfig wget unzip libxml2-devel yaml-cpp-devel fftw-devel libssh-devel cxxtest git gcc-c++ gnuplot
-  git clone https://github.com/piti-diablotin/abiout.git
-  cd abiout
+  git clone https://github.com/piti-diablotin/agate.git
+  cd agate 
   ./autogen.sh
   mkdir build
   cd build
@@ -98,8 +98,8 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
   The procedure has been tested on MacOS 10.14 only and only with *Homebrew*. *Macport* should work too.
   ```
   brew install automake autoconf curl cxxtest eigen fftw freetype git glfw gnuplot libpng libssh libtool libxml2 libyaml netcdf wget yaml-cpp
-  git clone https://github.com/piti-diablotin/abiout.git
-  cd abiout
+  git clone https://github.com/piti-diablotin/agate.git
+  cd agate 
   ./autogen.sh
   mkdir build
   cd build

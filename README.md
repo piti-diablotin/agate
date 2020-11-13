@@ -97,7 +97,7 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
 ## MacOS X
   The procedure has been tested on MacOS 10.14 only and only with *Homebrew*. *Macport* should work too.
   ```
-  brew install automake autoconf curl cxxtest eigen fftw freetype git glfw gnuplot libpng libssh libtool libxml2 libyaml netcdf wget yaml-cpp
+  brew install automake autoconf curl cxxtest eigen fftw freetype git glfw gnuplot libpng libssh libtool libxml2 netcdf yaml-cpp
   git clone https://github.com/piti-diablotin/agate.git
   cd agate 
   ./autogen.sh

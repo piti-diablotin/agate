@@ -59,13 +59,13 @@ Here is a small list of quantities that you can extract with **agate** from a MD
 
 ### From sources
   First you need to install some dependancies.
-  On Ubuntu <= 15.04
+  On Ubuntu == 14.04
   ```
   sudo apt-get install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng3-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest git
   ```
-On Ubuntu >= 16.04 (15.10 not maintained anymore)
+On Ubuntu >= 16.04 (LTS versions and last non-LTS)
   ```
-  sudo apt-get install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest git
+  sudo apt install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest git
   ```
   Then the procedure is the same.
   Compile agate with
@@ -99,7 +99,7 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
 
 ### Homebrew
   A tap formula is available. You need first to had the tap.
-  You can add the tap from `piti-diablotin` which is the most up-to-date, or the on from `abinit`.
+  You can add the tap from `piti-diablotin` which is the most up-to-date, or the one from `abinit`.
   ```
   brew tap piti-diablotin/tap
   # or

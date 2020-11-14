@@ -247,8 +247,7 @@ SUBDIRS = @AM_SPGLIB@ \\" > Makefile.am
   echo "  include src bin doc FINDSYM Win_x86 test" >> Makefile.am
 
   cat >> Makefile.am << EOF
-EXTRA_DIST = autogen.sh configure1 configure2 icons icons.qrc spglib-1.9.9.tar.gz $(if test "$1" = "-t"; then echo "glfw-3.2.1.zip"; fi)
-#EXTRA_DIST = autogen.sh glfw-3.2.1.zip spglib-1.8.3.tar.gz
+EXTRA_DIST = autogen.sh configure1 configure2 spglib-1.15.0.tar.gz $(if test "$1" = "-t"; then echo "glfw-3.2.1.zip"; fi)
 
 nodist_include_HEADERS = agate.h
 

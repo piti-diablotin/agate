@@ -22,7 +22,7 @@ class CanvasPhononsProj : public CxxTest::TestSuite
   {
     canvas = nullptr;
     canvas = new CanvasPhonons(false);
-#ifdef HAVE_NETCDF
+#if defined(HAVE_NETCDF) && ( defined(_LP64) || defined(__amd64__) || defined(__x86_64) || defined(__LP64__) )
     try {
 #include "SRO_HIST.hxx"
 #include "SRO_DDB.hxx"

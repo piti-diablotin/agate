@@ -17,8 +17,6 @@ then
     depcomp \
     install-sh \
     missing \
-    Win_x86/Makefile.am \
-    Win_x86/Makefile.in \
     configure.ac \
     m4/ar-lib \
     m4/compile \
@@ -171,13 +169,6 @@ install-data-hook:
 EOF
   cd ..
 
-  # Generate Makefile.am in Win_x86
-  cd Win_x86
-  cat > Makefile.am << EOF
-EXTRA_DIST = \\
-  AbiOut.exe
-EOF
-  cd ..
 
   # Generate Makefile.am in test
   cd test
@@ -244,7 +235,7 @@ SUBDIRS = @AM_SPGLIB@ \\" > Makefile.am
   do
     echo "  ${lib} \\" >> Makefile.am
   done
-  echo "  include src bin doc FINDSYM Win_x86 test" >> Makefile.am
+  echo "  include src bin doc FINDSYM test" >> Makefile.am
 
   cat >> Makefile.am << EOF
 EXTRA_DIST = autogen.sh configure1 configure2 spglib-1.15.0.tar.gz $(if test "$1" = "-t"; then echo "glfw-3.2.1.zip"; fi)

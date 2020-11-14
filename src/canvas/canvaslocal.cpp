@@ -570,7 +570,7 @@ std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
   unsigned nz = angles.size()/nxy;
   //std::clog << nx << " " << ny << " " << nz << std::endl;
 
-  double evenAv[3][2] = {0};
+  double evenAv[3][2] = {{0}};
   for ( unsigned iz = 0 ; iz < nz ; ++iz ) {
     for ( unsigned iy = 0 ; iy < ny ; ++iy ) {
       for ( unsigned ix = 0 ; ix < nx ; ++ix ) {

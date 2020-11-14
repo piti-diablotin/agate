@@ -50,7 +50,7 @@ void DosDB::buildFromPrefix(std::string prefix)
     auto pos = prefix.find_last_of("/\\");
     dir = prefix.substr(0,pos);
     pos = ( pos == std::string::npos ? 0 : pos+1);
-    files = std::move(utils::ls(dir,prefix.substr(pos)+"_DOS.*"));
+    files = utils::ls(dir,prefix.substr(pos)+"_DOS.*");
   }
   catch (...) {
     throw EXCEPTION("Problem getting file names",ERRDIV);

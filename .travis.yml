@@ -53,6 +53,12 @@ addons:
 jobs:
   include:
     - os: linux
+      dist: focal
+      compiler: clang
+    - os: linux
+      dist: focal 
+      compiler: gcc
+    - os: linux
       dist: bionic
       compiler: clang
     - os: linux

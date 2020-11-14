@@ -11,7 +11,7 @@ A new Qt GUI is available and is called [qAgate](https://github.com/piti-diablot
 At the moment the most remarkable functionnalities are for molecular dynamics (MD) simulations and phonon analysis. Agate allows you to extract information of a trajectory to interpret the physics on the system. Several tools are included to make life easier.
 
 ## Some features
-Here is a small list of quantities that you can extract with **agate** from an MD simulation:
+Here is a small list of quantities that you can extract with **agate** from a MD simulation:
 - OpenGL capabilities
 - Extract images to make a movie
 - Concatenate several simulations in one 
@@ -56,7 +56,7 @@ Here is a small list of quantities that you can extract with **agate** from an M
   and you are done !
   Simply execute `agate` in a terminal.
 
-### From the source
+### From sources
   First you need to install some dependancies.
   On Ubuntu <= 15.04
   ```
@@ -95,9 +95,25 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
   make install
   ```
 ## MacOS X
-  The procedure has been tested on MacOS 10.14 only and only with *Homebrew*. *Macport* should work too.
+
+### Homebrew
+  A tap formula is available. You need first to had the tap.
+  You can add the tap from `piti-diablotin` which is the most up-to-date, or the on from `abinit`.
   ```
-  brew install automake autoconf curl cxxtest eigen fftw freetype git glfw gnuplot libpng libssh libtool libxml2 netcdf yaml-cpp
+  brew tap piti-diablotin/tap
+  # or
+  brew tap abinit/tap
+  ```
+  Then just run
+  ``` 
+  brew install agate
+  ```
+  You can now run `agate` from your terminal.
+
+### From sources
+  The procedure has been tested on MacOS only with *Homebrew*. *Macport* should work too.
+  ```
+  brew install automake autoconf curl cxxtest eigen fftw freetype git glfw gnuplot jpeg libpng libssh libtool libxml2 netcdf yaml-cpp
   git clone https://github.com/piti-diablotin/agate.git
   cd agate 
   ./autogen.sh
@@ -107,5 +123,4 @@ On Ubuntu >= 16.04 (15.10 not maintained anymore)
   make
   sudo make install
   ```
-  You can also find a precompiled version in the `.dmg` file contained in the `OSX` directory.  
-  ***WARNING:*** This version has been updated on March 8th, 2018.
+

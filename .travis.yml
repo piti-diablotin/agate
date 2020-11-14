@@ -1,5 +1,10 @@
 language: cpp
-script: ./autogen.sh && ./configure && make && make check
+script: 
+  - ./autogen.sh 
+  - ./configure 
+  - make
+  - if [[ $CXX == "clang++" ]]; then export LD_LIBRARY_PATH='/usr/local/clang/lib:/usr/local/clang-7.0.0/lib'; fi;
+  - make check
 os:
   - linux
 compiler:

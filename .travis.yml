@@ -43,13 +43,12 @@ addons:
       - freetype
       - glfw
       - gnuplot
+      - jpeg
       - libpng
       - libssh
       - libtool
       - libxml2
-      - libyaml
       - netcdf
-      - wget
       - yaml-cpp
 jobs:
   include:

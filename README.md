@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/piti-diablotin/agate.svg?branch=master)](https://travis-ci.org/piti-diablotin/agate)
+[![Build Status](https://travis-ci.com/piti-diablotin/agate.svg?branch=master)](https://travis-ci.com/piti-diablotin/agate)
 [![Downloads](https://img.shields.io/github/downloads/piti-diablotin/agate/latest/total.svg)](https://github.com/piti-diablotin/agate/releases/latest)
 # Presentation
 Agate is a tool engine to visualize and post-process data from *ab-initio* codes.

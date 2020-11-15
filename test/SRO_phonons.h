@@ -41,7 +41,7 @@ class CanvasPhononsProj : public CxxTest::TestSuite
 
   void testFindQpt( void )
   {
-#ifndef HAVE_NETCDF
+#if defined(HAVE_NETCDF) && ( defined(_LP64) || defined(__amd64__) || defined(__x86_64) || defined(__LP64__) )
     TS_SKIP("NetCDF is needed");
 #endif
     try {
@@ -61,7 +61,7 @@ class CanvasPhononsProj : public CxxTest::TestSuite
 
   void testAnalyze( void )
   {
-#ifndef HAVE_NETCDF
+#if defined(HAVE_NETCDF) && ( defined(_LP64) || defined(__amd64__) || defined(__x86_64) || defined(__LP64__) )
     TS_SKIP("NetCDF is needed");
 #endif
     try {
@@ -110,7 +110,7 @@ class CanvasPhononsProj : public CxxTest::TestSuite
 
   void testPumpingPhonons( void )
   {
-#ifndef HAVE_NETCDF
+#if defined(HAVE_NETCDF) && ( defined(_LP64) || defined(__amd64__) || defined(__x86_64) || defined(__LP64__) )
     TS_SKIP("NetCDF is needed");
 #endif
     try {

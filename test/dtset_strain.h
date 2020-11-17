@@ -37,9 +37,9 @@ class StrainMatrix : public CxxTest::TestSuite
       ref.readFromFile("CTO_Pnma_444.in");
       test = ref;
 
-      const mat3d eta={0.020000, 0.30000, 0.00000,
-        0.300000, 0.02000, 0.000000,
-        0.000000, 0.00000,-0.0600699};
+      const mat3d eta={0.0, 0.0, -0.136721,
+        0.00000, 0.762778, 0.000000,
+        0.762778, 0.00000,0.0000000};
 
       test.applyStrain(eta);
       auto strain = test.getStrain(ref);
@@ -51,4 +51,3 @@ class StrainMatrix : public CxxTest::TestSuite
       TS_ASSERT_DELTA( eta[mat3dind(2,1)], strain[5], 1e-6 );
     }   
 };
-

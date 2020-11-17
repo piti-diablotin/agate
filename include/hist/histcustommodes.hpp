@@ -74,6 +74,11 @@ class HistCustomModes : public HistDataDtset {
      */
     enum StrainDistBound { IsoMin, IsoMax, TetraMin, TetraMax, ShearMin, ShearMax };
 
+    /** 
+     * @brief Define the Random type to use
+     */
+    enum RandomType { Uniform, Normal };
+
 
   private :
     Dtset &_reference;                             ///< Reference structure (contained in the DDB)
@@ -87,7 +92,8 @@ class HistCustomModes : public HistDataDtset {
     std::vector<StrainDir>  _strainShearDir;       ///< The direction(s) of the shear strain(s)
     std::vector<geometry::mat3d> _strainDist;      ///< The amplitude of the strains
     std::default_random_engine _randomEngine;      ///< Engine to generate random numbers;
-
+    RandomType _randomType;                        ///< Type of random
+  
   protected :
 
     void initRandomEngine();
@@ -211,11 +217,19 @@ class HistCustomModes : public HistDataDtset {
     void setSeed(const unsigned& seed);
 
     /**
+     * @brief setRandomType Setter for the randomType
+     * @param randomType The new type to used
+     */
+    void setRandomType(const RandomType randomType);
+
+
+    /**
      * @brief reserve This function allocate all the needed memory to build an hist
      * of ntime.
      * @param ntime Number of time step to reserve
      * @param dtset Use to know the dimensions of the structure to be used (natom mainly)
      */
+
     void reserve(unsigned ntime, const Dtset& dtset);
 
     /**

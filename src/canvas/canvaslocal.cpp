@@ -7,20 +7,20 @@
  *
  * @copyright Copyright 2014 Jordan Bieder
  *
- * This file is part of AbiOut.
+ * This file is part of Agate.
  *
- * AbiOut is free software: you can redistribute it and/or modify
+ * Agate is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * AbiOut is distributed in the hope that it will be useful,
+ * Agate is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AbiOut.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Agate.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 
@@ -570,7 +570,7 @@ std::array<double,3> CanvasLocal::getAverageRotations(unsigned itime) {
   unsigned nz = angles.size()/nxy;
   //std::clog << nx << " " << ny << " " << nz << std::endl;
 
-  double evenAv[3][2] = {0};
+  double evenAv[3][2] = {{0}};
   for ( unsigned iz = 0 ; iz < nz ; ++iz ) {
     for ( unsigned iy = 0 ; iy < ny ; ++iy ) {
       for ( unsigned ix = 0 ; ix < nx ; ++ix ) {

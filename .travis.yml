@@ -1,5 +1,10 @@
 language: cpp
-script: ./autogen.sh && ./configure && make && make check
+script: 
+  - ./autogen.sh 
+  - ./configure 
+  - make
+  - if [[ $CXX == "clang++" ]]; then export LD_LIBRARY_PATH='/usr/local/clang/lib:/usr/local/clang-7.0.0/lib'; fi;
+  - make check
 os:
   - linux
 compiler:
@@ -43,16 +48,21 @@ addons:
       - freetype
       - glfw
       - gnuplot
+      - jpeg
       - libpng
       - libssh
       - libtool
       - libxml2
-      - libyaml
       - netcdf
-      - wget
       - yaml-cpp
 jobs:
   include:
+    - os: linux
+      dist: focal
+      compiler: clang
+    - os: linux
+      dist: focal 
+      compiler: gcc
     - os: linux
       dist: bionic
       compiler: clang

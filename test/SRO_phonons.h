@@ -21,8 +21,8 @@ class CanvasPhononsProj : public CxxTest::TestSuite
   void setUp()
   {
     canvas = nullptr;
+#if defined(HAVE_NETCDF) && ( defined(_LP64) || defined(__amd64__) || defined(__x86_64) || defined(__LP64__) )
     canvas = new CanvasPhonons(false);
-#ifdef HAVE_NETCDF
     try {
 #include "SRO_HIST.hxx"
 #include "SRO_DDB.hxx"
@@ -41,9 +41,8 @@ class CanvasPhononsProj : public CxxTest::TestSuite
 
   void testFindQpt( void )
   {
-#ifndef HAVE_NETCDF
-    TS_SKIP("NetCDF is needed");
-#endif
+    if (canvas == nullptr)
+      TS_SKIP("NetCDF is needed");
     try {
 #include "SRO_HIST_qpt.hxx"
       std::istringstream input;
@@ -61,9 +60,8 @@ class CanvasPhononsProj : public CxxTest::TestSuite
 
   void testAnalyze( void )
   {
-#ifndef HAVE_NETCDF
-    TS_SKIP("NetCDF is needed");
-#endif
+    if (canvas == nullptr)
+      TS_SKIP("NetCDF is needed");
     try {
 #include "SRO_HIST_Analysis.hxx"
 #include "SRO_HIST_Analysis_fullnormalized.hxx"
@@ -110,9 +108,8 @@ class CanvasPhononsProj : public CxxTest::TestSuite
 
   void testPumpingPhonons( void )
   {
-#ifndef HAVE_NETCDF
-    TS_SKIP("NetCDF is needed");
-#endif
+    if (canvas == nullptr)
+      TS_SKIP("NetCDF is needed");
     try {
       std::istringstream input;
       input.str("1/2 1/2 1/2 1 2 3 15");

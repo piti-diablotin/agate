@@ -1,6 +1,7 @@
 #include <cxxtest/TestSuite.h>
 #include "hist/histcustommodes.hpp"
 #include "io/dtset.hpp"
+#include "base/utils.hpp"
 #include <sstream>
 #include <cmath>
 using namespace geometry;
@@ -191,6 +192,31 @@ class RotateMatrix : public CxxTest::TestSuite
       TS_ASSERT((strainShear[3] <= 0.1) || (strainShear[4] <= 0.1) || (strainShear[5] <= 0.1));
       TS_ASSERT((strainShear[3] >= 0.0001) || (strainShear[4] >= 0.0001) || (strainShear[5] >= 0.0001));
       TS_ASSERT((abs((strainShear[5]*strainShear[5])/(1-strainShear[5]*strainShear[5]) - strainShear[2]) <= 10e-6)|| (abs((strainShear[4]*strainShear[4])/(1-strainShear[4]*strainShear[4]) - strainShear[1]) <= 10e-6) || (abs((strainShear[3]*strainShear[3])/(1-strainShear[3]*strainShear[3]) - strainShear[0]) <= 10e-6));    
+    }
+
+    void testStrainGaussian() {
+#include "CTO_Pnma_444.hxx"
+      Dtset refIso;
+      refIso.readFromFile("CTO_Pnma_444.in");
+      DispDB db;
+      HistCustomModes histIso(refIso,db);
+      const geometry::vec3d& qptGrid={1, 1, 1};
+      std::map<HistCustomModes::StrainDistBound,double> strainBoundsIso {{HistCustomModes::IsoMin, 0.0001 }, {HistCustomModes::IsoMax, 0.1}};
+      unsigned ntime = 500;
+      const double temperature = 0;
+      histIso.setRandomType(HistCustomModes::Normal);
+
+      histIso.buildHist(qptGrid, temperature, strainBoundsIso, HistCustomModes::Ignore, ntime);
+      std::vector<double> strainIso;
+      for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
+        strainIso.push_back(histIso.getStrain(itime,refIso)[0]);
+      }
+      double mean = utils::mean(strainIso.begin(),strainIso.end());
+      double dev = utils::deviation(strainIso.begin(),strainIso.end(),mean);
+      const double expectedMean = (strainBoundsIso[HistCustomModes::IsoMin]+strainBoundsIso[HistCustomModes::IsoMax])*0.5;
+      const double expectedDev = (strainBoundsIso[HistCustomModes::IsoMax]-strainBoundsIso[HistCustomModes::IsoMin])/6;
+      TS_ASSERT_DELTA(mean,expectedMean,1e-3);
+      TS_ASSERT_DELTA(dev,expectedDev,1e-3);
     }
 
 };

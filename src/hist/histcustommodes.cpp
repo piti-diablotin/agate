@@ -287,9 +287,9 @@ void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBou
     }
   }
   else if ( _randomType == Normal){
-    std::normal_distribution<double> isoRng(0.0, isoMax);
-    std::normal_distribution<double> tetraRng(0.0, tetraMax);
-    std::normal_distribution<double> shearRng(0.0, shearMax);
+    std::normal_distribution<double> isoRng((isoMax+isoMin)/2, (isoMax-isoMin)/6);
+    std::normal_distribution<double> tetraRng((tetraMax+tetraMin)/2, (tetraMax-tetraMin)/6);
+    std::normal_distribution<double> shearRng((shearMax+shearMin)/2, (shearMax-shearMin)/6);
     for ( unsigned itime = 0 ; itime < ntime ; ++itime ) { 
       std::array<double,3> amplitudes({0});
       if ( iso ) amplitudes[StrainType::Iso]   = isoRng(_randomEngine);

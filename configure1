@@ -1,10 +1,10 @@
 # Basic information
-PACKAGE = AbiOut
-VERSION = 1.0.0
+PACKAGE = Agate
+VERSION = 1.1.1
 MAIL = jordan.bieder@uliege.be
 
 # Initial information about the package
-AC_INIT([AbiOut],[1.0.0],[jordan.bieder@uliege.be])
+AC_INIT([Agate],[1.1.1],[jordan.bieder@uliege.be])
 
 # Check source directory
 AC_CONFIG_SRCDIR([bin/agate.cpp])

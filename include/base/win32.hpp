@@ -7,20 +7,20 @@
  *
  * @copyright Copyright 2014 Jordan Bieder
  *
- * This file is part of AbiOut.
+ * This file is part of Agate.
  *
- * AbiOut is free software: you can redistribute it and/or modify
+ * Agate is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * AbiOut is distributed in the hope that it will be useful,
+ * Agate is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AbiOut.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Agate.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 
@@ -46,10 +46,10 @@
 #    define PACKAGE "abiout"
 #  endif
 #  ifndef PACKAGE_NAME
-#    define PACKAGE_NAME "AbiOut"
+#    define PACKAGE_NAME "Agate"
 #  endif
 #  ifndef PACKAGE_STRING
-#    define PACKAGE_STRING "AbiOut 0.0.5"
+#    define PACKAGE_STRING "Agate 0.0.5"
 #  endif
 #  ifndef PACKAGE_VERSION
 #    define PACKAGE_VERSION "0.0.5"

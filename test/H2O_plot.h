@@ -20,7 +20,7 @@ class HistMDPlot : public CxxTest::TestSuite
   void setUp()
   {
     hist = nullptr;
-#ifdef HAVE_NETCDF
+#if defined(HAVE_NETCDF) && ( defined(_LP64) || defined(__amd64__) || defined(__x86_64) || defined(__LP64__) )
     try {
 #include "H2O_HIST.hxx"
       hist = HistData::getHist("H2O_HIST.nc",true);

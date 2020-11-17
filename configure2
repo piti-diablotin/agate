@@ -2,7 +2,6 @@ AC_CONFIG_FILES([bin/Makefile])
 AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([doc/Makefile])
 AC_CONFIG_FILES([FINDSYM/Makefile])
-AC_CONFIG_FILES([Win_x86/Makefile])
 AC_CONFIG_FILES([Makefile])
 
 ac_configure_args_old="$ac_configure_args"

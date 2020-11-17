@@ -239,7 +239,7 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
       }
       catch(Exception& e) {
         std::stringstream erreur;
-        erreur << "Qpt " << Fraction(qpt[0]).toString() << "  " << Fraction(qpt[1]).toString() << "  " << Fraction(qpt[2]).toString();
+        erreur << "Qpt " << geometry::to_string(qpt);
         erreur << " is not in DispDB -> ignored";
         e.ADD(erreur.str(),ERRDIV);
         std::clog << e.fullWhat() << std::endl;

@@ -6,7 +6,7 @@
 #include <cmath>
 using namespace geometry;
 
-class RotateMatrix : public CxxTest::TestSuite
+class HistCMStrain : public CxxTest::TestSuite
 {
   public:
     void testRotateMatrix ( void )
@@ -202,21 +202,22 @@ class RotateMatrix : public CxxTest::TestSuite
       HistCustomModes histIso(refIso,db);
       const geometry::vec3d& qptGrid={1, 1, 1};
       std::map<HistCustomModes::StrainDistBound,double> strainBoundsIso {{HistCustomModes::IsoMin, 0.0001 }, {HistCustomModes::IsoMax, 0.1}};
-      unsigned ntime = 500;
+      unsigned ntime = 2000;
       const double temperature = 0;
       histIso.setRandomType(HistCustomModes::Normal);
 
       histIso.buildHist(qptGrid, temperature, strainBoundsIso, HistCustomModes::Ignore, ntime);
-      std::vector<double> strainIso;
+      std::vector<double> strainIso(ntime);
+#pragma omp parallel for
       for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
-        strainIso.push_back(histIso.getStrain(itime,refIso)[0]);
+        strainIso[itime]=histIso.getStrain(itime,refIso)[0];
       }
       double mean = utils::mean(strainIso.begin(),strainIso.end());
       double dev = utils::deviation(strainIso.begin(),strainIso.end(),mean);
       const double expectedMean = (strainBoundsIso[HistCustomModes::IsoMin]+strainBoundsIso[HistCustomModes::IsoMax])*0.5;
       const double expectedDev = (strainBoundsIso[HistCustomModes::IsoMax]-strainBoundsIso[HistCustomModes::IsoMin])/6;
-      TS_ASSERT_DELTA(mean,expectedMean,1e-3);
-      TS_ASSERT_DELTA(dev,expectedDev,1e-3);
+      TS_ASSERT_DELTA(mean,expectedMean,1e-2);
+      TS_ASSERT_DELTA(dev,expectedDev,1e-2);
     }
 
 };

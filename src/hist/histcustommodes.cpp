@@ -182,7 +182,8 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
   UnitConverter tempConverter(UnitConverter::K);
   tempConverter = UnitConverter::Ha;
   temperature = temperature*tempConverter;
-  std::uniform_real_distribution<double> randomDistrib(-1,1);
+  std::uniform_real_distribution<double> uniformDistrib(-1.,1.);
+  std::normal_distribution<double> normalDistrib(0., 1./3.);
   for ( unsigned i = 0 ; i < ntime ; ++i ) {
     DispDB::qptTree conf;
     for (auto qpt : qpts) {
@@ -205,8 +206,10 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
             }
           }
           if (energy<1e-6) continue; // avoid gamma acoustic modes
+          const double rng = (_randomType==Uniform?uniformDistrib(_randomEngine):normalDistrib(_randomEngine));
           double sigma = sqrt( (phys::BoseEinstein(energy,temperature)+0.5)/(energy*phys::amu_emass) )
-                         *phys::b2A*randomDistrib(_randomEngine);
+                         *phys::b2A
+                         * rng;
           // convert sigma to correct unit
           amplitudes.push_back({imode,sigma,energy});
         }

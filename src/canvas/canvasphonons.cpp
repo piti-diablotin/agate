@@ -784,6 +784,15 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     double temperature = parser.getToken<double>("temperature");
     HistCustomModes* hist = new HistCustomModes(_reference,_displacements);
     parser.setSensitive(false);
+    HistCustomModes::RandomType distribution = HistCustomModes::Uniform;
+    if ( parser.hasToken("distribution") ) {
+      std::string val = parser.getToken<std::string>("distribution");
+      if ( val == "uniform" ) distribution = HistCustomModes::Uniform;
+      else if ( val == "normal" ) distribution = HistCustomModes::Normal;
+      else throw EXCEPTION("Bad value for distribution",ERRDIV);
+
+    }
+    hist->setRandomType(distribution);
     if ( parser.hasToken("seedtype") ) {
       std::string seedType = parser.getToken<std::string>("seedtype");
       if ( seedType == "time") hist->setSeedType(HistCustomModes::Time);

@@ -164,7 +164,6 @@ class HistCustomModes : public HistDataDtset {
      * @brief Construct the total strain matrix to apply to rprim
      * @param Amplitudes of the different strains strainTot the matrix to construct
      */
-
     geometry::mat3d getStrainMatrix(const std::array<double,3>& amplitudes);
 
     /**
@@ -189,7 +188,6 @@ class HistCustomModes : public HistDataDtset {
      * @param type The type of strain to be rotated can only be Tetra or Shear
      * @see setStrainDir
      */
-
     void rotateStrain(geometry::mat3d &strainMatrix, const StrainType type);
 
     /**
@@ -222,14 +220,12 @@ class HistCustomModes : public HistDataDtset {
      */
     void setRandomType(const RandomType randomType);
 
-
     /**
      * @brief reserve This function allocate all the needed memory to build an hist
      * of ntime.
      * @param ntime Number of time step to reserve
      * @param dtset Use to know the dimensions of the structure to be used (natom mainly)
      */
-
     void reserve(unsigned ntime, const Dtset& dtset);
 
     /**

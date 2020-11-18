@@ -182,7 +182,8 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
   UnitConverter tempConverter(UnitConverter::K);
   tempConverter = UnitConverter::Ha;
   temperature = temperature*tempConverter;
-  std::uniform_real_distribution<double> randomDistrib(-1,1);
+  std::uniform_real_distribution<double> uniformDistrib(-1.,1.);
+  std::normal_distribution<double> normalDistrib(0., 1./3.);
   for ( unsigned i = 0 ; i < ntime ; ++i ) {
     DispDB::qptTree conf;
     for (auto qpt : qpts) {
@@ -205,8 +206,10 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
             }
           }
           if (energy<1e-6) continue; // avoid gamma acoustic modes
+          const double rng = (_randomType==Uniform?uniformDistrib(_randomEngine):normalDistrib(_randomEngine));
           double sigma = sqrt( (phys::BoseEinstein(energy,temperature)+0.5)/(energy*phys::amu_emass) )
-                         *phys::b2A*randomDistrib(_randomEngine);
+                         *phys::b2A
+                         * rng;
           // convert sigma to correct unit
           amplitudes.push_back({imode,sigma,energy});
         }
@@ -253,67 +256,51 @@ void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBou
   bool iso = false;
   bool tetra = false;
   bool shear = false;
-      if ( (it=distBounds.find(IsoMax)) != distBounds.end() ) {
-        iso = true;
-        isoMax = it->second;
-        it=distBounds.find(IsoMin);
-        isoMin = (it != distBounds.end()) ? it->second : -isoMax;
-      }
+  if ( (it=distBounds.find(IsoMax)) != distBounds.end() ) {
+    iso = true;
+    isoMax = it->second;
+    it=distBounds.find(IsoMin);
+    isoMin = (it != distBounds.end()) ? it->second : -isoMax;
+  }
 
-      if ( (it=distBounds.find(TetraMax)) != distBounds.end() ) {
-        tetra = true;
-        tetraMax = it->second;
-        it=distBounds.find(TetraMin);
-        tetraMin = (it != distBounds.end()) ? it->second : -tetraMax;
-      }
+  if ( (it=distBounds.find(TetraMax)) != distBounds.end() ) {
+    tetra = true;
+    tetraMax = it->second;
+    it=distBounds.find(TetraMin);
+    tetraMin = (it != distBounds.end()) ? it->second : -tetraMax;
+  }
 
-      if ( (it=distBounds.find(ShearMax)) != distBounds.end() ) {
-        shear = true;
-        shearMax = it->second;
-        it=distBounds.find(ShearMin);
-        shearMin = (it != distBounds.end()) ? it->second : -shearMax;
-      }
+  if ( (it=distBounds.find(ShearMax)) != distBounds.end() ) {
+    shear = true;
+    shearMax = it->second;
+    it=distBounds.find(ShearMin);
+    shearMin = (it != distBounds.end()) ? it->second : -shearMax;
+  }
 
-
-     if (_randomType == Uniform ){
-        std::uniform_real_distribution<double> isoRng  (isoMin,isoMax);
-        std::uniform_real_distribution<double> tetraRng(tetraMin,tetraMax);
-        std::uniform_real_distribution<double> shearRng(shearMin,shearMax);
-        for ( unsigned itime = 0 ; itime < ntime ; ++itime ) { 
-          std::array<double,3> amplitudes({0});
-          if ( iso ) amplitudes[StrainType::Iso]   = isoRng(_randomEngine);
-          if ( tetra ) amplitudes[StrainType::Tetra] = tetraRng(_randomEngine);
-          if ( shear) amplitudes[StrainType::Shear] = shearRng(_randomEngine);
-          _strainDist[itime] = this->getStrainMatrix(amplitudes);
-        }
-     }
-     else if ( _randomType == Normal){
-        std::normal_distribution<double> isoRng(0.0, isoMax);
-        std::normal_distribution<double> tetraRng(0.0, tetraMax);
-        std::normal_distribution<double> shearRng(0.0, shearMax);
-
-        for ( unsigned itime = 0 ; itime < ntime ; ++itime ) { 
-          std::array<double,3> amplitudes({0});
-          if ( iso ) amplitudes[StrainType::Iso]   = isoRng(_randomEngine);
-          if ( tetra ) amplitudes[StrainType::Tetra] = tetraRng(_randomEngine);
-          if ( shear) amplitudes[StrainType::Shear] = shearRng(_randomEngine);
-          _strainDist[itime] = this->getStrainMatrix(amplitudes);
-        }
-      }
-     //else{
-     //   std::uniform_real_distribution<double> isoRng  (isoMin,isoMax);
-     //   std::uniform_real_distribution<double> tetraRng(tetraMin,tetraMax);
-     //   std::uniform_real_distribution<double> shearRng(shearMin,shearMax);
-     //}
-
-  //for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {
-   // std::array<double,3> amplitudes({0});
-   // if ( iso ) amplitudes[StrainType::Iso]   = isoRng(_randomEngine);
-   // if ( tetra ) amplitudes[StrainType::Tetra] = tetraRng(_randomEngine);
-   // if ( shear) amplitudes[StrainType::Shear] = shearRng(_randomEngine);
-    //_strainDist[itime] = this->getStrainMatrix(amplitudes);
-  //}
-  
+  if (_randomType == Uniform ){
+    std::uniform_real_distribution<double> isoRng  (isoMin,isoMax);
+    std::uniform_real_distribution<double> tetraRng(tetraMin,tetraMax);
+    std::uniform_real_distribution<double> shearRng(shearMin,shearMax);
+    for ( unsigned itime = 0 ; itime < ntime ; ++itime ) { 
+      std::array<double,3> amplitudes({0});
+      if ( iso ) amplitudes[StrainType::Iso]   = isoRng(_randomEngine);
+      if ( tetra ) amplitudes[StrainType::Tetra] = tetraRng(_randomEngine);
+      if ( shear) amplitudes[StrainType::Shear] = shearRng(_randomEngine);
+      _strainDist[itime] = this->getStrainMatrix(amplitudes);
+    }
+  }
+  else if ( _randomType == Normal){
+    std::normal_distribution<double> isoRng((isoMax+isoMin)/2, (isoMax-isoMin)/6);
+    std::normal_distribution<double> tetraRng((tetraMax+tetraMin)/2, (tetraMax-tetraMin)/6);
+    std::normal_distribution<double> shearRng((shearMax+shearMin)/2, (shearMax-shearMin)/6);
+    for ( unsigned itime = 0 ; itime < ntime ; ++itime ) { 
+      std::array<double,3> amplitudes({0});
+      if ( iso ) amplitudes[StrainType::Iso]   = isoRng(_randomEngine);
+      if ( tetra ) amplitudes[StrainType::Tetra] = tetraRng(_randomEngine);
+      if ( shear) amplitudes[StrainType::Shear] = shearRng(_randomEngine);
+      _strainDist[itime] = this->getStrainMatrix(amplitudes);
+    }
+  }
 }
 
 geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amplitudes) {

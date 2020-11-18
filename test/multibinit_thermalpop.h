@@ -129,5 +129,23 @@ class ThermalPop : public CxxTest::TestSuite
     TS_ASSERT_THROWS_NOTHING(canvas.alter(token,stream);)
   }
 
+  void testDistrib( void )
+  {
+#include "PTO_DDB.hxx"
+    CanvasPhonons canvas(false);
+    canvas.openFile("ref_PTO_DDB");
+    std::string token = "thermalPop";
+    std::istringstream stream("qpt=2 2 2 distribution=uniform temperature=300 seedtype=user seed=1 ntime=1 shear=0.01");
+    TS_ASSERT_THROWS_NOTHING(canvas.alter(token,stream);)
+    stream.clear();
+    stream.seekg(0);
+    stream.str("qpt=2 2 2 distribution=normal temperature=300 seedtype=user seed=1 ntime=1 shear=0.01");
+    TS_ASSERT_THROWS_NOTHING(canvas.alter(token,stream);)
+    stream.clear();
+    stream.seekg(0);
+    stream.str("qpt=2 2 2 distribution=toto temperature=300 seedtype=user seed=1 ntime=1 shear=0.01");
+    TS_ASSERT_THROWS_ANYTHING(canvas.alter(token,stream);)
+  }
+
 };
 

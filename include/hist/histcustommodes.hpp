@@ -78,6 +78,12 @@ class HistCustomModes : public HistDataDtset {
      * @brief Define the Random type to use
      */
     enum RandomType { Uniform, Normal };
+    
+     /** 
+     * @brief Define the Distribution type to use
+     */
+
+    enum Statistics { Classical, Quantum };
 
 
   private :
@@ -93,7 +99,7 @@ class HistCustomModes : public HistDataDtset {
     std::vector<geometry::mat3d> _strainDist;      ///< The amplitude of the strains
     std::default_random_engine _randomEngine;      ///< Engine to generate random numbers;
     RandomType _randomType;                        ///< Type of random
-  
+    Statistics _statistics;                          ///< Type of satistic
   protected :
 
     void initRandomEngine();
@@ -219,6 +225,14 @@ class HistCustomModes : public HistDataDtset {
      * @param randomType The new type to used
      */
     void setRandomType(const RandomType randomType);
+
+
+    /**
+     * @brief setRandomType Setter for the randomType
+     * @param randomType The new type to used
+     */
+    void setStatistics(const Statistics statistics);
+
 
     /**
      * @brief reserve This function allocate all the needed memory to build an hist

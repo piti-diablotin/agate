@@ -207,9 +207,16 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
           }
           if (energy<1e-6) continue; // avoid gamma acoustic modes
           const double rng = (_randomType==Uniform?uniformDistrib(_randomEngine):normalDistrib(_randomEngine));
-          double sigma = sqrt( (phys::BoseEinstein(energy,temperature)+0.5)/(energy*phys::amu_emass) )
-                         *phys::b2A
-                         * rng;
+          double sigma = 0;
+          switch (_statistics) {
+            case Classical:
+              sigma = sqrt(temperature/phys::amu_emass)/energy;
+              break;
+            case Quantum:
+              sigma = sqrt( (phys::BoseEinstein(energy,temperature)+0.5)/(energy*phys::amu_emass) );
+              break;
+           }
+          sigma *= phys::b2A * rng;
           // convert sigma to correct unit
           amplitudes.push_back({imode,sigma,energy});
         }
@@ -421,7 +428,8 @@ HistCustomModes::HistCustomModes(Dtset& dtset, DispDB& db) :
   _strainShearDir(),
   _strainDist(),
   _randomEngine(),
-  _randomType()
+  _randomType(Normal),
+  _statistics(Classical)
 {
 }
 
@@ -449,6 +457,11 @@ void HistCustomModes::setSeed(const unsigned& seed)
 void HistCustomModes::setRandomType(const RandomType randomType)
 {
    _randomType = randomType;
+}
+
+void HistCustomModes::setStatistics(const Statistics statistics)
+{
+   _statistics = statistics;
 }
 
 void HistCustomModes::reserve(unsigned ntime, const Dtset& dtset)

@@ -784,21 +784,29 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     double temperature = parser.getToken<double>("temperature");
     HistCustomModes* hist = new HistCustomModes(_reference,_displacements);
     parser.setSensitive(false);
-    HistCustomModes::RandomType distribution = HistCustomModes::Uniform;
     if ( parser.hasToken("distribution") ) {
+      HistCustomModes::RandomType distribution = HistCustomModes::Normal;
       std::string val = parser.getToken<std::string>("distribution");
       if ( val == "uniform" ) distribution = HistCustomModes::Uniform;
       else if ( val == "normal" ) distribution = HistCustomModes::Normal;
-      else throw EXCEPTION("Bad value for distribution",ERRDIV);
-
+      else throw EXCEPTION("Bad value for distribution [uniform|normal]",ERRDIV);
+      hist->setRandomType(distribution);
     }
-    hist->setRandomType(distribution);
+    if ( parser.hasToken("statistics") ) {
+      HistCustomModes::Statistics stats = HistCustomModes::Classical;
+      std::string val = parser.getToken<std::string>("statistics");
+      if ( val == "classical" ) stats = HistCustomModes::Classical;
+      else if ( val == "quantum" ) stats= HistCustomModes::Quantum;
+      else throw EXCEPTION("Bad value for statistics [classical|quantum]",ERRDIV);
+      hist->setStatistics(stats);
+    }
     if ( parser.hasToken("seedtype") ) {
       std::string seedType = parser.getToken<std::string>("seedtype");
       if ( seedType == "time") hist->setSeedType(HistCustomModes::Time);
       else if ( seedType == "random") hist->setSeedType(HistCustomModes::Random);
       else if ( seedType == "user") hist->setSeedType(HistCustomModes::User);
       else if ( seedType == "none") hist->setSeedType(HistCustomModes::None);
+      else throw EXCEPTION("Bad value for seedtype [time|random|user|none]",ERRDIV);
     }
     if ( hist->seedType() == HistCustomModes::User ) {
       if ( parser.hasToken("seed") ) {
@@ -808,8 +816,8 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       else throw EXCEPTION("You need to specify a seed",ERRDIV);
     }
 
-    HistCustomModes::InstableModes instableModes = HistCustomModes::Absolute;
     if ( parser.hasToken("instable") ) {
+      HistCustomModes::InstableModes instableModes = HistCustomModes::Absolute;
       std::string instable = parser.getToken<std::string>("instable");
       if ( instable == "ignore" ) instableModes = HistCustomModes::Ignore;
       else if ( instable == "absolute" ) instableModes = HistCustomModes::Absolute;
@@ -820,6 +828,8 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
           hist->setInstableAmplitude(amplitude);
         }
       }
+      else throw EXCEPTION("Bad value for instable [ignore|absolute|constant]",ERRDIV);
+      hist->setInstableModes(instableModes);
     }
 
     std::map<HistCustomModes::StrainDistBound,double> strainBounds;
@@ -912,14 +922,14 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
         std::vector<double> tmp = parser.getToken<double>("qpt",3);
         double ntime = parser.getToken<unsigned>("ntime");
         vec3d qpt = {tmp[0],tmp[1],tmp[2]};
-        hist->buildHist(qpt,temperature,strainBounds,instableModes,ntime);
+        hist->buildHist(qpt,temperature,strainBounds,ntime);
       }
       else {
         parser.setSensitive(true);
         std::string histname = parser.getToken<std::string>("trajectory");
         std::clog << "Loading file " << histname << std::endl;
         HistData* trajectory = HistData::getHist(histname,true);
-        hist->addNoiseToHist(*trajectory,temperature,strainBounds,instableModes,[trajectory](){delete trajectory;});
+        hist->addNoiseToHist(*trajectory,temperature,strainBounds,[trajectory](){delete trajectory;});
       }
     }
     catch( Exception &e ) {

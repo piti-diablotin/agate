@@ -26,7 +26,8 @@ class HistCMPhonons : public CxxTest::TestSuite
       const double temperature = 100;
       hist.setRandomType(HistCustomModes::Normal);
       hist.setStatistics(HistCustomModes::Quantum);
-      hist.buildHist(qptGrid, temperature, strainBoundsIso, HistCustomModes::Ignore, ntime);
+      hist.setInstableModes(HistCustomModes::Ignore);
+      hist.buildHist(qptGrid, temperature, strainBoundsIso, ntime);
       Supercell first(hist,0);
       first.findReference(ref);
       DispDB::qptTree modes = { { {0,0,0}, { { 7, 1, 1 } } } };  // mode 7 with 1 amplitude 1 energye (we don't care here)
@@ -42,7 +43,7 @@ class HistCMPhonons : public CxxTest::TestSuite
       const double expectedMean = 0;
       const double expectedDev = 0.16;
       TS_ASSERT_DELTA(mean,expectedMean,1e-2);
-      TS_ASSERT_DELTA(dev,expectedDev,1e-2);
+      TS_ASSERT_DELTA(dev,expectedDev,2e-2);
     }
 
     void testStatistic() {
@@ -63,12 +64,14 @@ class HistCMPhonons : public CxxTest::TestSuite
 
       histC.setRandomType(HistCustomModes::Normal);
       histC.setStatistics(HistCustomModes::Classical);
+      histC.setInstableModes(HistCustomModes::Ignore);
       
       histQ.setRandomType(HistCustomModes::Normal);
       histQ.setStatistics(HistCustomModes::Quantum);
+      histQ.setInstableModes(HistCustomModes::Ignore);
      
-      histC.buildHist(qptGrid, temperature, strainBoundsIso, HistCustomModes::Ignore, ntime);
-      histQ.buildHist(qptGrid, temperature, strainBoundsIso, HistCustomModes::Ignore, ntime);
+      histC.buildHist(qptGrid, temperature, strainBoundsIso, ntime);
+      histQ.buildHist(qptGrid, temperature, strainBoundsIso, ntime);
      
       Supercell first(histC,0);
       first.findReference(ref);

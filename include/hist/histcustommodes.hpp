@@ -92,6 +92,7 @@ class HistCustomModes : public HistDataDtset {
     std::vector<DispDB::qptTree> _condensedModes;  ///< Vector of qpt and modes to be condensed in the builders (@see buildHist @see addNoise)
     SeedType _seedType;                            ///< Type of seed to use when initializing the RNG
     unsigned _seed;                                ///< The seed if _seedType==User
+    InstableModes _instableModes;                  ///< The way instable modes are treated
     double _instableAmplitude;                     ///< The amplitude of the instable modes if treated with InstableModes::Constant @see zachariasAmplitudes
     std::bitset<3>          _strainTypes;          ///< The type of strain
     std::vector<StrainDir>  _strainTetraDir;       ///< The direction(s) of the tetra strain(s)
@@ -99,7 +100,8 @@ class HistCustomModes : public HistDataDtset {
     std::vector<geometry::mat3d> _strainDist;      ///< The amplitude of the strains
     std::default_random_engine _randomEngine;      ///< Engine to generate random numbers;
     RandomType _randomType;                        ///< Type of random
-    Statistics _statistics;                          ///< Type of satistic
+    Statistics _statistics;                        ///< Type of satistic
+
   protected :
 
     void initRandomEngine();
@@ -126,7 +128,7 @@ class HistCustomModes : public HistDataDtset {
      * @param instableModes How to treat the instable modes
      * @param ntime Number of structures to generate
      */
-    void buildHist(const geometry::vec3d& qptGrid, const double temperature, const std::map<StrainDistBound,double>& strainBounds, InstableModes instableModes, unsigned ntime);
+    void buildHist(const geometry::vec3d& qptGrid, const double temperature, const std::map<StrainDistBound,double>& strainBounds, const unsigned ntime);
 
     /**
      * @brief addNoiseToHist to an already existing hist
@@ -137,7 +139,7 @@ class HistCustomModes : public HistDataDtset {
      * @param instableModes How to treat the instable modes
      * @param callback A function that will be executed when the Hist is fully built.
      */
-    void addNoiseToHist(const HistData &hist, const double temperature, const std::map<StrainDistBound,double>& strainBounds, InstableModes instableModes,std::function<void()> callback);
+    void addNoiseToHist(const HistData &hist, const double temperature, const std::map<StrainDistBound,double>& strainBounds, const std::function<void()> &callback);
 
 
     /**
@@ -145,7 +147,7 @@ class HistCustomModes : public HistDataDtset {
      * @param condensedModes The modes to be condensed.
      * @param ntime The number of time to animate the phonons. It will really animate the phonons.
      */
-    void animateModes(DispDB::qptTree &condensedModes, unsigned ntime);
+    void animateModes(const DispDB::qptTree &condensedModes, const unsigned ntime);
 
     /**
      * @brief zachariasAmplitudes build the amplitudes to condensed the phonons at a given temperature
@@ -156,7 +158,7 @@ class HistCustomModes : public HistDataDtset {
      * @param supercell Size of the supercell
      * @param instable The way to treat the instable modes @see InstableModes
      */
-    void zachariasAmplitudes(double temperature, unsigned ntime,vec3d supercell, InstableModes instable = Absolute);
+    void zachariasAmplitudes(const double temperature, const unsigned ntime, const vec3d &supercell);
 
     /**
      * Build the strain amplitudes to apply at a hist time step
@@ -164,7 +166,7 @@ class HistCustomModes : public HistDataDtset {
      * @param ntime Number of random amplitudes to generate
      * @param supercell Size of the supercell
      */
-    void strainDist(const std::map<StrainDistBound,double>& distBounds, unsigned ntime);
+    void strainDist(const std::map<StrainDistBound,double>& distBounds, const unsigned ntime);
 
     /**
      * @brief Construct the total strain matrix to apply to rprim
@@ -226,13 +228,13 @@ class HistCustomModes : public HistDataDtset {
      */
     void setRandomType(const RandomType randomType);
 
-
     /**
-     * @brief setRandomType Setter for the randomType
-     * @param randomType The new type to used
+     * @brief setStatistics Setter for the statistics used
+     * to populate the phonons can be Classical or Quantum
+     * @param statistics The new statistics to use
+     * @see Statistics
      */
     void setStatistics(const Statistics statistics);
-
 
     /**
      * @brief reserve This function allocate all the needed memory to build an hist
@@ -240,14 +242,14 @@ class HistCustomModes : public HistDataDtset {
      * @param ntime Number of time step to reserve
      * @param dtset Use to know the dimensions of the structure to be used (natom mainly)
      */
-    void reserve(unsigned ntime, const Dtset& dtset);
+    void reserve(const unsigned ntime, const Dtset& dtset);
 
     /**
      * @brief insert Insert the dtset in the Hist at the itime position to build the Hist
      * @param itime Time at with the dtset will be inserted
      * @param dtset The dtset to copy into the hist
      */
-    void insert(unsigned itime, const Dtset& dtset);
+    void insert(const unsigned itime, const Dtset& dtset);
 
     /**
      * @brief push Will push the dtset to the end of the current hist.
@@ -277,7 +279,13 @@ class HistCustomModes : public HistDataDtset {
      * @brief setInstableAmplitude Set the amplitude to be used if the instable modes ared condensed with a fixed amplitude.
      * @param instableAmplitude The amplitude in A.
      */
-    void setInstableAmplitude(double instableAmplitude);
+    void setInstableAmplitude(const double instableAmplitude);
+
+    /**
+     * @brief setInstableModes Set the way instable modes are treated when populating the phonons.
+     * @param instableModes The choice @see InstableModes
+     */
+    void setInstableModes(const InstableModes instableModes);
 
 };
 

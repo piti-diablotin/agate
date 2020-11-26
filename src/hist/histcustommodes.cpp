@@ -32,10 +32,10 @@
 #include "io/dtset.hpp"
 #include <chrono>
 
-void HistCustomModes::buildHist(const geometry::vec3d& qptGrid, const double temperature, const std::map<StrainDistBound,double>& strainBounds, InstableModes instableModes, unsigned ntime) {
+void HistCustomModes::buildHist(const geometry::vec3d& qptGrid, const double temperature, const std::map<StrainDistBound,double>& strainBounds, const unsigned ntime) {
 
   this->initRandomEngine();
-  this->zachariasAmplitudes(temperature,ntime,qptGrid,instableModes);
+  this->zachariasAmplitudes(temperature,ntime,qptGrid);
   this->strainDist(strainBounds,ntime);
 
   if ( _condensedModes.empty() && _strainDist.empty() ) {
@@ -69,14 +69,14 @@ void HistCustomModes::buildHist(const geometry::vec3d& qptGrid, const double tem
   }
 }
 
-void HistCustomModes::addNoiseToHist(const HistData &hist, const double temperature, const std::map<StrainDistBound,double>& strainBounds, InstableModes instableModes,std::function<void()> callback) {
+void HistCustomModes::addNoiseToHist(const HistData &hist, const double temperature, const std::map<StrainDistBound,double>& strainBounds, const std::function<void()> &callback) {
   //hist.waitTime(hist._ntime); // This is handle indirectly Dtset construtor in hist->get* functions
   unsigned ntime = hist.ntime();
   Supercell firstTime(hist,0);
   firstTime.findReference(_reference);
   geometry::vec3d qptGrid = firstTime.getDim();
   this->initRandomEngine();
-  this->zachariasAmplitudes(temperature,ntime,qptGrid,instableModes);
+  this->zachariasAmplitudes(temperature,ntime,qptGrid);
   this->strainDist(strainBounds,ntime);
   this->reserve(ntime,firstTime);
   this->setTryToMap(false);
@@ -99,7 +99,7 @@ void HistCustomModes::addNoiseToHist(const HistData &hist, const double temperat
 }
 
 
-void HistCustomModes::animateModes(DispDB::qptTree& condensedModes, unsigned ntime)
+void HistCustomModes::animateModes(const DispDB::qptTree& condensedModes, const unsigned ntime)
 {
   // First, find smallest qpt to build the supercell
   geometry::vec3d qpt = {{ 1.0, 1.0, 1.0 }};
@@ -155,7 +155,7 @@ void HistCustomModes::animateModes(DispDB::qptTree& condensedModes, unsigned nti
   }
 }
 
-void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, geometry::vec3d supercell, InstableModes instable)
+void HistCustomModes::zachariasAmplitudes(const double temperature, const unsigned ntime, const geometry::vec3d &supercell)
 {
   _condensedModes.clear();
   if ( temperature < 1e-3 ) return;
@@ -181,7 +181,7 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
 
   UnitConverter tempConverter(UnitConverter::K);
   tempConverter = UnitConverter::Ha;
-  temperature = temperature*tempConverter;
+  const double temperature_Ha = temperature*tempConverter;
   std::uniform_real_distribution<double> uniformDistrib(-1.,1.);
   std::normal_distribution<double> normalDistrib(0., 1./3.);
   for ( unsigned i = 0 ; i < ntime ; ++i ) {
@@ -193,7 +193,7 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
         for (unsigned imode = 0 ; imode < 3*_db.natom() ; ++imode) {
           double energy = _db.getEnergyMode(iqpt,imode);
           if ( energy < 0 ) {
-            switch (instable) {
+            switch (_instableModes) {
               case Ignore:
                 break;
               case Constant:
@@ -209,22 +209,23 @@ void HistCustomModes::zachariasAmplitudes(double temperature, unsigned ntime, ge
           const double rng = (_randomType==Uniform?uniformDistrib(_randomEngine):normalDistrib(_randomEngine));
           double sigma = 0;
           switch (_statistics) {
-            case Classical:
-              sigma = sqrt(temperature/phys::amu_emass)/energy;
-              break;
-            case Quantum:
-              sigma = sqrt( (phys::BoseEinstein(energy,temperature)+0.5)/(energy*phys::amu_emass) );
-              break;
+            case Classical: {
+                              sigma = sqrt(temperature_Ha/phys::amu_emass)/energy;
+                              break;
+                            }
+            case Quantum: {
+                            sigma = sqrt( (phys::BoseEinstein(energy,temperature_Ha)+0.5)/(energy*phys::amu_emass) );
+                            break;
+                          }
            }
-          sigma *= phys::b2A * rng;
-          // convert sigma to correct unit
+          sigma *= phys::b2A * rng; // convert sigma to correct unit
           amplitudes.push_back({imode,sigma,energy});
         }
         conf[qpt] = amplitudes;
       }
       catch(Exception& e) {
         std::stringstream erreur;
-        erreur << "Qpt " << Fraction(qpt[0]).toString() << "  " << Fraction(qpt[1]).toString() << "  " << Fraction(qpt[2]).toString();
+        erreur << "Qpt " << geometry::to_string(qpt);
         erreur << " is not in DispDB -> ignored";
         e.ADD(erreur.str(),ERRWAR);
         std::clog << e.fullWhat() << std::endl;
@@ -239,13 +240,13 @@ double HistCustomModes::instableAmplitude() const
   return _instableAmplitude;
 }
 
-void HistCustomModes::setInstableAmplitude(double instableAmplitude)
+void HistCustomModes::setInstableAmplitude(const double instableAmplitude)
 {
   _instableAmplitude = instableAmplitude;
 }
 
 
-void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBounds, unsigned ntime) { 
+void HistCustomModes::strainDist(const std::map<StrainDistBound,double>& distBounds, const unsigned ntime) { 
   geometry::mat3d zero = {0};
   _strainDist.clear();
   if ( distBounds.size() == 0 ) return;
@@ -422,6 +423,7 @@ HistCustomModes::HistCustomModes(Dtset& dtset, DispDB& db) :
   _condensedModes(),
   _seedType(Random),
   _seed(42),
+  _instableModes(Absolute),
   _instableAmplitude(1),
   _strainTypes(false),
   _strainTetraDir(),
@@ -462,6 +464,11 @@ void HistCustomModes::setRandomType(const RandomType randomType)
 void HistCustomModes::setStatistics(const Statistics statistics)
 {
    _statistics = statistics;
+}
+
+void HistCustomModes::setInstableModes(const InstableModes instableModes) 
+{
+  _instableModes = instableModes;
 }
 
 void HistCustomModes::reserve(unsigned ntime, const Dtset& dtset)

@@ -162,7 +162,7 @@ class HistCMStrain : public CxxTest::TestSuite
       unsigned ntime = 1;
       const double temperature = 0;
 
-      histIso.buildHist(qptGrid, temperature, strainBoundsIso, HistCustomModes::Ignore, ntime);
+      histIso.buildHist(qptGrid, temperature, strainBoundsIso, ntime);
       auto strainIso = histIso.getStrain(0,refIso);
       TS_ASSERT_DELTA(strainIso[0], strainIso[1], 10e-10);
       TS_ASSERT_DELTA(strainIso[0], strainIso[2], 10e-10);
@@ -177,7 +177,7 @@ class HistCMStrain : public CxxTest::TestSuite
       HistCustomModes histTetra(refTetra,db);
       std::map<HistCustomModes::StrainDistBound,double> strainBoundsTetra {{HistCustomModes::TetraMin, 0.0001 }, {HistCustomModes::TetraMax, 0.1}};
       histTetra.setStrainTetraDir(true,true,true);
-      histTetra.buildHist(qptGrid, temperature, strainBoundsTetra, HistCustomModes::Ignore, ntime);
+      histTetra.buildHist(qptGrid, temperature, strainBoundsTetra, ntime);
       auto strainTetra = histTetra.getStrain(0,refTetra);
       TS_ASSERT((strainTetra[0] <= 0.1 && strainTetra[1]<= 0.1) || (strainTetra[0] <= 0.1 && strainTetra[2]<= 0.1) || (strainTetra[1] <= 0.1 && strainTetra[2]<= 0.1));
       TS_ASSERT((strainTetra[0]>= 0.0001 && strainTetra[1]>= 0.0001) || (strainTetra[0]>= 0.0001 && strainTetra[2]>= 0.0001) || (strainTetra[1] >= 0.0001 && strainTetra[2]>= 0.0001));
@@ -187,7 +187,7 @@ class HistCMStrain : public CxxTest::TestSuite
       HistCustomModes histShear(refShear,db);
       std::map<HistCustomModes::StrainDistBound,double> strainBoundsShear {{HistCustomModes::ShearMin, 0.0001 }, {HistCustomModes::ShearMax, 0.1}};
       histShear.setStrainShearDir(true,true,true);
-      histShear.buildHist(qptGrid, temperature, strainBoundsShear, HistCustomModes::Ignore, ntime);
+      histShear.buildHist(qptGrid, temperature, strainBoundsShear, ntime);
       auto strainShear = histShear.getStrain(0,refShear);
       TS_ASSERT((strainShear[3] <= 0.1) || (strainShear[4] <= 0.1) || (strainShear[5] <= 0.1));
       TS_ASSERT((strainShear[3] >= 0.0001) || (strainShear[4] >= 0.0001) || (strainShear[5] >= 0.0001));
@@ -206,7 +206,7 @@ class HistCMStrain : public CxxTest::TestSuite
       const double temperature = 0;
       histIso.setRandomType(HistCustomModes::Normal);
 
-      histIso.buildHist(qptGrid, temperature, strainBoundsIso, HistCustomModes::Ignore, ntime);
+      histIso.buildHist(qptGrid, temperature, strainBoundsIso, ntime);
       std::vector<double> strainIso(ntime);
 #pragma omp parallel for
       for ( unsigned itime = 0 ; itime < ntime ; ++itime ) {

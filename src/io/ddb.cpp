@@ -25,18 +25,18 @@
 
 
 #include "io/ddb.hpp"
-#include "base/exception.hpp"
-#include <string>
-#include "base/utils.hpp"
-#include <sstream>
-#include <iomanip>
 #include "io/configparser.hpp"
 #include "io/ddbabinit.hpp"
 #include "io/ddbphonopy.hpp"
 #include "io/ddboutcar.hpp"
-#include <fstream>
+#include "base/exception.hpp"
+#include "base/utils.hpp"
 #include "base/uriparser.hpp"
 #include "base/fraction.hpp"
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <fstream>
 
 //
 Ddb::Ddb() : Dtset(),
@@ -269,4 +269,72 @@ geometry::mat3d Ddb::getEpsInf() const {
        epsinf[mat3dind( idir, idir)] += 1.0;
 
 	return epsinf;			
+}
+
+void Ddb::blocks2Reduced() {
+  complex *matrix = new complex[3*_natom*3*_natom];
+  using namespace geometry;
+  for ( auto& block : _blocks ) {
+    memset(matrix,0,3*_natom*3*_natom*sizeof(complex));
+
+    for ( auto& elt : block.second ) {
+      const unsigned idir1 = elt.first[0];
+      const unsigned ipert1 = elt.first[1];
+      const unsigned idir2 = elt.first[2];
+      const unsigned ipert2 = elt.first[3];
+      if ( !(idir1 < 3 && idir2 < 3 && ipert1 < _natom && ipert2 < _natom) ) continue;
+      matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+idir2] = elt.second;
+    }
+    block.second.clear();
+
+    // Go to reduce coordinates
+    for ( unsigned ipert1 = 0 ; ipert1 < _natom ; ++ipert1 ) {
+      for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 ) {
+        for ( unsigned ipert2 = 0 ; ipert2 < _natom ; ++ipert2 ) {
+          vec3d d2cartR;
+          vec3d d2cartI;
+          d2cartR[0] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3  ].real();
+          d2cartI[0] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3  ].imag();
+          d2cartR[1] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+1].real();
+          d2cartI[1] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+1].imag();
+          d2cartR[2] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+2].real();
+          d2cartI[2] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+2].imag();
+          vec3d d2redRowR = _rprim * d2cartR;
+          vec3d d2redRowI = _rprim * d2cartI;
+          matrix[(ipert1*3+idir1)*3*_natom + ipert2*3  ].real(d2redRowR[0]);
+          matrix[(ipert1*3+idir1)*3*_natom + ipert2*3  ].imag(d2redRowI[0]);
+          matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+1].real(d2redRowR[1]);
+          matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+1].imag(d2redRowI[1]);
+          matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+2].real(d2redRowR[2]);
+          matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+2].imag(d2redRowI[2]);
+        }
+      }
+    }
+    //Second loop : change basis from reduced to cartesian (columns)
+    for ( unsigned ipert1 = 0 ; ipert1 < _natom ; ++ipert1 ) {
+      for ( unsigned ipert2 = 0 ; ipert2 < _natom ; ++ipert2 ) {
+        for ( unsigned idir2 = 0 ; idir2 < 3 ; ++idir2 ) {
+          vec3d d2redRowR;
+          vec3d d2redRowI;
+          d2redRowR[0] = matrix[(ipert1*3  )*3*_natom + ipert2*3+idir2].real();
+          d2redRowI[0] = matrix[(ipert1*3  )*3*_natom + ipert2*3+idir2].imag();
+          d2redRowR[1] = matrix[(ipert1*3+1)*3*_natom + ipert2*3+idir2].real(); 
+          d2redRowI[1] = matrix[(ipert1*3+1)*3*_natom + ipert2*3+idir2].imag(); 
+          d2redRowR[2] = matrix[(ipert1*3+2)*3*_natom + ipert2*3+idir2].real();
+          d2redRowI[2] = matrix[(ipert1*3+2)*3*_natom + ipert2*3+idir2].imag();
+          vec3d d2redR = _rprim * d2redRowR;
+          vec3d d2redI = _rprim * d2redRowI;
+          for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 ) {
+            block.second.push_back(
+                std::make_pair(
+                  std::array<unsigned,4>{{ idir1, ipert1, idir2, ipert2 }} , 
+                  complex(d2redR[idir1],d2redI[idir1])
+                  )
+                );
+          }
+        }
+      }
+    }
+  }
+  delete[] matrix;
 }

@@ -1,7 +1,7 @@
 /**
- * @file outcar.hpp
+ * @file include/./ddboutcar.hpp
  *
- * @brief Manage information for vasp OUTCAR
+ * @brief Read an OUTCAR file and store the Dynamical Matrix
  *
  * @author Jordan Bieder <jordan.bieder@uliege.be>
  *
@@ -23,8 +23,9 @@
  * along with Agate.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef OUTCAR_HPP 
-#define OUTCAR_HPP
+
+#ifndef DDBOUTCAR_HPP
+#define DDBOUTCAR_HPP
 
 #ifdef _WIN32
 #include "base/win32.hpp"
@@ -35,48 +36,36 @@
 #undef HAVE_CONFIG_H
 #endif
 
+#include "io/ddb.hpp"
+#include "io/outcar.hpp"
 
-#include "io/dtset.hpp"
-
-/**
- * Replace the load function to read the poscar file instead of abinit input
+/** 
+ *
  */
-class Outcar : virtual public Dtset {
+class DdbOutcar : public Outcar, public Ddb {
+
+  private :
+
+  protected :
 
   public :
 
     /**
-     * Constructor that builds an empty default Dtset.
+     * Constructor.
      */
-    Outcar();
+    DdbOutcar();
 
     /**
      * Destructor.
      */
-    ~Outcar();
+    virtual ~DdbOutcar();
 
     /**
-     * Fill a Dtset from an poscar file.
+     * Fill a DDB with the content of a file.
      * @param filename The name of the input file to read.
      */
     virtual void readFromFile(const std::string& filename);
 
-    /**
-     * Creat an poscar file with the current Dtset.
-     * Dump the poscar file to the stream
-     * @param out The ostream stream to write into.
-     */
-    virtual void dump(std::ostream& out) const;
-
-    /**
-     * Creat an poscar file with the current Dtset.
-     * @param filename The name of the file to be written.
-     */
-    virtual void dump(const std::string& filename) const {
-      Dtset::dump(filename);
-    }
-
-
 };
 
-#endif  //OUTCAR_HPP
+#endif  // DDBOUTCAR_HPP

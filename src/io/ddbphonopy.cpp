@@ -93,68 +93,21 @@ void DdbPhonopy::readFromFile(const std::string& filename) {
           if ( !dynmat[row].IsSequence() && dynmat[row].size() != 3*_natom ) throw EXCEPTION("Bad formatted dynamical_matrix",ERRDIV);
           for ( unsigned ipert2 = 0, col = 0 ; ipert2 < _natom ; ++ipert2 ) {
             for ( unsigned idir2 = 0 ; idir2 < 3 ; ++idir2 ) {
-              matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+idir2] = complex(dynmat[row][col].as<double>()*factor,dynmat[row][col+1].as<double>()*factor);
+              block.push_back(
+                  std::make_pair(
+                    std::array<unsigned,4>{{ idir1, ipert1, idir2, ipert2 }} , 
+                    complex(dynmat[row][col].as<double>()*factor,dynmat[row][col+1].as<double>()*factor)
+                    )
+                  );
               col+=2;
             }
           }
           ++row;
         }
       }
-
-      // Go to reduce coordinates
-      for ( unsigned ipert1 = 0 ; ipert1 < _natom ; ++ipert1 ) {
-        for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 ) {
-          for ( unsigned ipert2 = 0 ; ipert2 < _natom ; ++ipert2 ) {
-            vec3d d2cartR;
-            vec3d d2cartI;
-            d2cartR[0] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3  ].real();
-            d2cartI[0] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3  ].imag();
-            d2cartR[1] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+1].real();
-            d2cartI[1] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+1].imag();
-            d2cartR[2] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+2].real();
-            d2cartI[2] = matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+2].imag();
-            vec3d d2redRowR = _rprim * d2cartR;
-            vec3d d2redRowI = _rprim * d2cartI;
-            matrix[(ipert1*3+idir1)*3*_natom + ipert2*3  ].real(d2redRowR[0]);
-            matrix[(ipert1*3+idir1)*3*_natom + ipert2*3  ].imag(d2redRowI[0]);
-            matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+1].real(d2redRowR[1]);
-            matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+1].imag(d2redRowI[1]);
-            matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+2].real(d2redRowR[2]);
-            matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+2].imag(d2redRowI[2]);
-          }
-        }
-      }
-      //Second loop : change basis from reduced to cartesian (columns)
-      for ( unsigned ipert1 = 0 ; ipert1 < _natom ; ++ipert1 ) {
-        for ( unsigned ipert2 = 0 ; ipert2 < _natom ; ++ipert2 ) {
-          for ( unsigned idir2 = 0 ; idir2 < 3 ; ++idir2 ) {
-            vec3d d2redRowR;
-            vec3d d2redRowI;
-            d2redRowR[0] = matrix[(ipert1*3  )*3*_natom + ipert2*3+idir2].real();
-            d2redRowI[0] = matrix[(ipert1*3  )*3*_natom + ipert2*3+idir2].imag();
-            d2redRowR[1] = matrix[(ipert1*3+1)*3*_natom + ipert2*3+idir2].real(); 
-            d2redRowI[1] = matrix[(ipert1*3+1)*3*_natom + ipert2*3+idir2].imag(); 
-            d2redRowR[2] = matrix[(ipert1*3+2)*3*_natom + ipert2*3+idir2].real();
-            d2redRowI[2] = matrix[(ipert1*3+2)*3*_natom + ipert2*3+idir2].imag();
-            vec3d d2redR = _rprim * d2redRowR;
-            vec3d d2redI = _rprim * d2redRowI;
-
-            for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 ) {
-              block.push_back(
-                  std::make_pair(
-                    std::array<unsigned,4>{{ idir1, ipert1, idir2, ipert2 }} , 
-                    complex(d2redR[idir1],d2redI[idir1])
-                    )
-                  );
-            }
-          }
-        }
-      }
-
-
-
       _blocks.insert(std::make_pair( qpt, block));
     }
+    this->blocks2Reduced();
 
   }
   catch (YAML::BadSubscript &e) {

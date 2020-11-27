@@ -33,6 +33,7 @@
 #include "io/configparser.hpp"
 #include "io/ddbabinit.hpp"
 #include "io/ddbphonopy.hpp"
+#include "io/ddboutcar.hpp"
 #include <fstream>
 #include "base/uriparser.hpp"
 #include "base/fraction.hpp"
@@ -64,9 +65,7 @@ std::string Ddb::info() const {
   rstr.setf(std::ios::scientific, std::ios::floatfield);
   rstr.setf(std::ios::right, std::ios::adjustfield);
   for ( auto& block : _blocks ) {
-    rstr << std::endl << "Q-pt: " << std::setw(8) << Fraction(block.first[0])
-      << std::setw(8) << Fraction(block.first[1])
-      << std::setw(8) << Fraction(block.first[2]) << std::endl;
+    rstr << std::endl << "Q-pt: " << geometry::to_string(block.first) << std::endl;
     rstr << "  # elements: " << block.second.size() << std::endl;
   }
   return rstr.str();
@@ -82,10 +81,7 @@ const std::vector<Ddb::d2der>& Ddb::getDdb(const geometry::vec3d qpt) const {
       found = it;
   }
   if ( found == _blocks.end() )
-    throw EXCEPTION(std::string("Block not found for q-pt [")
-        +utils::to_string(qpt[0])+std::string(",")
-        +utils::to_string(qpt[1])+std::string(",")
-        +utils::to_string(qpt[2])+std::string("]"),Ddb::ERFOUND);
+    throw EXCEPTION(std::string("Block not found for q-pt ")+to_string(qpt), Ddb::ERFOUND);
 
   return found->second;
 }
@@ -108,6 +104,7 @@ Ddb* Ddb::getDdb(const std::string& infile){
 
   allFormat.push_back(std::make_pair(std::unique_ptr<Ddb>(new DdbAbinit),"Abinit DDB")); //0
   allFormat.push_back(std::make_pair(std::unique_ptr<Ddb>(new DdbPhonopy),"Phonopy YAML"));   //1
+  allFormat.push_back(std::make_pair(std::unique_ptr<Ddb>(new DdbOutcar),"OUTCAR"));   //2
 
   std::string file = infile;
   UriParser uri;
@@ -116,6 +113,7 @@ Ddb* Ddb::getDdb(const std::string& infile){
   }
 
   if ( file.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[1]);
+  else if ( file.find("OUTCAR") != std::string::npos ) allFormat[0].swap(allFormat[2]);
 
   for ( auto& p : allFormat ) {
     try {

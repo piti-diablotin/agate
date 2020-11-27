@@ -66,7 +66,7 @@ Poscar::Poscar(const HistData &hist, const unsigned itime) : Dtset(hist,itime),
 
 //
 Poscar::Poscar(const Dtset& dtset) : Dtset(dtset),
-  _title("Abinit2VASP"),
+  _title("Agate2VASP"),
   _names()
 {
   /*
@@ -95,7 +95,7 @@ Poscar::Poscar(const Dtset& dtset) : Dtset(dtset),
 
 //
 Poscar& Poscar::operator = (const Dtset& dtset){
-  _title = "Abinit2VASP";
+  _title = "Agate2VASP";
   _natom = dtset.natom();
   _ntypat = dtset.ntypat();
   _typat = dtset.typat();

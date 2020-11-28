@@ -327,9 +327,9 @@ geometry::mat3d HistCustomModes::getStrainMatrix(const std::array<double,3>& amp
   }
   if ( std::abs(delta1) > 1e-10 ) {
     mat3d strainTetra = {
-      delta1, 0.0 ,0.0,
-      0.0 , delta1, 0.0,
-      0.0 , 0.0 , (-2*delta1 - (delta1*delta1))/((1+delta1)*(1+delta1)) };
+      -1+(1/sqrt(1+delta1)), 0.0 ,0.0,
+      0.0 , -1+(1/sqrt(1+delta1)), 0.0,
+      0.0 , 0.0 , delta1 };
     this->rotateStrain(strainTetra,Tetra);
     strainTot = strainTot + strainTetra;
   }

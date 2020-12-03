@@ -379,24 +379,33 @@ void Ddb::setZeff(const unsigned iatom, const geometry::mat3d &zeff) {
   _zion[_typat[iatom]-1] = 0;
 
   mat3d rprimTranspose = transpose(_rprim);
-  geometry::mat3d d2red = rprimTranspose * (zeff * _gprim);
+  geometry::mat3d d2red = (rprimTranspose * (zeff  * _gprim))*twopi;
 
-  for ( unsigned i = 0 ; i < 3 ; ++i )
-    for ( unsigned j = 0 ; j < 3 ; ++j ) {
-      d2red[mat3dind(j+1,i+1)] *= twopi;
+  for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 )
+    for ( unsigned idir2 = 0 ; idir2 < 3 ; ++idir2 ) {
       block.push_back(
           std::make_pair(
-            std::array<unsigned,4>{{ j, _natom+1, i, iatom}},
-            complex(d2red[mat3dind(j+1,i+1)],0)
+            std::array<unsigned,4>{{ idir1, _natom+1, idir2, iatom}},
+            complex(d2red[mat3dind(idir1+1,idir2+1)],0)
             )
           );
       block.push_back(
           std::make_pair(
-            std::array<unsigned,4>{{ i, iatom, j, _natom+1}},
-            complex(d2red[mat3dind(i+1,j+1)],0)
+            std::array<unsigned,4>{{ idir2, iatom, idir1, _natom+1}},
+            complex(d2red[mat3dind(idir1+1,idir2+1)],0)
             )
           );
     }
+  auto check = this->getZeff(iatom);
+  for ( unsigned i = 0 ; i < 9 ; ++i ) {
+    if ( std::abs(check[i]-zeff[i]) > 1e-3 ) {
+      std::cerr << "INPUT " << std::endl;
+      print(zeff);
+      std::cerr << "OUTPUT" << std::endl;
+      print(check);
+      throw EXCEPTION("Setting Zeff failed",ERRWAR);
+    }
+  }
 
 }
 
@@ -413,17 +422,26 @@ void Ddb::setEpsInf(const geometry::mat3d &epsinf) {
   mat3d gprimTranspose = transpose(_gprim);
   double volume = det(_rprim);
 
-  d2red = gprimTranspose * (d2red * _gprim);
+  d2red = (gprimTranspose * (d2red * _gprim))*(-phys::pi*volume);
 
   for ( unsigned i = 0 ; i < 3 ; ++i ) {
     for ( unsigned j = 0 ; j < 3 ; ++j ) {
-      d2red[mat3dind(j+1,i+1)] *= (-phys::pi*volume);
       block.push_back(
           std::make_pair(
             std::array<unsigned,4>{{ j, _natom+1, i, _natom+1}},
             complex(d2red[mat3dind(j+1,i+1)],0)
             )
           );
+    }
+  }
+  auto check = this->getEpsInf();
+  for ( unsigned i = 0 ; i < 9 ; ++i ) {
+    if ( std::abs(check[i]-epsinf[i]) > 1e-3 ) {
+      std::cerr << "INPUT " << std::endl;
+      print(epsinf);
+      std::cerr << "OUTPUT" << std::endl;
+      print(check);
+      throw EXCEPTION("Setting Eps Inf failed", ERRWAR);
     }
   }
 }

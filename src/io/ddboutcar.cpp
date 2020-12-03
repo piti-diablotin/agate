@@ -54,7 +54,7 @@ void DdbOutcar::readFromFile(const std::string& filename) {
       throw EXCEPTION("Error while opening file " + filename, ERRDIV);
 
     _zion.clear();
-    _zion.resize(_natom,0);
+    _zion.resize(_znucl.size(),0);
     std::string line;
     unsigned int iline = 0;
     UnitConverter eunit(UnitConverter::eV);
@@ -101,7 +101,8 @@ void DdbOutcar::readFromFile(const std::string& filename) {
         }
         break;
       }
-      else if ( (pos=line.find("BORN EFFECTIVE CHARGES (including local field effects) (in |e|, cummulative output)")) != std::string::npos ) {
+      else if ( (pos=line.find("BORN EFFECTIVE CHARGES")) != std::string::npos 
+          && (pos=line.find("cummulative output")) != std::string::npos ) {
         utils::getline(outcar,line,iline); // line with ---------------
         std::string dummy;
         for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {

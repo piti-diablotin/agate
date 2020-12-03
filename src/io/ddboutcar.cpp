@@ -39,6 +39,7 @@ DdbOutcar::~DdbOutcar() {
 }
 
 void DdbOutcar::readFromFile(const std::string& filename) {
+  using geometry::mat3dind;
   try {
     Outcar::readFromFile(filename);
   }
@@ -52,6 +53,8 @@ void DdbOutcar::readFromFile(const std::string& filename) {
     if ( !outcar)
       throw EXCEPTION("Error while opening file " + filename, ERRDIV);
 
+    _zion.clear();
+    _zion.resize(_natom,0);
     std::string line;
     unsigned int iline = 0;
     UnitConverter eunit(UnitConverter::eV);
@@ -59,6 +62,7 @@ void DdbOutcar::readFromFile(const std::string& filename) {
     eunit = UnitConverter::Ha;
     dunit = UnitConverter::bohr;
     const double factor = (-1*eunit)/(1*dunit*dunit);
+    bool foundEpsInf = false;
     while ( utils::getline(outcar,line,iline) ) {
       size_t pos;
       if ( (pos=line.find("SECOND DERIVATIVES")) != std::string::npos ) {
@@ -76,8 +80,7 @@ void DdbOutcar::readFromFile(const std::string& filename) {
           throw EXCEPTION("Missmatch between natom and number of perturbation read", ERRDIV);
         double val;
         std::string dummy;
-        std::vector<d2der> block;
-        geometry::vec3d qpt = {0,0,0}; // Gamma only
+        std::vector<Ddb::d2der>& block = this->getD2der({0,0,0});
         for ( unsigned ipert1 = 0 ; ipert1 < _natom ; ++ipert1 ) {
           for ( unsigned idir1 = 0 ; idir1 < 3  ; ++idir1 ) {
             utils::getline(outcar,line,iline); 
@@ -96,8 +99,32 @@ void DdbOutcar::readFromFile(const std::string& filename) {
             }
           }
         }
-        _blocks.insert(std::make_pair( qpt, block));
         break;
+      }
+      else if ( (pos=line.find("BORN EFFECTIVE CHARGES (including local field effects) (in |e|, cummulative output)")) != std::string::npos ) {
+        utils::getline(outcar,line,iline); // line with ---------------
+        std::string dummy;
+        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+          utils::getline(outcar,line,iline); // line with ion i
+          geometry::mat3d zeff;
+          for ( unsigned idir = 1 ; idir < 4 ; ++idir ) {
+            utils::getline(outcar,line,iline);
+            std::istringstream str(line);
+            str >> dummy >> zeff[mat3dind(1,idir)] >> zeff[mat3dind(2,idir)] >> zeff[mat3dind(3,idir)];
+          }
+          this->setZeff(iatom, zeff);
+        }
+      }
+      else if ( !foundEpsInf && (pos=line.find("MACROSCOPIC STATIC DIELECTRIC TENSOR (including local field effects in DFT)")) != std::string::npos ) {
+        utils::getline(outcar,line,iline); // line with ---------------
+        geometry::mat3d eps_inf;
+        for ( unsigned idir = 1 ; idir < 4 ; ++idir ) {
+          utils::getline(outcar,line,iline);
+          std::istringstream str(line);
+          str >> eps_inf[mat3dind(1,idir)] >> eps_inf[mat3dind(2,idir)] >> eps_inf[mat3dind(3,idir)];
+        }
+        this->setEpsInf(eps_inf);
+        foundEpsInf = true;
       }
     }
     if ( _blocks.size() < 1 ) 

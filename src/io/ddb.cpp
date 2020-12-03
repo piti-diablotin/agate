@@ -86,6 +86,22 @@ const std::vector<Ddb::d2der>& Ddb::getDdb(const geometry::vec3d qpt) const {
   return found->second;
 }
 
+std::vector<Ddb::d2der>& Ddb::getD2der(const geometry::vec3d qpt) {
+  using namespace geometry;
+  auto found = _blocks.end();
+  for ( auto it = _blocks.begin() ; it != _blocks.end() ; ++ it) {
+    if ( norm(qpt-it->first) < 1e-12 )
+      found = it;
+  }
+  if ( found == _blocks.end() ) {
+    std::vector<d2der> block;
+    _blocks.insert(std::make_pair( qpt, block));
+    return _blocks[qpt];
+  }
+  else {
+    return found->second;
+  }
+}
 
 //
 const std::vector<geometry::vec3d> Ddb::getQpts() const {
@@ -243,11 +259,10 @@ geometry::mat3d Ddb::getEpsInf() const {
     const unsigned ipert1 = elt.first[1];
     const unsigned idir2 = elt.first[2];
     const unsigned ipert2 = elt.first[3];
-    if ( idir1 < 3 && idir2 < 3 && 
-        ( ( ipert1 == _natom+1 && ipert2 == _natom+1 ) 
-          || ( ipert2 == _natom+1 && ipert1 == _natom+1 ) 
-        )
-       ) {
+    if ( idir1 < 3 && idir2 < 3 &&
+        ( ipert1 == _natom+1 && ipert2 == _natom+1 )
+       )
+       {
       epsinf[mat3dind( idir1+1, idir2+1)] += elt.second.real();
       count[mat3dind( idir1+1, idir2+1)] += 1e0;
     }
@@ -277,15 +292,26 @@ void Ddb::blocks2Reduced() {
   for ( auto& block : _blocks ) {
     memset(matrix,0,3*_natom*3*_natom*sizeof(complex));
 
+    std::vector<Ddb::d2der> saved;
     for ( auto& elt : block.second ) {
       const unsigned idir1 = elt.first[0];
       const unsigned ipert1 = elt.first[1];
       const unsigned idir2 = elt.first[2];
       const unsigned ipert2 = elt.first[3];
-      if ( !(idir1 < 3 && idir2 < 3 && ipert1 < _natom && ipert2 < _natom) ) continue;
-      matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+idir2] = elt.second;
+      if ( !(idir1 < 3 && idir2 < 3 && ipert1 < _natom && ipert2 < _natom) ) {
+        saved.push_back(
+            std::make_pair(
+              std::array<unsigned,4>{{ idir1, ipert1, idir2, ipert2 }},
+              elt.second
+              )
+            );
+      }
+      else {
+        matrix[(ipert1*3+idir1)*3*_natom + ipert2*3+idir2] = elt.second;
+      }
     }
     block.second.clear();
+    block.second = saved;
 
     // Go to reduce coordinates
     for ( unsigned ipert1 = 0 ; ipert1 < _natom ; ++ipert1 ) {
@@ -337,4 +363,67 @@ void Ddb::blocks2Reduced() {
     }
   }
   delete[] matrix;
+}
+
+void Ddb::setZeff(const unsigned iatom, const geometry::mat3d &zeff) {
+  using namespace geometry;
+  const vec3d qpt = {{0,0,0}};
+
+  if ( iatom >= _natom )
+    throw EXCEPTION("Atom "+utils::to_string(iatom)+" is not in DDB", ERRDIV);
+
+  std::vector<Ddb::d2der>& block = this->getD2der(qpt);
+
+  const double twopi = 2*phys::pi;
+
+  _zion[_typat[iatom]-1] = 0;
+
+  mat3d rprimTranspose = transpose(_rprim);
+  geometry::mat3d d2red = rprimTranspose * (zeff * _gprim);
+
+  for ( unsigned i = 0 ; i < 3 ; ++i )
+    for ( unsigned j = 0 ; j < 3 ; ++j ) {
+      d2red[mat3dind(j+1,i+1)] *= twopi;
+      block.push_back(
+          std::make_pair(
+            std::array<unsigned,4>{{ j, _natom+1, i, iatom}},
+            complex(d2red[mat3dind(j+1,i+1)],0)
+            )
+          );
+      block.push_back(
+          std::make_pair(
+            std::array<unsigned,4>{{ i, iatom, j, _natom+1}},
+            complex(d2red[mat3dind(i+1,j+1)],0)
+            )
+          );
+    }
+
+}
+
+void Ddb::setEpsInf(const geometry::mat3d &epsinf) {
+  using namespace geometry;
+  const vec3d qpt = {{0,0,0}};
+  geometry::mat3d d2red(epsinf);
+
+  std::vector<Ddb::d2der>& block = this->getD2der(qpt);
+
+  for ( unsigned idir = 1 ; idir <= 3 ; ++idir )
+    d2red[mat3dind( idir, idir)] -= 1.0;
+
+  mat3d gprimTranspose = transpose(_gprim);
+  double volume = det(_rprim);
+
+  d2red = gprimTranspose * (d2red * _gprim);
+
+  for ( unsigned i = 0 ; i < 3 ; ++i ) {
+    for ( unsigned j = 0 ; j < 3 ; ++j ) {
+      d2red[mat3dind(j+1,i+1)] *= (-phys::pi*volume);
+      block.push_back(
+          std::make_pair(
+            std::array<unsigned,4>{{ j, _natom+1, i, _natom+1}},
+            complex(d2red[mat3dind(j+1,i+1)],0)
+            )
+          );
+    }
+  }
 }

@@ -73,6 +73,7 @@ class DdbAbinit : public Ddb {
      */
     virtual void readFromFile(const std::string& filename);
 
+    static void header(const Ddb &ddb, std::ostream &out);
     static void dump(const Ddb &ddb, std::string filename);
 };
 

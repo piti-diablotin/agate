@@ -29,6 +29,7 @@
 #include <string>
 #include <iomanip>
 #include "base/utils.hpp"
+#include "base/unitconverter.hpp"
 #include "io/configparser.hpp"
 #include "base/mendeleev.hpp"
 
@@ -178,6 +179,11 @@ bool DdbAbinit::readBlock(std::ifstream& idd) {
 
 void DdbAbinit::header(const Ddb &ddb, std::ostream &out) {
   using namespace std;
+  std::vector<geometry::mat3d> rotations;
+  std::vector<geometry::vec3d> tnons;
+  UnitConverter dunit(UnitConverter::A);
+  dunit = UnitConverter::bohr;
+  ddb.getSymmetries(rotations,tnons,1e-3*dunit);
   out.setf(ios::right,ios::adjustfield);
   out << endl << " **** DERIVATIVE DATABASE ****    " << endl;
   out << "+DDB, Version number" << setw(10) << 100401 << endl << endl;
@@ -186,7 +192,7 @@ void DdbAbinit::header(const Ddb &ddb, std::ostream &out) {
   out << " " << setw(9) << "natom" << setw(10) << ddb.natom() << endl;
   out << " " << setw(9) << "nkpt" << setw(10) << 1 << endl;
   out << " " << setw(9) << "nsppol" << setw(10) << (ddb.spinat().size() > 0? 2: 1) << endl;
-  out << " " << setw(9) << "nsym" << setw(10) << 1 << endl;
+  out << " " << setw(9) << "nsym" << setw(10) << rotations.size() << endl;
   out << " " << setw(9) << "ntypat" << setw(10) << ddb.ntypat() << endl;
   out << " " << setw(9) << "occopt" << setw(10) << 1 << endl;
   out << " " << setw(9) << "nband" << setw(10) << 1 << endl;
@@ -232,13 +238,22 @@ void DdbAbinit::header(const Ddb &ddb, std::ostream &out) {
   if ( spinat.size() == 0 ) spinat.resize(ddb.natom(),{0,0,0});
   for ( unsigned iatom = 0 ; iatom < spinat.size() ; ++iatom )
     out << setw((iatom==0?22:32)) << spinat[iatom][0] << setw(22) << spinat[iatom][1] << setw(22) << spinat[iatom][2] << endl;
-  out << " " << setw(9) << "symafm" << setw(5) << " " << setw(5) << 1 << endl;
-  out << " " << setw(9) << "symrel" << setw(5) << " "
-    << setw(5) << 1 << setw(5) << 0 << setw(5) << 0
-    << setw(5) << 0 << setw(5) << 1 << setw(5) << 0
-    << setw(5) << 0 << setw(5) << 0 << setw(5) << 1 << endl;
-  out << " " << setw(9) << "tnons"
-    << setw(22) << 0. << setw(22) << 0. << setw(22) << 0. << endl;
+  out << " " << setw(9) << "symafm";
+  for ( unsigned isym = 0 ; isym < rotations.size() ; ++isym) {
+    out << setw((isym==0?10:(isym%12==0?20:5))) << 1;
+    if ( (isym+1)%12 == 0 ) out << endl;
+  }
+  if ( rotations.size()%12 != 0 ) out << endl;
+  out << " " << setw(9) << "symrel";
+  for ( unsigned isym = 0 ; isym < rotations.size() ; ++isym ) {
+    out << setw(isym==0?5:15) << " ";
+    for ( auto i : rotations[isym] )
+      out << setw(5) << lrint(i);
+    out << endl;
+  }
+  out << " " << setw(9) << "tnons";
+  for ( unsigned isym = 0 ; isym < tnons.size() ; ++isym)
+    out << setw((isym==0?22:32)) << tnons[isym][0] << setw(22) << tnons[isym][1] << setw(22) << tnons[isym][2] << endl;
   out << " " << setw(9) << "tolwfr" << setw(22) << 1e-20 << endl;
   out << " " << setw(9) << "tphysel" << setw(22) << 0. << endl;
   out << " " << setw(9) << "tsmear" << setw(22) << 1e-3 << endl;

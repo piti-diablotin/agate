@@ -1027,6 +1027,9 @@ void Dtset::getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<g
       }
     }
   }
+  delete [] positions;
+  delete [] rot;
+  delete [] tnon;
 #else
   throw EXCEPTION("spglib needed",ERRABT);
 #endif

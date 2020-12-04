@@ -123,6 +123,7 @@ void Outcar::readFromFile(const std::string& filename) {
 
 //
 void Outcar::dump(std::ostream& out) const {
+  (void) out;
   throw EXCEPTION("It does not make sens to dump an OUTCAR !", ERRDIV);
 }
 

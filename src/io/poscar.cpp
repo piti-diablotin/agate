@@ -51,10 +51,10 @@ Poscar::Poscar(const HistData &hist, const unsigned itime) : Dtset(hist,itime),
   _names()
 {
   if ( _znucl.size() >= 1 && _znucl[0]!=0 ) {
-    _names = "    ";
+    _names = "      ";
     for ( auto& znucl : _znucl ) {
       _names += Mendeleev::name[znucl];
-      _names += " ";
+      _names += "   ";
     }
     _names.erase(_names.end()-1);
   }
@@ -84,10 +84,10 @@ Poscar::Poscar(const Dtset& dtset) : Dtset(dtset),
   _acell = {{ 1.0, 1.0, 1.0 }};
   if ( !_znucl.empty() ) {
     _znucl.resize(_ntypat);
-    _names = "    ";
+    _names = "      ";
     for ( auto& znucl : _znucl ) {
       _names += Mendeleev::name[znucl];
-      _names += " ";
+      _names += "   ";
     }
     _names.erase(_names.end()-1);
   }
@@ -109,10 +109,10 @@ Poscar& Poscar::operator = (const Dtset& dtset){
   _findsym = dtset.findsym();
   if ( !_znucl.empty() ) {
     _znucl.resize(_ntypat);
-    _names = "    ";
+    _names = "      ";
     for ( auto& znucl : _znucl ) {
       _names += Mendeleev::name[znucl];
-      _names += " ";
+      _names += "   ";
     }
     _names.erase(_names.end()-1);
   }
@@ -234,10 +234,10 @@ void Poscar::readFromFile(const std::string& filename) {
     } while ( !sstr.eof() );
     if ( !_znucl.empty() ) {
       _znucl.resize(_ntypat);
-      _names = "    ";
+      _names = "      ";
       for ( auto& znucl : _znucl ) {
         _names += Mendeleev::name[znucl];
-        _names += " ";
+        _names += "   ";
       }
     }
 

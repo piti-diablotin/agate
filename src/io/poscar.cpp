@@ -296,13 +296,13 @@ void Poscar::readFromFile(const std::string& filename) {
       _xcart.shrink_to_fit();
 #endif
       geometry::changeBasis(_rprim, _xcart, _xred, true);
-      _acell[0] = 1.0;
-      _acell[1] = 1.0;
-      _acell[2] = 1.0;
     }
     else {
       throw EXCEPTION("Unkown coordinate system "+sstr.str(),ERRDIV);
     }
+    _acell[0] = 1.0;
+    _acell[1] = 1.0;
+    _acell[2] = 1.0;
   }
   catch( Exception& e ) {
     std::string err_str = "Failed to build Poscar from file "+filename;

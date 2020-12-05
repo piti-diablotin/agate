@@ -33,8 +33,6 @@
 #include "base/phys.hpp"
 #include "base/mendeleev.hpp"
 
-using namespace Agate;
-
 //
 DdbPhonopy::DdbPhonopy() : Ddb() {
   _haveMasses = true;
@@ -55,6 +53,17 @@ void DdbPhonopy::readFromFile(const std::string& filename) {
   try {
     YAML::Node fulldoc = YAML::LoadFile(filename);
     _natom = fulldoc["natom"].as<unsigned>();
+    _ntypat = _natom;
+    _typat.resize(_natom);
+    _xred.resize(_natom);
+    _xcart.resize(_natom);
+    _znucl.resize(_natom);
+    for ( unsigned i = 0 ; i < _natom ; ++i ) {
+      _typat[i]=i+1;
+      _xred[i]={0,0,0};
+      _xcart[i]={0,0,0};
+      _znucl[i]=0;
+    }
 
     YAML::Node rlattice;
     if ( fulldoc["reciprocal_lattice"] ) {
@@ -81,12 +90,11 @@ void DdbPhonopy::readFromFile(const std::string& filename) {
     std::clog << "Will read " << qpoints.size() << " qpoints" << std::endl;
 
     const double factor = phys::b2A*phys::b2A/phys::Ha2eV;
-    complex *matrix = new complex[3*_natom*3*_natom];
     for ( unsigned iqpt = 0 ; iqpt < qpoints.size() ; ++iqpt ) {
       vec3d qpt = qpoints[iqpt]["q-position"].as<vec3d>();
       auto dynmat = qpoints[iqpt]["dynamical_matrix"];
       if ( !dynmat.IsSequence() || dynmat.size() != 3*_natom ) throw EXCEPTION("Bad formatted file",ERRDIV);
-      std::vector<d2der> block;
+      auto& block = this->getD2der(qpt);
       unsigned row = 0;
       for ( unsigned ipert1 = 0 ; ipert1 < _natom ; ++ipert1 ) {
         for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 ) {
@@ -105,16 +113,34 @@ void DdbPhonopy::readFromFile(const std::string& filename) {
           ++row;
         }
       }
-      _blocks.insert(std::make_pair( qpt, block));
     }
     this->blocks2Reduced();
-
+    std::string bornfile = utils::dirname(filename)+"/BORN";
+    std::ifstream born(bornfile);
+    if ( born ) {
+      _zion.resize(_typat.size()); 
+      unsigned iline = 0;
+      std::string line;
+      utils::getline(born,line,iline); // First line is an conversion factor eventually.
+      utils::getline(born,line,iline); 
+      std::istringstream eps(line);
+      mat3d epsinf;
+      for ( unsigned i = 0 ; i < 9 ; ++i ) eps >> epsinf[i];
+      if ( eps ) this->setEpsInf(epsinf);
+      unsigned iatom = 0;
+      while ( utils::getline(born,line,iline) && iatom < _natom) {
+        std::istringstream zi(line);
+        mat3d zeff;
+        for ( unsigned i = 0 ; i < 9 ; ++i ) zi >> zeff[i];
+        this->setZeff(iatom++,zeff);
+      }
+    }
   }
   catch (YAML::BadSubscript &e) {
     throw EXCEPTION("Bad subscript",ERRABT);
   }
-  catch (...) {
-    throw EXCEPTION("Something unexpected happened", ERRDIV);
+  catch (YAML::Exception &e){
+    throw EXCEPTION(e.what(), ERRDIV);
   }
 #endif
 }
@@ -124,6 +150,31 @@ void DdbPhonopy::buildFrom(const Dtset& dtset) {
   if ( _natom != dtset.natom() ) 
     throw EXCEPTION("Not the same number of atoms !!",ERRABT);
   Ddb::buildFrom(dtset);
+  _zion.resize(_ntypat);
+  std::fill_n(_zion.begin(),_ntypat,0); // all should be 0
+  std::vector<geometry::mat3d> currentZ;
+  for ( unsigned izeff = 0 ; izeff < _natom ; ++izeff ) {
+    try {
+      currentZ.push_back(this->getZeff(izeff));
+    }
+    catch (...) {
+      break;
+    }
+  }
+  if ( currentZ.size() != _natom ) {
+    throw EXCEPTION("Number of Zeff is smaller than natom is not supported yet",ERRDIV);
+#ifdef HAVE_SPGLIB
+    SpglibDataset* spgDtset = this->getSpgDtset(0.001*phys::A2b);
+    if ( spgDtset != nullptr ) {
+      unsigned prevAtom = 0;
+      for ( unsigned iatom = 0, izeff=0; iatom < _natom; ++iatom ) {
+        unsigned eqatom = static_cast<unsigned>(spgDtset->equivalent_atoms[iatom]);
+        this->setZeff(iatom,eqatom == prevAtom ? currentZ[izeff] : currentZ[++izeff]);
+      }
+    }
+    spg_free_dataset(spgDtset);
+#endif
+  }
   if ( _typat.size() == _natom && _blocks.size() > 0) {
     for( auto& block : _blocks ){
       for ( auto& elt : block.second ) {

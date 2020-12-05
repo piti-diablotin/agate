@@ -377,6 +377,18 @@ namespace utils {
     return ( pos != std::string::npos ) ? filename.substr(0,pos) : filename;
   }
 
+  std::string dirname(std::string filename) {
+    if ( filename.back() == '/' ) filename.pop_back();
+    auto pos = filename.find_last_of("/");
+    return ( pos != std::string::npos ) ? filename.substr(0,pos) : ".";
+  }
+
+  std::string basename(std::string filename) {
+    if ( filename.back() == '/' ) filename.pop_back();
+    auto pos = filename.find_last_of("/");
+    return ( pos != std::string::npos ) ? filename.substr(pos+1) : filename;
+  }
+
 #ifndef _WIN32
   std::vector<std::pair<long int, std::string>> ls(std::string dir, std::string pattern) {
 

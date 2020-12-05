@@ -290,7 +290,7 @@ void Ddb::blocks2Reduced() {
   complex *matrix = new complex[3*_natom*3*_natom];
   using namespace geometry;
   for ( auto& block : _blocks ) {
-    memset(matrix,0,3*_natom*3*_natom*sizeof(complex));
+    std::fill_n(matrix,3*_natom*3*_natom,complex(0,0));
 
     std::vector<Ddb::d2der> saved;
     for ( auto& elt : block.second ) {

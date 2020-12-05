@@ -229,9 +229,9 @@ void DdbAbinit::header(const Ddb &ddb, std::ostream &out) {
   out << " " << setw(9) << "nspinor" << setw(10) << 1 << endl;
   out << " " << setw(9) << "occ" << setw(22) << 2. << endl;
   out << " " << setw(9) << "rprim" 
-    << setw(22) << ddb.rprim()[0] << setw(22) << ddb.rprim()[3] << setw(22) << ddb.rprim()[6] << endl
-    << setw(32) << ddb.rprim()[1] << setw(22) << ddb.rprim()[4] << setw(22) << ddb.rprim()[7] << endl
-    << setw(32) << ddb.rprim()[2] << setw(22) << ddb.rprim()[5] << setw(22) << ddb.rprim()[8] << endl;
+    << setw(22) << ddb.rprim()[0]/ddb.acell()[0] << setw(22) << ddb.rprim()[3]/ddb.acell()[0] << setw(22) << ddb.rprim()[6]/ddb.acell()[0] << endl
+    << setw(32) << ddb.rprim()[1]/ddb.acell()[1] << setw(22) << ddb.rprim()[4]/ddb.acell()[1] << setw(22) << ddb.rprim()[7]/ddb.acell()[1] << endl
+    << setw(32) << ddb.rprim()[2]/ddb.acell()[2] << setw(22) << ddb.rprim()[5]/ddb.acell()[2] << setw(22) << ddb.rprim()[8]/ddb.acell()[2] << endl;
   out << " " << setw(11) << "dfpt_sciss" << setw(22) << 0. << endl;
   out << " " << setw(9) << "spinat";
   auto spinat = ddb.spinat();

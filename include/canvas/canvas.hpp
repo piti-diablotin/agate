@@ -231,7 +231,7 @@ class Canvas {
     /**
      * Update internal variable to get new data form our histdata
      */
-    virtual void updateHist() = 0;
+    virtual void updateHist();
 
     /**
      * Alter/modify a canvas with respect to a keyword and stream containing data.

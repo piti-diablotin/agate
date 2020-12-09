@@ -211,11 +211,6 @@ class CanvasPos : public Canvas {
     virtual void setHist(HistData& hist);
 
     /**
-     * Update internal variable to get new data form our histdata
-     */
-    void updateHist();
-
-    /**
      * Refresh what to see on the screen
      */
     virtual void refresh(const geometry::vec3d &cam, TextRender &render);

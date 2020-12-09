@@ -376,6 +376,8 @@ void HistDataDtset::buildFromDtset(const Dtset& dtset) {
 }
 
 void HistDataDtset::dump(const HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
+  std::cerr << tend << " " << hist.ntime() << " " << hist.ntimeAvail() << std::endl;
+  hist.waitTime(tend);
   unsigned ntime = hist.ntime(); //tend-tbegin;
   unsigned ndecimal = 1;
   hist.checkTimes(tbegin,tend);

@@ -188,6 +188,7 @@ void HistDataXYZ::readFromFile(const std::string& filename) {
 
 //
 void HistDataXYZ::dump(const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) const {
+  this->waitTime(tend);
   std::ofstream file;
   using namespace std;
   try {
@@ -221,6 +222,7 @@ void HistDataXYZ::dump(const std::string& filename, unsigned tbegin, unsigned te
 
 //
 void HistDataXYZ::dump(const HistData &hist, const std::string& filename, unsigned tbegin, unsigned tend, unsigned step) {
+  hist.waitTime(tend);
   std::ofstream file;
   using namespace std;
   try {

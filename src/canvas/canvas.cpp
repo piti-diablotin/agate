@@ -253,6 +253,14 @@ void Canvas::translateZ(TransDir trans) {
 }
 
 //
+void Canvas::updateHist() {
+  if ( _histdata == nullptr ) return;
+  unsigned ntimeAvail = _histdata->ntimeAvail();
+  if ( _tend == _ntime ) _tend = -1;
+  this->setNTime(ntimeAvail);
+}
+
+//
 void Canvas::alter(std::string token, std::istringstream &stream) {
   ConfigParser parser;
   parser.setSensitive(true);
@@ -280,21 +288,32 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
       }
     }
   }
-  else if ( token == "d" || token == "dump" ) {
+  else if ( ( token == "d" || token == "dump" ) 
+      || ( token == "dxyz" || token == "dumpxyz" ) 
+      || ( token == "dhist" || token == "dumphist" ) 
+      ||( token == "ddtset" || token == "dumpdtset" ) 
+      ){
     std::string ext;
     std::ostringstream out;
     try {
       ext = utils::readString(stream);
       int step = 1;
-      try {
+      if ( parser.hasToken("step") )
         step = parser.getToken<int>("step");
-      }
-      catch ( Exception & e ) {
-        if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
-          throw e;
-        }
-      }
+
       if ( _histdata.get() != nullptr ) {
+        if ( _wait ) {
+          _histdata->waitTime(_histdata->ntime());
+          this->updateHist();
+        }
+
+        if ( token.find("xyz") != std::string::npos ) 
+          HistDataXYZ::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
+        else if ( token.find("hist") != std::string::npos ) 
+          HistDataNC::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
+        else if( token.find("dtset") != std::string::npos ) 
+          HistDataDtset::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
+        else
         _histdata->dump(ext,_tbegin,_tend,step);
       }
       else {
@@ -306,90 +325,6 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
       throw e;
     }
     out << "Dumping to file " << ext << " finished.";
-    throw EXCEPTION(out.str(), ERRCOM);
-  }
-  else if ( token == "dxyz" || token == "dumpxyz" ) {
-    std::string ext;
-    std::ostringstream out;
-    try {
-      ext = utils::readString(stream);
-      int step = 1;
-      try {
-        step = parser.getToken<int>("step");
-      }
-      catch ( Exception & e ) {
-        if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
-          throw e;
-        }
-      }
-      if ( _histdata.get() != nullptr ) {
-        HistDataXYZ::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
-      }
-      else {
-        throw EXCEPTION("Nothing to dump", ERRCOM);
-      }
-    }
-    catch ( Exception &e ) {
-      e.ADD("Unable to dump history "+ext,ERRDIV);
-      throw e;
-    }
-    out << "Dumping to file " << ext << " finished.";
-    throw EXCEPTION(out.str(), ERRCOM);
-  }
-  else if ( token == "dhist" || token == "dumphist" ) {
-    std::string ext;
-    std::ostringstream out;
-    try {
-      ext = utils::readString(stream);
-      int step = 1;
-      try {
-        step = parser.getToken<int>("step");
-      }
-      catch ( Exception & e ) {
-        if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
-          throw e;
-        }
-      }
-      if ( _histdata.get() != nullptr ) {
-        HistDataNC::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
-      }
-      else {
-        throw EXCEPTION("Nothing to dump", ERRCOM);
-      }
-    }
-    catch ( Exception &e ) {
-      e.ADD("Unable to dump history "+ext,ERRDIV);
-      throw e;
-    }
-    out << "Dumping to file " << ext << " finished.";
-    throw EXCEPTION(out.str(), ERRCOM);
-  }
-  else if ( token == "ddtset" || token == "dumpdtset" ) {
-    std::string ext;
-    std::ostringstream out;
-    try {
-      ext = utils::readString(stream);
-      int step = 1;
-      try {
-        step = parser.getToken<int>("step");
-      }
-      catch ( Exception & e ) {
-        if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
-          throw e;
-        }
-      }
-      if ( _histdata.get() != nullptr ) {
-        HistDataDtset::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
-      }
-      else {
-        throw EXCEPTION("Nothing to dump", ERRCOM);
-      }
-    }
-    catch ( Exception &e ) {
-      e.ADD("Unable to dump history "+ext,ERRDIV);
-      throw e;
-    }
-    out << "Dumping to file " << ext << "* finished.";
     throw EXCEPTION(out.str(), ERRCOM);
   }
   else if ( token == "tbegin" || token == "time_begin" ) {

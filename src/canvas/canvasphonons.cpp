@@ -161,6 +161,8 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
      * We cannot do in an other way since qpoints.yaml does not always provide
      * the structure (1.10 at least does not)
      */
+    if ( !(*_ddb==_reference) ) 
+      throw EXCEPTION("It seems reference and DDB are different structures",ERRDIV);
     _ddb->buildFrom(_reference); 
     DispDB disp;
     disp.computeFromDDB(*_ddb.get());
@@ -757,8 +759,6 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     _ddb->dump(_qptModes->first);
   }
   else if ( token == "eigendisp" ) {
-    if ( _ddb.get() == nullptr )
-      throw EXCEPTION("You need to load a DDB first",ERRDIV);
     std::string output = (parser.hasToken("output")
                           ? parser.getToken<std::string>("output")
                           : "eigen_displacements_"+geometry::to_string(_qptModes->first,false)+".out");

@@ -350,7 +350,7 @@ void Dtset::readConfig(ConfigParser& parser, unsigned img, unsigned jdtset) {
       if ( !parser.hasToken(token) ) token = "xcart"+suffix_img;
       double factor = 1.0;
       try {
-        tokenVectorCheck = parser.getToken<double>(token,3*_natom);
+        tokenVectorCheck = parser.getToken<double>(token,3*_natom,ConfigParser::LENGTH);
       }
       catch (Exception &e) {
         if ( e.getReturnValue() == ConfigParser::ERFOUND ) {

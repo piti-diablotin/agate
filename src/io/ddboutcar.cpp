@@ -63,6 +63,7 @@ void DdbOutcar::readFromFile(const std::string& filename) {
     dunit = UnitConverter::bohr;
     const double factor = (-1*eunit)/(1*dunit*dunit);
     bool foundEpsInf = false;
+    bool foundPh = false;
     while ( utils::getline(outcar,line,iline) ) {
       size_t pos;
       if ( (pos=line.find("SECOND DERIVATIVES")) != std::string::npos ) {
@@ -99,6 +100,7 @@ void DdbOutcar::readFromFile(const std::string& filename) {
             }
           }
         }
+        foundPh = true;
         break;
       }
       else if ( (pos=line.find("BORN EFFECTIVE CHARGES")) != std::string::npos 
@@ -130,7 +132,7 @@ void DdbOutcar::readFromFile(const std::string& filename) {
     }
     if ( _blocks.size() < 1 ) 
       throw EXCEPTION("Could not find the second derivatives",ERRDIV);
-    this->blocks2Reduced();
+    if ( foundPh ) this->blocks2Reduced();
   }
   catch ( Exception &e ) {
     e.ADD("Failed to read DdbOutcar",ERRDIV);

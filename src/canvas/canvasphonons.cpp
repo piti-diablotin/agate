@@ -28,6 +28,7 @@
 #include "hist/histdatadtset.hpp"
 #include "base/phys.hpp"
 #include "io/ddbabinit.hpp"
+#include "io/ddboutcar.hpp"
 #include "plot/gnuplot.hpp"
 #include <algorithm>
 #include "base/unitconverter.hpp"
@@ -165,7 +166,16 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
       throw EXCEPTION("It seems reference and DDB are different structures",ERRDIV);
     _ddb->buildFrom(_reference); 
     DispDB disp;
-    disp.computeFromDDB(*_ddb.get());
+    try {
+      disp.computeFromDDB(*_ddb.get());
+    }
+    catch ( Exception &e ) { // It seems it is a DDB but cannot compute modes.
+      // Either it is an OUTCAR without the dynmat so load modes
+      // Either it is an empty DDB
+      if ( dynamic_cast<DdbOutcar*>(_ddb.get()) != nullptr )
+        disp.readFromFile(filename);
+      else throw e;
+    }
     _displacements += disp;
     std::clog << "Displacements loaded" << std::endl;
     if ( _status == PAUSE ) _status = UPDATE;

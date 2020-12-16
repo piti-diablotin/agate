@@ -51,10 +51,10 @@ Poscar::Poscar(const HistData &hist, const unsigned itime) : Dtset(hist,itime),
   _names()
 {
   if ( _znucl.size() >= 1 && _znucl[0]!=0 ) {
-    _names = "    ";
+    _names = "      ";
     for ( auto& znucl : _znucl ) {
       _names += Mendeleev::name[znucl];
-      _names += " ";
+      _names += "   ";
     }
     _names.erase(_names.end()-1);
   }
@@ -66,7 +66,7 @@ Poscar::Poscar(const HistData &hist, const unsigned itime) : Dtset(hist,itime),
 
 //
 Poscar::Poscar(const Dtset& dtset) : Dtset(dtset),
-  _title("Abinit2VASP"),
+  _title("Agate2VASP"),
   _names()
 {
   /*
@@ -84,10 +84,10 @@ Poscar::Poscar(const Dtset& dtset) : Dtset(dtset),
   _acell = {{ 1.0, 1.0, 1.0 }};
   if ( !_znucl.empty() ) {
     _znucl.resize(_ntypat);
-    _names = "    ";
+    _names = "      ";
     for ( auto& znucl : _znucl ) {
       _names += Mendeleev::name[znucl];
-      _names += " ";
+      _names += "   ";
     }
     _names.erase(_names.end()-1);
   }
@@ -95,7 +95,7 @@ Poscar::Poscar(const Dtset& dtset) : Dtset(dtset),
 
 //
 Poscar& Poscar::operator = (const Dtset& dtset){
-  _title = "Abinit2VASP";
+  _title = "Agate2VASP";
   _natom = dtset.natom();
   _ntypat = dtset.ntypat();
   _typat = dtset.typat();
@@ -109,10 +109,10 @@ Poscar& Poscar::operator = (const Dtset& dtset){
   _findsym = dtset.findsym();
   if ( !_znucl.empty() ) {
     _znucl.resize(_ntypat);
-    _names = "    ";
+    _names = "      ";
     for ( auto& znucl : _znucl ) {
       _names += Mendeleev::name[znucl];
-      _names += " ";
+      _names += "   ";
     }
     _names.erase(_names.end()-1);
   }
@@ -234,10 +234,10 @@ void Poscar::readFromFile(const std::string& filename) {
     } while ( !sstr.eof() );
     if ( !_znucl.empty() ) {
       _znucl.resize(_ntypat);
-      _names = "    ";
+      _names = "      ";
       for ( auto& znucl : _znucl ) {
         _names += Mendeleev::name[znucl];
-        _names += " ";
+        _names += "   ";
       }
     }
 
@@ -296,13 +296,13 @@ void Poscar::readFromFile(const std::string& filename) {
       _xcart.shrink_to_fit();
 #endif
       geometry::changeBasis(_rprim, _xcart, _xred, true);
-      _acell[0] = 1.0;
-      _acell[1] = 1.0;
-      _acell[2] = 1.0;
     }
     else {
       throw EXCEPTION("Unkown coordinate system "+sstr.str(),ERRDIV);
     }
+    _acell[0] = 1.0;
+    _acell[1] = 1.0;
+    _acell[2] = 1.0;
   }
   catch( Exception& e ) {
     std::string err_str = "Failed to build Poscar from file "+filename;

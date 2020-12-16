@@ -325,9 +325,9 @@ void PhononMode::computeForceCst(const std::vector<Ddb::d2der>& ddb) {
         */
 
 #ifdef HAVE_EIGEN
-  Eigen::Matrix<short,Eigen::Dynamic,Eigen::Dynamic> check;
+  Eigen::Matrix<bool,Eigen::Dynamic,Eigen::Dynamic> check;
   check.resize(3*_natom,3*_natom);
-  check.setOnes();
+  check.fill(true);
   // First loop : Construct and first basis change from reduced to cartesian (lines)
   for ( auto& elt : ddb ) {
     const unsigned idir1 = elt.first[0];
@@ -336,7 +336,7 @@ void PhononMode::computeForceCst(const std::vector<Ddb::d2der>& ddb) {
     const unsigned ipert2 = elt.first[3];
     if ( !(idir1 < 3 && idir2 < 3 && ipert1 < _natom && ipert2 < _natom) ) continue;
     _d2cart(ipert2*3+idir2,ipert1*3+idir1) = elt.second;
-      check(ipert2*3+idir2,ipert1*3+idir1) = 0;
+      check(ipert2*3+idir2,ipert1*3+idir1) = false;
   }
   if ( check.any() )
     throw EXCEPTION("Missing some data in the DDB",ERRDIV);

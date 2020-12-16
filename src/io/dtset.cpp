@@ -37,15 +37,6 @@
 #include "base/mendeleev.hpp"
 #include "base/utils.hpp"
 #include "io/cifparser.hpp"
-#ifdef HAVE_SPGLIB
-#  ifdef __cplusplus
-extern "C" {
-#  endif
-#  include "spglib/spglib.h"
-#  ifdef __cplusplus
-}
-#  endif
-#endif
 #include "phonons/supercell.hpp"
 #include "hist/histdatamd.hpp"
 
@@ -1027,11 +1018,34 @@ void Dtset::getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<g
       }
     }
   }
+  delete [] positions;
+  delete [] rot;
+  delete [] tnon;
 #else
   throw EXCEPTION("spglib needed",ERRABT);
 #endif
 }
 
+SpglibDataset* Dtset::getSpgDtset(double symprec) const {
+#ifdef HAVE_SPGLIB
+  double (*lattice)[3] = (double(*)[3]) &_rprim[0];
+  double *positions = new double[_natom*3];
+  for ( unsigned i = 0 ; i < _natom ; ++i )
+    for ( unsigned j = 0 ; j < 3; ++j )
+      positions[i*3+j] = _xred[i][j];
+  SpglibDataset* spgDtset = spg_get_dataset(
+      lattice,
+      (double(*)[3])positions,
+      &_typat[0],
+      _natom,
+      symprec);
+  delete [] positions;
+  return spgDtset;
+#else
+  throw EXCEPTION("spglib needed",ERRABT);
+  return nullptr;
+#endif
+}
 
 std::array<double,6> Dtset::getStrain(const Dtset& reference) const {
   using namespace geometry;

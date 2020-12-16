@@ -9,7 +9,7 @@ cat > $1 << EOF
  *
  * @author Jordan Bieder <jordan.bieder@uliege.be>
  *
- * @copyright Copyright 2019 Jordan Bieder
+ * @copyright Copyright $(date "+%Y") Jordan Bieder
  *
  * This file is part of Agate.
  *

@@ -583,6 +583,7 @@ HistData* HistData::getHist(const std::string& infile, bool wait){
   else if ( file.find("_POT") != std::string::npos ) allFormat[0].swap(allFormat[8]);
   else if ( file.find("_OPT") != std::string::npos ) allFormat[0].swap(allFormat[8]);
   else if ( file.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[8]);
+  else if ( file.find("OUTCAR") != std::string::npos ) allFormat[0].swap(allFormat[8]);
 
   for ( auto& p : allFormat ) {
     try {

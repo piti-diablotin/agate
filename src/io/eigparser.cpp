@@ -156,7 +156,7 @@ EigParser* EigParser::getEigParser(const std::string& file){
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserPhonopy),"Phonopy band YAML"));   //2
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserPHBST),"Abinit _PHBST")); //3
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserFatbands),"Abinit _FATBANDS")); //4
-  allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new Procar),"Procar PROCAR")); //5
+  allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new Procar),"VASP PROCAR")); //5
   allFormat.push_back(std::make_pair(std::unique_ptr<EigParser>(new EigParserGSR),"Abinit _GSR.nc")); //6
 
   if ( file.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[2]);

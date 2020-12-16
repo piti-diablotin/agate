@@ -26,6 +26,7 @@
 
 #include "hist/histdatapolydtset.hpp"
 #include "io/poscar.hpp"
+#include "io/outcar.hpp"
 #include "io/etsfnc.hpp"
 #include "io/abihdr.hpp"
 #include "io/phonopydtset.hpp"
@@ -51,6 +52,7 @@ void HistDataPolyDtset::readFromFile(const std::string& filename) {
   allFormat.push_back(std::make_pair(std::unique_ptr<Dtset>(new AbiHdr),"Abinit Binary Header"));   //1
   allFormat.push_back(std::make_pair(std::unique_ptr<Dtset>(new EtsfNC),"ETSF"));   //2
   allFormat.push_back(std::make_pair(std::unique_ptr<Dtset>(new PhonopyDtset),"Phonopy"));     //3
+  allFormat.push_back(std::make_pair(std::unique_ptr<Dtset>(new Outcar),"OUTCAR"));     //4
 
   if      ( filename.find("POSCAR") != std::string::npos ) allFormat[0].swap(allFormat[0]);
   else if ( filename.find("_DEN") != std::string::npos ) allFormat[0].swap(allFormat[1]);
@@ -58,6 +60,7 @@ void HistDataPolyDtset::readFromFile(const std::string& filename) {
   else if ( filename.find("_POT") != std::string::npos ) allFormat[0].swap(allFormat[1]);
   else if ( filename.find(".nc") != std::string::npos ) allFormat[0].swap(allFormat[2]);
   else if ( filename.find(".yaml") != std::string::npos ) allFormat[0].swap(allFormat[3]);
+  else if ( filename.find("OUTCAR") != std::string::npos ) allFormat[0].swap(allFormat[4]);
 
   for ( auto& p : allFormat ) {
     try {

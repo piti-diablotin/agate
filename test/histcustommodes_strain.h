@@ -179,10 +179,10 @@ class HistCMStrain : public CxxTest::TestSuite
       histTetra.setStrainTetraDir(true,true,true);
       histTetra.buildHist(qptGrid, temperature, strainBoundsTetra, ntime);
       auto strainTetra = histTetra.getStrain(0,refTetra);
-      TS_ASSERT((strainTetra[0] <= 0.1 && strainTetra[1]<= 0.1) || (strainTetra[0] <= 0.1 && strainTetra[2]<= 0.1) || (strainTetra[1] <= 0.1 && strainTetra[2]<= 0.1));
-      TS_ASSERT((strainTetra[0]>= 0.0001 && strainTetra[1]>= 0.0001) || (strainTetra[0]>= 0.0001 && strainTetra[2]>= 0.0001) || (strainTetra[1] >= 0.0001 && strainTetra[2]>= 0.0001));
+      TS_ASSERT((strainTetra[0]<= 0.1) || (strainTetra[1]<= 0.1) || (strainTetra[2]<= 0.1));
+      TS_ASSERT((strainTetra[0]>= 0.0001) || (strainTetra[1]>= 0.0001) || (strainTetra[2]>= 0.0001));
       TS_ASSERT((abs(strainTetra[0] - strainTetra[1]) <= 10e-10) || (abs(strainTetra[0] - strainTetra[2]) <= 10e-10)|| (abs(strainTetra[1] - strainTetra[2]) <= 10e-10)) ;
-      TS_ASSERT((abs((-2*strainTetra[0]-strainTetra[0]*strainTetra[0])/((1+strainTetra[0])*(1+strainTetra[0])) - strainTetra[2]) <= 10e-6) || (abs((-2*strainTetra[0]-strainTetra[0]*strainTetra[0])/((1+strainTetra[0])*(1+strainTetra[0])) - strainTetra[1]) <= 10e-6) || (abs((-2*strainTetra[2]-strainTetra[2]*strainTetra[2])/((1+strainTetra[2])*(1+strainTetra[2])) - strainTetra[0]) <= 10e-6));    
+      TS_ASSERT((abs(-1+(1/sqrt(1+strainTetra[0])) - strainTetra[2]) <= 10e-6) || (abs(-1+(1/sqrt(1+strainTetra[0])) - strainTetra[1]) <= 10e-6) || (1/abs(-1+(sqrt(1+strainTetra[1])) - strainTetra[0]) <= 10e-6) || (abs(-1+(1/sqrt(1+strainTetra[1])) - strainTetra[2]) <= 10e-6) || (abs(-1+(1/sqrt(1+strainTetra[2])) - strainTetra[0]) <= 10e-6) || (abs(-1+(1/sqrt(1+strainTetra[2])) - strainTetra[1]) <= 10e-6));   
 
       HistCustomModes histShear(refShear,db);
       std::map<HistCustomModes::StrainDistBound,double> strainBoundsShear {{HistCustomModes::ShearMin, 0.0001 }, {HistCustomModes::ShearMax, 0.1}};

@@ -132,61 +132,6 @@ void PhononMode::computeForceCst(const geometry::vec3d& qpt, const Ddb& ddb) {
 }
 
 
-/*Function to read Born-Effective Charges (_zeff) out of ddb and translate it into C/A*/
-const std::vector<geometry::mat3d> PhononMode::getzeff(const geometry::vec3d& qpt, const Ddb& ddb1, const std::vector<Ddb::d2der>& ddb2) {
-#ifndef HAVE_EIGEN
-  throw EXCEPTION("To use this functionnality you need to compile with EIGEN support",ERRABT);
-  (void) qpt;
-  (void) ddb1;
-  (void) ddb2;
-#else
-	this->resize(ddb1.natom());	/// resize variables
-	_natom = ddb1.natom();		/// get number of atoms
-	_qpt << qpt[0], qpt[1], qpt[2]; /// get q_point (Always Gamma) 
-	
-	geometry::mat3d gprim = ddb1.gprim(); /// get gprim
- 	 _gprim << gprim[0], gprim[1],gprim[2],
-         gprim[3], gprim[4], gprim[5],
-         gprim[6], gprim[7], gprim[8];
-
-	geometry::mat3d rprim = ddb1.rprim(); /// get rprim
- 	 _rprim << rprim[0], rprim[1],rprim[2],
-         rprim[3], rprim[4], rprim[5],
-         rprim[6], rprim[7], rprim[8];
-	
-	auto zion = ddb1.zion();  ///get zion 
-	auto typat = ddb1.typat();  ///get zion 
-	
-	/* Read values from ddb into _zeff*/
-	for ( auto& elt : ddb2 ) {
-    		const unsigned idir1 = elt.first[0];
-    		const unsigned ipert1 = elt.first[1];
-   		const unsigned idir2 = elt.first[2];
-  		const unsigned ipert2 = elt.first[3];
-	if ( !(idir1 < 3 && idir2 < 3 && ipert1 == _natom+1 && ipert2 < _natom) ) continue;
-    		_zeff[ipert2][geometry::mat3dind( idir1+1, idir2+1)] = elt.second.real();
-	}  	
-	/*Change unit/add zion on diagonal axis of BEC-Tensor*/
-	for ( unsigned ipert2 = 0 ; ipert2 < _natom ; ++ipert2 ) {
-		for ( unsigned idir1 = 1 ; idir1 <= 3 ; ++idir1 ) {
-			for ( unsigned idir2 = 1 ; idir2 <= 3; ++idir2 ) {
-					if ( std::abs(_zeff[ipert2][geometry::mat3dind( idir1, idir2)])  > pow(10,-10) && idir1 == idir2  ) {
-							_zeff[ipert2][geometry::mat3dind( idir1, idir2)] = ( _zeff[ipert2][geometry::mat3dind( idir1, idir2)]/(2*phys::pi)) + zion[typat[ipert2]-1];		
-					}
-					else if ( std::abs(_zeff[ipert2][geometry::mat3dind( idir1, idir2)])   > pow(10,-10) && idir1 != idir2 ) { 
-						_zeff[ipert2][geometry::mat3dind( idir1, idir2)] =  _zeff[ipert2][geometry::mat3dind( idir1, idir2)]*_rprim(idir1-1,idir1-1)*_gprim(idir2-1,idir2-1)/(2*phys::pi);
-					}				
-					else { 
-						_zeff[ipert2][geometry::mat3dind( idir1, idir2)] = 0; 
-					}	
-			}
-    		}
-  	}
-	return _zeff;			
-#endif
-} 
-
-
 /*Calculate Linear Repsonse of Phonons to a static dielectric field from DFPT*/
 std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::vec3d &E_vec, double E_Amp, const Ddb& ddb) {
 #ifndef HAVE_EIGEN
@@ -204,7 +149,10 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::v
 	//E_Amp = 10000; 
 	
 	_natom = ddb.natom();  					/// get natom 
-	_zeff = getzeff(_qpt, ddb, ddb.getDdb(_qpt)); 		/// get BEC-Tensors
+  _zeff.resize(_natom);
+  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom )
+    _zeff[iatom] = ddb.getZeff(iatom); 		/// get BEC-Tensors
+
 	for (unsigned i = 0; i < _zeff.size(); i++) {
 		if (_zeff[i][geometry::mat3dind( 2,1 )] == 0 ){ 
 			  _zeff[i][geometry::mat3dind( 1, 2)] = 0; 

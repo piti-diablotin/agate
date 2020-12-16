@@ -58,6 +58,18 @@ class DispDB {
 
   private :
 
+    /**
+     * Read a anaddb output file to build the DB
+     * @param filename Name of the file to read.
+     */
+    void readAnaddb(std::string filename);
+
+    /**
+     * Read an OUTCAR file from VASP to build the DB
+     * @param filename Name of the file to read.
+     */
+    void readOutcar(const std::string &filename);
+
   protected :
 
     unsigned _natom;                    ///< Number of atoms in the cell (input)
@@ -108,7 +120,7 @@ class DispDB {
     void clear();
 
     /**
-     * Read a anaddb output file (or log file?) to build the DB
+     * Try to read a anaddb output file (or log file?) or OUTCAR to build the DB
      * @param filename Name of the file to read.
      * @param natom Number of atom corresponding to the simulation. If -1 then use internal value.
      * If -1 and internal _natom value is also -1 then throw exception.

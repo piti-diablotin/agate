@@ -30,6 +30,7 @@
 #include "base/geometry.hpp"
 #include "base/utils.hpp"
 #include "io/poscar.hpp"
+#include "io/outcar.hpp"
 
 //
 Procar::Procar() : EigParserElectrons() {
@@ -177,10 +178,26 @@ void Procar::readFromFile(const std::string& filename) {
     _eunit.rebase(UnitConverter::eV);
   }
 
-  std::string POSCAR = filename.substr(0,filename.find("PROCAR"))+"POSCAR";
-  Poscar *structure = new Poscar;
+  Dtset *structure = nullptr;
+  std::string structFile = utils::dirname(filename)+"/POSCAR";
+  std::ifstream test(structFile);
+  if ( ! test ) {
+    structFile = utils::dirname(filename)+"/OUTCAR";
+    std::ifstream test2(structFile);
+    if ( !test2 ) {
+      Exception e = EXCEPTION("Structure file is missing.\nProjection won't be available",ERRWAR);
+      std::clog << e.fullWhat() << std::endl;
+    }
+    test2.close();
+    structure = new Outcar;
+  }
+  else {
+    test.close();
+    structure = new Poscar;
+  }
+
   try {
-    structure->readFromFile(POSCAR);
+    structure->readFromFile(structFile);
     _dtset.reset(structure);
   }
   catch ( Exception &e ) {

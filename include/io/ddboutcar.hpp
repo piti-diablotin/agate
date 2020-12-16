@@ -1,11 +1,11 @@
 /**
- * @file include/ddbabinit.hpp
+ * @file include/./ddboutcar.hpp
  *
- * @brief Read an abinit DDB
+ * @brief Read an OUTCAR file and store the Dynamical Matrix
  *
- * @author Jordan Bieder <jordan.bieder@cea.fr>
+ * @author Jordan Bieder <jordan.bieder@uliege.be>
  *
- * @copyright Copyright 2016 Jordan Bieder
+ * @copyright Copyright 2020 Jordan Bieder
  *
  * This file is part of Agate.
  *
@@ -24,8 +24,8 @@
  */
 
 
-#ifndef DDBABINIT_HPP
-#define DDBABINIT_HPP
+#ifndef DDBOUTCAR_HPP
+#define DDBOUTCAR_HPP
 
 #ifdef _WIN32
 #include "base/win32.hpp"
@@ -37,21 +37,14 @@
 #endif
 
 #include "io/ddb.hpp"
+#include "io/outcar.hpp"
 
 /** 
- * Read a _DDB file and store all the second derivative information 
+ *
  */
-class DdbAbinit : public Ddb {
+class DdbOutcar : public Outcar, public Ddb {
 
   private :
-
-    /**
-     * Function to read one block from a DDB file
-     * @param idd ifstream to the file to read
-     * @param return true if it is a 2nd derivative, false otherwise
-     */
-    bool readBlock(std::ifstream& idd);
-
 
   protected :
 
@@ -60,12 +53,12 @@ class DdbAbinit : public Ddb {
     /**
      * Constructor.
      */
-    DdbAbinit();
+    DdbOutcar();
 
     /**
      * Destructor.
      */
-    virtual ~DdbAbinit();
+    virtual ~DdbOutcar();
 
     /**
      * Fill a DDB with the content of a file.
@@ -73,8 +66,6 @@ class DdbAbinit : public Ddb {
      */
     virtual void readFromFile(const std::string& filename);
 
-    static void header(const Ddb &ddb, std::ostream &out);
-    static void dump(const Ddb &ddb, std::string filename);
 };
 
-#endif  // DDBABINIT_HPP
+#endif  // DDBOUTCAR_HPP

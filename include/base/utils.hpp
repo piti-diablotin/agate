@@ -69,6 +69,11 @@ namespace utils {
   void Version();
 
   /**
+   * Get Agate version string like x.y.z
+   */
+  std::string agateVersion();
+
+  /**
    * get spglib version is available
    * @return the string major.minor.micro
    */
@@ -251,6 +256,22 @@ namespace utils {
    * @return The filename without its extension if it has one.
    */
   std::string noSuffix(std::string filename);
+
+  /**
+   * Get the directory path of current filename
+   * Equivalent to dirname in bash
+   * @param filenmae the file to treat
+   * @return The absolute path of the file 
+   */
+  std::string dirname(std::string filename);
+
+  /**
+   * Get the filename without the path
+   * Equivalent to basename in bash
+   * @param filenmae the file to treat
+   * @return The name of the file without the path
+   */
+  std::string basename(std::string filename);
 
   /**
    * List all the files (directories included) in the current path.

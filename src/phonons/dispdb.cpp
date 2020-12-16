@@ -33,9 +33,11 @@
 #include "phonons/dispdb.hpp"
 #include "base/exception.hpp"
 #include "base/geometry.hpp"
+#include "base/mendeleev.hpp"
 #include "io/configparser.hpp"
 #include "base/utils.hpp"
 #include "io/ddb.hpp"
+#include "io/outcar.hpp"
 #include "phonons/phononmode.hpp"
 
 //
@@ -84,7 +86,16 @@ void DispDB::readFromFile(std::string filename, unsigned natom) {
   if ( natom == (unsigned) -1 && _natom == (unsigned)-1 )
     throw EXCEPTION("Need to know how many atoms you have",ERRDIV);
   if ( natom != (unsigned) -1 ) _natom = natom;
+  try { 
+    this->readAnaddb(filename);
+  }
+  catch ( Exception &e ) {
+    this->readOutcar(filename);
+  }
 
+}
+
+void DispDB::readAnaddb(std::string filename) {
   std::ifstream anaddb(filename,std::ios::in);
   if ( !anaddb )
     throw EXCEPTION("Unable to open file "+filename,ERRDIV);
@@ -504,5 +515,93 @@ void DispDB::printModes(const geometry::vec3d& qpt, std::ostream &output) const 
       output << std::setw(23) << _modes[dq*_nmode*3*_natom+vec*3*_natom+coord].imag();
     }
     output << std::endl;
+  }
+}
+
+void DispDB::readOutcar(const std::string &filename) {
+  std::vector<int> znucl;
+  std::vector<int> typat;
+  try {
+    Outcar *tmp = new Outcar;
+    tmp->readFromFile(filename);
+    _natom = tmp->natom();
+    znucl = tmp->znucl();
+    typat = tmp->typat();
+    delete tmp;
+  }
+  catch (Exception& e) {
+    if ( _natom == static_cast<unsigned>(-1) )
+      throw EXCEPTION("Missing OUTCAR structure information",ERRDIV);
+  }
+  _nqpt = 1; // Only Gamma in VASP
+  _nmode = 3*_natom;
+  _qpts.clear();
+  _qpts.resize(1,{0,0,0});
+  _modes.resize(_nqpt*_nmode*3*_natom,cplx(0.0,0.0)); // nqpt * nmode * 1vector per atom
+  _energies.resize(_nqpt*_nmode);
+  _iqpt = _qpts.end();
+
+  std::ifstream outcar(filename,std::ios::in);  
+  if ( !outcar)
+    throw EXCEPTION("Error while opening file " + filename, ERRDIV);
+
+  std::string line;
+  unsigned int iline = 0;
+  UnitConverter eunit(UnitConverter::THz);
+  eunit = UnitConverter::Ha;
+  bool found = false;
+  size_t pos;
+  while ( utils::getline(outcar,line,iline) ) {
+    if ( (pos=line.find("Eigenvectors and eigenvalues of the dynamical matrix")) != std::string::npos ) {
+      utils::getline(outcar,line,iline); // ------------- line
+      unsigned imode = 0;
+      std::string dummy;
+      for (unsigned i = 0 ; i < _nmode ; ++i) {
+        utils::getline(outcar,line,iline); // i f = w THz
+        std::istringstream str(line);
+        str >> imode >> dummy;
+        double sign = 1.0;
+        if ( dummy == "f" ) str >> dummy;  // read "="
+        else if ( dummy == "f/i=" ) sign = -1.0;
+        else 
+          throw EXCEPTION("Bad reading for type of frequency line "+utils::to_string(iline)+ " " + dummy,ERRDIV);
+        str >> _energies[_nmode-1-i];
+        _energies[_nmode-1-i] *= sign*eunit; // Convert to Ha and set the correct sign
+        if ( (i+1) != imode ) 
+          throw EXCEPTION("Reading mode "+utils::to_string(imode)+" but expecting "+utils::to_string(i+1),ERRDIV);
+        utils::getline(outcar,line,iline);  // X Y Z dx dy dz
+        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+          utils::getline(outcar,line,iline);  // X Y Z dx dy dz
+          std::istringstream disp(line);
+          for ( unsigned idummy = 0 ; idummy < 3 ; ++idummy )
+            disp >> dummy;
+          for ( unsigned idisp = 0 ; idisp < 3 ; ++idisp ) {
+            double val;
+            disp >> val;
+            _modes[(_nmode-1-i)*3*_natom+iatom*3+idisp] = cplx(val*phys::A2b,0); // Vasp write mode from higest energy to lowest
+          }
+        }
+      }
+      found = true;
+    }
+  }
+  if ( !found )
+    throw EXCEPTION("Could not find eigen displacements",ERRDIV);
+
+  // Renormalize 
+  for ( unsigned imode = 0 ; imode < _nmode ; ++imode ) {
+    double norm = 0.;
+    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+      double mass = MendeTable.mass[znucl[typat[iatom]-1]]*phys::amu_emass;
+      for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
+        norm += mass*std::norm(_modes[imode*3*_natom+iatom*3+idir]);
+      }
+    }
+    norm = std::sqrt(norm);
+    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+      for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
+        _modes[imode*3*_natom+iatom*3+idir] /= norm;
+      }
+    }
   }
 }

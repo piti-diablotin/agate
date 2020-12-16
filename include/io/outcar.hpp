@@ -1,11 +1,11 @@
 /**
- * @file include/ddbabinit.hpp
+ * @file outcar.hpp
  *
- * @brief Read an abinit DDB
+ * @brief Manage information for vasp OUTCAR
  *
- * @author Jordan Bieder <jordan.bieder@cea.fr>
+ * @author Jordan Bieder <jordan.bieder@uliege.be>
  *
- * @copyright Copyright 2016 Jordan Bieder
+ * @copyright Copyright 2020 Jordan Bieder
  *
  * This file is part of Agate.
  *
@@ -23,9 +23,8 @@
  * along with Agate.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-#ifndef DDBABINIT_HPP
-#define DDBABINIT_HPP
+#ifndef OUTCAR_HPP 
+#define OUTCAR_HPP
 
 #ifdef _WIN32
 #include "base/win32.hpp"
@@ -36,45 +35,48 @@
 #undef HAVE_CONFIG_H
 #endif
 
-#include "io/ddb.hpp"
 
-/** 
- * Read a _DDB file and store all the second derivative information 
+#include "io/dtset.hpp"
+
+/**
+ * Replace the load function to read the poscar file instead of abinit input
  */
-class DdbAbinit : public Ddb {
-
-  private :
-
-    /**
-     * Function to read one block from a DDB file
-     * @param idd ifstream to the file to read
-     * @param return true if it is a 2nd derivative, false otherwise
-     */
-    bool readBlock(std::ifstream& idd);
-
-
-  protected :
+class Outcar : virtual public Dtset {
 
   public :
 
     /**
-     * Constructor.
+     * Constructor that builds an empty default Dtset.
      */
-    DdbAbinit();
+    Outcar();
 
     /**
      * Destructor.
      */
-    virtual ~DdbAbinit();
+    ~Outcar();
 
     /**
-     * Fill a DDB with the content of a file.
+     * Fill a Dtset from an poscar file.
      * @param filename The name of the input file to read.
      */
     virtual void readFromFile(const std::string& filename);
 
-    static void header(const Ddb &ddb, std::ostream &out);
-    static void dump(const Ddb &ddb, std::string filename);
+    /**
+     * Creat an poscar file with the current Dtset.
+     * Dump the poscar file to the stream
+     * @param out The ostream stream to write into.
+     */
+    virtual void dump(std::ostream& out) const;
+
+    /**
+     * Creat an poscar file with the current Dtset.
+     * @param filename The name of the file to be written.
+     */
+    virtual void dump(const std::string& filename) const {
+      Dtset::dump(filename);
+    }
+
+
 };
 
-#endif  // DDBABINIT_HPP
+#endif  //OUTCAR_HPP

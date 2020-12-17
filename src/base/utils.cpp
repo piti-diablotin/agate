@@ -41,6 +41,7 @@
 #include "base/exception.hpp"
 #include <tuple>
 #include <algorithm>
+#include <cstdlib>
 
 #if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
 #  ifdef __cplusplus
@@ -510,6 +511,14 @@ std::string readString(std::istream& stream) {
     stream >> partialString;
     fullString.back() = ' ';
     fullString += partialString;
+  }
+  if ( fullString[0] == '~' ) {
+#ifndef _WIN32
+    std::string home(getenv("HOME"));
+    fullString.replace(0,1,home);
+#else
+#error Need to set the HOME directory
+#endif
   }
   return fullString;
 }

@@ -75,17 +75,17 @@ jobs:
     - os: linux
       dist: xenial
       compiler: gcc
-    - os: osx
-      osx_image: xcode12.2
-      compiler: clang
-    - os: osx
-      osx_image: xcode11.3
-      compiler: clang
-    - os: osx
-      osx_image: xcode10.6
-      compiler: clang
-    - os: osx
-      osx_image: xcode9.4
-      compiler: clang
+      #    - os: osx
+      #      osx_image: xcode12.2
+      #      compiler: clang
+      #    - os: osx
+      #      osx_image: xcode11.3
+      #      compiler: clang
+      #    - os: osx
+      #      osx_image: xcode10.6
+      #      compiler: clang
+      #    - os: osx
+      #      osx_image: xcode9.4
+      #      compiler: clang
 
 after_failure: "ls test/ && cat test/test-suite.log"

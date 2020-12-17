@@ -754,7 +754,7 @@ void CanvasLocal::help(std::ostream &out) {
   out << setw(40) << ":c or :color (plus|minus)" << setw(59) << "Set the color in RGB for plus or minus rotations." << endl;
   out << setw(40) << ":length filename" << setw(59) << "Dump for each octaheadra the a b and c lengths in filename." << endl;
   out << setw(40) << ":rot filename" << setw(59) << "Dump for each octaheadra the alpha, beta and gamma angles in filename." << endl;
-  out << setw(49) << ":loc or :local (rotatation|length)" << setw(59) << "Select which proppertie of the octahedra is displayed" << endl;
-  out << setw(49) << ":plot (rotatations|rot)" << setw(59) << "Plot average rotations of the cell taking care of the sign" << endl;
+  out << setw(49) << ":loc or :local (rotation|length)" << setw(59) << "Select which proppertie of the octahedra is displayed" << endl;
+  out << setw(49) << ":plot (rotations|rot)" << setw(59) << "Plot average rotations of the cell taking care of the sign" << endl;
   out << "Commands from positions mode are also available." << endl;
 }

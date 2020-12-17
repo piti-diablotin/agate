@@ -405,7 +405,7 @@ void Tdep::tdep() {
 
   //int err = system("tdep <<< \"input.in \nHIST.nc\"");
   FILE *tdep;
-  tdep = popen("tdep","w");
+  tdep = popen("atdep","w");
   if ( tdep == nullptr ) 
     throw EXCEPTION("Unable to open pipe for tdep",ERRDIV);
 

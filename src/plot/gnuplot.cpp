@@ -29,7 +29,7 @@
 #include <cmath>
 
 //
-Gnuplot::Gnuplot() :
+Gnuplot::Gnuplot() : Graph(),
   _gp(nullptr),
   _header(),
   _buffer(),
@@ -77,6 +77,8 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
     }
     if ( p < colors.size() && colors[p] != (unsigned) -1 )
       _buffer << " lc rgbcolor " << colors[p];
+    else
+      _buffer << " lc rgb \"" << HTMLcolor[p%15] << "\"";
     _buffer << ", ";
   }
 
@@ -123,6 +125,8 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
     }
     if ( p < c.size() )
       _buffer << " lc rgb variable lw 3";
+    else
+      _buffer << " lc rgb \"" << HTMLcolor[p%15] << "\"";
     _buffer << ", ";
   }
 
@@ -170,6 +174,8 @@ void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<dou
     }
     if ( p < colors.size() && colors[p] != (unsigned) -1)
       _buffer << " lc rgbcolor " << colors[p];
+    else
+      _buffer << " lc rgb \"" << HTMLcolor[p%15] << "\"";
     _buffer << ", ";
   }
 

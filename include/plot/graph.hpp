@@ -92,7 +92,27 @@ class Graph {
     std::vector<arrow> _arrows; ///< Arrow to display on the graph
     range _xrange;
     range _yrange;
-    
+
+    /**
+     * Save a list of 15 custom colors 
+     */
+    const char HTMLcolor[15][8]={
+      "#505050", //Grey
+      "#003CA6",
+      "#837902",
+      "#CF009E",
+      "#FF7E2E",
+      "#6ECA97",
+      "#FA9ABA",
+      "#E19BDF",
+      "#B6BD00",
+      "#C9910D",
+      "#704B1C",
+      "#007852",
+      "#6EC4E8",
+      "#62259D",
+      "#FFCD00"  // line01
+    };
 
   public :
 

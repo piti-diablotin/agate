@@ -1725,6 +1725,9 @@ void HistData::interpolate(unsigned ninter, double amplitude) {
   int nsegment = _ntime-1;
   int newNTime = ninter*nsegment;
   unsigned natom3 = 3*_natom;
+  bool removeDuplica = false;
+
+  if ( (removeDuplica = (std::abs(amplitude-1) < 1e-10)) ) newNTime -= (_ntime-2); // Remove duplica
 
   _xcart.resize(natom3*newNTime);
   _xred.resize(natom3*newNTime);
@@ -1790,6 +1793,7 @@ void HistData::interpolate(unsigned ninter, double amplitude) {
 
       --currentTime;
     }
+    if (removeDuplica) ++currentTime; // Override previous step since will be the same;
   }
   _ntime = newNTime;
   _ntimeAvail = _ntime;

@@ -780,6 +780,9 @@ void HistDataMD::interpolate(unsigned ninter, double amplitude) {
   int nsegment = _ntime-1;
   int newNTime = ninter*nsegment;
   unsigned natom3 = 3*_natom;
+  bool removeDuplica = false;
+
+  if ( (removeDuplica = (std::abs(amplitude-1) < 1e-10)) ) newNTime -= (_ntime-2); // Remove duplica
 
   _velocities.resize(natom3*newNTime);
   _ekin.resize(natom3*newNTime);
@@ -816,6 +819,7 @@ void HistDataMD::interpolate(unsigned ninter, double amplitude) {
           gamma*entropyLast+beta*_entropy[firstStep];
       --currentTime;
     }
+    if (removeDuplica) ++currentTime; // Override previous step since will be the same;
   }
   HistData::interpolate(ninter,amplitude);
 }

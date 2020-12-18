@@ -27,6 +27,7 @@
 #include "plot/gnuplot.hpp"
 #include "base/exception.hpp"
 #include <cmath>
+#include <regex>
 
 //
 Gnuplot::Gnuplot() : Graph(),
@@ -84,6 +85,8 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
 
   _buffer.seekp(-2,ios_base::end);
   _buffer << std::endl;
+  _buffer.str(translateToSymbol(_buffer.str()));
+  _buffer.seekp(0,ios_base::end);
 
   _buffer.setf(std::ios::scientific,std::ios::floatfield);
   _buffer.precision(14);
@@ -132,6 +135,8 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
 
   _buffer.seekp(-2,ios_base::end);
   _buffer << std::endl;
+  _buffer.str(translateToSymbol(_buffer.str()));
+  _buffer.seekp(0,ios_base::end);
 
   _buffer.setf(std::ios::scientific,std::ios::floatfield);
   _buffer.precision(14);
@@ -181,6 +186,8 @@ void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<dou
 
   _buffer.seekp(-2,ios_base::end);
   _buffer << std::endl;
+  _buffer.str(translateToSymbol(_buffer.str()));
+  _buffer.seekp(0,ios_base::end);
 
   _buffer.setf(std::ios::scientific,std::ios::floatfield);
   _buffer.precision(14);
@@ -218,14 +225,14 @@ void Gnuplot::save(std::string filename) {
 
 //
 void Gnuplot::dump(std::ostream& out, std::string& plotname) const {
-  out << _header.str() << std::endl;
+  out << translateToSymbol(_header.str()) << std::endl;
   out << "set terminal push" << std::endl;
   out << "set terminal postscript enhanced color solid font 24 eps" << std::endl;
   out << "set output \"" << plotname << "\"" << std::endl;
-  out << _custom.str() << std::endl;
-  out << "set xlabel '" << _xlabel << "'" << std::endl;
-  out << "set ylabel '" << _ylabel << "'" << std::endl;
-  out << "set title '" << _title << "'" << std::endl;
+  out << translateToSymbol(_custom.str()) << std::endl;
+  out << "set xlabel '" << translateToSymbol(_xlabel) << "'" << std::endl;
+  out << "set ylabel '" << translateToSymbol(_ylabel) << "'" << std::endl;
+  out << "set title '" << translateToSymbol(_title) << "'" << std::endl;
   out << _buffer.str() << std::endl;
   out << "set terminal pop" << std::endl;
 
@@ -260,4 +267,65 @@ void Gnuplot::addCustom() {
       _custom << "set arrow from " << a.x1 << "," << a.y1 << " to " << a.x2 << "," << a.y2 << (a.head? " head" : " nohead") << std::endl;
     }
   }
+}
+
+std::string Gnuplot::translateToSymbol(const std::string &input) {
+  const std::map<std::string,std::string> translator = {
+    std::pair<std::string,std::string>("Alpha"  , "{/Symbol A}"),
+    std::pair<std::string,std::string>("Beta"   , "{/Symbol B}"),
+    std::pair<std::string,std::string>("Gamma"  , "{/Symbol G}"),
+    std::pair<std::string,std::string>("Delta"  , "{/Symbol D}"),
+    std::pair<std::string,std::string>("Epsilon", "{/Symbol E}"),
+    std::pair<std::string,std::string>("Zeta"   , "{/Symbol Z}"),
+    std::pair<std::string,std::string>("Theta"  , "{/Symbol Q}"),
+    std::pair<std::string,std::string>("Eta"    , "{/Symbol H}"),
+    std::pair<std::string,std::string>("Iota"   , "{/Symbol I}"),
+    std::pair<std::string,std::string>("Kappa"  , "{/Symbol K}"),
+    std::pair<std::string,std::string>("Lambda" , "{/Symbol L}"),
+    std::pair<std::string,std::string>("Mu"     , "{/Symbol M}"),
+    std::pair<std::string,std::string>("Nu"     , "{/Symbol N}"),
+    std::pair<std::string,std::string>("Xi"     , "{/Symbol X}"),
+    std::pair<std::string,std::string>("Omicron", "{/Symbol O}"),
+    std::pair<std::string,std::string>("Pi"     , "{/Symbol P}"),
+    std::pair<std::string,std::string>("Rho"    , "{/Symbol R}"),
+    std::pair<std::string,std::string>("Sigma"  , "{/Symbol S}"),
+    std::pair<std::string,std::string>("Tau"    , "{/Symbol T}"),
+    std::pair<std::string,std::string>("Upsilon", "{/Symbol U}"),
+    std::pair<std::string,std::string>("Phi"    , "{/Symbol F}"),
+    std::pair<std::string,std::string>("Chi"    , "{/Symbol C}"),
+    std::pair<std::string,std::string>("Khi"    , "{/Symbol C}"),
+    std::pair<std::string,std::string>("Psi"    , "{/Symbol Y}"),
+    std::pair<std::string,std::string>("Omega"  , "{/Symbol W}"),
+    std::pair<std::string,std::string>("alpha"  , "{/Symbol a}"),
+    std::pair<std::string,std::string>("beta"   , "{/Symbol b}"),
+    std::pair<std::string,std::string>("gamma"  , "{/Symbol g}"),
+    std::pair<std::string,std::string>("delta"  , "{/Symbol d}"),
+    std::pair<std::string,std::string>("epsilon", "{/Symbol e}"),
+    std::pair<std::string,std::string>("zeta"   , "{/Symbol z}"),
+    std::pair<std::string,std::string>("theta"  , "{/Symbol q}"),
+    std::pair<std::string,std::string>("eta"    , "{/Symbol h}"),
+    std::pair<std::string,std::string>("iota"   , "{/Symbol i}"),
+    std::pair<std::string,std::string>("kappa"  , "{/Symbol k}"),
+    std::pair<std::string,std::string>("lambda" , "{/Symbol l}"),
+    std::pair<std::string,std::string>("mu"     , "{/Symbol m}"),
+    std::pair<std::string,std::string>("nu"     , "{/Symbol n}"),
+    std::pair<std::string,std::string>("xi"     , "{/Symbol x}"),
+    std::pair<std::string,std::string>("omicron", "{/Symbol o}"),
+    std::pair<std::string,std::string>("pi"     , "{/Symbol p}"),
+    std::pair<std::string,std::string>("rho"    , "{/Symbol r}"),
+    std::pair<std::string,std::string>("sigma"  , "{/Symbol s}"),
+    std::pair<std::string,std::string>("tau"    , "{/Symbol t}"),
+    std::pair<std::string,std::string>("upsilon", "{/Symbol u}"),
+    std::pair<std::string,std::string>("phi"    , "{/Symbol f}"),
+    std::pair<std::string,std::string>("chi"    , "{/Symbol c}"),
+    std::pair<std::string,std::string>("khi"    , "{/Symbol c}"),
+    std::pair<std::string,std::string>("psi"    , "{/Symbol y}"),
+    std::pair<std::string,std::string>("omega"  , "{/Symbol w}"),
+  };
+
+  std::string output(input);
+  for ( auto& word : translator ) {
+    output = std::regex_replace(output,std::regex("\\b"+word.first+"\\b"),word.second);
+  }
+  return output;
 }

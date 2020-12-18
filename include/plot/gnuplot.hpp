@@ -52,6 +52,13 @@ class Gnuplot : public Graph {
     std::stringstream _buffer; ///< All the string to send to gnuplot
     std::stringstream _custom;
 
+    /**
+     * Replace literal greek letters by the Symbol
+     * @param input The string containing e.g. alpha
+     * @return input with alpha replace by the correct replacement
+     */
+    static std::string translateToSymbol(const std::string &input);
+
   protected :
 
     /**

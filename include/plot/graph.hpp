@@ -98,20 +98,20 @@ class Graph {
      */
     const char HTMLcolor[15][8]={
       "#505050", //Grey
-      "#003CA6",
-      "#837902",
-      "#CF009E",
-      "#FF7E2E",
-      "#6ECA97",
-      "#FA9ABA",
-      "#E19BDF",
-      "#B6BD00",
-      "#C9910D",
-      "#704B1C",
-      "#007852",
-      "#6EC4E8",
-      "#62259D",
-      "#FFCD00"  // line01
+      "#CF009E", // line04
+      "#6EC4E8", // line13
+      "#FF7E2E", // line05
+      "#6ECA97", // line06
+      "#FA9ABA", // line07
+      "#003CA6", // line03
+      "#E19BDF", // line08
+      "#C9910D", // line10
+      "#B6BD00", // line09
+      "#704B1C", // line11
+      "#007852", // line12
+      "#62259D", // line14
+      "#FFCD00",  // line01
+      "#837902"  // line02
     };
 
   public :

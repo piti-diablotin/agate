@@ -1254,6 +1254,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       if ( _histdata != nullptr ) {
         try {
           _histdata->shiftOrigin((all=="all"?-1:_itime),red[0],red[1],red[2]);
+          this->buildBorders((all=="all"?0:_itime),true);
         }
         catch ( Exception &e ) {
           e.ADD("Failed to shift origin",ERRDIV);

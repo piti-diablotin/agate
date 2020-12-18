@@ -390,6 +390,8 @@ void Window::loopStep() {
   update = false;
   int& initBuffer = _optioni["initBuffer"];
   float& speed = _optionf["speed"];
+  bool canvasPaused=_canvas->isPaused();
+
   if ( _canvas.get() == nullptr ) return;
   _canvas->updateHist();
   if ( _optioni["prevNtime"] != (_optioni["ntime"] = _canvas->ntime()) ) { 
@@ -414,7 +416,7 @@ void Window::loopStep() {
     initBuffer = 0;
   }
 
-  if ( update || !_canvas->isPaused() ) {
+  if ( update || !canvasPaused ) {
     update = true;
     const bool paral_proj = _optionb["paral_proj"];
     float& zoom = ( _optionf["zoom"]+= _optionf["wheel"]*0.04f);
@@ -512,7 +514,10 @@ void Window::loopStep() {
     else {
       _canvas->nextFrame((int) speed);
     }
-
+    // If canvas was not paused 
+    // but is paused NOW  need to update next buffer
+    // to avoid flicking
+    if ( !canvasPaused && _canvas->isPaused() ) {initBuffer=1;}
   }
   this->swapBuffers();
 }

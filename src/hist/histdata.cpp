@@ -2171,13 +2171,13 @@ void HistData::shiftOrigin(unsigned itime, double x, double y, double z) {
 
   for ( unsigned iitime = begin ; iitime < end ; ++iitime ) {
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-      _xred[iitime*3*_natom+iatom*3  ] -= x;
-      _xred[iitime*3*_natom+iatom*3+1] -= y;
-      _xred[iitime*3*_natom+iatom*3+2] -= z;
+      _xred[iitime*3*_natom+iatom*3  ] += x;
+      _xred[iitime*3*_natom+iatom*3+1] += y;
+      _xred[iitime*3*_natom+iatom*3+2] += z;
 
-      _xcart[iitime*3*_natom+iatom*3  ] -= _rprimd[iitime*9+0]*x + _rprimd[iitime*9+1]*y + _rprimd[iitime*9+2]*z;
-      _xcart[iitime*3*_natom+iatom*3+1] -= _rprimd[iitime*9+3]*x + _rprimd[iitime*9+4]*y + _rprimd[iitime*9+5]*z;
-      _xcart[iitime*3*_natom+iatom*3+2] -= _rprimd[iitime*9+6]*x + _rprimd[iitime*9+7]*y + _rprimd[iitime*9+8]*z;
+      _xcart[iitime*3*_natom+iatom*3  ] += _rprimd[iitime*9+0]*x + _rprimd[iitime*9+1]*y + _rprimd[iitime*9+2]*z;
+      _xcart[iitime*3*_natom+iatom*3+1] += _rprimd[iitime*9+3]*x + _rprimd[iitime*9+4]*y + _rprimd[iitime*9+5]*z;
+      _xcart[iitime*3*_natom+iatom*3+2] += _rprimd[iitime*9+6]*x + _rprimd[iitime*9+7]*y + _rprimd[iitime*9+8]*z;
     }
   }
 }

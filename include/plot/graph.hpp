@@ -193,7 +193,7 @@ class Graph {
      * Save the graph
      * @param filename Save to filename
      * */
-    virtual void save(std::string filename) = 0;
+    virtual void save(const std::string& filename) = 0;
 
     /**
      * Clean everything
@@ -270,7 +270,7 @@ class Graph {
      * @param plotname is the filename for the file that would be created when the graph is created
      * Not the script file that would be executed to creat the graph
      */
-    virtual void dump(std::ostream& out, std::string& plotname) const = 0;
+    virtual void dump(std::ostream& out, const std::string& plotname) const = 0;
 
     /**
      * Creat a file with the current command for plotting.

@@ -55,13 +55,12 @@ Graph::~Graph() {
 void Graph::dump(const std::string& filename) const {
   std::ofstream file(filename,std::ios::out);
   size_t pos = filename.find_last_of(".");
-  std::string plotname = filename.substr(0,pos)+".ps";
   try { 
     if ( !file ) {
       std::string err_str = "Error opening file " +filename;
       throw EXCEPTION(err_str,ERRDIV);
     }
-    this->dump(file,plotname);
+    this->dump(file,filename.substr(0,pos));
 
     file.close();
   }

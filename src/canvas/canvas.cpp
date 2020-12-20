@@ -447,6 +447,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
           _graphConfig.xy.clear();
           _graphConfig.labels.clear();
           _graphConfig.colors.clear();
+          _graphConfig.rgb.clear();
         }
         _histdata->plot(_tbegin,_tend, stream, _gplot.get(), _graphConfig);
       }

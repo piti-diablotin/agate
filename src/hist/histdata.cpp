@@ -1694,6 +1694,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 
   else if ( function == "xy" ) { // Plot two quantities
     // Here ignore hold and clear everything
+    auto xy = std::move(config.xy); // keep old xy (if hold=true)
     config.x.clear();
     config.y.clear();
     config.xy.clear();
@@ -1706,25 +1707,35 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
       paramY = parser.getToken<std::string>("y");
     }
     catch( Exception &e ) {
-      e.ADD("x and y parameters must be set as a function name",ERRABT);
+      e.ADD("x and y parameters must be set as a function name",ERRDIV);
       throw e;
     }
-    std::regex re("^(msd|pacf|vacf|pdos|thermo)\\b");
+    std::regex reX("^(msd|pacf|vacf|pdos|thermo|positions|gyration|g\\(r\\)|stress)\\s*");
     std::smatch m;
-    if ( std::regex_match(paramX,m,re) )
-      throw EXCEPTION(std::string(m[0])+" not allowed for x function",ERRABT);
-    if ( std::regex_match(paramY,m,re) )
-      throw EXCEPTION(std::string(m[0])+" not allowed for y function",ERRABT);
+    if ( std::regex_match(paramX,m,reX) )
+      throw EXCEPTION(std::string(m[0])+" not allowed for x function",ERRDIV);
+    std::regex reY("^(msd|pacf|vacf|pdos|thermo|positions|gyration|g\\(r\\))\\s*");
+    if ( std::regex_match(paramY,m,reY) )
+      throw EXCEPTION(std::string(m[0])+" not allowed for y function",ERRDIV);
 
+    // Compute x
     std::istringstream streamX(paramX);
     this->plot(tbegin,tend,streamX,gplot,config);
     std::string xlabel = config.ylabel;
-    std::list<std::vector<double>> xvalues(std::move(config.y));
-    std::string filename = config.filename;
+    if ( config.y.size() > 1 ) 
+      throw EXCEPTION("x function has to many data, this is not allowed",ERRDIV);
+    std::vector<double> xvalues(std::move(config.y.front())); // Save x values
+    std::string filename = config.filename; // Save filename extension for x;
+    config.y.clear();
+
     std::istringstream streamY(paramY);
     this->plot(tbegin,tend,streamY,gplot,config);
     // y is correctly set. Change x
-    config.x = std::move(xvalues.front());
+    // x and y to xy vector;
+    for ( auto it = config.y.begin(); it != config.y.end(); ++it )
+      xy.push_back(std::make_pair(xvalues,std::move(*it)));
+    config.xy = std::move(xy);
+
     config.xlabel = xlabel;
     config.filename += "_"+filename;
     config.doSumUp= false;

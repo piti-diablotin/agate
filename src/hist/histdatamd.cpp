@@ -632,7 +632,6 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       stream.clear();
     }
     else {
-      e.ADD("Bad things happen sometimes",ERRDIV);
       throw e;
     }
   }

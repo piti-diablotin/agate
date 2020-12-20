@@ -25,6 +25,10 @@
 
 
 #include "window/winfake.hpp"
+#ifdef HAVE_READLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+#endif
 
 Winfake::Winfake(pCanvas &canvas, const int width, const int height) : Window(canvas,width,height) 
 {
@@ -97,8 +101,16 @@ void Winfake::loopStep() {
 
   if ( _optioni["shouldExit"]==0 && _inputChar.empty() ) {
     std::string inputString;
+#ifdef HAVE_READLINE
+    char *input = readline(" >> ");
+    if (strlen(input)>0) add_history(input);
+    inputString = input;
+    delete[] input;
+#else
     std::cout << " >> ";
     std::getline(std::cin,inputString);
+#endif
+
     for ( unsigned i = 0 ; i < inputString.size() ; ++i )
       _inputChar.push((unsigned int)inputString[i]);
     _inputChar.push((unsigned int)'\n');

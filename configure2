@@ -31,6 +31,7 @@ echo " * OpenMP...: $have_omp"
 echo
 echo " - Libraries (Tools) -"
 echo " ~~~~~~~~~~~~~~~~~~~~~"
+echo " * readline.: $have_readline_usable"
 echo " * cURL.....: $have_curl_usable"
 echo " * NetCDF...: $have_netcdf_usable"
 if test x"$have_netcdfcxx4_usable" == x"yes"; then

@@ -98,6 +98,11 @@ namespace utils {
 
     out << " - Libraries (Tools) -" << std::endl;
     out << " ~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+#ifdef HAVE_READLINE
+    out << " * readline.: yes" << std::endl;
+#else
+    out << " * readline.: no" << std::endl;
+#endif
 #ifdef HAVE_CURL
     out << " * cURL.....: yes" << std::endl;
 #else

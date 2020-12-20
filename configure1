@@ -704,6 +704,19 @@ then
   AC_DEFINE([HAVE_NCURSES],[1],[Define to 1 if ncurses is usable.])
 fi
 
+# check for readline library headers   
+AC_CHECK_HEADER([readline/readline.h],[readline_check_h=yes],[readline_check_h=no])
+AC_CHECK_HEADER([readline/history.h],[history_check_h=yes],[history_check_h=no])
+AC_CHECK_LIB([readline],[readline],[readline_check_lib=yes],[readline_check_lib=no])
+if test x"$readline_check_h" == x"yes" && test x"$history_check_h" == x"yes" && test x"$readline_check_lib" == x"yes"
+then
+  LIBS="$LIBS -lreadline"
+  AC_DEFINE([HAVE_READLINE],[1],[Define to 1 if readline is usable.])
+  have_readline_usable="yes"
+else
+  have_readline_usable="no"
+fi
+
 #=========================================================================
 # cURL
 #=========================================================================

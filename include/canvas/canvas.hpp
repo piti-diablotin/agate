@@ -75,6 +75,7 @@ class Canvas {
     std::unique_ptr<HistData> _histdata; ///< HistData saved in case need to output something
 
     std::unique_ptr<Graph> _gplot; ///< Handle to plot things if necessary;
+    Graph::Config          _graphConfig; ///< Store all stuff related to graph
     std::unique_ptr<EigParser> _eigparser; ///< Handle to plot things if necessary;
 
     /**
@@ -239,6 +240,15 @@ class Canvas {
      * @param stream the stream with the other data to be parsed.
      */
     virtual void alter(std::string token, std::istringstream &stream);
+
+    /**
+     * Driver to plot something 
+     * @param tbegin First time to use to plot data
+     * @param tend Last time to use to plot data
+     * @param stream The stream containing the command to parse
+     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
+     */
+    virtual void plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::GraphSave save);
 
     /**
      * Refresh what to see on the screen

@@ -382,13 +382,12 @@ void HistDataMD::printThermo(unsigned tbegin, unsigned tend, std::ostream &out) 
 }
 
 //
-void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::GraphSave save) {
+void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::Config &config) {
   std::string function;
   auto pos = stream.tellg();
-  Graph::Config config;
 
   try {
-    HistData::plot(tbegin, tend, stream, gplot, save);
+    HistData::plot(tbegin, tend, stream, gplot, config);
   }
   catch ( Exception &e ) {
     if ( e.getReturnValue() == ERRABT ) {
@@ -623,7 +622,6 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
       }
 
-      config.save = save;
       try {
         filename = parser.getToken<std::string>("output");
       }

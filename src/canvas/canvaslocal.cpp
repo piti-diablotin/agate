@@ -469,27 +469,6 @@ void CanvasLocal::my_alter(std::string token, std::istringstream &stream) {
       throw EXCEPTION("Bad value. rotattions or lengths are allowed", ERRDIV);
     this->convertOctahedra();
   }
-  else if ( token == "plot" || token == "print" || token == "data" ) {
-    Graph::GraphSave save = Graph::GraphSave::NONE;
-    if ( token == "print" )
-      save = Graph::GraphSave::PRINT;
-    else if ( token == "data" )
-      save = Graph::GraphSave::DATA;
-
-    try {
-      if ( _gplot == nullptr ) 
-        _gplot.reset(new Gnuplot);
-
-      _gplot->setWinTitle(_info);
-    }
-    catch ( Exception &e ) {
-      e.ADD("Unable to plot with gnuplot.\nInstead, writing data.", ERRWAR);
-      std::cerr << e.fullWhat() << std::endl;
-      _gplot.reset(nullptr);
-    }
-
-    this->plot(_tbegin, _tend, stream,save);
-  }
   else 
     CanvasPos::my_alter(token, stream);
 }

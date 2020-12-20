@@ -135,6 +135,7 @@ class Graph {
       GraphSave save;
       bool doSumUp;
       bool order;
+      bool hold;
 
       Config() :
         x(),
@@ -149,7 +150,8 @@ class Graph {
         title("Untitled"),
         save(NONE),
         doSumUp(true),
-        order(false)
+        order(false),
+        hold(false)
       {}
     } Config;
 

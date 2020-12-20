@@ -1183,9 +1183,8 @@ void HistData::printThermo(unsigned tbegin, unsigned tend, std::ostream &out) {
   (void) tend;
 }
 
-void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::GraphSave save) {
+void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::Config &config) {
   std::string function;
-  Graph::Config config;
 
   try {
     HistData::checkTimes(tbegin,tend);
@@ -1697,7 +1696,6 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
   }
 
-  config.save = save;
   try {
     filename = parser.getToken<std::string>("output");
   }
@@ -2483,7 +2481,7 @@ void HistData::decorrelate(unsigned tbegin, unsigned tend, unsigned ntime, doubl
   Graph::plot(config,&gplot);
   std::cerr << "E finale " << E0 << std::endl;
   if ( stop ) std::cerr << "Converged" << std::endl;
-  hist->plot(0,decorrelateTimes.size(),toto,&gplot, Graph::GraphSave::DATA);
+  hist->plot(0,decorrelateTimes.size(),toto,&gplot, config);
   delete hist;
 }
 

@@ -140,15 +140,6 @@ class CanvasPos : public Canvas {
     void my_alter(std::string token, std::istringstream &stream);
 
     /**
-     * Driver to plot something 
-     * @param tbegin First time to use to plot data
-     * @param tend Last time to use to plot data
-     * @param stream The stream containing the command to parse
-     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
-     */
-    virtual void plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::GraphSave save);
-
-    /**
      * Build the cartesian position of the atoms on the borders
      * @param itime Build for this time step
      * @param findBorders True if the border is searched

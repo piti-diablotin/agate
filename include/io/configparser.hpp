@@ -147,6 +147,17 @@ class ConfigParser {
     T getToken(const std::string& token, Characteristic dim = NONE) const;
 
     /**
+     * Get the corresponding values for an input variable.
+     * If not present then return the default value
+     * @param token Name of the input variable
+     * @param val Default value to return
+     * @param dim Characteristic of token. Read a unit and convert the returned value to internal unit according to dim value.
+     * @return A vector of size values.
+     */
+    template<class T>
+    T getTokenDefault(const std::string& token, const T val, Characteristic dim = NONE) const;
+
+    /**
      * Check if the token can be found in the data
      * Usefull for optional token
      * return true if the toekn is found, false otherwise
@@ -162,6 +173,7 @@ std::string ConfigParser::getToken(const std::string& token, Characteristic dim)
 
 template<>
 bool ConfigParser::getToken(const std::string& token, Characteristic dim) const;
+
 
 #include "io/configparser.hxx"
 

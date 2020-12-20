@@ -506,12 +506,20 @@ std::istream& getline(std::istream& cin,std::string& line, unsigned int& counter
 std::string readString(std::istream& stream) {
   std::string fullString;
   stream >> fullString;
-  while ( fullString.back() == '\\' && stream.good()) {
+  char end = 0;
+  bool quote = false;
+  if ( fullString[0] == '"' ) end = '"';
+  else if ( fullString[0] == '\'' ) end = '\'';
+  if ( (quote = (end!=0)) ) fullString.erase(0,1);
+  while ( (fullString.back() == '\\'||quote) && stream.good()) {
     std::string partialString;
     stream >> partialString;
-    fullString.back() = ' ';
-    fullString += partialString;
+    if ( fullString.back() == '\\' )
+      fullString.pop_back();
+    fullString += " "+partialString;
+    if ( partialString.back() == end ) break;
   }
+  if (quote) fullString.pop_back();
   if ( fullString[0] == '~' ) {
 #ifndef _WIN32
     std::string home(getenv("HOME"));

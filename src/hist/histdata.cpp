@@ -70,6 +70,7 @@ extern "C" {
 #include <fftw3.h>
 #endif
 #include <random>
+#include <regex>
 
 using Agate::Mendeleev;
 
@@ -1689,6 +1690,44 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     labels.push_back("Px");
     labels.push_back("Py");
     labels.push_back("Pz");
+  }
+
+  else if ( function == "xy" ) { // Plot two quantities
+    // Here ignore hold and clear everything
+    config.x.clear();
+    config.y.clear();
+    config.xy.clear();
+    config.labels.clear();
+    config.colors.clear();
+    std::string paramX;
+    std::string paramY;
+    try {
+      paramX = parser.getToken<std::string>("x");
+      paramY = parser.getToken<std::string>("y");
+    }
+    catch( Exception &e ) {
+      e.ADD("x and y parameters must be set as a function name",ERRABT);
+      throw e;
+    }
+    std::regex re("^(msd|pacf|vacf|pdos|thermo)\\b");
+    std::smatch m;
+    if ( std::regex_match(paramX,m,re) )
+      throw EXCEPTION(std::string(m[0])+" not allowed for x function",ERRABT);
+    if ( std::regex_match(paramY,m,re) )
+      throw EXCEPTION(std::string(m[0])+" not allowed for y function",ERRABT);
+
+    std::istringstream streamX(paramX);
+    this->plot(tbegin,tend,streamX,gplot,config);
+    std::string xlabel = config.ylabel;
+    std::list<std::vector<double>> xvalues(std::move(config.y));
+    std::string filename = config.filename;
+    std::istringstream streamY(paramY);
+    this->plot(tbegin,tend,streamY,gplot,config);
+    // y is correctly set. Change x
+    config.x = std::move(xvalues.front());
+    config.xlabel = xlabel;
+    config.filename += "_"+filename;
+    config.doSumUp= false;
   }
 
 

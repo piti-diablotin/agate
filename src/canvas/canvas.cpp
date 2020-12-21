@@ -578,14 +578,10 @@ void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream) {
   else if ( function == "xy" ) { // Plot two quantities
     // Here ignore hold and clear everything
     auto xy = std::move(_graphConfig.xy); // keep old xy (if hold=true)
-    //auto filename = _filename;
-    auto save = _graphConfig.save;
-    _graphConfig.filename.clear();
-    _graphConfig.x.clear();
     _graphConfig.y.clear();
-    _graphConfig.xy.clear();
-    _graphConfig.labels.clear();
-    _graphConfig.colors.clear();
+    _graphConfig.x.clear();
+    auto save = _graphConfig.save;
+    auto labels = std::move(_graphConfig.labels);
     _graphConfig.save = Graph::NONE;
     std::string paramX;
     std::string paramY;
@@ -597,11 +593,12 @@ void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream) {
       e.ADD("x and y parameters must be set as a function name",ERRDIV);
       throw e;
     }
-    std::regex reX("^(msd|pacf|vacf|pdos|thermo|positions|gyration|g\\(r\\)|stress|strain)\\s*");
+    const std::string common("msd|pacf|vacf|pdos|thermo|positions|g\\(r\\)|band|tdep|conducti|dos");
+    std::regex reX("^("+common+"|gyration)\\s*");
     std::smatch m;
     if ( std::regex_match(paramX,m,reX) )
       throw EXCEPTION(std::string(m[0])+" not allowed for x function",ERRDIV);
-    std::regex reY("^(msd|pacf|vacf|pdos|thermo|positions|gyration|g\\(r\\))\\s*");
+    std::regex reY("^("+common+")\\s*");
     if ( std::regex_match(paramY,m,reY) )
       throw EXCEPTION(std::string(m[0])+" not allowed for y function",ERRDIV);
 
@@ -627,6 +624,11 @@ void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream) {
     for ( auto it = _graphConfig.y.begin(); it != _graphConfig.y.end(); ++it )
       xy.push_back(std::make_pair(xvalues,std::move(*it)));
     _graphConfig.xy = std::move(xy);
+    _graphConfig.y.clear();
+    _graphConfig.x.clear();
+    for ( auto it = _graphConfig.labels.begin() ; it != _graphConfig.labels.end() ; ++it )
+      labels.push_back(std::move(*it));
+    _graphConfig.labels = std::move(labels);
 
     _graphConfig.xlabel = xlabel;
     _graphConfig.doSumUp = false;

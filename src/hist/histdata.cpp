@@ -1692,65 +1692,6 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     labels.push_back("Pz");
   }
 
-  else if ( function == "xy" ) { // Plot two quantities
-    // Here ignore hold and clear everything
-    auto xy = std::move(config.xy); // keep old xy (if hold=true)
-    auto filename = _filename;
-    auto save = config.save;
-    _filename.clear();
-    config.x.clear();
-    config.y.clear();
-    config.xy.clear();
-    config.labels.clear();
-    config.colors.clear();
-    config.save = Graph::NONE;
-    std::string paramX;
-    std::string paramY;
-    try {
-      paramX = parser.getToken<std::string>("x");
-      paramY = parser.getToken<std::string>("y");
-      std::clog << paramX<< std::endl;
-      std::clog << paramY<< std::endl;
-    }
-    catch( Exception &e ) {
-      e.ADD("x and y parameters must be set as a function name",ERRDIV);
-      throw e;
-    }
-    std::regex reX("^(msd|pacf|vacf|pdos|thermo|positions|gyration|g\\(r\\)|stress|strain)\\s*");
-    std::smatch m;
-    if ( std::regex_match(paramX,m,reX) )
-      throw EXCEPTION(std::string(m[0])+" not allowed for x function",ERRDIV);
-    std::regex reY("^(msd|pacf|vacf|pdos|thermo|positions|gyration|g\\(r\\))\\s*");
-    if ( std::regex_match(paramY,m,reY) )
-      throw EXCEPTION(std::string(m[0])+" not allowed for y function",ERRDIV);
-
-    // Compute x
-    std::istringstream streamX(paramX);
-    this->plot(tbegin,tend,streamX,gplot,config);
-    std::string xlabel = config.ylabel;
-    if ( config.y.size() > 1 ) 
-      throw EXCEPTION("x function has to many data, this is not allowed",ERRDIV);
-    std::vector<double> xvalues(std::move(config.y.front())); // Save x values
-    std::string filenamex = config.filename; // Save filename extension for x;
-    config.y.clear();
-
-    std::istringstream streamY(paramY);
-    this->plot(tbegin,tend,streamY,gplot,config);
-    // y is correctly set. Change x
-    // x and y to xy vector;
-    for ( auto it = config.y.begin(); it != config.y.end(); ++it )
-      xy.push_back(std::make_pair(xvalues,std::move(*it)));
-    config.xy = std::move(xy);
-
-    config.xlabel = xlabel;
-    _filename = filename;
-    config.filename.erase(0,1);
-    config.filename += filenamex;
-    config.doSumUp= false;
-    config.save = save;
-  }
-
-
   else {
     throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
   }

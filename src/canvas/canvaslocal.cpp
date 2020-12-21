@@ -621,22 +621,12 @@ void CanvasLocal::resetBase() {
   }
 }
 
-void CanvasLocal::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::GraphSave save) {
+void CanvasLocal::plot(unsigned tbegin, unsigned tend, std::istream &stream) {
   std::string function;
-  Graph::Config config;
 
+  size_t initpos = stream.tellg();
   stream >> function;
   unsigned ntime = tend-tbegin;
-  std::vector<double> &x = config.x;
-  std::list<std::vector<double>> &y = config.y;
-  //std::list<std::pair<std::vector<double>,std::vector<double>>> &xy = config.xy;
-  std::list<std::string> &labels = config.labels;
-  //std::vector<short> &colors = config.colors;
-  std::string &filename = config.filename;
-  std::string &xlabel = config.xlabel;
-  std::string &ylabel = config.ylabel;
-  std::string &title = config.title;
-  bool &doSumUp = config.doSumUp;
 
   std::string line;
   size_t pos = stream.tellg();
@@ -650,30 +640,30 @@ void CanvasLocal::plot(unsigned tbegin, unsigned tend, std::istream &stream, Gra
   try {
     std::string tunit = parser.getToken<std::string>("tunit");
     if ( tunit == "fs" ) {
-      xlabel = "Time [fs]";
-      x.resize(ntime);
-      for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=_histdata->getTime(i)*phys::atu2fs;
+      _graphConfig.xlabel = "Time [fs]";
+      _graphConfig.x.resize(ntime);
+      for ( unsigned i = tbegin ; i < tend ; ++i ) _graphConfig.x[i-tbegin]=_histdata->getTime(i)*phys::atu2fs;
     }
     else if ( tunit == "step" ) {
-      xlabel = "Time [step]";
-      x.resize(ntime);
-      for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
+      _graphConfig.xlabel = "Time [step]";
+      _graphConfig.x.resize(ntime);
+      for ( unsigned i = tbegin ; i < tend ; ++i ) _graphConfig.x[i-tbegin]=i;
     }
     else {
       throw EXCEPTION("Unknow time unit, allowed values fs and step",ERRDIV);
     }
   }
   catch (Exception &e) {
-    xlabel = "Time [step]";
-    x.resize(ntime);
-    for ( unsigned i = tbegin ; i < tend ; ++i ) x[i-tbegin]=i;
+    _graphConfig.xlabel = "Time [step]";
+    _graphConfig.x.resize(ntime);
+    for ( unsigned i = tbegin ; i < tend ; ++i ) _graphConfig.x[i-tbegin]=i;
   }
 
   // rotations
   if ( function == "rotations" || function == "rot" ) {
-    filename = "Rotations";
-    ylabel = "Rotations [degree]";
-    title = "Rotations";
+    _graphConfig.filename = "Rotations";
+    _graphConfig.ylabel = "Rotations [degree]";
+    _graphConfig.title = "Rotations";
     std::clog << std::endl << " -- Average rotations --" << std::endl;
 
     std::vector<double> alpha(ntime);
@@ -698,28 +688,25 @@ void CanvasLocal::plot(unsigned tbegin, unsigned tend, std::istream &stream, Gra
       e.ADD("Unable to plot average rotations",ERRABT);
       throw e;
     }
-    y.push_back(std::move(alpha));
-    y.push_back(std::move(beta));
-    y.push_back(std::move(gamma));
-    labels.push_back("alpha");
-    labels.push_back("beta");
-    labels.push_back("gamma");
-    doSumUp = true;
+    _graphConfig.y.push_back(std::move(alpha));
+    _graphConfig.y.push_back(std::move(beta));
+    _graphConfig.y.push_back(std::move(gamma));
+    _graphConfig.labels.push_back("alpha");
+    _graphConfig.labels.push_back("beta");
+    _graphConfig.labels.push_back("gamma");
+    _graphConfig.doSumUp = true;
   }
   else {
-    CanvasPos::plot(tbegin,tend,stream,save);
+    stream.clear();
+    stream.seekg(initpos);
+    CanvasPos::plot(tbegin,tend,stream);
     return;
   }
-  config.save = save;
-  try {
-    filename = parser.getToken<std::string>("output");
-  }
-  catch (Exception &e) {
-    filename = utils::noSuffix(this->info())+std::string("_")+filename;
-  }
-  Graph::plot(config,_gplot.get());
-  if ( _gplot != nullptr )
-    _gplot->clearCustom();
+  _graphConfig.filename = parser.getTokenDefault<std::string>("output",
+      utils::noSuffix(this->info())+std::string("_")+_graphConfig.filename
+      );
+  Graph::plot(_graphConfig,_gplot.get());
+  _gplot->clearCustom();
   stream.clear();
 }
 

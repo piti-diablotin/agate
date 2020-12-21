@@ -426,6 +426,15 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
       _graphConfig.hold = parser.getToken<bool>("hold");
     }
 
+    if ( !_graphConfig.hold ) {
+      _graphConfig.x.clear();
+      _graphConfig.y.clear();
+      _graphConfig.xy.clear();
+      _graphConfig.rgb.clear();
+      _graphConfig.labels.clear();
+      _graphConfig.colors.clear();
+    }
+
     try {
       if ( _gplot == nullptr ) 
         _gplot.reset(new Gnuplot);
@@ -438,42 +447,20 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
       _gplot.reset(nullptr);
     }
 
-    size_t pos = stream.tellg();
-    try {
-      if ( _histdata.get() != nullptr ) {
-        if ( !_graphConfig.hold ) {
-          _graphConfig.x.clear();
-          _graphConfig.y.clear();
-          _graphConfig.xy.clear();
-          _graphConfig.labels.clear();
-          _graphConfig.colors.clear();
-          _graphConfig.rgb.clear();
-        }
-        _histdata->plot(_tbegin,_tend, stream, _gplot.get(), _graphConfig);
-      }
-      else
-        throw EXCEPTION("",ERRABT);
-    }
-    catch( Exception &e ) {
-      if ( e.getReturnValue() == ERRABT) {
-        stream.clear();
-        stream.seekg(pos);
-        this->plot(_tbegin, _tend, stream,_graphConfig.save);
-      }
-      else throw e;
-    }
+    this->plot(_tbegin,_tend,stream);
+
   }
   else 
     this->my_alter(token,stream);
 }
 
 
-void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::GraphSave save) {
+void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream) {
   std::string function;
-  Graph::Config config;
   (void) tbegin;
   (void) tend;
 
+  size_t initpos = stream.tellg();
   stream >> function;
 
   std::string line;
@@ -502,17 +489,17 @@ void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::G
     }
 
 
-    Graph::plotBand(*(_eigparser.get()),parser,_gplot.get(),save);
+    Graph::plotBand(*(_eigparser.get()),parser,_gplot.get(),_graphConfig.save);
   }
   else if ( function == "dos" ) {
     DosDB db;
     db.buildFromPrefix(parser.getToken<std::string>("prefix"));
-    Graph::plotDOS(db,parser,_gplot.get(),save);
+    Graph::plotDOS(db,parser,_gplot.get(),_graphConfig.save);
   }
   else if ( function == "conducti" ) {
     if ( _histdata == nullptr ) return;
     Graph::Config config;
-    config.save = save;
+    config.save = _graphConfig.save;
     config.filename = utils::noSuffix(_histdata->filename());
 
     AbiOpt opt;
@@ -522,19 +509,8 @@ void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::G
     conducti.traceTensor(opt);
     conducti.getResultSigma(config);
 
-    try {
-      if ( _gplot == nullptr ) 
-        _gplot.reset(new Gnuplot);
-      Graph::plot(config,_gplot.get());
-    }
-    catch ( Exception &e ) {
-      e.ADD("Unable to plot with gnuplot.\nInstead, writing data.", ERRWAR);
-      std::cerr << e.fullWhat() << std::endl;
-      _gplot.reset(nullptr);
-    }
-
-    if ( _gplot != nullptr )
-      _gplot->clearCustom();
+    Graph::plot(config,_gplot.get());
+    _gplot->clearCustom();
   }
   else if ( function == "tdep" ) {
     if ( _histdata == nullptr ) 
@@ -558,42 +534,13 @@ void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::G
     else
       throw EXCEPTION("Not a valid Hist file",ERRDIV);
 
-    try {
-      ( parser.hasToken("debug") ) ? tdep.mode(Tdep::Mode::Debug) : tdep.mode(Tdep::Mode::Normal);
-    }
-    catch (...) {
-      tdep.mode(Tdep::Mode::Normal);
-    }
+    ( parser.getTokenDefault<bool>("debug",false) ) ? tdep.mode(Tdep::Mode::Debug) : tdep.mode(Tdep::Mode::Normal);
 
-    try {
-      tdep.step(parser.getToken<unsigned>("step"));
-    }
-    catch (...) {
-    }
-
-    try {
-      tdep.temperature(parser.getToken<unsigned>("temperature"));
-    }
-    catch (...) {
-    }
-
-    try {
-      tdep.order(parser.getToken<unsigned>("order"));
-    }
-    catch (...) {
-    }
-
-    try {
-      tdep.rcut3(parser.getToken<double>("rcut3"));
-    }
-    catch (...) {
-    }
-
-    try {
-      tdep.rcut(parser.getToken<double>("rcut"));
-    }
-    catch (...) {
-    }
+    tdep.step(parser.getTokenDefault<unsigned>("step",1));
+    tdep.temperature(parser.getTokenDefault<double>("temperature",-1));
+    tdep.order(parser.getTokenDefault<unsigned>("order",2));
+    tdep.rcut3(parser.getTokenDefault<double>("rcut3",-1));
+    tdep.rcut(parser.getTokenDefault<double>("rcut",-1));
 
     try {
       parser.setSensitive(true);
@@ -625,21 +572,81 @@ void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::G
     this->setHist(*uc);
     _info = save;
     std::stringstream info("band "+phononBands.back().second+" "+line);
+    this->plot(_tbegin, _tend,info);
+  }
+
+  else if ( function == "xy" ) { // Plot two quantities
+    // Here ignore hold and clear everything
+    auto xy = std::move(_graphConfig.xy); // keep old xy (if hold=true)
+    //auto filename = _filename;
+    auto save = _graphConfig.save;
+    _graphConfig.filename.clear();
+    _graphConfig.x.clear();
+    _graphConfig.y.clear();
+    _graphConfig.xy.clear();
+    _graphConfig.labels.clear();
+    _graphConfig.colors.clear();
+    _graphConfig.save = Graph::NONE;
+    std::string paramX;
+    std::string paramY;
     try {
-      if ( _gplot == nullptr ) 
-        _gplot.reset(new Gnuplot);
-      this->plot(_tbegin, _tend,info,Graph::GraphSave::NONE);
-      return;
+      paramX = parser.getToken<std::string>("x");
+      paramY = parser.getToken<std::string>("y");
     }
-    catch ( Exception &e ) {
-      e.ADD("Unable to plot with gnuplot.\nInstead, writing data.", ERRWAR);
-      std::cerr << e.fullWhat() << std::endl;
-      _gplot.reset(nullptr);
+    catch( Exception &e ) {
+      e.ADD("x and y parameters must be set as a function name",ERRDIV);
+      throw e;
     }
+    std::regex reX("^(msd|pacf|vacf|pdos|thermo|positions|gyration|g\\(r\\)|stress|strain)\\s*");
+    std::smatch m;
+    if ( std::regex_match(paramX,m,reX) )
+      throw EXCEPTION(std::string(m[0])+" not allowed for x function",ERRDIV);
+    std::regex reY("^(msd|pacf|vacf|pdos|thermo|positions|gyration|g\\(r\\))\\s*");
+    if ( std::regex_match(paramY,m,reY) )
+      throw EXCEPTION(std::string(m[0])+" not allowed for y function",ERRDIV);
+
+    // Compute x
+    std::istringstream streamX(paramX);
+    this->plot(tbegin,tend,streamX);
+    std::string xlabel = _graphConfig.ylabel;
+    if ( _graphConfig.y.size() > 1 ) 
+      throw EXCEPTION("x function has to many data, this is not allowed",ERRDIV);
+    std::vector<double> xvalues(std::move(_graphConfig.y.front())); // Save x values
+    std::string filenamex = _graphConfig.filename.substr(
+        _graphConfig.filename.length()-
+        _graphConfig.filename.compare(
+          utils::noSuffix(this->info())
+          )
+        ); // Save filename extension for x;
+    _graphConfig.y.clear();
+
+    std::istringstream streamY(paramY);
+    this->plot(tbegin,tend,streamY);
+    // y is correctly set. Change x
+    // x and y to xy vector;
+    for ( auto it = _graphConfig.y.begin(); it != _graphConfig.y.end(); ++it )
+      xy.push_back(std::make_pair(xvalues,std::move(*it)));
+    _graphConfig.xy = std::move(xy);
+
+    _graphConfig.xlabel = xlabel;
+    _graphConfig.doSumUp = false;
+    _graphConfig.save = save;
+    _graphConfig.filename = parser.getTokenDefault<std::string>("output",
+        utils::noSuffix(_graphConfig.filename)+filenamex
+        );
+    Graph::plot(_graphConfig,_gplot.get());
+    _gplot->clearCustom();
+    _graphConfig.doSumUp = true;
   }
 
   else {
-    throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet or your need to load a file first"),ERRABT);
+    if ( _histdata != nullptr ) {
+      stream.clear();
+      stream.seekg(initpos);
+      _histdata->plot(_tbegin,_tend,stream,_gplot.get(), _graphConfig);
+    }
+    else
+      throw EXCEPTION("Function "+function+" not available yet or you need to load a file first",ERRDIV);
   }
 }
 

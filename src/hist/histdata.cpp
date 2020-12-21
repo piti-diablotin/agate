@@ -420,7 +420,7 @@ std::array<double, 6> HistData::getStrain(const unsigned time, const Dtset &dtse
     0, 1, 0,
     0, 0, 1
   };
-  if ( _natom != dtset.natom() ) { //Maybe a supercell
+  if ( _natom != dtset.natom() ) { //Maybe a supercell Just in case not taken care before
     Supercell supercell(*this,time);
     supercell.findReference(dtset);
     const vec3d dim = supercell.getDim();
@@ -428,6 +428,7 @@ std::array<double, 6> HistData::getStrain(const unsigned time, const Dtset &dtse
     inv_multiplicity[4]=1/dim[1];
     inv_multiplicity[8]=1/dim[2];
   }
+
   mat3d strain = rprim*inv_multiplicity*gprim;
 
   return {strain[mat3dind(1,1)]-1,strain[mat3dind(2,2)]-1,strain[mat3dind(3,3)]-1,strain[mat3dind(3,2)],strain[mat3dind(3,1)],strain[mat3dind(2,1)]};
@@ -1566,7 +1567,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     filename = "etotal";
     UnitConverter eunit(UnitConverter::Ha);
     eunit = UnitConverter::getFromString(parser.getTokenDefault<std::string>("eunit","Ha"));
-    ylabel = "Etot["+eunit.str()+"]";
+    ylabel = "Etot ["+eunit.str()+"]";
     if (_imgdata._imgmov > 0 ) xlabel = "Image";
     title = "Total energy";
     std::clog << std::endl << " -- Total (electronic) energy --" << std::endl;
@@ -1580,35 +1581,24 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     ylabel = "Stress [GPa]";
     title = "Stress tensor";
     std::clog << std::endl << " -- Stress tensor --" << std::endl;
-    x.resize(_ntime);
-    std::vector<double> s1(ntime);
-    std::vector<double> s2(ntime);
-    std::vector<double> s3(ntime);
-    std::vector<double> s4(ntime);
-    std::vector<double> s5(ntime);
-    std::vector<double> s6(ntime);
+    int only = parser.getTokenDefault<int>("only",0);
+    if ( only < 0 || only > 6 )
+      throw EXCEPTION("Bad value for only="+utils::to_string(only),ERRDIV);
+    --only;
+    std::array<std::vector<double>,6> stress;
+    for ( int s = 0 ; s < 6 ; ++s ) stress[s].resize((only==-1||only==s)?ntime:0);
     x.resize(_ntime);
 #pragma omp parallel for schedule(static)
     for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
-      s1[itime-tbegin] = _stress[itime*6+0]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s2[itime-tbegin] = _stress[itime*6+1]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s3[itime-tbegin] = _stress[itime*6+2]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s4[itime-tbegin] = _stress[itime*6+3]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s5[itime-tbegin] = _stress[itime*6+4]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s6[itime-tbegin] = _stress[itime*6+5]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
+      for ( int s = 0 ; s < 6 ; ++s )
+        if ( only==-1||only==s )
+          stress[s][itime-tbegin] = _stress[itime*6+s]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
     }
-    y.push_back(std::move(s1));
-    y.push_back(std::move(s2));
-    y.push_back(std::move(s3));
-    y.push_back(std::move(s4));
-    y.push_back(std::move(s5));
-    y.push_back(std::move(s6));
-    labels.push_back("sigma 1");
-    labels.push_back("sigma 2");
-    labels.push_back("sigma 3");
-    labels.push_back("sigma 4");
-    labels.push_back("sigma 5");
-    labels.push_back("sigma 6");
+    for ( int s = 0 ; s < 6 ; ++s )
+      if ( only==-1||only==s ) {
+        y.push_back(std::move(stress[s]));
+        labels.push_back("sigma "+utils::to_string(s+1));
+      }
   }
 
   // strain
@@ -1618,44 +1608,39 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     title = "Strain tensor";
     std::clog << std::endl << " -- Strain tensor --" << std::endl;
     HistData* ref = nullptr;
+    int only = parser.getTokenDefault<int>("only",0);
+    if ( only < 0 || only > 6 )
+      throw EXCEPTION("Bad value for only="+utils::to_string(only),ERRDIV);
+    --only;
     try {
       std::string refFile = parser.getToken<std::string>("reference");
       ref = getHist(refFile,true);
-      int time = 0;
-      if (parser.hasToken("time")) time = parser.getToken<int>("time");
+      int time = parser.getTokenDefault<int>("time",0);
       Dtset refDtset(*ref,time);
       delete ref;
       ref = nullptr;
+      std::array<std::vector<double>,6> eta;
+      for ( int s = 0 ; s < 6 ; ++s ) eta[s].resize((only==-1||only==s)?ntime:0);
       x.resize(_ntime);
-      std::vector<double> eta1(ntime);
-      std::vector<double> eta2(ntime);
-      std::vector<double> eta3(ntime);
-      std::vector<double> eta4(ntime);
-      std::vector<double> eta5(ntime);
-      std::vector<double> eta6(ntime);
-      x.resize(_ntime);
+
+      if ( _natom != refDtset.natom() ) { //Maybe a supercell
+        Supercell supercell(*this,time);
+        supercell.findReference(refDtset);
+        refDtset = supercell;
+      }
+
 #pragma omp parallel for schedule(static)
       for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
         auto strain = this->getStrain(itime,refDtset);
-        eta1[itime-tbegin] = strain[0];
-        eta2[itime-tbegin] = strain[1];
-        eta3[itime-tbegin] = strain[2];
-        eta4[itime-tbegin] = strain[3];
-        eta5[itime-tbegin] = strain[4];
-        eta6[itime-tbegin] = strain[5];
+        for ( int s = 0 ; s < 6 ; ++s )
+          if ( only==-1||only==s )
+            eta[s][itime-tbegin] = strain[s];
       }
-      y.push_back(std::move(eta1));
-      y.push_back(std::move(eta2));
-      y.push_back(std::move(eta3));
-      y.push_back(std::move(eta4));
-      y.push_back(std::move(eta5));
-      y.push_back(std::move(eta6));
-      labels.push_back("eta 1");
-      labels.push_back("eta 2");
-      labels.push_back("eta 3");
-      labels.push_back("eta 4");
-      labels.push_back("eta 5");
-      labels.push_back("eta 6");
+      for ( int s = 0 ; s < 6 ; ++s )
+        if ( only==-1||only==s ) {
+          y.push_back(std::move(eta[s]));
+          labels.push_back("eta "+utils::to_string(s+1));
+        }
     }
     catch ( Exception &e ){
       if ( ref != nullptr ) delete ref;

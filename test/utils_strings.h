@@ -24,6 +24,10 @@ class UtilsString : public CxxTest::TestSuite
       TS_ASSERT_EQUALS(test,std::string("string with"));
       test = utils::readString(stream);
       TS_ASSERT_EQUALS(test,std::string("space\""));
+      stream.str("\"one\"");
+      stream.clear();
+      test = utils::readString(stream);
+      TS_ASSERT_EQUALS(test,std::string("one"));
     }
 
     void testBasename( void ) {

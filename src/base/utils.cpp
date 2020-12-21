@@ -511,7 +511,11 @@ std::string readString(std::istream& stream) {
   if ( fullString[0] == '"' ) end = '"';
   else if ( fullString[0] == '\'' ) end = '\'';
   if ( (quote = (end!=0)) ) fullString.erase(0,1);
-  while ( (fullString.back() == '\\'||quote) && stream.good()) {
+  if ( quote && fullString.back()==end) {
+    quote = false;
+    fullString.pop_back();
+  }
+  while ( (fullString.back()=='\\' || quote) && stream.good()) {
     std::string partialString;
     stream >> partialString;
     if ( fullString.back() == '\\' )

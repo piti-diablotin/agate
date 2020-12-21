@@ -228,6 +228,11 @@ HistDataMD& HistDataMD::operator+=(HistDataMD& hist) {
   // Direct call to this function so _ntime == _temperature.size() and we need to add HistData fields first
   if ( prevNtime == _ntime ) HistData::operator+=(*dynamic_cast<HistData*>(&hist));
 
+  bool dovel = _velocities.empty() ^ hist._velocities.empty();
+  if ( dovel && _velocities.empty() ) _velocities.resize(_xyz*_natom*prevNtime,0);
+  if ( dovel && hist._velocities.empty() ) hist._velocities.resize(_xyz*_natom*hist._ntimeAvail,0);
+  dovel = !(_velocities.empty() || hist._velocities.empty());
+
   _ekin.resize(_ntime);
   std::copy(hist._ekin.begin(), hist._ekin.end(),_ekin.begin()+prevNtime);
 
@@ -277,16 +282,18 @@ HistDataMD& HistDataMD::operator+=(HistDataMD& hist) {
   _pressure.resize(_ntime);
   std::copy(hist._pressure.begin(), hist._pressure.end(),_pressure.begin()+prevNtime);
 
-  _velocities.resize(_ntime*_natom*_xyz);
-  if ( !reorder ) {
-    std::copy(hist._velocities.begin(), hist._velocities.end(),_velocities.begin()+prevNtime*_natom*_xyz);
-  }
-  else {
-    unsigned start = prevNtime*_natom*_xyz;
-    for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
-      for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-        for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
-          _velocities[start+itime*3*_natom+iatom*3+coord] = hist._velocities[itime*3*_natom+order[iatom]*3+coord];
+  if ( dovel ) {
+    _velocities.resize(_ntime*_natom*_xyz);
+    if ( !reorder ) {
+      std::copy(hist._velocities.begin(), hist._velocities.end(),_velocities.begin()+prevNtime*_natom*_xyz);
+    }
+    else {
+      unsigned start = prevNtime*_natom*_xyz;
+      for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
+        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+          for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+            _velocities[start+itime*3*_natom+iatom*3+coord] = hist._velocities[itime*3*_natom+order[iatom]*3+coord];
+          }
         }
       }
     }

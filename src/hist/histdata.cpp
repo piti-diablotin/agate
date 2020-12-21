@@ -686,11 +686,8 @@ HistData& HistData::operator+=(HistData& hist) {
   _xcart.resize(_ntime*_natom*_xyz);
   _xred.resize(_ntime*_natom*_xyz);
 
-  bool dofcart;
-  bool dospinat;
-
-  dofcart = _fcart.empty() ^ hist._fcart.empty();
-  dospinat = hist._spinat.empty() ^ _spinat.empty();
+  bool dofcart = _fcart.empty() ^ hist._fcart.empty();
+  bool dospinat= hist._spinat.empty() ^ _spinat.empty();
 
   if ( dofcart && _fcart.empty() ) _fcart.resize(_xyz*_natom*prevNtime,0);
   if ( dofcart && hist._fcart.empty() ) hist._fcart.resize(_xyz*_natom*hist._ntimeAvail,0);

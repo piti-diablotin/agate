@@ -422,9 +422,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     else if ( token == "data" )
       _graphConfig.save = Graph::DATA;
 
-    if ( parser.hasToken("hold") ) {
-      _graphConfig.hold = parser.getToken<bool>("hold");
-    }
+    _graphConfig.hold = parser.getTokenDefault("hold",_graphConfig.hold);
 
     if ( !_graphConfig.hold ) {
       _graphConfig.x.clear();

@@ -1247,7 +1247,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   //RDF
   if ( function == "g(r)" ) {
     filename = "PDF";
-    xlabel="R["+dunit.str()+"]";
+    xlabel="R ["+dunit.str()+"]";
     ylabel = "Radial Distribution Function [a.u]";
     title = "G(r)";
     double rmax = 0;
@@ -1378,8 +1378,8 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 
     filename = std::string("Posisions") + xaxis;
     filename += yaxis;
-    xlabel = "Positions X["+dunit.str()+"]";
-    ylabel = "Positions Y["+dunit.str()+"]";
+    xlabel = "Positions X ["+dunit.str()+"]";
+    ylabel = "Positions Y ["+dunit.str()+"]";
     xlabel[10] = xaxis;
     ylabel[10] = yaxis;
     title = "Trajectories (cartesian)";
@@ -1442,7 +1442,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
         << "_" << iatom2;
       filename = str.str();
     }
-    ylabel = "Distance["+dunit.str()+"]" ;
+    ylabel = "Distance ["+dunit.str()+"]" ;
     title = std::string("Distance ") + utils::to_string(iatom1) + std::string("-") + utils::to_string(iatom2);
     std::clog << std::endl << " -- Distance --" << std::endl;
     std::vector<double> distance(ntime);
@@ -1458,7 +1458,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   ///VOLUME
   else if ( function == "V" ) {
     filename = "volume";
-    ylabel = "Volume["+dunit.str()+"^3]";
+    ylabel = "Volume ["+dunit.str()+"^3]";
     title = "Volume";
     std::clog << std::endl << " -- Volume --" << std::endl;
     std::vector<double> volume(ntime);
@@ -1517,7 +1517,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   /// Angles
   else if ( function == "angle" ) {
     int iatom1, iatom2, iatom3 = 0;
-    ylabel = "Angle[degree]";
+    ylabel = "Angle [degree]";
     stream >> iatom1 >> iatom2 >> iatom3;
     std::clog << std::endl << " -- Angle --" << std::endl;
     if ( stream.fail() ) {
@@ -1644,7 +1644,6 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     }
     catch ( Exception &e ){
       if ( ref != nullptr ) delete ref;
-      e.ADD("Probably a problem with the reference structure",ERRDIV);
       throw e;
     }
   }

@@ -446,7 +446,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       // TEMPERATURE
       if ( function == "T" ) {
         filename = "temperature";
-        ylabel = "Temperature[K]";
+        ylabel = "Temperature [K]";
         title = "Temperature";
         std::clog << std::endl << " -- Temperature --" << std::endl;
         y.push_back(std::vector<double>(_temperature.begin()+tbegin,_temperature.end()-(_ntime-tend)));
@@ -455,7 +455,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       // Pressure
       else if ( function == "P" ) {
         filename = "pressure";
-        ylabel = "Pressure[GPa]";
+        ylabel = "Pressure [GPa]";
         title = "Pressure";
         std::clog << std::endl << " -- Pressure --" << std::endl;
         y.push_back(std::vector<double>(_pressure.begin()+tbegin,_pressure.end()-(_ntime-tend)));
@@ -464,7 +464,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       // Ekin
       else if ( function == "ekin" ) {
         filename = "ekin";
-        ylabel = "Ekin[Ha]";
+        ylabel = "Ekin [Ha]";
         title = "Kinetic energy";
         std::clog << std::endl << " -- Kinetic energy --" << std::endl;
         y.push_back(std::vector<double>(_ekin.begin()+tbegin,_ekin.end()-(_ntime-tend)));

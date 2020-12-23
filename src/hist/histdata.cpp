@@ -1398,6 +1398,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
         ylabel = "Positions Y";
         xlabel[10] = xaxis;
         ylabel[10] = yaxis;
+        dunit = UnitConverter::bohr;
       }
     }
     else 

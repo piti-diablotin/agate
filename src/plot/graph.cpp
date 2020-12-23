@@ -182,9 +182,7 @@ unsigned Graph::rgb(std::string str) {
 
 unsigned Graph::rgb(float color[])
 {
-  return 65536*static_cast<unsigned>(color[0]*255)
-      + 256*static_cast<unsigned>(color[1]*255)
-      + static_cast<unsigned>(color[0]*255);
+  return Graph::rgb(255*color[0],255*color[1],255*color[2]);
 }
 
 void Graph::setXRange(double min, double max) {

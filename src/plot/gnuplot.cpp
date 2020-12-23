@@ -42,6 +42,7 @@ Gnuplot::Gnuplot() : Graph(),
   _header << "reset" << std::endl;
   _header << "set style data line" << std::endl;
   _header << "set autoscale xy" << std::endl;
+  _header << "set grid" << std::endl;
 }
 
 //

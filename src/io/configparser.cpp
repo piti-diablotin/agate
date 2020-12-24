@@ -267,8 +267,8 @@ bool ConfigParser::getToken(const std::string& token, Characteristic dim) const 
     str_err +=  TypeName<bool>::get() + " value for token \"" + token + "\".";
     throw EXCEPTION(str_err,ConfigParser::ERTYPE);
   }
-  if ( readToken.compare("0")==0 || utils::tolower((const std::string)readToken).compare("false")==0 ) return false;
-  else if ( readToken.compare("1")==0 || utils::tolower((const std::string)readToken).compare("true")==0 ) return true;
+  if ( readToken == "0" || utils::tolower((const std::string)readToken) == "false" ) return false;
+  else if ( readToken == "1" || utils::tolower((const std::string)readToken) == "true" ) return true;
   throw EXCEPTION("Cannot converte "+readToken+" to boolean value",ConfigParser::ERTYPE);
   return false;
 }

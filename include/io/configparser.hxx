@@ -194,3 +194,14 @@ T ConfigParser::getToken(const std::string& token, Characteristic dim) const {
   return rvector;
 }
 
+template<typename T>
+T ConfigParser::getTokenDefault(const std::string& token, const T val, Characteristic dim) const {
+  try {
+    return this->getToken<T>(token,dim);
+  }
+  catch (Exception &e) {
+    if ( e.getReturnValue() == ERFOUND ) return val;
+    else 
+      throw e;
+  }
+}

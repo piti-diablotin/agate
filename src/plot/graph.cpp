@@ -55,13 +55,12 @@ Graph::~Graph() {
 void Graph::dump(const std::string& filename) const {
   std::ofstream file(filename,std::ios::out);
   size_t pos = filename.find_last_of(".");
-  std::string plotname = filename.substr(0,pos)+".ps";
   try { 
     if ( !file ) {
       std::string err_str = "Error opening file " +filename;
       throw EXCEPTION(err_str,ERRDIV);
     }
-    this->dump(file,plotname);
+    this->dump(file,filename.substr(0,pos));
 
     file.close();
   }
@@ -183,9 +182,7 @@ unsigned Graph::rgb(std::string str) {
 
 unsigned Graph::rgb(float color[])
 {
-  return 65536*static_cast<unsigned>(color[0]*255)
-      + 256*static_cast<unsigned>(color[1]*255)
-      + static_cast<unsigned>(color[0]*255);
+  return Graph::rgb(255*color[0],255*color[1],255*color[2]);
 }
 
 void Graph::setXRange(double min, double max) {

@@ -76,9 +76,8 @@ class CanvasLocal : public CanvasPos {
      * @param tbegin First time to use to plot data
      * @param tend Last time to use to plot data
      * @param stream The stream containing the command to parse
-     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
      */
-    virtual void plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph::GraphSave save);
+    virtual void plot(unsigned tbegin, unsigned tend, std::istream &stream);
 
     
     /**

@@ -70,6 +70,7 @@ extern "C" {
 #include <fftw3.h>
 #endif
 #include <random>
+#include <regex>
 
 using Agate::Mendeleev;
 
@@ -419,7 +420,7 @@ std::array<double, 6> HistData::getStrain(const unsigned time, const Dtset &dtse
     0, 1, 0,
     0, 0, 1
   };
-  if ( _natom != dtset.natom() ) { //Maybe a supercell
+  if ( _natom != dtset.natom() ) { //Maybe a supercell Just in case not taken care before
     Supercell supercell(*this,time);
     supercell.findReference(dtset);
     const vec3d dim = supercell.getDim();
@@ -427,6 +428,7 @@ std::array<double, 6> HistData::getStrain(const unsigned time, const Dtset &dtse
     inv_multiplicity[4]=1/dim[1];
     inv_multiplicity[8]=1/dim[2];
   }
+
   mat3d strain = rprim*inv_multiplicity*gprim;
 
   return {strain[mat3dind(1,1)]-1,strain[mat3dind(2,2)]-1,strain[mat3dind(3,3)]-1,strain[mat3dind(3,2)],strain[mat3dind(3,1)],strain[mat3dind(2,1)]};
@@ -685,11 +687,8 @@ HistData& HistData::operator+=(HistData& hist) {
   _xcart.resize(_ntime*_natom*_xyz);
   _xred.resize(_ntime*_natom*_xyz);
 
-  bool dofcart;
-  bool dospinat;
-
-  dofcart = _fcart.empty() ^ hist._fcart.empty();
-  dospinat = hist._spinat.empty() ^ _spinat.empty();
+  bool dofcart = _fcart.empty() ^ hist._fcart.empty();
+  bool dospinat= hist._spinat.empty() ^ _spinat.empty();
 
   if ( dofcart && _fcart.empty() ) _fcart.resize(_xyz*_natom*prevNtime,0);
   if ( dofcart && hist._fcart.empty() ) hist._fcart.resize(_xyz*_natom*hist._ntimeAvail,0);
@@ -1183,9 +1182,8 @@ void HistData::printThermo(unsigned tbegin, unsigned tend, std::ostream &out) {
   (void) tend;
 }
 
-void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::GraphSave save) {
+void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::Config &config) {
   std::string function;
-  Graph::Config config;
 
   try {
     HistData::checkTimes(tbegin,tend);
@@ -1241,7 +1239,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   }
 
   std::string sdunit = "bohr";
-  if ( parser.hasToken("dunit") )
+  if ( function != "xy" && parser.hasToken("dunit") )
     sdunit = parser.getToken<std::string>("dunit");
   UnitConverter dunit = UnitConverter::getFromString(sdunit);
   dunit.rebase(UnitConverter::bohr);
@@ -1249,7 +1247,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   //RDF
   if ( function == "g(r)" ) {
     filename = "PDF";
-    xlabel="R["+dunit.str()+"]";
+    xlabel="R ["+dunit.str()+"]";
     ylabel = "Radial Distribution Function [a.u]";
     title = "G(r)";
     double rmax = 0;
@@ -1380,8 +1378,8 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 
     filename = std::string("Posisions") + xaxis;
     filename += yaxis;
-    xlabel = "Positions X["+dunit.str()+"]";
-    ylabel = "Positions Y["+dunit.str()+"]";
+    xlabel = "Positions X ["+dunit.str()+"]";
+    ylabel = "Positions Y ["+dunit.str()+"]";
     xlabel[10] = xaxis;
     ylabel[10] = yaxis;
     title = "Trajectories (cartesian)";
@@ -1400,6 +1398,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
         ylabel = "Positions Y";
         xlabel[10] = xaxis;
         ylabel[10] = yaxis;
+        dunit = UnitConverter::bohr;
       }
     }
     else 
@@ -1444,7 +1443,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
         << "_" << iatom2;
       filename = str.str();
     }
-    ylabel = "Distance["+dunit.str()+"]" ;
+    ylabel = "Distance ["+dunit.str()+"]" ;
     title = std::string("Distance ") + utils::to_string(iatom1) + std::string("-") + utils::to_string(iatom2);
     std::clog << std::endl << " -- Distance --" << std::endl;
     std::vector<double> distance(ntime);
@@ -1460,7 +1459,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   ///VOLUME
   else if ( function == "V" ) {
     filename = "volume";
-    ylabel = "Volume["+dunit.str()+"^3]";
+    ylabel = "Volume ["+dunit.str()+"^3]";
     title = "Volume";
     std::clog << std::endl << " -- Volume --" << std::endl;
     std::vector<double> volume(ntime);
@@ -1519,7 +1518,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   /// Angles
   else if ( function == "angle" ) {
     int iatom1, iatom2, iatom3 = 0;
-    ylabel = "Angle[degree]";
+    ylabel = "Angle [degree]";
     stream >> iatom1 >> iatom2 >> iatom3;
     std::clog << std::endl << " -- Angle --" << std::endl;
     if ( stream.fail() ) {
@@ -1567,11 +1566,14 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
   // Etotal
   else if ( function == "etotal" ) {
     filename = "etotal";
-    ylabel = "Etot[Ha]";
+    UnitConverter eunit(UnitConverter::Ha);
+    eunit = UnitConverter::getFromString(parser.getTokenDefault<std::string>("eunit","Ha"));
+    ylabel = "Etot ["+eunit.str()+"]";
     if (_imgdata._imgmov > 0 ) xlabel = "Image";
     title = "Total energy";
     std::clog << std::endl << " -- Total (electronic) energy --" << std::endl;
     y.push_back(std::vector<double>(_etotal.begin()+tbegin,_etotal.end()-(_ntime-tend)));
+    for ( auto& e : y.back() ) e = e*eunit;
   }
 
   // stress
@@ -1580,35 +1582,24 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     ylabel = "Stress [GPa]";
     title = "Stress tensor";
     std::clog << std::endl << " -- Stress tensor --" << std::endl;
-    x.resize(_ntime);
-    std::vector<double> s1(ntime);
-    std::vector<double> s2(ntime);
-    std::vector<double> s3(ntime);
-    std::vector<double> s4(ntime);
-    std::vector<double> s5(ntime);
-    std::vector<double> s6(ntime);
+    int only = parser.getTokenDefault<int>("only",0);
+    if ( only < 0 || only > 6 )
+      throw EXCEPTION("Bad value for only="+utils::to_string(only),ERRDIV);
+    --only;
+    std::array<std::vector<double>,6> stress;
+    for ( int s = 0 ; s < 6 ; ++s ) stress[s].resize((only==-1||only==s)?ntime:0);
     x.resize(_ntime);
 #pragma omp parallel for schedule(static)
     for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
-      s1[itime-tbegin] = _stress[itime*6+0]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s2[itime-tbegin] = _stress[itime*6+1]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s3[itime-tbegin] = _stress[itime*6+2]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s4[itime-tbegin] = _stress[itime*6+3]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s5[itime-tbegin] = _stress[itime*6+4]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
-      s6[itime-tbegin] = _stress[itime*6+5]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
+      for ( int s = 0 ; s < 6 ; ++s )
+        if ( only==-1||only==s )
+          stress[s][itime-tbegin] = _stress[itime*6+s]*phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21;
     }
-    y.push_back(std::move(s1));
-    y.push_back(std::move(s2));
-    y.push_back(std::move(s3));
-    y.push_back(std::move(s4));
-    y.push_back(std::move(s5));
-    y.push_back(std::move(s6));
-    labels.push_back("sigma 1");
-    labels.push_back("sigma 2");
-    labels.push_back("sigma 3");
-    labels.push_back("sigma 4");
-    labels.push_back("sigma 5");
-    labels.push_back("sigma 6");
+    for ( int s = 0 ; s < 6 ; ++s )
+      if ( only==-1||only==s ) {
+        y.push_back(std::move(stress[s]));
+        labels.push_back("sigma "+utils::to_string(s+1));
+      }
   }
 
   // strain
@@ -1618,48 +1609,42 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     title = "Strain tensor";
     std::clog << std::endl << " -- Strain tensor --" << std::endl;
     HistData* ref = nullptr;
+    int only = parser.getTokenDefault<int>("only",0);
+    if ( only < 0 || only > 6 )
+      throw EXCEPTION("Bad value for only="+utils::to_string(only),ERRDIV);
+    --only;
     try {
       std::string refFile = parser.getToken<std::string>("reference");
       ref = getHist(refFile,true);
-      int time = 0;
-      if (parser.hasToken("time")) time = parser.getToken<int>("time");
+      int time = parser.getTokenDefault<int>("time",0);
       Dtset refDtset(*ref,time);
       delete ref;
       ref = nullptr;
+      std::array<std::vector<double>,6> eta;
+      for ( int s = 0 ; s < 6 ; ++s ) eta[s].resize((only==-1||only==s)?ntime:0);
       x.resize(_ntime);
-      std::vector<double> eta1(ntime);
-      std::vector<double> eta2(ntime);
-      std::vector<double> eta3(ntime);
-      std::vector<double> eta4(ntime);
-      std::vector<double> eta5(ntime);
-      std::vector<double> eta6(ntime);
-      x.resize(_ntime);
+
+      if ( _natom != refDtset.natom() ) { //Maybe a supercell
+        Supercell supercell(*this,time);
+        supercell.findReference(refDtset);
+        refDtset = supercell;
+      }
+
 #pragma omp parallel for schedule(static)
       for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
         auto strain = this->getStrain(itime,refDtset);
-        eta1[itime-tbegin] = strain[0];
-        eta2[itime-tbegin] = strain[1];
-        eta3[itime-tbegin] = strain[2];
-        eta4[itime-tbegin] = strain[3];
-        eta5[itime-tbegin] = strain[4];
-        eta6[itime-tbegin] = strain[5];
+        for ( int s = 0 ; s < 6 ; ++s )
+          if ( only==-1||only==s )
+            eta[s][itime-tbegin] = strain[s];
       }
-      y.push_back(std::move(eta1));
-      y.push_back(std::move(eta2));
-      y.push_back(std::move(eta3));
-      y.push_back(std::move(eta4));
-      y.push_back(std::move(eta5));
-      y.push_back(std::move(eta6));
-      labels.push_back("eta 1");
-      labels.push_back("eta 2");
-      labels.push_back("eta 3");
-      labels.push_back("eta 4");
-      labels.push_back("eta 5");
-      labels.push_back("eta 6");
+      for ( int s = 0 ; s < 6 ; ++s )
+        if ( only==-1||only==s ) {
+          y.push_back(std::move(eta[s]));
+          labels.push_back("eta "+utils::to_string(s+1));
+        }
     }
     catch ( Exception &e ){
       if ( ref != nullptr ) delete ref;
-      e.ADD("Probably a problem with the reference structure",ERRDIV);
       throw e;
     }
   }
@@ -1692,12 +1677,10 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     labels.push_back("Pz");
   }
 
-
   else {
     throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
   }
 
-  config.save = save;
   try {
     filename = parser.getToken<std::string>("output");
   }
@@ -2483,7 +2466,7 @@ void HistData::decorrelate(unsigned tbegin, unsigned tend, unsigned ntime, doubl
   Graph::plot(config,&gplot);
   std::cerr << "E finale " << E0 << std::endl;
   if ( stop ) std::cerr << "Converged" << std::endl;
-  hist->plot(0,decorrelateTimes.size(),toto,&gplot, Graph::GraphSave::DATA);
+  hist->plot(0,decorrelateTimes.size(),toto,&gplot, config);
   delete hist;
 }
 

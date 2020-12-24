@@ -13,28 +13,34 @@
 class HistMDPlot : public CxxTest::TestSuite
 {
 
-  HistData *hist;
+  std::unique_ptr<HistData> hist;
+  Graph::Config config;
 
   public:
 
   void setUp()
   {
-    hist = nullptr;
+    hist.reset(nullptr);
 #if defined(HAVE_NETCDF) && ( defined(_LP64) || defined(__amd64__) || defined(__x86_64) || defined(__LP64__) )
     try {
 #include "SRO_HIST.hxx"
-      hist = HistData::getHist("SRO_HIST.nc",true);
+      hist.reset(HistData::getHist("SRO_HIST.nc",true));
     }
     catch ( Exception &e ) {
       std::cerr << e.fullWhat() << std::endl;
-      hist = nullptr;
+      hist.reset(nullptr);
       TS_FAIL("Unable to create HIST");
     }
 #endif
+    config.save = Graph::DATA;
   }
 
   void tearDown() {
-    if ( hist != nullptr ) delete hist;
+    config.x.clear();
+    config.y.clear();
+    config.xy.clear();
+    config.labels.clear();
+    config.colors.clear();
   }
 
   void testMSD( void )
@@ -44,7 +50,7 @@ class HistMDPlot : public CxxTest::TestSuite
 #include "SRO_HIST_MSD.hxx"
       std::stringstream input;
       input << "msd";
-      hist->plot(0,hist->ntime(),input,nullptr,Graph::DATA);
+      hist->plot(0,hist->ntime(),input,nullptr,config);
       std::ifstream fref("ref_SRO_HIST_MSD.dat",std::ios::in);
       std::ifstream fnew("SRO_HIST_MSD.dat",std::ios::in);
       DIFF_FILES(fref,fnew)
@@ -62,7 +68,7 @@ class HistMDPlot : public CxxTest::TestSuite
 #include "SRO_HIST_PDF.hxx"
       std::stringstream input;
       input << "g(r)";
-      hist->plot(0,hist->ntime(),input,nullptr,Graph::DATA);
+      hist->plot(0,hist->ntime(),input,nullptr,config);
       std::ifstream fref("ref_SRO_HIST_PDF.dat",std::ios::in);
       std::ifstream fnew("SRO_HIST_PDF.dat",std::ios::in);
       DIFF_FILES(fref,fnew)
@@ -81,7 +87,7 @@ class HistMDPlot : public CxxTest::TestSuite
 #include "SRO_HIST_pressure.hxx"
       std::stringstream input;
       input << "P";
-      hist->plot(0,hist->ntime(),input,nullptr,Graph::DATA);
+      hist->plot(0,hist->ntime(),input,nullptr,config);
       std::ifstream fref("ref_SRO_HIST_pressure.dat",std::ios::in);
       std::ifstream fnew("SRO_HIST_pressure.dat",std::ios::in);
       DIFF_FILES(fref,fnew)
@@ -99,7 +105,7 @@ class HistMDPlot : public CxxTest::TestSuite
 #include "SRO_HIST_temperature.hxx"
       std::stringstream input;
       input << "T";
-      hist->plot(0,hist->ntime(),input,nullptr,Graph::DATA);
+      hist->plot(0,hist->ntime(),input,nullptr,config);
       std::ifstream fref("ref_SRO_HIST_temperature.dat",std::ios::in);
       std::ifstream fnew("SRO_HIST_temperature.dat",std::ios::in);
       DIFF_FILES(fref,fnew)
@@ -118,7 +124,7 @@ class HistMDPlot : public CxxTest::TestSuite
 #include "SRO_222.hxx"
       std::stringstream input;
       input << "V";
-      hist->plot(0,hist->ntime(),input,nullptr,Graph::DATA);
+      hist->plot(0,hist->ntime(),input,nullptr,config);
       std::ifstream fref("ref_SRO_HIST_volume.dat",std::ios::in);
       std::ifstream fnew("SRO_HIST_volume.dat",std::ios::in);
       DIFF_FILES(fref,fnew)
@@ -136,7 +142,7 @@ class HistMDPlot : public CxxTest::TestSuite
 #include "SRO_HIST_strain.hxx"
       std::stringstream input;
       input << "strain reference=ref_SRO_222";
-      hist->plot(0,hist->ntime(),input,nullptr,Graph::DATA);
+      hist->plot(0,hist->ntime(),input,nullptr,config);
       std::ifstream fref("ref_SRO_HIST_strain.dat",std::ios::in);
       std::ifstream fnew("SRO_HIST_strain.dat",std::ios::in);
       DIFF_FILES(fref,fnew)

@@ -227,9 +227,9 @@ class HistDataMD : public HistData {
      * @param tend Last time to use to plot data
      * @param stream The stream containing the command to parse
      * @param gplot Pointer  to a plotter
-     * @param save What to do with the calculated data : plot ? save to file ? save raw data?
+     * @param config Configuration for the plots
      */
-    virtual void plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::GraphSave save);
+    virtual void plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::Config &config);
 
     /**
      * Dump the full history into the current format

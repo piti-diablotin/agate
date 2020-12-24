@@ -28,6 +28,7 @@
 #include "base/exception.hpp"
 #include <cmath>
 #include <regex>
+#include <map>
 
 //
 Gnuplot::Gnuplot() : Graph(),
@@ -42,6 +43,7 @@ Gnuplot::Gnuplot() : Graph(),
   _header << "reset" << std::endl;
   _header << "set style data line" << std::endl;
   _header << "set autoscale xy" << std::endl;
+  _header << "set grid" << std::endl;
 }
 
 //
@@ -212,10 +214,9 @@ void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<dou
 }
 
 //
-void Gnuplot::save(std::string filename) {
+void Gnuplot::save(const std::string &filename) {
   std::stringstream com;
-  std::string name = filename+".eps";
-  this->dump(com,name);
+  this->dump(com,filename);
 
   if ( _gp.get() != nullptr ) {
     fprintf(_gp.get(),"%s\n",com.str().c_str());
@@ -224,11 +225,11 @@ void Gnuplot::save(std::string filename) {
 }
 
 //
-void Gnuplot::dump(std::ostream& out, std::string& plotname) const {
+void Gnuplot::dump(std::ostream& out, const std::string& plotname) const {
   out << translateToSymbol(_header.str()) << std::endl;
   out << "set terminal push" << std::endl;
   out << "set terminal postscript enhanced color solid font 24 eps" << std::endl;
-  out << "set output \"" << plotname << "\"" << std::endl;
+  out << "set output \"" << (plotname+".eps") << "\"" << std::endl;
   out << translateToSymbol(_custom.str()) << std::endl;
   out << "set xlabel '" << translateToSymbol(_xlabel) << "'" << std::endl;
   out << "set ylabel '" << translateToSymbol(_ylabel) << "'" << std::endl;

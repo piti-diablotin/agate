@@ -228,7 +228,7 @@ void Supercell::findReference(const Dtset& dtset) {
   auto ref_typat = dtset.typat();
   auto ref_znucl = dtset.znucl();
   std::vector<vec3d> ref_xred(dtset.xred());
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
   for (unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom) {
     auto &vec = ref_xred[iatom];
     for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {

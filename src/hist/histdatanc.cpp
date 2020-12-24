@@ -703,9 +703,9 @@ void HistDataNC::readFromFile(const std::string& filename) {
             _rprimd[ltime*9+7] = swap3;
             if ( _imgdata._rprimd.size() > 0 ) {
               for ( unsigned img = 0 ; img < nimage ; ++img ) {
-                double swap1 = _imgdata._rprimd[ltime*9*nimage+img*9+1];
-                double swap2 = _imgdata._rprimd[ltime*9*nimage+img*9+2];
-                double swap3 = _imgdata._rprimd[ltime*9*nimage+img*9+5];
+                swap1 = _imgdata._rprimd[ltime*9*nimage+img*9+1];
+                swap2 = _imgdata._rprimd[ltime*9*nimage+img*9+2];
+                swap3 = _imgdata._rprimd[ltime*9*nimage+img*9+5];
                 _imgdata._rprimd[ltime*9*nimage+img*9+1] = _imgdata._rprimd[ltime*9*nimage+img*9+3];
                 _imgdata._rprimd[ltime*9*nimage+img*9+2] = _imgdata._rprimd[ltime*9*nimage+img*9+6];
                 _imgdata._rprimd[ltime*9*nimage+img*9+5] = _imgdata._rprimd[ltime*9*nimage+img*9+7];
@@ -715,12 +715,12 @@ void HistDataNC::readFromFile(const std::string& filename) {
               }
             }
 
-            //Scale mdtime
-            //if ( !has_dtion )
-              _time[ltime] *= dtion;
+            _time[ltime] *= dtion;
 
-            ( _nimage > 1 ) ? this->computeVelocitiesPressureTemperature(ltime,dtion) :
-              this->computePressureTemperature(ltime);
+            //Fix velocities in abinit that are 0 a ltime==0
+            if ( _nimage == 0 && ltime == 1 ) this->computeVelocitiesPressureTemperature(ltime,dtion);
+            ( _nimage > 1 ) ? this->computeVelocitiesPressureTemperature(ltime,dtion) 
+              : this->computePressureTemperature(ltime);
 
             // Duplicate spinat at while we don't have the time evolution.
             if ( has_spinat )

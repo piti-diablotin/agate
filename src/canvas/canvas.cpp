@@ -40,6 +40,14 @@
 #include "hist/histdatanc.hpp"
 #include "hist/histdatadtset.hpp"
 #include "io/eigparserelectrons.hpp"
+#include "io/eigparser.hpp"
+#include "io/eigparserelectrons.hpp"
+#include "bind/tdep.hpp"
+#include "conducti/abiopt.hpp"
+#include "conducti/conducti.hpp"
+#include "base/unitconverter.hpp"
+#include "plot/dosdb.hpp"
+#include "plot/gnuplot.hpp"
 
 //
 Canvas::Canvas(bool drawing) :
@@ -60,6 +68,7 @@ Canvas::Canvas(bool drawing) :
   _objDraw(TriObj::FILL),
   _histdata(nullptr),
   _gplot(nullptr),
+  _graphConfig(),
   _eigparser(nullptr)
 {
   _translate[0] = 1;
@@ -97,6 +106,7 @@ Canvas::Canvas(Canvas&& canvas) :
   _objDraw(canvas._objDraw),
   _histdata(canvas._histdata.release()),
   _gplot(canvas._gplot.release()),
+  _graphConfig(canvas._graphConfig),
   _eigparser(canvas._eigparser.release())
 {
   _translate[0] = canvas._translate[0];
@@ -405,9 +415,241 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     else 
       throw EXCEPTION("You need to provide 0 or 1 after wait to disable or enable threading",ERRDIV);
   }
+  else if ( token == "plot" || token == "print" || token == "data" ) {
+    _graphConfig.save = Graph::NONE;
+    if ( token == "print" )
+      _graphConfig.save = Graph::PRINT;
+    else if ( token == "data" )
+      _graphConfig.save = Graph::DATA;
+
+    _graphConfig.hold = parser.getTokenDefault("hold",_graphConfig.hold);
+
+    if ( !_graphConfig.hold ) {
+      _graphConfig.x.clear();
+      _graphConfig.y.clear();
+      _graphConfig.xy.clear();
+      _graphConfig.rgb.clear();
+      _graphConfig.labels.clear();
+      _graphConfig.colors.clear();
+    }
+
+    try {
+      if ( _gplot == nullptr ) 
+        _gplot.reset(new Gnuplot);
+
+      _gplot->setWinTitle(_info);
+    }
+    catch ( Exception &e ) {
+      e.ADD("Unable to plot with gnuplot.\nInstead, writing data.", ERRWAR);
+      std::cerr << e.fullWhat() << std::endl;
+      _gplot.reset(nullptr);
+    }
+
+    this->plot(_tbegin,_tend,stream);
+
+  }
   else 
     this->my_alter(token,stream);
 }
+
+
+void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream) {
+  std::string function;
+  (void) tbegin;
+  (void) tend;
+
+  size_t initpos = stream.tellg();
+  stream >> function;
+
+  std::string line;
+  size_t pos = stream.tellg();
+  std::getline(stream,line);
+  stream.clear();
+  stream.seekg(pos);
+  ConfigParser parser;
+  parser.setSensitive(true);
+  parser.setContent(line);
+
+  // band
+  if ( function == "band" ) {
+    std::string bandfile = utils::readString(stream);
+    if ( stream.fail() )
+      throw EXCEPTION("You need to specify a filename",ERRDIV);
+
+    if ( _eigparser == nullptr || (_eigparser != nullptr && _eigparser->getFilename() != bandfile) ) {
+      try {
+        _eigparser.reset(EigParser::getEigParser(bandfile));
+      }
+      catch (Exception &e) {
+        e.ADD("Unable to get an EigParser",ERRDIV);
+        throw e;
+      }
+    }
+
+
+    Graph::plotBand(*(_eigparser.get()),parser,_gplot.get(),_graphConfig.save);
+  }
+  else if ( function == "dos" ) {
+    DosDB db;
+    db.buildFromPrefix(parser.getToken<std::string>("prefix"));
+    Graph::plotDOS(db,parser,_gplot.get(),_graphConfig.save);
+  }
+  else if ( function == "conducti" ) {
+    if ( _histdata == nullptr ) return;
+    Graph::Config config;
+    config.save = _graphConfig.save;
+    config.filename = utils::noSuffix(_histdata->filename());
+
+    AbiOpt opt;
+    opt.readFromFile(_histdata->filename());
+    Conducti conducti;
+    conducti.setParameters(parser);
+    conducti.traceTensor(opt);
+    conducti.getResultSigma(config);
+
+    Graph::plot(config,_gplot.get());
+    _gplot->clearCustom();
+  }
+  else if ( function == "tdep" ) {
+    if ( _histdata == nullptr ) 
+      throw EXCEPTION("No data loaded",ERRDIV);
+
+    std::clog << std::endl << " -- TDEP --" << std::endl;
+
+    Tdep tdep;
+
+    HistDataMD *histmd;
+    bool has_unitcell = false;
+    if ( ( histmd = dynamic_cast<HistDataMD*>(_histdata.get()) ) ) {
+      try {
+        tdep.supercell(histmd);
+        has_unitcell = true;
+      }
+      catch ( Exception &e ) {
+        std::cerr << e.fullWhat() << std::endl;
+      }
+    }
+    else
+      throw EXCEPTION("Not a valid Hist file",ERRDIV);
+
+    ( parser.getTokenDefault<bool>("debug",false) ) ? tdep.mode(Tdep::Mode::Debug) : tdep.mode(Tdep::Mode::Normal);
+
+    tdep.step(parser.getTokenDefault<unsigned>("step",1));
+    tdep.temperature(parser.getTokenDefault<double>("temperature",-1));
+    tdep.order(parser.getTokenDefault<unsigned>("order",2));
+    tdep.rcut3(parser.getTokenDefault<double>("rcut3",-1));
+    tdep.rcut(parser.getTokenDefault<double>("rcut",-1));
+
+    try {
+      parser.setSensitive(true);
+      std::string unitcell = parser.getToken<std::string>("unitcell");
+      auto uc = HistData::getHist(unitcell,true);
+      tdep.unitcell(uc,0);
+      delete uc;
+    }
+    catch ( Exception &e ) {
+      if ( e.getReturnValue() != ConfigParser::ERFOUND ) {
+        e.ADD("Error with the unitcell definition",ERRABT);
+        throw e;
+      }
+      else if ( !has_unitcell && e.getReturnValue() == ConfigParser::ERFOUND ) {
+        e.add("Set the unitcell with the keyword unitcell FILENAME");
+        throw e;
+      }
+    }
+    tdep.tbegin(_tbegin);
+    tdep.tend(_tend);
+
+    std::clog << std::endl << "Running TDEP, this can take some time." << std::endl;
+    tdep.tdep();
+    std::clog << std::endl << "OK." << std::endl;
+    auto phononBands = utils::ls(".*phonon-bands.yaml");
+
+    auto save = _info;
+    HistDataDtset *uc = new HistDataDtset(tdep.unitcell());
+    this->setHist(*uc);
+    _info = save;
+    std::stringstream info("band "+phononBands.back().second+" "+line);
+    this->plot(_tbegin, _tend,info);
+  }
+
+  else if ( function == "xy" ) { // Plot two quantities
+    // Here ignore hold and clear everything
+    auto xy = std::move(_graphConfig.xy); // keep old xy (if hold=true)
+    _graphConfig.y.clear();
+    _graphConfig.x.clear();
+    auto save = _graphConfig.save;
+    auto labels = std::move(_graphConfig.labels);
+    _graphConfig.save = Graph::NONE;
+    std::string paramX;
+    std::string paramY;
+    try {
+      paramX = parser.getToken<std::string>("x");
+      paramY = parser.getToken<std::string>("y");
+    }
+    catch( Exception &e ) {
+      e.ADD("x and y parameters must be set as a function name",ERRDIV);
+      throw e;
+    }
+    const std::string common("msd|pacf|vacf|pdos|thermo|positions|g\\(r\\)|band|tdep|conducti|dos");
+    std::regex reX("^("+common+"|gyration)\\s*");
+    std::smatch m;
+    if ( std::regex_match(paramX,m,reX) )
+      throw EXCEPTION(std::string(m[0])+" not allowed for x function",ERRDIV);
+    std::regex reY("^("+common+")\\s*");
+    if ( std::regex_match(paramY,m,reY) )
+      throw EXCEPTION(std::string(m[0])+" not allowed for y function",ERRDIV);
+
+    // Compute x
+    std::istringstream streamX(paramX);
+    this->plot(tbegin,tend,streamX);
+    std::string xlabel = _graphConfig.ylabel;
+    if ( _graphConfig.y.size() > 1 ) 
+      throw EXCEPTION("x function has to many data, this is not allowed",ERRDIV);
+    std::vector<double> xvalues(std::move(_graphConfig.y.front())); // Save x values
+    std::string filenamex = _graphConfig.filename.substr(
+        _graphConfig.filename.length()-
+        _graphConfig.filename.compare(
+          utils::noSuffix(this->info())
+          )
+        ); // Save filename extension for x;
+    _graphConfig.y.clear();
+
+    std::istringstream streamY(paramY);
+    this->plot(tbegin,tend,streamY);
+    // y is correctly set. Change x
+    // x and y to xy vector;
+    for ( auto it = _graphConfig.y.begin(); it != _graphConfig.y.end(); ++it )
+      xy.push_back(std::make_pair(xvalues,std::move(*it)));
+    _graphConfig.xy = std::move(xy);
+    _graphConfig.y.clear();
+    _graphConfig.x.clear();
+    for ( auto it = _graphConfig.labels.begin() ; it != _graphConfig.labels.end() ; ++it )
+      labels.push_back(std::move(*it));
+    _graphConfig.labels = std::move(labels);
+
+    _graphConfig.xlabel = xlabel;
+    _graphConfig.doSumUp = false;
+    _graphConfig.save = save;
+    _graphConfig.filename = parser.getTokenDefault<std::string>("output",
+        utils::noSuffix(_graphConfig.filename)+filenamex
+        );
+    Graph::plot(_graphConfig,_gplot.get());
+    _gplot->clearCustom();
+    _graphConfig.doSumUp = true;
+  }
+
+  else {
+    if ( _histdata != nullptr ) {
+      stream.clear();
+      stream.seekg(initpos);
+      _histdata->plot(_tbegin,_tend,stream,_gplot.get(), _graphConfig);
+    }
+    else
+      throw EXCEPTION("Function "+function+" not available yet or you need to load a file first",ERRDIV);
+  }
+}
+
 
 
 void Canvas::help(std::ostream &out) {

@@ -228,6 +228,11 @@ HistDataMD& HistDataMD::operator+=(HistDataMD& hist) {
   // Direct call to this function so _ntime == _temperature.size() and we need to add HistData fields first
   if ( prevNtime == _ntime ) HistData::operator+=(*dynamic_cast<HistData*>(&hist));
 
+  bool dovel = _velocities.empty() ^ hist._velocities.empty();
+  if ( dovel && _velocities.empty() ) _velocities.resize(_xyz*_natom*prevNtime,0);
+  if ( dovel && hist._velocities.empty() ) hist._velocities.resize(_xyz*_natom*hist._ntimeAvail,0);
+  dovel = !(_velocities.empty() || hist._velocities.empty());
+
   _ekin.resize(_ntime);
   std::copy(hist._ekin.begin(), hist._ekin.end(),_ekin.begin()+prevNtime);
 
@@ -277,16 +282,18 @@ HistDataMD& HistDataMD::operator+=(HistDataMD& hist) {
   _pressure.resize(_ntime);
   std::copy(hist._pressure.begin(), hist._pressure.end(),_pressure.begin()+prevNtime);
 
-  _velocities.resize(_ntime*_natom*_xyz);
-  if ( !reorder ) {
-    std::copy(hist._velocities.begin(), hist._velocities.end(),_velocities.begin()+prevNtime*_natom*_xyz);
-  }
-  else {
-    unsigned start = prevNtime*_natom*_xyz;
-    for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
-      for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-        for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
-          _velocities[start+itime*3*_natom+iatom*3+coord] = hist._velocities[itime*3*_natom+order[iatom]*3+coord];
+  if ( dovel ) {
+    _velocities.resize(_ntime*_natom*_xyz);
+    if ( !reorder ) {
+      std::copy(hist._velocities.begin(), hist._velocities.end(),_velocities.begin()+prevNtime*_natom*_xyz);
+    }
+    else {
+      unsigned start = prevNtime*_natom*_xyz;
+      for ( unsigned itime = 0 ; itime < hist._ntime ; ++itime ) {
+        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+          for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
+            _velocities[start+itime*3*_natom+iatom*3+coord] = hist._velocities[itime*3*_natom+order[iatom]*3+coord];
+          }
         }
       }
     }
@@ -382,13 +389,12 @@ void HistDataMD::printThermo(unsigned tbegin, unsigned tend, std::ostream &out) 
 }
 
 //
-void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::GraphSave save) {
+void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph *gplot, Graph::Config &config) {
   std::string function;
   auto pos = stream.tellg();
-  Graph::Config config;
 
   try {
-    HistData::plot(tbegin, tend, stream, gplot, save);
+    HistData::plot(tbegin, tend, stream, gplot, config);
   }
   catch ( Exception &e ) {
     if ( e.getReturnValue() == ERRABT ) {
@@ -440,7 +446,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       // TEMPERATURE
       if ( function == "T" ) {
         filename = "temperature";
-        ylabel = "Temperature[K]";
+        ylabel = "Temperature [K]";
         title = "Temperature";
         std::clog << std::endl << " -- Temperature --" << std::endl;
         y.push_back(std::vector<double>(_temperature.begin()+tbegin,_temperature.end()-(_ntime-tend)));
@@ -449,7 +455,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       // Pressure
       else if ( function == "P" ) {
         filename = "pressure";
-        ylabel = "Pressure[GPa]";
+        ylabel = "Pressure [GPa]";
         title = "Pressure";
         std::clog << std::endl << " -- Pressure --" << std::endl;
         y.push_back(std::vector<double>(_pressure.begin()+tbegin,_pressure.end()-(_ntime-tend)));
@@ -458,7 +464,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       // Ekin
       else if ( function == "ekin" ) {
         filename = "ekin";
-        ylabel = "Ekin[Ha]";
+        ylabel = "Ekin [Ha]";
         title = "Kinetic energy";
         std::clog << std::endl << " -- Kinetic energy --" << std::endl;
         y.push_back(std::vector<double>(_ekin.begin()+tbegin,_ekin.end()-(_ntime-tend)));
@@ -623,7 +629,6 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
         throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
       }
 
-      config.save = save;
       try {
         filename = parser.getToken<std::string>("output");
       }
@@ -634,7 +639,6 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       stream.clear();
     }
     else {
-      e.ADD("Bad things happen sometimes",ERRDIV);
       throw e;
     }
   }

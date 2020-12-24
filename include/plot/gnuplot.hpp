@@ -108,7 +108,7 @@ class Gnuplot : public Graph {
      * Save the graph
      * @param filename Save to filename
      * */
-    virtual void save(std::string filename);
+    virtual void save(const std::string& filename);
 
     /**
      * Print out the commande to plot
@@ -116,7 +116,7 @@ class Gnuplot : public Graph {
      * @param plotname is the filename for the file that would be created when the graph is created
      * Not the script file that would be executed to creat the graph
      */
-    virtual void dump(std::ostream& out, std::string& plotname) const;
+    virtual void dump(std::ostream& out, const std::string& plotname) const;
 
 };
 

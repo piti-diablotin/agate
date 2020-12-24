@@ -28,6 +28,7 @@
 #include "base/exception.hpp"
 #include <cmath>
 #include <regex>
+#include <map>
 
 //
 Gnuplot::Gnuplot() : Graph(),

@@ -132,8 +132,10 @@ class Window {
     InputMode    _mode;           ///< Current mode for user input
     InputMode    _modeMouse;      ///< Current mode for mouse input
     std::string  _command;        ///< String to know the action to perform
+#ifndef HAVE_READLINE
     std::vector<std::string> _commandStack; ///< Store all the entered commands
     unsigned int _commandStackNo; ///Current line in the stack
+#endif
 
     TextRender   _render; ///< Save some data for text rendering and quickly render a string
     std::map<std::string,bool> _optionb;
@@ -275,13 +277,7 @@ class Window {
     /**
      * Destructor.
      */
-    virtual ~Window(){
-      if ( _imageBuffer != nullptr ) {
-        delete[] _imageBuffer;
-        _imageBuffer = nullptr;
-      }
-      utils::fftw3Free();
-    }
+    virtual ~Window();
 
     /**
      * Set the title of the window

@@ -103,7 +103,7 @@ void Winfake::loopStep() {
     std::string inputString;
 #ifdef HAVE_READLINE
     char *input = readline(" >> ");
-    if (strlen(input)>0) add_history(input);
+    //if (strlen(input)>0) add_history(input);
     inputString = input;
     delete[] input;
 #else

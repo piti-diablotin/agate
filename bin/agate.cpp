@@ -159,6 +159,7 @@ void handle_signal (int para) {
       break;
   }
   ptrwin->exit();
+  delete ptrwin;
   std::cerr << "Window has been asked to close." << std::endl;
   exit(1);
 };
@@ -363,13 +364,9 @@ int main(int argc, char** argv) {
       Window::help();
     }
   }
-  /*
-  crystal.reset();
-     if ( crystal != nullptr ) {
-     delete crystal;
-     crystal = nullptr;
-     }
-     */
+
+  if (ptrwin!=nullptr) delete ptrwin;
+
   if ( !parser.getOption<bool>("term") ) {
 #ifdef HAVE_GL
 #ifdef HAVE_GLFW2

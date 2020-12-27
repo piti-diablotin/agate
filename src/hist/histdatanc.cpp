@@ -718,7 +718,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
             _time[ltime] *= dtion;
 
             //Fix velocities in abinit that are 0 a ltime==0
-            if ( _nimage == 0 && ltime == 1 ) this->computeVelocitiesPressureTemperature(ltime,dtion);
+            //if ( _nimage == 0 && ltime == 1 ) this->computeVelocitiesPressureTemperature(ltime,dtion);
             ( _nimage > 1 ) ? this->computeVelocitiesPressureTemperature(ltime,dtion) 
               : this->computePressureTemperature(ltime);
 

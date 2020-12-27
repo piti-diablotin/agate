@@ -159,10 +159,9 @@ void handle_signal (int para) {
       break;
   }
   ptrwin->exit();
-  delete ptrwin;
   std::cerr << "Window has been asked to close." << std::endl;
   exit(1);
-};
+}
 
 
 /**
@@ -366,6 +365,7 @@ int main(int argc, char** argv) {
   }
 
   if (ptrwin!=nullptr) delete ptrwin;
+  ptrwin = nullptr;
 
   if ( !parser.getOption<bool>("term") ) {
 #ifdef HAVE_GL

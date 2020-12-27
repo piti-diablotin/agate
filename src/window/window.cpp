@@ -102,6 +102,7 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _mode(mode_static),
   _modeMouse(mode_static),
   _command(),
+  _cursorPos(0),
 #ifndef HAVE_READLINE
   _commandStack(),
   _commandStackNo(),
@@ -261,6 +262,7 @@ Window::Window():
   _mode(mode_static),
   _modeMouse(mode_static),
   _command(),
+  _cursorPos(0),
 #ifndef HAVE_READLINE
   _commandStack(),
   _commandStackNo(),
@@ -581,7 +583,7 @@ bool Window::userInput(std::stringstream& info) {
   const Canvas::TransDir TransDel = Canvas::TransDir::MINUS;
 
   _optionb["takeSnapshot"] = false;
-  bool process = false;
+  bool doProcess = false;
   const bool debug=false;
   bool breakWhile=false;
   if ( _mode == mode_process ) _mode = mode_static;
@@ -605,6 +607,7 @@ bool Window::userInput(std::stringstream& info) {
           if ( ic == ':' ){
             _inputChar.pop();
             _command = ":|";
+            _cursorPos = 1;
 #ifdef HAVE_READLINE
             add_history(":");
             history_set_pos(history_length-1);
@@ -684,21 +687,17 @@ bool Window::userInput(std::stringstream& info) {
           _inputChar.pop();
         } // _mode != mode_command
         else {
-          size_t cursor = 0; 
-          if ( (cursor = _command.find_last_of("|")) != std::string::npos ) 
-            _command.erase(cursor,1);
-          //while ( !_inputChar.empty() ) {
-          //char c = static _cast<char>(_inputChar.front());
+          if ( _cursorPos > 0 ) _command.erase(_cursorPos,1);
           if ( ic != '\n') {
             _inputChar.pop();
             if ( _modeMouse != mode_mouse ) {
-              _command += ic;
+              if ( _cursorPos == _command.size() ) _command.push_back(ic);
+              else _command.insert(_cursorPos,1,ic);
               if ( !_render._isOk && _render._doRender ) {std::clog << ic; std::clog.flush();}
+              _cursorPos++;
             }
           }
-          else 
-            process = true;
-          //}
+          else doProcess = true;
 #ifdef HAVE_READLINE
           HIST_ENTRY* current = current_history();
 
@@ -711,20 +710,20 @@ bool Window::userInput(std::stringstream& info) {
             }
             replace_history_entry(where_history(),_command.c_str(),current->data);
           }
-#endif 
-          _command += "|";
-#ifndef HAVE_READLINE
+#else
           _commandStack.back() = _command;
 #endif
+          if ( _cursorPos == _command.size() ) _command.push_back('|');
+          else _command.insert(_cursorPos,1,'|');
         }
-        if ( process ) breakWhile = true;
+        if ( doProcess ) breakWhile = true;
       }
       // End of while loop
-
       //
       if ( _mode == mode_command ) {
-        if ( this->getChar(_keyEnter) || this->getChar(_keyKPEnter) || process ) {// enter
+        if ( this->getChar(_keyEnter) || this->getChar(_keyKPEnter) || doProcess ) {// enter
           action = true;
+          _command.erase(_cursorPos,1);
 #ifdef HAVE_READLINE
           HIST_ENTRY *current = current_history();
           if ( current != nullptr && current->data != nullptr ) {
@@ -732,7 +731,7 @@ bool Window::userInput(std::stringstream& info) {
             replace_history_entry(where_history(),data,nullptr);
             delete[] data;
           }
-          replace_history_entry(history_length-1,_command.substr(0,_command.size()-1).c_str(),nullptr);
+          replace_history_entry(history_length-1,_command.c_str(),nullptr);
 #else
           _commandStack.back() = _command;
 #endif
@@ -741,7 +740,7 @@ bool Window::userInput(std::stringstream& info) {
           }
           try {
             if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
-            std::istringstream cin(_command.substr(1,_command.size()-2));
+            std::istringstream cin(_command.substr(1,_command.size()-1));
             std::string token;
             cin >> token;
             this->my_alter(token,cin);
@@ -756,7 +755,7 @@ bool Window::userInput(std::stringstream& info) {
           }
           _mode = mode_process;
           while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
-          process = false;
+          doProcess = false;
         } // enter
         else if ( this->getChar(_keyEscape) ) {
           _mode = mode_static;
@@ -774,8 +773,8 @@ bool Window::userInput(std::stringstream& info) {
           if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
           while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
         } // escape
-        else if ( this->getChar(_keyBackspace)  && _command.size() > 1 ){
-          _command.erase(_command.end()-2);
+        else if ( this->getChar(_keyBackspace)  && _cursorPos > 1 ){
+          _command.erase(--_cursorPos,1);
 #ifdef HAVE_READLINE
           HIST_ENTRY* current = current_history();
           if ( current != nullptr ) {
@@ -785,11 +784,14 @@ bool Window::userInput(std::stringstream& info) {
               strcpy(hold,current->line);
               current->data = hold;
             }
-            replace_history_entry(where_history(),_command.substr(0,_command.length()-1).c_str(),current->data);
+            replace_history_entry(where_history(),_command.erase(_cursorPos,1).c_str(),current->data);
+            if ( _cursorPos == _command.size() ) _command.push_back('|');
+            else _command.insert(_cursorPos,1,'|');
           }
 #else
           _commandStack.back() = _command;
 #endif
+
           if ( !_render._isOk && _render._doRender ) std::clog << "\b \b";
           action = true;
         } // backspace
@@ -800,11 +802,14 @@ bool Window::userInput(std::stringstream& info) {
             _command = prev->line;
             _command += '|';
             action = true;
+            _cursorPos = _command.size()-1;
           }
 #else
           if ( (_commandStackNo - 1) < _commandStack.size()) { // _commandStackNo is unsigend so if <0 it is apriori >> _commandStack.size()
             _command = _commandStack[--_commandStackNo];
             action = true;
+            _command += '|';
+            _cursorPos = _command.size()-1;
           }
 #endif
         }
@@ -816,14 +821,28 @@ bool Window::userInput(std::stringstream& info) {
               _command = next->line;
               _command += '|';
               action = true;
+              _cursorPos = _command.size()-1;
             }
           }
 #else
           if ( (_commandStackNo+1) < _commandStack.size() ) {
             _command = _commandStack[++_commandStackNo];
             action = true;
+            _command += '|';
+            _cursorPos = _command.size()-1;
           }
 #endif
+        }
+        else if ( this->getChar(_keyArrowLeft) && _cursorPos > 1) {
+          _command.erase(_cursorPos--,1);
+          _command.insert(_cursorPos,1,'|');
+          action = true;
+        }
+        else if ( this->getChar(_keyArrowRight) && _cursorPos < _command.size()-1) {
+          _command.erase(_cursorPos++,1);
+          if ( _cursorPos == _command.size() ) _command.push_back('|');
+          else _command.insert(_cursorPos,1,'|');
+          action = true;
         }
       } // _mode == mode_command
       else {
@@ -832,6 +851,7 @@ bool Window::userInput(std::stringstream& info) {
           action = true;
           while ( !_inputChar.empty() && _inputChar.front() != '\n' ) _inputChar.pop();
           _command = "";
+          _cursorPos = -1;
 #ifdef HAVE_READLINE
           history_set_pos(history_length-1);
 #endif

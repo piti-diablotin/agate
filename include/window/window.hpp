@@ -132,6 +132,7 @@ class Window {
     InputMode    _mode;           ///< Current mode for user input
     InputMode    _modeMouse;      ///< Current mode for mouse input
     std::string  _command;        ///< String to know the action to perform
+    unsigned int _cursorPos;      ///< Position in the _command of the cursor to insert letters
 #ifndef HAVE_READLINE
     std::vector<std::string> _commandStack; ///< Store all the entered commands
     unsigned int _commandStackNo; ///Current line in the stack

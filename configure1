@@ -1405,8 +1405,10 @@ if test x"$glsupport" = x"yes"; then
     if test x"$glfw_suf" = x"3"
     then
       AC_CHECK_LIB([glfw$glfw_suf],[glfwSetDropCallback],[glfw3_has_drop=yes],[glfw3_has_drop=no],[$GLFW_EXTRA])
+      AC_CHECK_LIB([glfw$glfw_suf],[glfwGetWindowContentScale],[glfw3_has_contentscale=yes],[glfw3_has_contentscale=no],[$GLFW_EXTRA])
     else
       AC_CHECK_LIB([glfw$glfw_suf],[glfwSetDropCallback],[glfw3_has_drop=yes],[glfw3_has_drop=no])
+      AC_CHECK_LIB([glfw$glfw_suf],[glfwGetWindowContentScale],[glfw3_has_contentscale=yes],[glfw3_has_contentscale=no])
     fi
     LIBS="$TMP_LIBS -lglfw$glfw_suf"
     if test x"$glfw_suf" = x"3"
@@ -1415,10 +1417,14 @@ if test x"$glsupport" = x"yes"; then
     fi
     have_glfw_usable="yes"
     glfw_version=3
-    AC_DEFINE(HAVE_GLFW3,1,[Define to 1 if OpenGLFW is usable])
+    AC_DEFINE(HAVE_GLFW3,1,[Define to 1 if GLFW3 is usable])
     if test x"$glfw3_has_drop" = x"yes"; 
     then
-      AC_DEFINE(HAVE_GLFW3_DROP,1,[Define to 1 if OpenGLFW is usable])
+      AC_DEFINE(HAVE_GLFW3_DROP,1,[Define to 1 if GLFW3 has glfwSetDropCallback])
+    fi
+    if test x"$glfw3_has_contentscale" = x"yes"; 
+    then
+      AC_DEFINE(HAVE_GLFW3_CONTENTSCALE,1,[Define to 1 if GLFW3 has glfwGetWindowContentScale])
     fi
   else 
     if  test x"$glfw2_check_h" = x"yes" && test x"$glfw2_check_lib" = x"yes"

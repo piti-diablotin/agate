@@ -88,6 +88,12 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
   glfwSetScrollCallback(_win,WheelCallback);
   glfwSetCharCallback(_win,CharCallback);
   glfwSetKeyCallback(_win,KeyCallback);
+#ifdef HAVE_GLFW3_CONTENTSCALE
+  float xscale, yscale;
+  glfwGetWindowContentScale(_win, &xscale, &yscale);
+  _optioni["fontSize"] *= ( xscale+yscale )/2.;
+  _render._render.setSize(_optioni["fontSize"]);
+#endif
 #else
   throw EXCEPTION("GLFW support is not available.\nConsider compiling the code with OpenGL+GLFW",ERRDIV);
 #endif

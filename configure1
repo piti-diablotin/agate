@@ -712,6 +712,7 @@ if test x"$readline_check_h" == x"yes" && test x"$history_check_h" == x"yes" && 
 then
   LIBS="$LIBS -lreadline"
   AC_DEFINE([HAVE_READLINE],[1],[Define to 1 if readline is usable.])
+  AC_CHECK_LIB([readline],[free_history_entry],[AC_DEFINE([HAVE_FREEHISTORYENTRY],[1],[Define to 1 if readline has free_history_entry.])],[])
   have_readline_usable="yes"
 else
   have_readline_usable="no"

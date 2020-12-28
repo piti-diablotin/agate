@@ -586,6 +586,19 @@ bool Window::userInput(std::stringstream& info) {
   bool doProcess = false;
   const bool debug=false;
   bool breakWhile=false;
+
+
+#if defined(HAVE_READLINE) && !defined(HAVE_FREEHISTORYENTRY)
+  std::function<histdata_t(HIST_ENTRY*)> free_history_entry = [](HIST_ENTRY* hist) {
+    histdata_t data = nullptr;
+    if ( hist == nullptr ) return data;
+    if ( hist->line ) free(hist->line);
+    if ( hist->timestamp ) free(hist->timestamp);
+    data = hist->data;
+    free(hist);
+    return data;
+  };
+#endif
   if ( _mode == mode_process ) _mode = mode_static;
 
   if (debug) {
@@ -704,11 +717,12 @@ bool Window::userInput(std::stringstream& info) {
           if ( current != nullptr ){
             if ( where_history() < history_length-1 && current->data == nullptr ) {
               const int len = strlen(current->line);
-              char *hold = new char[len];
+              char *hold = new char[len+1];
               strcpy(hold,current->line);
               current->data = hold;
             }
-            replace_history_entry(where_history(),_command.c_str(),current->data);
+            HIST_ENTRY* old = replace_history_entry(where_history(),_command.c_str(),current->data);
+            free_history_entry(old); // Do not free data since it is used by the new histentry
           }
 #else
           _commandStack.back() = _command;
@@ -728,10 +742,13 @@ bool Window::userInput(std::stringstream& info) {
           HIST_ENTRY *current = current_history();
           if ( current != nullptr && current->data != nullptr ) {
             char *data = (char*)current->data;
-            replace_history_entry(where_history(),data,nullptr);
+            HIST_ENTRY* old = replace_history_entry(where_history(),data,nullptr);
+            free_history_entry(old); // Old data is data 
             delete[] data;
           }
-          replace_history_entry(history_length-1,_command.c_str(),nullptr);
+          HIST_ENTRY* old = replace_history_entry(history_length-1,_command.c_str(),nullptr);
+          histdata_t data = free_history_entry(old);
+          if (data) delete[] (char*)data;
 #else
           _commandStack.back() = _command;
 #endif
@@ -780,11 +797,12 @@ bool Window::userInput(std::stringstream& info) {
           if ( current != nullptr ) {
             if ( where_history() < history_length-1 && current->data == nullptr ) {
               int len = strlen(current->line);
-              char *hold = new char[len];
+              char *hold = new char[len+1];
               strcpy(hold,current->line);
               current->data = hold;
             }
-            replace_history_entry(where_history(),_command.erase(_cursorPos,1).c_str(),current->data);
+            HIST_ENTRY* old = replace_history_entry(where_history(),_command.erase(_cursorPos,1).c_str(),current->data);
+            free_history_entry(old); // Do not free data since it is used by the new histentry
             if ( _cursorPos == _command.size() ) _command.push_back('|');
             else _command.insert(_cursorPos,1,'|');
           }

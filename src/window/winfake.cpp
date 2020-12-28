@@ -105,7 +105,7 @@ void Winfake::loopStep() {
     char *input = readline(" >> ");
     //if (strlen(input)>0) add_history(input);
     inputString = input;
-    delete[] input;
+    if (input) free(input);
 #else
     std::cout << " >> ";
     std::getline(std::cin,inputString);

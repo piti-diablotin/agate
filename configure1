@@ -717,8 +717,8 @@ AC_ARG_WITH([readline],
 AC_MSG_RESULT([$resultreadline])
 OLD_CPPFLAGS=$CPPFLAGS;
 OLD_LDFLAGS=$LDFLAGS;
-CPPFLAGS="$CPPFLAGS -I$readline_prefix/include"
-LDFLAGS="$LDFLAGS -L$readline_prefix/lib"
+CPPFLAGS="-I$readline_prefix/include $CPPFLAGS"
+LDFLAGS="-L$readline_prefix/lib $LDFLAGS"
 
 AC_CHECK_HEADER([readline/readline.h],[readline_check_h=yes],[readline_check_h=no])
 AC_CHECK_HEADER([readline/history.h],[history_check_h=yes],[history_check_h=no])

@@ -86,19 +86,19 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _imageSuffixMode(convert),
   _movie(false),
   _mouseButtonLeft(0),
-  _mouseButtonRight(0),
-  _mouseButtonMiddle(0),
-  _keyEnter(0),
-  _keyKPEnter(0),
-  _keyBackspace(0),
-  _keyEscape(0),
-  _keyArrowUp(0),
-  _keyArrowDown(0),
-  _keyArrowLeft(0),
-  _keyArrowRight(0),
-  _keyX(0),
-  _keyY(0),
-  _keyZ(0),
+  _mouseButtonRight(1),
+  _mouseButtonMiddle(2),
+  _keyEnter(3),
+  _keyKPEnter(4),
+  _keyBackspace(5),
+  _keyEscape(6),
+  _keyArrowUp(7),
+  _keyArrowDown(8),
+  _keyArrowLeft(9),
+  _keyArrowRight(10),
+  _keyX(11),
+  _keyY(12),
+  _keyZ(13),
   _mode(mode_static),
   _modeMouse(mode_static),
   _command(),
@@ -246,19 +246,19 @@ Window::Window():
   _imageSuffixMode(convert),
   _movie(false),
   _mouseButtonLeft(0),
-  _mouseButtonRight(0),
-  _mouseButtonMiddle(0),
-  _keyEnter(0),
-  _keyKPEnter(0),
-  _keyBackspace(0),
-  _keyEscape(0),
-  _keyArrowUp(0),
-  _keyArrowDown(0),
-  _keyArrowLeft(0),
-  _keyArrowRight(0),
-  _keyX(0),
-  _keyY(0),
-  _keyZ(0),
+  _mouseButtonRight(1),
+  _mouseButtonMiddle(2),
+  _keyEnter(3),
+  _keyKPEnter(4),
+  _keyBackspace(5),
+  _keyEscape(6),
+  _keyArrowUp(7),
+  _keyArrowDown(8),
+  _keyArrowLeft(9),
+  _keyArrowRight(10),
+  _keyX(11),
+  _keyY(12),
+  _keyZ(13),
   _mode(mode_static),
   _modeMouse(mode_static),
   _command(),
@@ -325,6 +325,15 @@ Window::Window():
 
 #if defined(HAVE_GL) && defined(HAVE_GLEXT)
   std::clog << "OpenGL might use VBO" << std::endl;
+#endif
+#ifdef HAVE_READLINE
+  std::istringstream history(std::string("~/.agate_history"));
+  int err = read_history(utils::readString(history).c_str());
+  if ( err != 0 && err != 2 ) {
+    Exception e = EXCEPTION("Initialization of history failed with errno "+utils::to_string(err),ERRDIV);
+    std::clog << e.fullWhat() << std::endl;
+  }
+  history_set_pos(history_length-1);
 #endif
 }
 
@@ -803,42 +812,18 @@ bool Window::userInput(std::stringstream& info) {
           action = true;
         } // backspace
         else if ( this->getChar(_keyArrowUp) ) {
-#ifdef HAVE_READLINE
-          HIST_ENTRY *prev = previous_history();
-          if ( prev != nullptr ) {
-            _command = prev->line;
+          if ( previousHistoryEntry(_command) ) {
             _command += '|';
             action = true;
             _cursorPos = _command.size()-1;
           }
-#else
-          if ( (_commandStackNo - 1) < _commandStack.size()) { // _commandStackNo is unsigend so if <0 it is apriori >> _commandStack.size()
-            _command = _commandStack[--_commandStackNo];
-            action = true;
-            _command += '|';
-            _cursorPos = _command.size()-1;
-          }
-#endif
         }
         else if ( this->getChar(_keyArrowDown) ) {
-#ifdef HAVE_READLINE
-          if ( where_history() < (history_length-1) ) {
-            HIST_ENTRY *next = next_history();
-            if ( next != nullptr ) {
-              _command = next->line;
-              _command += '|';
-              action = true;
-              _cursorPos = _command.size()-1;
-            }
-          }
-#else
-          if ( (_commandStackNo+1) < _commandStack.size() ) {
-            _command = _commandStack[++_commandStackNo];
-            action = true;
+          if ( nextHistoryEntry(_command) ) {
             _command += '|';
+            action = true;
             _cursorPos = _command.size()-1;
           }
-#endif
         }
         else if ( this->getChar(_keyArrowLeft) && _cursorPos > 1) {
           _command.erase(_cursorPos--,1);
@@ -900,6 +885,43 @@ bool Window::userInput(std::stringstream& info) {
   if ( _exit ) _optioni["shouldExit"] = 1;
 
   return action;
+}
+
+bool Window::nextHistoryEntry(std::string &line) {
+  std::clog << where_history() << std::endl;
+#ifdef HAVE_READLINE
+  if ( where_history() < (history_length-1) ) {
+    HIST_ENTRY *next = next_history();
+    if ( next != nullptr ) {
+      line = next->line;
+      return true;
+    }
+    else return false;
+  }
+#else
+  if ( (_commandStackNo+1) < _commandStack.size() ) {
+    line = _commandStack[++_commandStackNo];
+    return = true;
+  }
+#endif
+  else return false;
+}
+
+bool Window::previousHistoryEntry(std::string &line){
+  std::clog << where_history() << std::endl;
+#ifdef HAVE_READLINE
+  HIST_ENTRY *prev = previous_history();
+  if ( prev != nullptr ) {
+    line = prev->line;
+    return true;
+  }
+#else
+  if ( (_commandStackNo - 1) < _commandStack.size()) { // _commandStackNo is unsigend so if <0 it is apriori >> _commandStack.size()
+    line = _commandStack[--_commandStackNo];
+    return = true;
+  }
+#endif
+  else return false;
 }
 
 void Window::drawAxis() {

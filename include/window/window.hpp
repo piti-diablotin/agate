@@ -223,6 +223,19 @@ class Window {
      */
     virtual bool userInput(std::stringstream& info);
 
+    /**
+     * Try to get the next history entry
+     * @param line is the input/output string with the entry if found.
+     * @return false if nothing was found
+     */
+    bool nextHistoryEntry(std::string &line);
+    /**
+     * Try to get the previous history entry
+     * @param line is the input/output string with the entry if found.
+     * @return false if nothing was found
+     */
+    bool previousHistoryEntry(std::string &line);
+
   public :
 
     /**

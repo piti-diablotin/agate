@@ -588,17 +588,6 @@ bool Window::userInput(std::stringstream& info) {
   bool breakWhile=false;
 
 
-#if defined(HAVE_READLINE) && !defined(HAVE_FREEHISTORYENTRY)
-  std::function<histdata_t(HIST_ENTRY*)> free_history_entry = [](HIST_ENTRY* hist) {
-    histdata_t data = nullptr;
-    if ( hist == nullptr ) return data;
-    if ( hist->line ) free(hist->line);
-    if ( hist->timestamp ) free(hist->timestamp);
-    data = hist->data;
-    free(hist);
-    return data;
-  };
-#endif
   if ( _mode == mode_process ) _mode = mode_static;
 
   if (debug) {

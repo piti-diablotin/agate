@@ -726,7 +726,9 @@ AC_CHECK_LIB([readline],[readline],[readline_check_lib=yes],[readline_check_lib=
 if test x"$readline_check_h" == x"yes" && test x"$history_check_h" == x"yes" && test x"$readline_check_lib" == x"yes"
 then
   AC_MSG_CHECKING([if readline version is >= 6.3 ])
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <readline/readline.h>
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <cstdio>
+#include <readline/readline.h>
 #if RL_READLINE_VERSION < 0x603
 #error readline version should be >= 6.3
 #endif

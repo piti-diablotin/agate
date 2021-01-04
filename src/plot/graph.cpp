@@ -126,7 +126,10 @@ void Graph::plot(const Config &conf, Graph* gplot) {
           for ( unsigned r = 0 ; r < conf.x.size() ; ++r ) {
             file << std::setw(22) << conf.x[r];
             for ( auto& vec : conf.y ) {
-              file << std::setw(22) << (r < vec.size() ? vec[r] : " ");
+              if (r<vec.size())
+                file << std::setw(22) << vec[r];
+              else
+                file << std::setw(22) << " ";
             }
             file << std::endl;
           }

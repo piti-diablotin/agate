@@ -888,7 +888,6 @@ bool Window::userInput(std::stringstream& info) {
 }
 
 bool Window::nextHistoryEntry(std::string &line) {
-  std::clog << where_history() << std::endl;
 #ifdef HAVE_READLINE
   if ( where_history() < (history_length-1) ) {
     HIST_ENTRY *next = next_history();
@@ -908,7 +907,6 @@ bool Window::nextHistoryEntry(std::string &line) {
 }
 
 bool Window::previousHistoryEntry(std::string &line){
-  std::clog << where_history() << std::endl;
 #ifdef HAVE_READLINE
   HIST_ENTRY *prev = previous_history();
   if ( prev != nullptr ) {

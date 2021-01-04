@@ -755,7 +755,8 @@ bool Window::userInput(std::stringstream& info) {
           }
           try {
             if ( !_render._isOk && _render._doRender ) std::clog << std::endl;
-            std::istringstream cin(_command.substr(1,_command.size()-1));
+            while ( _command[0] == ':' ) _command.erase(0,1);
+            std::istringstream cin(_command);
             std::string token;
             cin >> token;
             this->my_alter(token,cin);

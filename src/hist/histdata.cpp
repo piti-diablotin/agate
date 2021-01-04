@@ -1568,6 +1568,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     filename = "etotal";
     UnitConverter eunit(UnitConverter::Ha);
     eunit = UnitConverter::getFromString(parser.getTokenDefault<std::string>("eunit","Ha"));
+    eunit.rebase(UnitConverter::Ha);
     ylabel = "Etot ["+eunit.str()+"]";
     if (_imgdata._imgmov > 0 ) xlabel = "Image";
     title = "Total energy";

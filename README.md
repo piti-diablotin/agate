@@ -61,11 +61,11 @@ Here is a small list of quantities that you can extract with **agate** from a MD
   First you need to install some dependancies.
   On Ubuntu == 14.04
   ```
-  sudo apt-get install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng3-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest git
+  sudo apt-get install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng3-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev libreadline-dev cxxtest git
   ```
 On Ubuntu >= 16.04 (LTS versions and last non-LTS)
   ```
-  sudo apt install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev cxxtest git
+  sudo apt install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg8-dev libpng-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig ttf-ubuntu-font-family libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev libreadline-dev cxxtest git
   ```
   Then the procedure is the same.
   Compile agate with
@@ -85,7 +85,7 @@ On Ubuntu >= 16.04 (LTS versions and last non-LTS)
   It is exactly the same as for Ubuntu with the following packages (Fedora 22)
   ```
   sudo su
-  yum install autoconf automake m4 libjpeg-turbo-devel libpng-devel netcdf-devel libcurl-devel freetype-devel glfw-devel eigen3-devel fontconfig wget unzip libxml2-devel yaml-cpp-devel fftw-devel libssh-devel cxxtest git gcc-c++ gnuplot
+  yum install autoconf automake m4 libjpeg-turbo-devel libpng-devel netcdf-devel libcurl-devel freetype-devel glfw-devel eigen3-devel fontconfig wget unzip libxml2-devel yaml-cpp-devel fftw-devel libssh-devel readline-devel cxxtest git gcc-c++ gnuplot
   git clone https://github.com/piti-diablotin/agate.git
   cd agate 
   ./autogen.sh
@@ -114,7 +114,7 @@ On Ubuntu >= 16.04 (LTS versions and last non-LTS)
 ### From sources
   The procedure has been tested on MacOS only with *Homebrew*. *Macport* should work too.
   ```
-  brew install automake autoconf curl cxxtest eigen fftw freetype git glfw gnuplot jpeg libpng libssh libtool libxml2 netcdf yaml-cpp
+  brew install automake autoconf curl cxxtest eigen fftw freetype git glfw gnuplot jpeg libpng libssh libtool libxml2 netcdf yaml-cpp readline
   git clone https://github.com/piti-diablotin/agate.git
   cd agate 
   ./autogen.sh

@@ -901,7 +901,7 @@ bool Window::nextHistoryEntry(std::string &line) {
 #else
   if ( (_commandStackNo+1) < _commandStack.size() ) {
     line = _commandStack[++_commandStackNo];
-    return = true;
+    return true;
   }
 #endif
   else return false;
@@ -917,7 +917,7 @@ bool Window::previousHistoryEntry(std::string &line){
 #else
   if ( (_commandStackNo - 1) < _commandStack.size()) { // _commandStackNo is unsigend so if <0 it is apriori >> _commandStack.size()
     line = _commandStack[--_commandStackNo];
-    return = true;
+    return true;
   }
 #endif
   else return false;

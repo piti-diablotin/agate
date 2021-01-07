@@ -344,7 +344,7 @@ namespace utils {
   void sumUp(const std::list<std::vector<double>>& y, const std::list<std::string>& labels, std::ostream& sum, bool ordered) {
     sum.setf(std::ios::scientific,std::ios::floatfield);
     sum.precision(10);
-    if ( labels.size() < 2 ) {
+    if ( y.size() < 2 ) {
       sum << " Mean value: " ;
       sum.setf(std::ios::right,std::ios::adjustfield); 
       const double meanV = utils::mean(y.begin()->begin(),y.begin()->end());
@@ -358,10 +358,10 @@ namespace utils {
       std::vector<std::tuple<std::string,double,double>> toSort;
       sum << std::endl;
       sum.precision(10);
-      for ( ; vec != y.end() ; ++label, ++vec ) {
+      for (int i=1 ; vec != y.end() ; ++label, ++vec, ++i ) {
         const double meanV = utils::mean(vec->begin(),vec->end());
         const double deviationV = utils::deviation(vec->begin(),vec->end(),meanV);
-        toSort.push_back(std::make_tuple(*label,meanV,deviationV));
+        toSort.push_back(std::make_tuple((label!=labels.end()?*label:"Curve "+utils::to_string(i)),meanV,deviationV));
       }
       if ( ordered ) {
         std::sort(toSort.begin(),toSort.end(),[](const std::tuple<std::string,double,double> &t1, const std::tuple<std::string, double,double> &t2){

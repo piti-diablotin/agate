@@ -1,10 +1,10 @@
 # Basic information
 PACKAGE = Agate
-VERSION = 1.1.2
+VERSION = 1.2.0
 MAIL = jordan.bieder@uliege.be
 
 # Initial information about the package
-AC_INIT([Agate],[1.1.2],[jordan.bieder@uliege.be])
+AC_INIT([Agate],[1.2.0],[jordan.bieder@uliege.be])
 
 # Check source directory
 AC_CONFIG_SRCDIR([bin/agate.cpp])

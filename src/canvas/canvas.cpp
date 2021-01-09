@@ -104,7 +104,7 @@ Canvas::Canvas(Canvas&& canvas) :
   _translate(),
   _info(canvas._info),
   _objDraw(canvas._objDraw),
-  _histdata(canvas._histdata.release()),
+  _histdata(nullptr),
   _gplot(canvas._gplot.release()),
   _graphConfig(canvas._graphConfig),
   _eigparser(canvas._eigparser.release())
@@ -112,7 +112,10 @@ Canvas::Canvas(Canvas&& canvas) :
   _translate[0] = canvas._translate[0];
   _translate[1] = canvas._translate[1];
   _translate[2] = canvas._translate[2];
-  _histdata->waitTime(_ntime);
+  if ( canvas._histdata != nullptr ) {
+    canvas._histdata->waitTime(_ntime);
+    _histdata.reset(canvas._histdata.release());
+  }
 }
 
 //

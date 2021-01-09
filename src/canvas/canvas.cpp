@@ -435,6 +435,9 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
       _graphConfig.labels.clear();
       _graphConfig.colors.clear();
     }
+    else {
+      _graphConfig.labels.resize(_graphConfig.y.size(),"");
+    }
 
     try {
       if ( _gplot == nullptr ) 

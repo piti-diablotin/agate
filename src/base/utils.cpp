@@ -361,7 +361,7 @@ namespace utils {
       for (int i=1 ; vec != y.end() ; ++label, ++vec, ++i ) {
         const double meanV = utils::mean(vec->begin(),vec->end());
         const double deviationV = utils::deviation(vec->begin(),vec->end(),meanV);
-        toSort.push_back(std::make_tuple((label!=labels.end()?*label:"Curve "+utils::to_string(i)),meanV,deviationV));
+        toSort.push_back(std::make_tuple((label!=labels.end()&&!label->empty()?*label:"Curve "+utils::to_string(i)),meanV,deviationV));
       }
       if ( ordered ) {
         std::sort(toSort.begin(),toSort.end(),[](const std::tuple<std::string,double,double> &t1, const std::tuple<std::string, double,double> &t2){

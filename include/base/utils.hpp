@@ -74,6 +74,11 @@ namespace utils {
   std::string agateVersion();
 
   /**
+   * Get Agate lastest available version string like x.y.z
+   */
+  std::string agateLatestVersion();
+
+  /**
    * get spglib version is available
    * @return the string major.minor.micro
    */

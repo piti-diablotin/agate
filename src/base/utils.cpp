@@ -42,6 +42,9 @@
 #include <tuple>
 #include <algorithm>
 #include <cstdlib>
+#ifdef HAVE_CURL
+#include <curl/curl.h>
+#endif
 
 #if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
 #  ifdef __cplusplus
@@ -463,6 +466,12 @@ std::string base64_decode(const std::string &in) {
 void Version(){
   std::cout << PACKAGE_NAME << " version " << agateVersion() << std::endl;
   utils::dumpConfig(std::clog);
+  std::string latest;
+  if ( agateVersion() != (latest=agateLatestVersion()) ) {
+    std::cout << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n";
+    std::cout << "New Agate version available:" << latest;
+    std::cout << "\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" << std::endl;
+  }
 #if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
   std::clog << "Using spglib version " << spglibVersion() << std::endl;
 #endif
@@ -470,6 +479,44 @@ void Version(){
 
 std::string agateVersion(){
   return PACKAGE_VERSION;
+}
+
+std::string agateLatestVersion(){
+#ifdef HAVE_CURL
+  std::string latest(PACKAGE_VERSION);
+  curl_global_init(CURL_GLOBAL_ALL);
+  CURL *curl = curl_easy_init();
+  if (curl) {
+    CURLcode res;
+    std::stringstream result;
+    char curl_error[CURL_ERROR_SIZE];
+    curl_easy_setopt(curl,CURLOPT_URL, "https://github.com/piti-diablotin/agate/releases/latest");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0);
+    curl_easy_setopt(curl,CURLOPT_WRITEDATA,(void *) &result);
+    size_t (*callback)(char* ptr, size_t size, size_t nmemb, void *strstream)=
+      [](char* ptr, size_t size, size_t nmemb, void *strstream) -> size_t
+      {
+        static_cast<std::stringstream*>(strstream)->write(ptr,size*nmemb);
+        return size*nmemb;
+      };
+    curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,callback);
+    curl_easy_setopt(curl,CURLOPT_ERRORBUFFER,curl_error);
+    res = curl_easy_perform(curl);
+    if ( res == CURLE_OK ) {
+      curl_easy_cleanup(curl);
+      curl_global_cleanup();
+      std::regex re("\\d+.\\d+.\\d+");
+      std::smatch match;
+      std::string search(result.str());
+      if ( std::regex_search(search,match,re) ) {
+        latest = match[0];
+      }
+    }
+  }
+  return latest;
+#else
+  return PACKAGE_VERSION;
+#endif
 }
 
 std::string spglibVersion(){

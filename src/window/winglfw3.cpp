@@ -101,6 +101,9 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
 
   void (*windowScaled)(GLFWwindow* win, float nxscale, float nyscale) = [](GLFWwindow* win, float nxscale, float nyscale) {
     std::clog << "scaling changed " << nxscale << " " << nyscale << std::endl;
+    int width, height;
+    glfwGetWindowSize(win,&width,&height);
+    glfwSetWindowSize(win,width/nxscale,height/nyscale);
   };
   glfwSetWindowContentScaleCallback(_win, windowScaled);
 

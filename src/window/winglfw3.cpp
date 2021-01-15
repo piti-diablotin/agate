@@ -98,6 +98,12 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
   glfwSetWindowSize(_win,_width,_height);
   _optioni["fontSize"] *= ( xscale+yscale )/2.;
   _render._render.setSize(_optioni["fontSize"]);
+
+  void (*windowScaled)(GLFWwindow* win, float nxscale, float nyscale) = [](GLFWwindow* win, float nxscale, float nyscale) {
+    std::clog << "scaling changed " << nxscale << " " << nyscale << std::endl;
+  };
+  glfwSetWindowContentScaleCallback(_win, windowScaled);
+
 #endif
 #else
   throw EXCEPTION("GLFW support is not available.\nConsider compiling the code with OpenGL+GLFW",ERRDIV);

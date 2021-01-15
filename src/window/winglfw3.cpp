@@ -91,7 +91,11 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
 #ifdef HAVE_GLFW3_CONTENTSCALE
   float xscale, yscale;
   glfwGetWindowContentScale(_win, &xscale, &yscale);
-  glfwSetWindowSize(_win,_width*xscale,_height*yscale);
+#ifdef __linux__
+  _width *= xscale;
+  _height *= yscale;
+#endif
+  glfwSetWindowSize(_win,_width,_height);
   _optioni["fontSize"] *= ( xscale+yscale )/2.;
   _render._render.setSize(_optioni["fontSize"]);
 #endif

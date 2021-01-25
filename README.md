@@ -80,6 +80,25 @@ On Ubuntu >= 16.04 (LTS versions and last non-LTS)
   sudo make install
   ```
   That's it.
+  Note that `agate` will be installed in `/usr/local/` (prefix to use to compile [qAgate](https://github.com/piti-diablotin/qAgate).
+
+## Debian 10
+  The procedure is the same as for ubuntu with 2 modifications the
+  dependencies and the `configure`
+  ```
+  su
+  apt install g++ autotools-dev automake autoconf m4 libtool libncurses5-dev libjpeg62-turbo-dev libpng-dev libnetcdf-dev libcurl3-dev libfreetype6-dev libglfw3-dev libeigen3-dev fontconfig libxml2-dev gnuplot-qt libyaml-cpp-dev libfftw3-dev libssh-dev libreadline-dev cxxtest git make
+  git clone https://github.com/piti-diablotin/agate.git
+  cd agate
+  ./autogen.sh
+  mkdir build
+  cd build
+  ../configure --disable-dependency-tracking
+  make
+  make install
+  ```
+  Note that `agate` will be installed in `/usr/local/` (prefix to use to compile [qAgate](https://github.com/piti-diablotin/qAgate).
+
 
 ## Fedora
   It is exactly the same as for Ubuntu with the following packages (Fedora 22)

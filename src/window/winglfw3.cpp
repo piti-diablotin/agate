@@ -75,6 +75,9 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
   //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 16);
+#ifdef __APPLE__
+  glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
+#endif
 
   if ( (_win = glfwCreateWindow(_width, _height, PACKAGE_STRING, monitor, nullptr) ) == nullptr )
     throw EXCEPTION("Failed to open GLFW window",ERRDIV);
@@ -88,26 +91,16 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
   glfwSetScrollCallback(_win,WheelCallback);
   glfwSetCharCallback(_win,CharCallback);
   glfwSetKeyCallback(_win,KeyCallback);
-#ifdef HAVE_GLFW3_CONTENTSCALE
+#if defined(HAVE_GLFW3_CONTENTSCALE) && defined(__linux__)
   float xscale, yscale;
   glfwGetWindowContentScale(_win, &xscale, &yscale);
-#ifdef __linux__
   _width *= xscale;
   _height *= yscale;
+  _optioni["fontSize"] *= ( xscale+yscale )/2.;
 #endif
   glfwSetWindowSize(_win,_width,_height);
-  _optioni["fontSize"] *= ( xscale+yscale )/2.;
   _render._render.setSize(_optioni["fontSize"]);
 
-  void (*windowScaled)(GLFWwindow* win, float nxscale, float nyscale) = [](GLFWwindow* win, float nxscale, float nyscale) {
-    std::clog << "scaling changed " << nxscale << " " << nyscale << std::endl;
-    int width, height;
-    glfwGetWindowSize(win,&width,&height);
-    glfwSetWindowSize(win,width/nxscale,height/nyscale);
-  };
-  glfwSetWindowContentScaleCallback(_win, windowScaled);
-
-#endif
 #else
   throw EXCEPTION("GLFW support is not available.\nConsider compiling the code with OpenGL+GLFW",ERRDIV);
 #endif

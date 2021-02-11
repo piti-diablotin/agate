@@ -632,7 +632,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       etmp.ADD("Projection may be wrong or incomplete",ERRDIV);
       throw etmp;
     }
-
+/*
     try {
       if ( _gplot == nullptr ) 
         _gplot.reset(new Gnuplot);
@@ -644,7 +644,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       std::cerr << e.fullWhat() << std::endl;
       _gplot.reset(nullptr);
     }
-
+*/
     Graph::plot(config,_gplot.get());
   }
   else if ( token == "findqpt" ) {
@@ -735,7 +735,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       etmp.ADD("Qpt analysis may be wrong or incomplete",ERRDIV);
       throw etmp;
     }
-
+/*
     try {
       if ( _gplot == nullptr ) 
         _gplot.reset(new Gnuplot);
@@ -747,7 +747,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       std::cerr << e.fullWhat() << std::endl;
       _gplot.reset(nullptr);
     }
-
+*/
     Graph::plot(config,_gplot.get());
   }
   else if ( token == "lin_res_E" ) {

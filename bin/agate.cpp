@@ -41,6 +41,7 @@
 #include "window/winfake.hpp"
 #include "canvas/canvaspos.hpp"
 #include "base/utils.hpp"
+#include "plot/gnuplot.hpp"
 
 Window* ptrwin = nullptr; ///< Pointer to the window if created
 
@@ -311,6 +312,7 @@ int main(int argc, char** argv) {
       std::istringstream stream("1");
       crystal->alter("wait",stream);
     }
+    crystal->setGraph(new Gnuplot);
 
     ptrwin->canvas(crystal);
 

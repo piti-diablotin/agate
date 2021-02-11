@@ -149,6 +149,7 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   _optionb["takeSnapshot"] = false;
   _optionb["axis"] = true;
   _optionb["axisCart"] = false;
+  _optionb["newVersion"] = false;
 
   _optioni["shouldExit"] = 0;
   _optioni["oldWidth"] = 0;
@@ -176,6 +177,8 @@ Window::Window(pCanvas &canvas, const int width, const int height) :
   }
   history_set_pos(history_length-1);
 #endif
+  if ( utils::agateVersion() != utils::agateLatestVersion() )
+    _optionb["newVersion"] = true;
 }
 
 //
@@ -883,6 +886,7 @@ bool Window::userInput(std::stringstream& info) {
   if ( view_angle && view_time ) info << "| ";
   if ( view_time ) info << "Time step: " << _canvas->itime() << "/" << _canvas->ntime()-1 << " ";
   if ( _movie ) { info << "Recording ";}
+  if ( _optionb["newVersion"] ) info << " !! Agate " << utils::agateLatestVersion() << " available !! ";
   if ( _exit ) _optioni["shouldExit"] = 1;
 
   return action;

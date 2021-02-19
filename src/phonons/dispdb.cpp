@@ -324,8 +324,7 @@ void DispDB::loadFromEigParserPhonon(EigParserPhonons& eigparser) {
 void DispDB::linearResponseE(std::vector<double> &Edir, double A, Ddb &ddb) {
   PhononMode respE;
   geometry::vec3d E_dir = {{ Edir[0], Edir[1], Edir[2] }};
-  geometry::vec3d gamma = {{ 0,0,0 }};
-  auto disp_E = respE.lin_res(gamma, E_dir, A, ddb);
+  auto disp_E = respE.lin_res(E_dir, A, ddb);
   _linResE.resize(3*ddb.natom());
   for ( unsigned i = 0 ; i < 3*ddb.natom() ; ++i ) {
     _linResE[i].real(disp_E[i]);

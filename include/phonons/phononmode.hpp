@@ -128,13 +128,12 @@ class PhononMode {
 
     /**
      * Calculate linear response from ddb 
-     * @param _qpt The Q - Point -> always GAMMA 
      * @param Edir direction vector for electric field in cartesian coordinates 
      * @param Eamp Amplitude of electric field 
      * @param ddb  complete ddb 
      */	
 
-    std::vector<double> lin_res(const geometry::vec3d& _qpt, geometry::vec3d &Edir, double Eamp, const Ddb& ddb); 	
+    std::vector<double> lin_res(const geometry::vec3d &Edir, double Eamp, const Ddb& ddb); 	
 
 };
 

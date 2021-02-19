@@ -133,10 +133,9 @@ void PhononMode::computeForceCst(const geometry::vec3d& qpt, const Ddb& ddb) {
 
 
 /*Calculate Linear Repsonse of Phonons to a static dielectric field from DFPT*/
-std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::vec3d &E_vec, double E_Amp, const Ddb& ddb) {
+std::vector<double> PhononMode::lin_res(const geometry::vec3d &E_vec, double E_Amp, const Ddb& ddb) {
 #ifndef HAVE_EIGEN
   throw EXCEPTION("To use this functionnality you need to compile with EIGEN support",ERRABT);
-  (void) _qpt;
   (void) E_vec;
   (void) E_Amp;
   (void) ddb;
@@ -153,16 +152,7 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::v
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom )
     _zeff[iatom] = ddb.getZeff(iatom); 		/// get BEC-Tensors
 
-	for (unsigned i = 0; i < _zeff.size(); i++) {
-		if (_zeff[i][geometry::mat3dind( 2,1 )] == 0 ){ 
-			  _zeff[i][geometry::mat3dind( 1, 2)] = 0; 
-		}	
-		if (_zeff[i][geometry::mat3dind( 3,1 )] == 0 ){ 
-			  _zeff[i][geometry::mat3dind( 1, 3)] = 0; 
-		}     		
-	} 
-
-	geometry::mat3d rprim = ddb.rprim(); 			/// get rprim
+	const geometry::mat3d rprim = ddb.rprim(); 			/// get rprim
  	 _rprim << rprim[0], rprim[1],rprim[2],
          rprim[3], rprim[4], rprim[5],
          rprim[6], rprim[7], rprim[8];
@@ -182,12 +172,13 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d& _qpt, geometry::v
 		if (freq_gamma[m] < -1)
 			throw EXCEPTION("NEGATIVE PHONON FREQUENCY FOUND: The linear response to an Electric-Field calculation makes only sense in stable structures. Fully relax your structure",ERRDIV);	
 	}
-        for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-            _mass[iatom] = MendeTable.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]; // type starts at 1
-        }	
-	for ( unsigned i = 0; i < disp_gamma.size(); ++i ) {             
-            disp_gamma[i] = disp_gamma[i].real()*pow(phys::amu_emass,0.5);
-        }
+  _mass.resize(_natom);
+  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+    _mass[iatom] = MendeTable.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]; // type starts at 1
+  }	
+  for ( unsigned i = 0; i < disp_gamma.size(); ++i ) {             
+    disp_gamma[i] = disp_gamma[i]*sqrt(phys::amu_emass);
+  }
 
 	/*--------- Calculate diplacement under electric filed ---------*/ 
 	/* 1. Calculate polarity of each mode and store*/

@@ -287,6 +287,21 @@ class HistCustomModes : public HistDataDtset {
      */
     void setInstableModes(const InstableModes instableModes);
 
+    /**
+     * @brief Get the amplitudes of the displacements that can be condensed 
+     * at time itime
+     * @param itime the time of the HIST
+     * @return A map of qpt / vector of qMode informations (number,amplitude,energy)
+     */
+    const DispDB::qptTree& getDispAmplitudes(const int itime);
+
+    /**
+     * @brief Get the strain matrix used to distord the lattice at itime 
+     * @param itime the time of the HIST
+     * @return the strain matrix
+     */
+    const geometry::mat3d& getStrainMatrix(const int itime);
+
 };
 
 #endif  // HISTCUSTOMMODES_HPP

@@ -581,6 +581,11 @@ void HistCustomModes::push(const Dtset& dtset)
 }
 
 void HistCustomModes::buildInsert(Supercell& supercell, const unsigned itime) {
+  // First apply strain, then displacement so that
+  // X = (1+eta)(R+tau) + u
+  if ( itime < _strainDist.size() ) {
+    supercell.applyStrain(_strainDist[itime]);
+  }
   if ( itime < _condensedModes.size() ) {
     if (_db.natom()!=_reference.natom())
       throw EXCEPTION("natoms are different in DB and reference structure",ERRDIV);
@@ -589,9 +594,6 @@ void HistCustomModes::buildInsert(Supercell& supercell, const unsigned itime) {
         supercell.makeDisplacement(iqpt->first,_db,vib.imode,vib.amplitude,0);
       }
     }
-  }
-  if ( itime < _strainDist.size() ) {
-    supercell.applyStrain(_strainDist[itime]);
   }
   if ( itime >= _ntime )
     throw EXCEPTION("itime larger than _ntime.",ERRWAR);
@@ -619,4 +621,16 @@ void HistCustomModes::initRandomEngine() {
       break;
   }
   _randomEngine.seed(seed);
+}
+
+const DispDB::qptTree& HistCustomModes::getDispAmplitudes(const int itime) {
+  if ( itime >= _condensedModes.size() ) 
+    throw EXCEPTION("Bad value for itime",ERRDIV);
+  return _condensedModes[itime];
+}
+
+const geometry::mat3d& HistCustomModes::getStrainMatrix(const int itime) {
+  if ( itime >= _strainDist.size() ) 
+    throw EXCEPTION("Bad value for itime",ERRDIV);
+  return _strainDist[itime];
 }

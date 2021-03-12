@@ -1075,4 +1075,5 @@ void Dtset::applyStrain(const geometry::mat3d& strainMatrix) {
   const mat3d buffRprim(_rprim);
   _rprim = strainMatrix*_rprim;
   _rprim = _rprim + buffRprim;
+  geometry::changeBasis(_rprim, _xcart, _xred, false);
 }

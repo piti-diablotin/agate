@@ -84,7 +84,7 @@ class MappingSupercell : public CxxTest::TestSuite
       auto vec1 = dist.projectOnModes(ddb, disp, condensed, Supercell::NONE,true);
       auto vec2 = dist_shifted.projectOnModes(ddb, disp, condensed, Supercell::NONE,true);
       for ( unsigned int i = 0 ; i < vec1.size() ; ++i ) {
-        TS_ASSERT_DELTA(vec1[i],vec2[i],1e-13);
+        TS_ASSERT_DELTA(vec1[i],vec2[i],1e-12);
       }
 
       vec1 = dist.projectOnModes(ddb, disp, condensed, Supercell::NORMALL,true);

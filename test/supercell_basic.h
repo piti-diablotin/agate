@@ -127,5 +127,138 @@ class SupercellBasic : public CxxTest::TestSuite
     }
   }
 
+  void testDisplacementNoStrain( void )
+  {
+    std::stringstream refstream;
+    refstream << " acell  3*8\n";
+    refstream << " natom  5\n";
+    refstream << " ntypat 3\n";
+    refstream << " typat  1 2 3 3 3\n";
+    refstream << " znucl 38 44 8\n";
+    refstream << " xcart 0 0 0\n";
+    refstream << "       4 4 4\n";
+    refstream << "       0 4 4\n";
+    refstream << "       4 0 4\n";
+    refstream << "       4 4 0\n";
+    Dtset reference;
+    ConfigParser parser;
+    std::cout << refstream.str() << std::endl;
+    parser.setContent(refstream.str());
+    reference.readConfig(parser);
+    Supercell test1;
+    refstream.str("");
+    refstream.clear();
+    refstream << " acell  3*8\n";
+    refstream << " natom  5\n";
+    refstream << " ntypat 3\n";
+    refstream << " typat  1 2 3 3 3\n";
+    refstream << " znucl 38 44 8\n";
+    refstream << " xcart 0 0 0\n";
+    refstream << "       4 4 5\n";
+    refstream << "       0 3 4\n";
+    refstream << "       4 0 4\n";
+    refstream << "       -4 -4 0\n";
+    std::cout << refstream.str() << std::endl;
+    parser.setContent(refstream.str());
+    test1.readConfig(parser);
+    test1.findReference(reference);
+    auto disp = test1.getDisplacement(reference,false);
+    std::vector<double> result(15,0);
+    /*result[0] = 0; result[1] = 0; result[2] = 0;*/
+    /*result[3] = 0; result[4] = 0;*/ result[5] = 1;
+    /*result[6] = 0;*/ result[7] = -1; /*result[8] = 0;*/
+    /*result[9] = 0; result[10] = 0; result[11] = 0;*/
+    /*result[12] = 0; result[13] = 0; result[14] = 0;*/
+    for (int i=0; i<disp.size();++i ) 
+        TS_ASSERT_DELTA(disp[i],result[i],1e-13);
+  }
+
+  void testDisplacementStrainNiDisp( void )
+  {
+    std::stringstream refstream;
+    refstream << " acell  3*8\n";
+    refstream << " natom  5\n";
+    refstream << " ntypat 3\n";
+    refstream << " typat  1 2 3 3 3\n";
+    refstream << " znucl 38 44 8\n";
+    refstream << " xcart 0 0 0\n";
+    refstream << "       4 4 4\n";
+    refstream << "       0 4 4\n";
+    refstream << "       4 0 4\n";
+    refstream << "       4 4 0\n";
+    Dtset reference;
+    ConfigParser parser;
+    std::cout << refstream.str() << std::endl;
+    parser.setContent(refstream.str());
+    reference.readConfig(parser);
+    Supercell test1;
+    refstream.str("");
+    refstream.clear();
+    refstream << " acell  2*8 8.5\n";
+    refstream << " natom  5\n";
+    refstream << " ntypat 3\n";
+    refstream << " typat  1 2 3 3 3\n";
+    refstream << " znucl 38 44 8\n";
+    refstream << " xred 0 0 0\n";
+    refstream << "       0.5 0.5 0.5\n";
+    refstream << "       0 0.5 0.5\n";
+    refstream << "       0.5 0 0.5\n";
+    refstream << "       0.5 0.5 0\n";
+    std::cout << refstream.str() << std::endl;
+    parser.setContent(refstream.str());
+    test1.readConfig(parser);
+    test1.findReference(reference);
+    auto disp = test1.getDisplacement(reference,false);
+    std::vector<double> result(15,0);
+    for (int i=0; i<disp.size();++i ) 
+        TS_ASSERT_DELTA(disp[i],result[i],1e-13);
+  }
+
+  void testDisplacementStrainDisp( void )
+  {
+    std::stringstream refstream;
+    refstream << " acell  3*8\n";
+    refstream << " natom  5\n";
+    refstream << " ntypat 3\n";
+    refstream << " typat  1 2 3 3 3\n";
+    refstream << " znucl 38 44 8\n";
+    refstream << " xcart 0 0 0\n";
+    refstream << "       4 4 4\n";
+    refstream << "       0 4 4\n";
+    refstream << "       4 0 4\n";
+    refstream << "       4 4 0\n";
+    Dtset reference;
+    ConfigParser parser;
+    std::cout << refstream.str() << std::endl;
+    parser.setContent(refstream.str());
+    reference.readConfig(parser);
+    Supercell test1;
+    refstream.str("");
+    refstream.clear();
+    refstream << " acell  2*8 8.5\n";
+    refstream << " natom  5\n";
+    refstream << " ntypat 3\n";
+    refstream << " typat  1 2 3 3 3\n";
+    refstream << " znucl 38 44 8\n";
+    refstream << " xcart 0 0 0\n";
+    refstream << "       4 4 5.25\n";
+    refstream << "       0 3 4.25\n";
+    refstream << "       4 0 4.25\n";
+    refstream << "       4 4 0\n";
+    std::cout << refstream.str() << std::endl;
+    parser.setContent(refstream.str());
+    test1.readConfig(parser);
+    test1.findReference(reference);
+    auto disp = test1.getDisplacement(reference,false);
+    std::vector<double> result(15,0);
+    /*result[0] = 0; result[1] = 0; result[2] = 0;*/
+    /*result[3] = 0; result[4] = 0;*/ result[5] = 1;
+    /*result[6] = 0;*/ result[7] = -1; /*result[8] = 0;*/
+    /*result[9] = 0; result[10] = 0; result[11] = 0;*/
+    /*result[12] = 0; result[13] = 0; result[14] = 0;*/
+    for (int i=0; i<disp.size();++i ) 
+        TS_ASSERT_DELTA(disp[i],result[i],1e-13);
+  }
+
 };
 

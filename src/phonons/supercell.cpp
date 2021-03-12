@@ -354,7 +354,7 @@ void Supercell::setReference(const Supercell& supercell) {
 }
 
 //
-std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
+std::vector<double> Supercell::getDisplacement(const Dtset &dtset, const bool rmBmass) {
   using namespace geometry;
   if ( _baseAtom.size() != _natom 
       || _cellCoord.size() != _natom 
@@ -377,61 +377,53 @@ std::vector<double> Supercell::getDisplacement(const Dtset &dtset) {
   if ( natom*static_cast<unsigned>(_dim[0]*_dim[1]*_dim[2]) != _natom )
     throw EXCEPTION("Hmm supercell and dtset are incoherent",ERRDIV);
 
-  auto ref_rprim = dtset.rprim();
-  auto ref_rprim_supercell = ref_rprim;
-  ref_rprim_supercell[0] *= _dim[0];
-  ref_rprim_supercell[3] *= _dim[0];
-  ref_rprim_supercell[6] *= _dim[0];
-  ref_rprim_supercell[1] *= _dim[1];
-  ref_rprim_supercell[4] *= _dim[1];
-  ref_rprim_supercell[7] *= _dim[1];
-  ref_rprim_supercell[2] *= _dim[2];
-  ref_rprim_supercell[5] *= _dim[2];
-  ref_rprim_supercell[8] *= _dim[2];
+  auto rprim = dtset.rprim();
 
   std::vector<double> displacements(3*_natom,0);
   auto& ref_xred = dtset.xred();
 #pragma omp parallel for schedule(static), shared(displacements,ref_xred)
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    vec3d super_xred_in_ref = _xred[iatom];
+    vec3d ref_xred_in_supercell;
     for ( int d = 0 ; d < 3 ; ++d )
-      super_xred_in_ref[d] = super_xred_in_ref[d]*_dim[d]-_cellCoord[iatom][d];
-    vec3d disp = super_xred_in_ref - ref_xred[_baseAtom[iatom]];
+      ref_xred_in_supercell[d] = (_cellCoord[iatom][d]+ref_xred[_baseAtom[iatom]][d])/_dim[d];
+    vec3d disp = _xred[iatom] - ref_xred_in_supercell;
     recenter(disp);
-    disp = ref_rprim*disp;
+    disp = _rprim*disp;
     for ( unsigned d = 0 ; d < 3 ; ++ d )
       displacements[iatom*3+d] = disp[d];
   }
 
-  // Compute center of mass of displacement and set it to 0
-  double norm = 0;
-  double bmass[3] = {0};
-  double totalMass = 0e0;
-  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
-    totalMass += mass;
-    for ( unsigned d = 0 ; d < 3 ; ++ d ){
-      bmass[d] +=  mass*displacements[iatom*3+d];
-      norm += mass*displacements[iatom*3+d]*displacements[iatom*3+d];
+  if ( rmBmass ) {
+    // Compute center of mass of displacement and set it to 0
+    double norm = 0;
+    double bmass[3] = {0};
+    double totalMass = 0e0;
+    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+      double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
+      totalMass += mass;
+      for ( unsigned d = 0 ; d < 3 ; ++ d ){
+        bmass[d] +=  mass*displacements[iatom*3+d];
+        norm += mass*displacements[iatom*3+d]*displacements[iatom*3+d];
+      }
     }
-  }
-  for ( unsigned d = 0 ; d < 3 ; ++ d )
-    bmass[d] /= totalMass;
+    for ( unsigned d = 0 ; d < 3 ; ++ d )
+      bmass[d] /= totalMass;
 
-  //std::clog << "Before Bmass norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
-  //std::clog << "Bmass was at " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
+    //std::clog << "Before Bmass norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
+    //std::clog << "Bmass was at " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
 
-  norm = 0;
-  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-    double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
-    for ( unsigned d = 0 ; d < 3 ; ++ d ){
-      displacements[iatom*3+d] -= bmass[d];
-      norm+=mass*displacements[iatom*3+d]*displacements[iatom*3+d];
-      //std::clog << phys::b2A*displacements[iatom*3+d] << " ";
+    norm = 0;
+    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+      double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
+      for ( unsigned d = 0 ; d < 3 ; ++ d ){
+        displacements[iatom*3+d] -= bmass[d];
+        norm+=mass*displacements[iatom*3+d]*displacements[iatom*3+d];
+        //std::clog << phys::b2A*displacements[iatom*3+d] << " ";
+      }
+      //std::clog << std::endl;
     }
-    //std::clog << std::endl;
-  }
 //  std::clog << "norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
+  }
   _fft.clear();
   return displacements;
 }

@@ -128,15 +128,14 @@ class Supercell : public Dtset{
     /**
      * Extract the displacements of all atoms with respect to the dtset 
      * which should be the same as the reference dtset
-     * Internally, we build the supercell reference structure (remove strain and stress)
-     * Then we transform the reduced positions of the supercell in cartesian coordinates
-     * in the supercell reference structure.
+     * Internally, we calculate the displacement u as r = (1+eta)(R+tau) + u
      * @param dtset The reference dtset
+     * @param rmBmass Set to True to align the center of mass at 0 (Remove acoustic modes)
      * @result A vector of displacements atom1.x atom1.y atom1.z atom2.x ,...
      * The result is has the length dimension (bohr) and is equal to
-     * rprim_ref_supercell*(xred_supercell-xred_ref_supercell)
+     * rprim_supercel*(xred_supercell-1/dim(cellCoord+xred))
      */
-    std::vector<double> getDisplacement(const Dtset &dtset);
+    std::vector<double> getDisplacement(const Dtset &dtset, const bool rmBmass = true);
 
     /**
      * Project the displacement of the supercell on the eigen displacements of the reference structure.

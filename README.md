@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.com/piti-diablotin/agate.svg?branch=master)](https://travis-ci.com/piti-diablotin/agate)
 [![Downloads](https://img.shields.io/github/downloads/piti-diablotin/agate/latest/total.svg)](https://github.com/piti-diablotin/agate/releases/latest)
+[![DOI](https://zenodo.org/badge/103832429.svg)](https://zenodo.org/badge/latestdoi/103832429)
+
 # Presentation
 Agate is a tool engine to visualize and post-process data from *ab-initio* codes.
 It is mainly designed to work with the [Abinit](www.abinit.org "Abinit website") DFT code. However, it can perfectly read some [VASP](www.vasp.at "VASP website") files and other commonly used format. 

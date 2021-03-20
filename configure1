@@ -19,6 +19,9 @@ fi
 if test -d "/usr/lib64"; then
   LDFLAGS="$LDFLAGS -L/usr/lib64"
 fi
+if test -d "/mingw64/lib"; then
+  LDFLAGS="$LDFLAGS -L/mingw64/lib"
+fi
 OLD_CXXFLAGS=$CXXFLAGS
 OLD_CPPFLAGS=$CPPFLAGS
 AC_PROG_CXXCPP
@@ -88,7 +91,8 @@ case $host in
     GL_PREFIX=OpenGL
     ;;
  *mingw32*)
-    AC_DEFINE([HAVE_MINGW],[1],[Define to 1 if we are running on WINGW])
+    default_prefix=/mingw64
+    AC_DEFINE([HAVE_MINGW],[1],[Define to 1 if we are running on MINGW])
     GL_PREFIX=GL
     ;;
   *)
@@ -1330,13 +1334,19 @@ if test x"$glsupport" = x"yes"; then
     AC_MSG_WARN([On apple device, OpenGL support is assumed.])
     AC_DEFINE(GL_SILENCE_DEPRECATION,1,[Define to 1 to silent OpenGL warnings])
     gl_check_lib=yes
+  elif test x"$host_vendor" == x"w64"; then
+    AC_CHECK_LIB([opengl32],[glBegin],[gl_check_lib=yes],[gl_check_lib=no])
   else
     AC_CHECK_LIB([GL],[glBegin],[gl_check_lib=yes],[gl_check_lib=no])
   fi
   if test x"$gl_check_h" = x"yes" && test x"$gl_check_lib" = x"yes"
   then
     if test x"$host_vendor" != x"apple"; then
-      LIBS="$LIBS -l$GL_PREFIX"
+      if test x"$host_vendor" == x"w64"; then
+        LIBS="$LIBS -lopengl32"
+      else
+        LIBS="$LIBS -l$GL_PREFIX"
+      fi
     fi
     have_gl_usable="yes"
     AC_DEFINE(HAVE_GL,1,[Define to 1 if OpenGL is usable])
@@ -1355,6 +1365,8 @@ if test x"$glsupport" = x"yes"; then
                    ]])
   if test x"$host_vendor" == x"apple"; then
     glext_check_lib=yes
+  elif test x"$host_vendor" == x"w64"; then
+    AC_CHECK_LIB([opengl32],[glBindBuffer],[glext_check_lib=yes],[glext_check_lib=no])
   else
     AC_CHECK_LIB([GL],[glBindBuffer],[glext_check_lib=yes],[glext_check_lib=no])
   fi
@@ -1409,6 +1421,8 @@ if test x"$glsupport" = x"yes"; then
 
   if test x"$host_vendor" == x"apple"; then
     GLFW_EXTRA="-framework Cocoa -framework IOKit -framework CoreVideo"
+  elif test x"$host_vendor" == x"w64"; then
+    GLFW_EXTRA=""
   else
     GLFW_EXTRA="-lrt -lXrandr -lXinerama -lXi -lXcursor -lm -ldl -lXrender -ldrm -lXdamage -lX11-xcb -lxcb-glx -lxcb-dri2 -lxcb-dri3 -lxcb-present -lxcb-sync -lxshmfence -lXxf86vm -lXfixes -lXext -lX11 -lpthread -lxcb -lXau -lXdmcp"
     GLFW_EXTRA="-lX11 -lXxf86vm -lXrandr -lXinerama -lXcursor -lXi"

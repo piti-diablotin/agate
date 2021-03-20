@@ -413,7 +413,9 @@ void Tdep::tdep() {
   std::string files("input.in\n"+_supercell->filename()+"\n"+_outputPrefix+"\n");
   fputs(files.c_str(),tdep);
   int st = pclose(tdep);
+#ifndef _WIN32
   if ( WIFEXITED(st) && WEXITSTATUS(st) != 0 ) {
     throw EXCEPTION("Unable to execute tdep",ERRDIV);
   }
+#endif
 }

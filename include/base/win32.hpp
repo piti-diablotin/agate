@@ -32,52 +32,55 @@
 #undef HAVE_CONFIG_H
 #endif
 
-#if defined(WIN32) || defined(_WIN32)
-#  ifndef __func__
-#    define __func__ __FUNCTION__
-#  endif
-#  define COMPILE_HOST "Win32"
-#  define COMPILE_BUILD "Win32"
-#  define COMPILE_CPPFLAGS "Undefined"
-#  define COMPILE_CXXFLAGS "Undifined"
-#  define COMPILE_LIBS "Undefined"
-#  define COMPILE_LDFLAGS "Undefined"
-#  ifndef PACKAGE
-#    define PACKAGE "abiout"
-#  endif
-#  ifndef PACKAGE_NAME
-#    define PACKAGE_NAME "Agate"
-#  endif
-#  ifndef PACKAGE_STRING
-#    define PACKAGE_STRING "Agate 0.0.5"
-#  endif
-#  ifndef PACKAGE_VERSION
-#    define PACKAGE_VERSION "0.0.5"
-#  endif
-//#  define HAVE_CURL
-//#  define HAVE_EIGEN
-//#  define HAVE_NETCDF
-#  define HAVE_GL
-#  define HAVE_GLEXT
-//#  define HAVE_GLFW3
-//#  define HAVE_GLFW3_DROP
-//#  define HAVE_LIBPNG
-//#  define HAVE_LIBJPEG
-//#  define HAVE_LIBXML2
-//#  define HAVE_CPPTHREAD
-#  define HAVE_OMP
-//#  define HAVE_SPGLIB
-//#define HAVE_FREETYPE
-#  define _CRT_SECURE_NO_WARNINGS
-#  include <Windows.h>
-typedef long ssize_t;
-#define GL_UNSIGNED_INT_8_8_8_8 0x8035
-#define GL_MULTISAMPLE 0x809D
+//#if defined(WIN32) || defined(_WIN32)
+//#  ifndef __func__
+//#    define __func__ __FUNCTION__
+//#  endif
+//#  define COMPILE_HOST "Win32"
+//#  define COMPILE_BUILD "Win32"
+//#  define COMPILE_CPPFLAGS "Undefined"
+//#  define COMPILE_CXXFLAGS "Undifined"
+//#  define COMPILE_LIBS "Undefined"
+//#  define COMPILE_LDFLAGS "Undefined"
+//#  ifndef PACKAGE
+//#    define PACKAGE "abiout"
+//#  endif
+//#  ifndef PACKAGE_NAME
+//#    define PACKAGE_NAME "Agate"
+//#  endif
+//#  ifndef PACKAGE_STRING
+//#    define PACKAGE_STRING "Agate 0.0.5"
+//#  endif
+//#  ifndef PACKAGE_VERSION
+//#    define PACKAGE_VERSION "0.0.5"
+//#  endif
+////#  define HAVE_CURL
+////#  define HAVE_EIGEN
+////#  define HAVE_NETCDF
+//#  define HAVE_GL
+//#  define HAVE_GLEXT
+////#  define HAVE_GLFW3
+////#  define HAVE_GLFW3_DROP
+////#  define HAVE_LIBPNG
+////#  define HAVE_LIBJPEG
+////#  define HAVE_LIBXML2
+////#  define HAVE_CPPTHREAD
+//#  define HAVE_OMP
+////#  define HAVE_SPGLIB
+////#define HAVE_FREETYPE
+//#  define _CRT_SECURE_NO_WARNINGS
+//#  include <Windows.h>
+//typedef long ssize_t;
+//#define GL_UNSIGNED_INT_8_8_8_8 0x8035
+//#define GL_MULTISAMPLE 0x809D
+#ifdef DEFAULT_FONT 
+#undef DEFAULT_FONT
 #define DEFAULT_FONT "c:\\windows\\fonts\\calibri.ttf"
-
-#define popen _popen
-#define pclose _pclose
 #endif
+//
+//#define popen _popen
+//#define pclose _pclose
+//#endif
 
 
 #endif  // WIN32_HPP

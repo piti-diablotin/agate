@@ -48,14 +48,13 @@
 # endif
 #endif
 
-//#if defined(HAVE_GL) && defined(HAVE_GLEXT)
-//# ifdef __APPLE__
-//#  include <OpenGL/glext.h>
-//# else
-//#warning("glext")
-//#  include <GL/glext.h>
-//# endif
-//#endif
+#if defined(HAVE_GL) && defined(HAVE_GLEXT)
+# ifdef __APPLE__
+#  include <OpenGL/glext.h>
+# else
+#  include <GL/glext.h>
+# endif
+#endif
 
 TextRender::TextRender() : _doRender(false), _isOk(false), _color(), _render(), _buffer(Render::BufferRender(200,200) ) {
   try {

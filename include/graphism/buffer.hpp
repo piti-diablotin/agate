@@ -168,7 +168,7 @@ class Buffer {
                                     }
           case Buffer::TYPE_TEXT : {
                                      for (size_t j=0;j<buffer._cols;++j)
-                                       out << (buffer._buffer[i*buffer._cols+j] < 1 ? ' ' : '@' );
+                                       out << ((buffer._buffer[i*buffer._cols+j]&0x000000FF) < 1 ? ' ' : '@' );
                                      break;
                                    }
           case Buffer::TYPE_NUM : {

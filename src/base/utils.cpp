@@ -398,14 +398,14 @@ namespace utils {
     return ( pos != std::string::npos ) ? filename.substr(pos+1) : filename;
   }
 
-#ifndef _WIN32
   std::vector<std::pair<long int, std::string>> ls(std::string dir, std::string pattern) {
+    std::vector<std::pair<long int, std::string>> files;
+#ifndef _WIN32
 
     DIR *dp;
     dirent *d;
 
     std::regex search(pattern);
-    std::vector<std::pair<long int, std::string>> files;
 
     if((dp = opendir(dir.c_str())) == NULL)
       throw EXCEPTION("Unable to open current directory", ERRABT);
@@ -421,9 +421,9 @@ namespace utils {
       }
     }
     std::sort(files.begin(),files.end(),[](std::pair<long int, std::string> it1,std::pair<long int,std::string> it2){return it1.first < it2.first;});
+#endif
     return files;
   }
-#endif
 
 std::string base64_encode(const std::string &in) {
 
@@ -580,12 +580,12 @@ std::string readString(std::istream& stream) {
   }
   if (quote) fullString.pop_back();
   if ( fullString[0] == '~' ) {
-#ifndef _WIN32
+//#ifndef _WIN32
     std::string home(getenv("HOME"));
     fullString.replace(0,1,home);
-#else
-#error Need to set the HOME directory
-#endif
+//#else
+//#error Need to set the HOME directory
+//#endif
   }
   return fullString;
 }

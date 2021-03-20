@@ -1485,11 +1485,11 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
     // Inside
     for ( int iatom = first ; iatom < last ; ++iatom ) {
       const unsigned typ1 = _typat[iatom];
-      const double rad1 = MendeTable.rcov[_znucl[typ1]];
+      const double rad_1 = MendeTable.rcov[_znucl[typ1]];
       geometry::vec3d pos={{ xcart[3*iatom], xcart[3*iatom+1], xcart[3*iatom+2] }};
       for ( int hatom = iatom+1 ; hatom < last ; ++hatom ) {
         unsigned typ2 = _typat[hatom];
-        const double blength = rad1 + MendeTable.rcov[_znucl[typ2]];
+        const double blength = rad_1 + MendeTable.rcov[_znucl[typ2]];
         geometry::vec3d hpos={{ xcart[3*hatom]-pos[0], xcart[3*hatom+1]-pos[1], xcart[3*hatom+2]-pos[2] }};
         double norm2 = geometry::dot(hpos,hpos);
         if ( norm2 < (blength*blength)*b2 )
@@ -1501,7 +1501,7 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
           int atomref = _onBorders[batom].first;
           if ( atomref >= first && atomref < last ) {
             unsigned typ2 = _typat[atomref];
-            const double blength = rad1 + MendeTable.rcov[_znucl[typ2]];
+            const double blength = rad_1 + MendeTable.rcov[_znucl[typ2]];
             geometry::vec3d hpos={{ _xcartBorders[3*batom]-pos[0], _xcartBorders[3*batom+1]-pos[1], _xcartBorders[3*batom+2]-pos[2] }};
             double norm2 = geometry::dot(hpos,hpos);
             if ( norm2 < (blength*blength)*b2 )
@@ -1516,14 +1516,14 @@ std::vector<std::pair<int,int>> CanvasPos::buildBonds() {
         int atomref1 = _onBorders[batom1].first;
         if ( atomref1 >= first && atomref1 < last ) {
           const unsigned typ1 = _typat[atomref1];
-          const double rad1 = MendeTable.rcov[_znucl[typ1]];
+          const double rad_1 = MendeTable.rcov[_znucl[typ1]];
           geometry::vec3d pos={{ _xcartBorders[3*batom1], _xcartBorders[3*batom1+1], _xcartBorders[3*batom1+2] }};
           // Border - Border
           for ( unsigned batom2 = 0 ; batom2 <  _onBorders.size() ; ++batom2 ) {
             int atomref2 = _onBorders[batom2].first;
             if ( atomref2 >= first && atomref2 < last ) {
               int typ2 = _typat[atomref2];
-              const double blength = rad1 + MendeTable.rcov[_znucl[typ2]];
+              const double blength = rad_1 + MendeTable.rcov[_znucl[typ2]];
               geometry::vec3d hpos={{ _xcartBorders[3*batom2]-pos[0], _xcartBorders[3*batom2+1]-pos[1], _xcartBorders[3*batom2+2]-pos[2] }};
               double norm2 = geometry::dot(hpos,hpos);
               if ( norm2 < (blength*blength)*b2 )

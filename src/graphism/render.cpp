@@ -365,14 +365,17 @@ void Render::regenerate() {
   if (_size==0) return;
   if ( _fontfile.empty() ) return;
 
+  Exception e;
   for ( char c = 0, C=32; C < 127; ++C, ++c ) {
     using namespace std;
     try {
       /* load glyph image into the slot (erase previous one) */
       int error = FT_Load_Char( _face, C, _renderMode );
       if ( error ) {
-        std::stringstream message ; message << "Error loading charachter " << C << ".";
-        throw EXCEPTION(message.str(),ERRDIV);
+        std::stringstream message ; message << "Error loading charachter " << C << (unsigned)C << ".";
+        //throw EXCEPTION(message.str(),ERRDIV);
+	e.ADD(message.str(),ERRDIV);
+	continue;
       }
 
       bitmap = &_slot->bitmap;
@@ -419,5 +422,6 @@ void Render::regenerate() {
       }
     }
   }
+  std::cerr << e.fullWhat() << std::endl;
 #endif
 }

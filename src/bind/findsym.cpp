@@ -60,7 +60,7 @@ Findsym::Findsym() :
   _cif()
 {
 #ifdef HAVE_LINUX
-  std::string datadir = DATADIR 
+  std::string datadir = AGATE_DATADIR 
     + std::string("/")
     + std::string(PACKAGE_NAME) 
     + std::string("/FINDSYM/");

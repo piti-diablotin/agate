@@ -51,6 +51,25 @@
 #include "canvas/canvaslocal.hpp"
 #include "canvas/canvasphonons.hpp"
 
+#ifdef HAVE_GL
+# ifdef HAVE_GLEXT
+#  define GL_GLEXT_PROTOTYPES
+# endif
+# ifdef __APPLE__
+#  include <OpenGL/gl.h>
+# else
+#  include <GL/gl.h>
+# endif
+#endif
+
+#if defined(HAVE_GL) && defined(HAVE_GLEXT)
+# ifdef __APPLE__
+#  include <OpenGL/glext.h>
+# else
+#  include <GL/glext.h>
+# endif
+#endif
+
 using std::abs;
 
 int runSnake();

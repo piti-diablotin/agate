@@ -29,6 +29,14 @@
 #include <cmath>
 #include <algorithm>
 
+#if defined(HAVE_GL) && defined(HAVE_GLEXT)
+# ifdef __APPLE__
+#  include <OpenGL/glext.h>
+# else
+#  include <GL/glext.h>
+# endif
+#endif
+
 //
 TriMap::TriMap(bool opengl) : TriObj(opengl),
   _unitColor(nullptr),

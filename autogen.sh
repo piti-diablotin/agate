@@ -89,7 +89,7 @@ else
     done
     sed -i -e '$s/\\//' Makefile.am
     echo "AM_CXXFLAGS = @AM_CXXFLAGS""@
-AM_CPPFLAGS = -I\$(top_srcdir)/include @AM_CPPFLAGS@  -DDATADIR=\\\"\$(datadir)\\\"" >> Makefile.am
+AM_CPPFLAGS = -I\$(top_srcdir)/include @AM_CPPFLAGS@  -DAGATE_DATADIR=\\\"\$(datadir)\\\"" >> Makefile.am
     cd -
   done
   cd ..

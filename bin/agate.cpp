@@ -32,7 +32,9 @@
 #include <fstream>
 #include <sstream>
 #include <exception>
+#ifndef _WIN32
 #include <execinfo.h>
+#endif
 #include "io/parser.hpp"
 #include "io/configparser.hpp"
 #include "hist/histdatanc.hpp"
@@ -68,7 +70,7 @@ void initInput(int argc, const char** argv) {
   for ( int i = 0 ; i < argc ; ++i ) {
     std::ifstream file(argv[i],std::ios::in);
 
-    if ( file.good() && (i == 0 || (i > 0 && strcmp(argv[i-1],"-c") != 0 && strcmp(argv[i-1],"--config")) != 0) ) {
+    if ( file.good() && (i == 0 || (i > 0 && strcmp(argv[i-1],"-c") != 0 && strcmp(argv[i-1],"--config") && strcmp(argv[i-1],"-f") != 0 && strcmp(argv[i-1],"--font") ) != 0) ) {
       filename.push_back(std::string(argv[i]));
     }
 
@@ -164,7 +166,7 @@ void handle_signal (int para) {
   exit(1);
 }
 
-
+#ifndef _WIN32
 /**
  * Handle when the terminate function is called
  */
@@ -179,6 +181,7 @@ void handle_terminate() {
     free( stack_syms );
     exit(1);
 }
+#endif
 
 
 /**
@@ -197,8 +200,8 @@ int main(int argc, char** argv) {
 #ifndef _WIN32
   signal(SIGKILL,handle_signal);
   signal(SIGQUIT,handle_signal);
-#endif
   std::set_terminate (handle_terminate);
+#endif
 
   int rvalue = 0;
   Parser parser(argc,argv);
@@ -316,14 +319,6 @@ int main(int argc, char** argv) {
 
     ptrwin->canvas(crystal);
 
-    try {
-      initInput(argc-1, (const char**) argv+1);
-    }
-    catch ( Exception &e ) {
-      std::clog << e.fullWhat() << std::endl;
-      ptrwin->canvas(new CanvasPos(useopengl));
-    }
-
     try{
       if ( parser.isSetOption("font") )
         ptrwin->setFont(parser.getOption<std::string>("font"));
@@ -333,6 +328,14 @@ int main(int argc, char** argv) {
         e.ADD("Something bad happened",ERRDIV);
         throw e;
       }
+    }
+
+    try {
+      initInput(argc-1, (const char**) argv+1);
+    }
+    catch ( Exception &e ) {
+      std::clog << e.fullWhat() << std::endl;
+      ptrwin->canvas(new CanvasPos(useopengl));
     }
 
     ptrwin->setParameters(config);

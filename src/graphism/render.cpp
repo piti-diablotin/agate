@@ -335,7 +335,8 @@ void Render::render(const char* string, BufferRender& buffer, const unsigned cha
       size_t begin = (string[c]-32)*fullsize+2;
       for ( FT_Int i = _size-1, ii =0 ; i >= 0; --i, ++ii ) {
         for ( FT_Int j = 0; (j < line && j+offset < fullLine); ++j) {
-          buffer(i,j+offset) = cc+(unsigned int)_temp[begin + ii*line + j];
+          auto pixel = (unsigned int)_temp[begin + ii*line + j];
+          buffer(i,j+offset) = (pixel > 0 ? cc+pixel : 0);
         }
       }
       offset += advance;

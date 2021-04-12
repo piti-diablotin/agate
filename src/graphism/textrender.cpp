@@ -62,6 +62,7 @@ TextRender::TextRender() : _doRender(false), _isOk(false), _color(), _render(), 
     _render = Render(DEFAULT_FONT,20,RENDERGRAY);
     _isOk = true;
     _doRender = true;
+    _buffer.setType(Buffer<unsigned int>::TYPE_TEXT);
   }
   catch( Exception &e ) {
     e.ADD("Won't display any information on the screen",ERRWAR);

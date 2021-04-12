@@ -406,6 +406,17 @@ class HistData {
      */
     std::list<std::vector<double>> getPACF(unsigned tbegin, unsigned tend) const;
 
+    
+    /**
+     * Return the displacement vector with respect to the ref dtset.
+     * The center of mass can be set to 0 if rmBmass is true.
+     * Otherwise the result is just "R-Ref"
+     * @param ref the reference structure to use
+     * @param ref itime the time in the hist to extract the displacement
+     * @param rmBmass True if the center of mass of the displacement must be reset to 0.
+     */
+    std::vector<double> getDisplacement(const Dtset &ref, unsigned itime, bool rmBmass) const;
+
     /**
      * Compute the polarization using the Born Effective Charges and the reference structure
      * P_i = \frac{e}{V}\sum_j Z_ij \Delta x_j

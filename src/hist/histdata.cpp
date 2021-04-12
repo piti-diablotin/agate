@@ -2292,6 +2292,22 @@ std::list<std::vector<double>> HistData::getPACF(unsigned tbegin, unsigned tend)
   return pacf;
 }
 
+std::vector<double> HistData::getDisplacement(const Dtset &ref, unsigned itime, bool rmBmass) const {
+  if ( itime >= _ntimeAvail ) 
+    throw EXCEPTION("Bad value for itime",ERRDIV);
+
+  Supercell superfirst(*this,itime);
+  try {
+    superfirst.findReference(ref);
+  }
+  catch (Exception &e) {
+    e.ADD("Unable to match reference structure with supercell",ERRDIV);
+    throw e;
+  }
+  superfirst.setReference(superfirst);
+  return superfirst.getDisplacement(ref,rmBmass);
+}
+
 std::vector<double> HistData::getPolarization(const Dtset &ref, const std::vector<geometry::mat3d> &Zeff, unsigned tbegin, unsigned tend) const {
   this->checkTimes(tbegin,tend);
   if ( Zeff.size() != ref.natom() )

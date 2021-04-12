@@ -324,8 +324,7 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
         if ( token.find("xyz") != std::string::npos ) 
           HistDataXYZ::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
         else if ( token.find("hist") != std::string::npos ) 
-          HistDataNC::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
-        else if( token.find("dtset") != std::string::npos ) 
+          HistDataNC::dump(*(_histdata.get()),ext,_tbegin,_tend,step); else if( token.find("dtset") != std::string::npos ) 
           HistDataDtset::dump(*(_histdata.get()),ext,_tbegin,_tend,step);
         else
         _histdata->dump(ext,_tbegin,_tend,step);
@@ -340,6 +339,30 @@ void Canvas::alter(std::string token, std::istringstream &stream) {
     }
     out << "Dumping to file " << ext << " finished.";
     throw EXCEPTION(out.str(), ERRCOM);
+  }
+  else if ( token == "disp" || token == "displacement" ) {
+    if ( _histdata.get() == nullptr )
+      throw EXCEPTION("No data to process",ERRDIV);
+    auto ref_name = parser.getToken<std::string>("reference");
+    bool rmBmass = parser.getTokenDefault("rmbmass",false);
+    auto hist = HistData::getHist(ref_name,true);
+    auto ref_hist = Dtset(*hist,0);
+    delete hist;
+    auto disp = _histdata->getDisplacement(ref_hist,_itime,rmBmass);
+    std::string output=parser.getTokenDefault("output",utils::noSuffix(_histdata->filename())+"_"+utils::to_string(_itime)+"_displacement.dat");
+    std::ofstream file(output,std::ios::out);
+    if ( file ) {
+      file.setf(std::ios::scientific|std::ios::right);
+      file.precision(14);
+      for ( unsigned i = 0 ; i < _histdata->natom() ; ++i ) {
+        for ( unsigned j = 0 ; j < 3 ; ++j ) {
+          file << std::setw(22) << disp[i*3+j];
+        }
+        file << "\n";
+      }
+      file.close();
+      throw EXCEPTION("File "+output+" written",ERRCOM);
+    }
   }
   else if ( token == "tbegin" || token == "time_begin" ) {
     int save = _tbegin;
@@ -665,6 +688,7 @@ void Canvas::help(std::ostream &out) {
   out <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
   out << setw(40) << ":a or :append filename" << setw(59) << "Append filename to the current trajectory." << endl;
   out << setw(40) << ":o or :open filename" << setw(59) << "Open the file filename and dispay it." << endl;
+  out << setw(40) << ":disp reference=filename rmbmass=(true|false) [output=filename]" << setw(59) << "Compute the displacement with respect to a reference structure." << endl;
   out << setw(40) << ":dump filename step STEP" << setw(59) << "Dump the full history in the original format (_HIST,XYZ,...) if available every STEP step." << endl;
   out << setw(40) << ":dumpxyz filename step STEP" << setw(59) << "Dump the full history in the xyz format every STEP step." << endl;
   out << setw(40) << ":dumphist filename step STEP" << setw(59) << "Dump the full history in the _HIST format every STEP step." << endl;

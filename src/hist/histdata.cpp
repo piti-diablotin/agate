@@ -1482,6 +1482,21 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
     y.push_back(std::move(volume));
   }
 
+  /// Pressure
+  else if ( function == "P" ) {
+    filename = "pressure";
+    ylabel = "Pressure [GPa]";
+    title = "Pressure";
+    std::clog << std::endl << " -- Pressure --" << std::endl;
+    std::vector<double> pressure(ntime);
+#pragma omp parallel for schedule(static)
+    for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
+      pressure[itime-tbegin] = - phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21 
+      *(_stress[itime * 6] + _stress[itime * 6 + 1] + _stress[itime * 6 + 2]) / 3.0;
+    }
+    y.push_back(std::move(pressure));
+  }
+
   ///ACELL 
   else if ( function == "acell" ) {
     filename = "latticeLengths";

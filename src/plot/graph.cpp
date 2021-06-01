@@ -32,6 +32,24 @@
 #include "io/eigparserelectrons.hpp"
 #include "io/electrondos.hpp"
 
+const char Graph::HTMLcolor[15][8] = {
+    "#505050", // Grey
+    "#CF009E", // line04
+    "#6EC4E8", // line13
+    "#FF7E2E", // line05
+    "#6ECA97", // line06
+    "#FA9ABA", // line07
+    "#003CA6", // line03
+    "#E19BDF", // line08
+    "#C9910D", // line10
+    "#B6BD00", // line09
+    "#704B1C", // line11
+    "#007852", // line12
+    "#62259D", // line14
+    "#FFCD00", // line01
+    "#837902"  // line02
+};
+
 //
 Graph::Graph() : _xlabel(),
   _ylabel(), 
@@ -232,8 +250,8 @@ void Graph::clearCustom() {
   _arrows.clear();
 }
 
-void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, Graph::GraphSave save) {
-  Graph::Config config;
+void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph *gplot,
+                     Graph::Config &config) {
   std::vector<double> &x = config.x;
   std::list<std::vector<double>> &y = config.y;
   std::list<std::string> &labels = config.labels;
@@ -243,6 +261,14 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
   std::string &ylabel = config.ylabel;
   std::string &title = config.title;
   bool &doSumUp = config.doSumUp;
+
+  static int colorId = 0;
+  if (config.x.size() == 0)
+    colorId = 0;
+  auto color_1 = Graph::rgb(HTMLcolor[colorId++]);
+  colorId = colorId % 15;
+  auto color_2 = Graph::rgb(HTMLcolor[colorId++]);
+  colorId = colorId % 15;
 
   if ( gplot != nullptr )
     gplot->setWinTitle("Band Structure");
@@ -318,19 +344,24 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
   std::vector<unsigned> projectionUMask;
   bool projection = false;
   if ( parser.hasToken("fatband") ) {
+    if (parser.hasToken("color")) {
+      Exception e =
+          EXCEPTION("fatband and color options are exclusive", ERRWAR);
+      std::clog << e.fullWhat() << std::endl;
+    }
     projection = true;
     try {
-      projectionUMask = parser.getToken<unsigned>("fatband",eigparser.getNband());
-    }
-    catch ( Exception &e ) { 
-      if ( e.getReturnValue() & ConfigParser::ERDIM ) {
-        auto blabla = e.what("",true);
+      projectionUMask =
+          parser.getToken<unsigned>("fatband", eigparser.getNband());
+    } catch (Exception &e) {
+      if (e.getReturnValue() & ConfigParser::ERDIM) {
+        auto blabla = e.what("", true);
         auto pos = blabla.find("Could only read ");
         int maxToRead = 0;
-        if ( pos != std::string::npos ) {
-          std::istringstream sub(blabla.substr(pos+16));
+        if (pos != std::string::npos) {
+          std::istringstream sub(blabla.substr(pos + 16));
           sub >> maxToRead;
-          projectionUMask = parser.getToken<unsigned>("fatband",maxToRead);
+          projectionUMask = parser.getToken<unsigned>("fatband", maxToRead);
         }
       }
     }
@@ -376,13 +407,21 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
     eeig = nullptr;
   }
 
+  if (parser.hasToken("color")) {
+    std::vector<unsigned> rgb =
+        parser.getToken<unsigned>("color", eigparser.isPolarized() ? 6 : 3);
+    color_1 = Graph::rgb(rgb[0], rgb[1], rgb[2]);
+    if (eigparser.isPolarized())
+      color_2 = Graph::rgb(rgb[3], rgb[4], rgb[5]);
+  }
+
   x = eigparser.getPath();
   std::list<std::vector<unsigned>> &projectionsColor = config.rgb;
   for ( unsigned iband = ignore ; iband < eigparser.getNband() ; ++iband ) {
     y.push_back(eigparser.getBand(iband,fermi,1));
     if ( projection )
       projectionsColor.push_back(eigparser.getBandColor(iband,1,projectionUMask));
-    colors.push_back(Graph::rgb(0,0,0));
+    colors.push_back(color_1);
     labels.push_back("");
   }
   if ( eigparser.isPolarized() ) {
@@ -392,7 +431,7 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
       y.push_back(eigparser.getBand(iband,fermi,2));
       if ( projection )
         projectionsColor.push_back(eigparser.getBandColor(iband,2,projectionUMask));
-      colors.push_back(Graph::rgb(255,0,0));
+      colors.push_back(color_2);
       labels.push_back("");
     }
     labels.pop_back();
@@ -431,12 +470,13 @@ void Graph::plotBand(EigParser &eigparser, ConfigParser &parser, Graph* gplot, G
       throw EXCEPTION("Number of ndiv not compatible with number of labels: "+tmp.str(),ERRDIV);
     }
   }
-  if ( save == Graph::GraphSave::DATA ) { 
+  auto save = config.save;
+  if (config.save == Graph::GraphSave::DATA) {
     eigparser.dump(filename+".dat",EigParser::PRTKPT|EigParser::PRTIKPT|(projection ? EigParser::PRTPROJ : 0));
-    save = Graph::GraphSave::NONE;
+    config.save = Graph::GraphSave::NONE;
   }
+  Graph::plot(config, gplot);
   config.save = save;
-  Graph::plot(config,gplot);
   if ( gplot != nullptr )
     gplot->clearCustom();
 }

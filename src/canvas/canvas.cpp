@@ -515,8 +515,7 @@ void Canvas::plot(unsigned tbegin, unsigned tend, std::istream &stream) {
       }
     }
 
-
-    Graph::plotBand(*(_eigparser.get()),parser,_gplot.get(),_graphConfig.save);
+    Graph::plotBand(*(_eigparser.get()), parser, _gplot.get(), _graphConfig);
   }
   else if ( function == "dos" ) {
     DosDB db;

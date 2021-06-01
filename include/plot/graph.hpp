@@ -96,23 +96,7 @@ class Graph {
     /**
      * Save a list of 15 custom colors 
      */
-    const char HTMLcolor[15][8]={
-      "#505050", //Grey
-      "#CF009E", // line04
-      "#6EC4E8", // line13
-      "#FF7E2E", // line05
-      "#6ECA97", // line06
-      "#FA9ABA", // line07
-      "#003CA6", // line03
-      "#E19BDF", // line08
-      "#C9910D", // line10
-      "#B6BD00", // line09
-      "#704B1C", // line11
-      "#007852", // line12
-      "#62259D", // line14
-      "#FFCD00",  // line01
-      "#837902"  // line02
-    };
+    static const char HTMLcolor[15][8];
 
   public :
 
@@ -314,7 +298,7 @@ class Graph {
      * @param gplot The graph to plot to. If nullptr, nothing plot but data written
      * @param save What to do with the calculated data : plot ? save to file ? save raw data?
      */
-    static void plotBand(EigParser &eigparser, ConfigParser &config, Graph* gplot, Graph::GraphSave save);
+    static void plotBand(EigParser &eigparser, ConfigParser &config, Graph* gplot, Config& conf);
 
     /**
      * Function to plot DOS

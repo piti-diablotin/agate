@@ -393,17 +393,9 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
   std::string function;
   auto pos = stream.tellg();
 
-  try {
-    HistData::plot(tbegin, tend, stream, gplot, config);
-  }
-  catch ( Exception &e ) {
-    if ( e.getReturnValue() == ERRABT ) {
-      stream.clear();
-      stream.seekg(pos);
       stream >> function;
 
       std::string line;
-      size_t pos = stream.tellg();
       std::getline(stream,line);
       stream.clear();
       stream.seekg(pos);
@@ -626,7 +618,14 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       }
 
       else {
-        throw EXCEPTION(std::string("Function ")+function+std::string(" not available yet"),ERRABT);
+        try {
+          HistData::plot(tbegin, tend, stream, gplot, config);
+        } catch (Exception &e) {
+          e.ADD(std::string("Function ") + function +
+                    std::string(" not available yet"),
+                ERRABT);
+          throw e;
+        }
       }
 
       try {
@@ -637,11 +636,6 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       }
       Graph::plot(config,gplot);
       stream.clear();
-    }
-    else {
-      throw e;
-    }
-  }
 }
 
 std::list<std::vector<double>> HistDataMD::getVACF(unsigned tbegin, unsigned tend) const {

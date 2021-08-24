@@ -1360,7 +1360,7 @@ void Window::help(){
   cout <<         "   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   " << endl;
   cout << setw(40) << ":axis [lattice|cartesian]" << setw(59) << "Display/Hide the axis. if lattice or cartesian is specified, display this one;" << endl;
   cout << setw(40) << ":bg or :background X Y Z" << setw(59) << "Set the background color in RGB." << endl;
-  cout << setw(40) << ":fg or :forground X Y Z" << setw(59) << "Set the foreground color in RGB." << endl;
+  cout << setw(40) << ":fg or :foreground X Y Z" << setw(59)  << "Set the foreground color in RGB." << endl;
   cout << setw(40) << ":font path/to/font.ttf" << setw(59) << "Change the font to use." << endl;
   cout << setw(40) << ":fs or :fontsize" << setw(59) << "Set the fontsize in pixel." << endl;
   cout << setw(40) << ":h or :help" << setw(59) << "Display this message." << endl;

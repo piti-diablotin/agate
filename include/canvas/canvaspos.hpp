@@ -110,6 +110,11 @@ class CanvasPos : public Canvas {
     void drawCell();
 
     /**
+     * Draw the primitive cell made by x,y,z
+     */
+    void drawCell(const double *);
+
+    /**
      * Draw the bond
      * @param bonds A vector contains the bonded atoms
      */

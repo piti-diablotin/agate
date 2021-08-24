@@ -620,6 +620,7 @@ void HistDataMD::plot(unsigned tbegin, unsigned tend, std::istream &stream, Grap
       else {
         try {
           HistData::plot(tbegin, tend, stream, gplot, config);
+          return;
         } catch (Exception &e) {
           e.ADD(std::string("Function ") + function +
                     std::string(" not available yet"),

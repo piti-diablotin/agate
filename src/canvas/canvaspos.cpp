@@ -640,6 +640,61 @@ void CanvasPos::drawCell() {
 #endif
 }
 
+void CanvasPos::drawCell(const double *rprimd) {
+#ifdef HAVE_GL
+
+  const GLfloat x[] = {(GLfloat)rprimd[0], (GLfloat)rprimd[3],
+                       (GLfloat)rprimd[6]};
+  const GLfloat y[] = {(GLfloat)rprimd[1], (GLfloat)rprimd[4],
+                       (GLfloat)rprimd[7]};
+  const GLfloat z[] = {(GLfloat)rprimd[2], (GLfloat)rprimd[5],
+                       (GLfloat)rprimd[8]};
+  const GLfloat xy[] = {x[0] + y[0], x[1] + y[1], x[2] + y[2]};
+  const GLfloat yz[] = {y[0] + z[0], y[1] + z[1], y[2] + z[2]};
+  const GLfloat zx[] = {z[0] + x[0], z[1] + x[1], z[2] + x[2]};
+  const GLfloat xyz[] = {x[0] + y[0] + z[0], x[1] + y[1] + z[1],
+                         x[2] + y[2] + z[2]};
+
+  const GLfloat tx = static_cast<GLfloat>(-(_translate[0] * 0.5f));
+  const GLfloat ty = static_cast<GLfloat>(-(_translate[1] * 0.5f));
+  const GLfloat tz = static_cast<GLfloat>(-(_translate[2] * 0.5f));
+
+  if (_display & DISP_CELL) {
+    if (_light)
+      glDisable(GL_LIGHTING);
+    glBegin(GL_LINES);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3d(0.0, 0.0, 0.0);
+    glVertex3d(x[0], x[1], x[2]);
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3d(0.0, 0.0, 0.0);
+    glVertex3d(y[0], y[1], y[2]);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3d(0.0, 0.0, 0.0);
+    glVertex3d(z[0], z[1], z[2]);
+    glColor3f(0.5f, 0.5f, 0.5f);
+    glVertex3d(x[0], x[1], x[2]);
+    glVertex3d(zx[0], zx[1], zx[2]);
+    glVertex3d(y[0], y[1], y[2]);
+    glVertex3d(yz[0], yz[1], yz[2]);
+    glEnd();
+    glBegin(GL_LINE_STRIP);
+    glVertex3d(x[0], x[1], x[2]);
+    glVertex3d(xy[0], xy[1], xy[2]);
+    glVertex3d(xyz[0], xyz[1], xyz[2]);
+    glVertex3d(zx[0], zx[1], zx[2]);
+    glVertex3d(z[0], z[1], z[2]);
+    glVertex3d(yz[0], yz[1], yz[2]);
+    glVertex3d(xyz[0], xyz[1], xyz[2]);
+    glVertex3d(xy[0], xy[1], xy[2]);
+    glVertex3d(y[0], y[1], y[2]);
+    glEnd();
+    if (_light)
+      glEnable(GL_LIGHTING);
+  }
+
+#endif
+}
 //
 float CanvasPos::typicalDim(float reset) {
   _maxDim *= reset;

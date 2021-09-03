@@ -908,6 +908,7 @@ void CanvasPos::my_alter(std::string token, std::istringstream &stream) {
       for( auto z : save )
         this->updateOctahedra(z);
       if ( _status == PAUSE ) _status = UPDATE;
+      delete backup;
     }
     catch (Exception& e) {
       e.ADD("Could not get the averaged HistData object",ERRDIV);

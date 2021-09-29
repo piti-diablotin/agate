@@ -252,14 +252,16 @@ void Gnuplot::addCustom() {
     if ( _xrange.set )
       _custom << "set xtics " << _xrange.min-1 << "," << _xrange.max+1 << "," << _xrange.max+1 << std::endl;
     for( auto t : _xtics ) {
-      _custom << "set xtics add (\"" << t.label << "\" " << t.position << ")" << std::endl;
+      _custom << "set xtics add (\"" << translateToSymbol(t.label) << "\" "
+              << t.position << ")" << std::endl;
     }
   }
   if ( _ytics.size() > 0 ) {
     if ( _yrange.set )
       _custom << "set ytics " << _yrange.min-1 << "," << _yrange.max+1 << "," << _yrange.max+1 << std::endl;
     for( auto t : _ytics ) {
-      _custom << "set ytics add (\"" << t.label << "\"" << t.position << ")" << std::endl;
+      _custom << "set ytics add (\"" << translateToSymbol(t.label) << "\""
+              << t.position << ")" << std::endl;
     }
   }
 

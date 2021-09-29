@@ -664,6 +664,8 @@ void CanvasLocal::plot(unsigned tbegin, unsigned tend, std::istream &stream) {
     _graphConfig.filename = "Rotations";
     _graphConfig.ylabel = "Rotations [degree]";
     _graphConfig.title = "Rotations";
+    _graphConfig.title += (_baseCart ? " (reference is cartesian axis)"
+                                     : "(reference is first step octahedra)");
     std::clog << std::endl << " -- Average rotations --" << std::endl;
 
     std::vector<double> alpha(ntime);

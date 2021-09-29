@@ -788,9 +788,13 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     _ddb->dump(_qptModes->first);
   }
   else if ( token == "eigendisp" ) {
-    std::string output = (parser.hasToken("output")
-                          ? parser.getToken<std::string>("output")
-                          : "eigen_displacements_"+geometry::to_string(_qptModes->first,false)+".out");
+    auto qpt = _qptModes->first;
+    std::string output =
+        (parser.hasToken("output")
+             ? parser.getToken<std::string>("output")
+             : "eigen_displacements_" + utils::to_string(qpt[0]) + "-" +
+                   utils::to_string(qpt[1]) + "-" + utils::to_string(qpt[2]) +
+                   ".out");
     std::ofstream file(output.c_str(),std::ios::out);
     _displacements.printModes(_qptModes->first,file);
     file.close();

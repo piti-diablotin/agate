@@ -1,7 +1,7 @@
 /**
  * @file src/supercell.cpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
@@ -23,12 +23,11 @@
  * along with Agate.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "phonons/supercell.hpp"
 #include "base/mendeleev.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cstring>
-#include <algorithm>
 #ifdef HAVE_FFTW3
 #include "fftw3.h"
 #endif
@@ -36,61 +35,46 @@
 using namespace Agate;
 
 //
-geometry::vec3d Supercell::getDim() const
-{
-  return _dim;
-}
+geometry::vec3d Supercell::getDim() const { return _dim; }
 
-Supercell::Supercell() : Dtset(),
-  _baseAtom(),
-  _dim(),
-  _cellCoord(),
-  _fft()
-{
+Supercell::Supercell() : Dtset(), _baseAtom(), _dim(), _cellCoord(), _fft() {
   ;
 }
 
 //
-Supercell::Supercell(const Dtset& dtset, const geometry::vec3d& qpt) : Dtset(),
-  _baseAtom(),
-  _dim(),
-  _cellCoord(),
-  _fft()
-{
-  const geometry::vec3d aqpt = {{std::abs(qpt[0]), std::abs(qpt[1]), std::abs(qpt[2])}};
-  const double Rx = (aqpt[0] > 1e-6 ) ? std::floor(1.0e0/aqpt[0]) : 1.0;
-  const double Ry = (aqpt[1] > 1e-6 ) ? std::floor(1.0e0/aqpt[1]) : 1.0;
-  const double Rz = (aqpt[2] > 1e-6 ) ? std::floor(1.0e0/aqpt[2]) : 1.0;
+Supercell::Supercell(const Dtset &dtset, const geometry::vec3d &qpt)
+    : Dtset(), _baseAtom(), _dim(), _cellCoord(), _fft() {
+  const geometry::vec3d aqpt = {
+      {std::abs(qpt[0]), std::abs(qpt[1]), std::abs(qpt[2])}};
+  const double Rx = (aqpt[0] > 1e-6) ? std::floor(1.0e0 / aqpt[0]) : 1.0;
+  const double Ry = (aqpt[1] > 1e-6) ? std::floor(1.0e0 / aqpt[1]) : 1.0;
+  const double Rz = (aqpt[2] > 1e-6) ? std::floor(1.0e0 / aqpt[2]) : 1.0;
 
   /*
-  if ( std::abs(Rx-1.0e0/aqpt[0]) > 1e-10 ) 
+  if ( std::abs(Rx-1.0e0/aqpt[0]) > 1e-10 )
     throw EXCEPTION("Unable to find supercell multiple for x direction",ERRDIV);
-  if ( std::abs(Ry-1.0e0/aqpt[1]) > 1e-10 ) 
+  if ( std::abs(Ry-1.0e0/aqpt[1]) > 1e-10 )
     throw EXCEPTION("Unable to find supercell multiple for y direction",ERRDIV);
-  if ( std::abs(Rz-1.0e0/aqpt[2]) > 1e-10 ) 
+  if ( std::abs(Rz-1.0e0/aqpt[2]) > 1e-10 )
     throw EXCEPTION("Unable to find supercell multiple for z direction",ERRDIV);
     */
 
-  *this = Supercell(dtset,(unsigned) Rx, (unsigned) Ry, (unsigned) Rz);
+  *this = Supercell(dtset, (unsigned)Rx, (unsigned)Ry, (unsigned)Rz);
 }
 
-
 //
-Supercell::Supercell(const Dtset& dtset, const unsigned nx, const unsigned ny, const unsigned nz) : Dtset(),
-  _baseAtom(),
-  _dim(),
-  _cellCoord(),
-  _fft()
-{
-  const double Rx = (double) nx;
-  const double Ry = (double) ny;
-  const double Rz = (double) nz;
+Supercell::Supercell(const Dtset &dtset, const unsigned nx, const unsigned ny,
+                     const unsigned nz)
+    : Dtset(), _baseAtom(), _dim(), _cellCoord(), _fft() {
+  const double Rx = (double)nx;
+  const double Ry = (double)ny;
+  const double Rz = (double)nz;
 
   _dim[0] = Rx;
   _dim[1] = Ry;
   _dim[2] = Rz;
 
-  _natom = dtset.natom()*static_cast<unsigned>(Rx*Ry*Rz);
+  _natom = dtset.natom() * static_cast<unsigned>(Rx * Ry * Rz);
   _ntypat = dtset.ntypat();
   _znucl = dtset.znucl();
   _acell = dtset.acell();
@@ -108,24 +92,28 @@ Supercell::Supercell(const Dtset& dtset, const unsigned nx, const unsigned ny, c
   _gprim = geometry::invertTranspose(_rprim);
   bool hasSpin = (!dtset.spinat().empty());
 
-  //Build _xcart
-  for ( int i = 0 ; i < _dim[0] ; ++i) {
+  // Build _xcart
+  for (int i = 0; i < _dim[0]; ++i) {
     using namespace geometry;
-    const double fi = (double) i;
-    const vec3d xtrans = {{ fi*ucrprim[0], fi*ucrprim[3], fi*ucrprim[6] }};
-    for ( int j = 0 ; j < _dim[1] ; ++j) {
-      const double fj = (double) j;
-      const vec3d ytrans = {{ fj*ucrprim[1]+xtrans[0], fj*ucrprim[4]+xtrans[1], fj*ucrprim[7]+xtrans[2] }};
-      for ( int k = 0 ; k < _dim[2] ; ++k ) {
-        const double fk = (double) k;
-        const vec3d ztrans = {{ fk*ucrprim[2]+ytrans[0], fk*ucrprim[5]+ytrans[1], fk*ucrprim[8]+ytrans[2] }};
-        const vec3d coord = {{ fi, fj, fk }};
-        for ( unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom ) {
+    const double fi = (double)i;
+    const vec3d xtrans = {{fi * ucrprim[0], fi * ucrprim[3], fi * ucrprim[6]}};
+    for (int j = 0; j < _dim[1]; ++j) {
+      const double fj = (double)j;
+      const vec3d ytrans = {{fj * ucrprim[1] + xtrans[0],
+                             fj * ucrprim[4] + xtrans[1],
+                             fj * ucrprim[7] + xtrans[2]}};
+      for (int k = 0; k < _dim[2]; ++k) {
+        const double fk = (double)k;
+        const vec3d ztrans = {{fk * ucrprim[2] + ytrans[0],
+                               fk * ucrprim[5] + ytrans[1],
+                               fk * ucrprim[8] + ytrans[2]}};
+        const vec3d coord = {{fi, fj, fk}};
+        for (unsigned iatom = 0; iatom < dtset.natom(); ++iatom) {
           _baseAtom.push_back(iatom);
           _cellCoord.push_back(coord);
           _typat.push_back(dtset.typat()[iatom]);
-          _xcart.push_back(dtset.xcart()[iatom]+ztrans);
-          if ( hasSpin )
+          _xcart.push_back(dtset.xcart()[iatom] + ztrans);
+          if (hasSpin)
             _spinat.push_back(dtset.spinat()[iatom]);
         }
       }
@@ -135,73 +123,80 @@ Supercell::Supercell(const Dtset& dtset, const unsigned nx, const unsigned ny, c
 }
 
 //
-Supercell::Supercell(const HistData& hist, const unsigned itime) : Dtset(hist,itime),
-  _baseAtom(),
-  _dim(),
-  _cellCoord(),
-  _fft()
-{
+Supercell::Supercell(const HistData &hist, const unsigned itime)
+    : Dtset(hist, itime), _baseAtom(), _dim(), _cellCoord(), _fft() {
   ;
 }
 
 //
-Supercell::~Supercell() {
-  ;
-}
+Supercell::~Supercell() { ; }
 
 //
-void Supercell::makeDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned imode, double amplitude, double phase) {
+void Supercell::makeDisplacement(const geometry::vec3d qpt, DispDB &db,
+                                 unsigned imode, double amplitude,
+                                 double phase) {
   using namespace geometry;
   unsigned natom = db.natom();
 
-  const double A_sqrtamu2b_sqrtu = sqrt(phys::amu_emass)/phys::b2A;
+  const double A_sqrtamu2b_sqrtu = sqrt(phys::amu_emass) / phys::b2A;
 
-  if ( natom*static_cast<unsigned>(_dim[0]*_dim[1]*_dim[2]) != _natom )
-    throw EXCEPTION("Hmm supercell and DispDB are incoherent",ERRDIV);
-  if ( _cellCoord.size() == 0 or _baseAtom.size() == 0 )
-    throw EXCEPTION("Hmm supercell is not built ahead of a reference structure",ERRDIV);
+  if (natom * static_cast<unsigned>(_dim[0] * _dim[1] * _dim[2]) != _natom)
+    throw EXCEPTION("Hmm supercell and DispDB are incoherent", ERRDIV);
+  if (_cellCoord.size() == 0 or _baseAtom.size() == 0)
+    throw EXCEPTION("Hmm supercell is not built ahead of a reference structure",
+                    ERRDIV);
   unsigned q = db.getQpt(qpt);
-  auto mymode = db.getMode(q,imode);
+  auto mymode = db.getMode(q, imode);
 
-  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+  for (unsigned iatom = 0; iatom < _natom; ++iatom) {
     const vec3d R = _cellCoord[iatom];
     const unsigned iatomUC = _baseAtom[iatom];
-    const double qR_theta = 2.*phys::pi*dot(qpt,R)+phase;
-    vec3d Re = {{ mymode[iatomUC*3].real(),mymode[iatomUC*3+1].real(),mymode[iatomUC*3+2].real() }};
-    vec3d Im = {{ mymode[iatomUC*3].imag(),mymode[iatomUC*3+1].imag(),mymode[iatomUC*3+2].imag() }};
-    //std::cerr << iatom << " " << mymode[iatomUC*3] << " " << mymode[iatomUC*3+1] << " " << mymode[iatomUC*3+2] << std::endl;
-    _xcart[iatom] += (Re*std::cos(qR_theta)-Im*std::sin(qR_theta))*amplitude*A_sqrtamu2b_sqrtu;
+    const double qR_theta = 2. * phys::pi * dot(qpt, R) + phase;
+    vec3d Re = {{mymode[iatomUC * 3].real(), mymode[iatomUC * 3 + 1].real(),
+                 mymode[iatomUC * 3 + 2].real()}};
+    vec3d Im = {{mymode[iatomUC * 3].imag(), mymode[iatomUC * 3 + 1].imag(),
+                 mymode[iatomUC * 3 + 2].imag()}};
+    // std::cerr << iatom << " " << mymode[iatomUC*3] << " " <<
+    // mymode[iatomUC*3+1] << " " << mymode[iatomUC*3+2] << std::endl;
+    _xcart[iatom] += (Re * std::cos(qR_theta) - Im * std::sin(qR_theta)) *
+                     amplitude * A_sqrtamu2b_sqrtu;
   }
   geometry::changeBasis(_rprim, _xcart, _xred, true);
 }
 
-void Supercell::arrowDisplacement(const geometry::vec3d qpt, DispDB& db, unsigned imode, double amplitude) {
+void Supercell::arrowDisplacement(const geometry::vec3d qpt, DispDB &db,
+                                  unsigned imode, double amplitude) {
   using namespace geometry;
   unsigned natom = db.natom();
 
-  const double A_sqrtamu2b_sqrtu = sqrt(phys::amu_emass)/phys::b2A;
+  const double A_sqrtamu2b_sqrtu = sqrt(phys::amu_emass) / phys::b2A;
 
-  if ( natom*static_cast<unsigned>(_dim[0]*_dim[1]*_dim[2]) != _natom )
-    throw EXCEPTION("Hmm supercell and DispDB are incoherent",ERRDIV);
-  if ( _cellCoord.size() == 0 or _baseAtom.size() == 0 )
-    throw EXCEPTION("Hmm supercell is not built ahead of a reference structure",ERRDIV);
+  if (natom * static_cast<unsigned>(_dim[0] * _dim[1] * _dim[2]) != _natom)
+    throw EXCEPTION("Hmm supercell and DispDB are incoherent", ERRDIV);
+  if (_cellCoord.size() == 0 or _baseAtom.size() == 0)
+    throw EXCEPTION("Hmm supercell is not built ahead of a reference structure",
+                    ERRDIV);
   unsigned q = db.getQpt(qpt);
-  auto mymode = db.getMode(q,imode);
+  auto mymode = db.getMode(q, imode);
 
   _spinat.resize(_natom);
-  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+  for (unsigned iatom = 0; iatom < _natom; ++iatom) {
     const vec3d R = _cellCoord[iatom];
     const unsigned iatomUC = _baseAtom[iatom];
-    const double qR = 2.*phys::pi*dot(qpt,R);
-    vec3d Re = {{ mymode[iatomUC*3].real(),mymode[iatomUC*3+1].real(),mymode[iatomUC*3+2].real() }};
-    vec3d Im = {{ mymode[iatomUC*3].imag(),mymode[iatomUC*3+1].imag(),mymode[iatomUC*3+2].imag() }};
-    //std::cerr << iatom << " " << mymode[iatomUC*3] << " " << mymode[iatomUC*3+1] << " " << mymode[iatomUC*3+2] << std::endl;
-    _spinat[iatom] += (Re*std::cos(qR)-Im*std::sin(qR))*2.*amplitude*A_sqrtamu2b_sqrtu;
+    const double qR = 2. * phys::pi * dot(qpt, R);
+    vec3d Re = {{mymode[iatomUC * 3].real(), mymode[iatomUC * 3 + 1].real(),
+                 mymode[iatomUC * 3 + 2].real()}};
+    vec3d Im = {{mymode[iatomUC * 3].imag(), mymode[iatomUC * 3 + 1].imag(),
+                 mymode[iatomUC * 3 + 2].imag()}};
+    // std::cerr << iatom << " " << mymode[iatomUC*3] << " " <<
+    // mymode[iatomUC*3+1] << " " << mymode[iatomUC*3+2] << std::endl;
+    _spinat[iatom] += (Re * std::cos(qR) - Im * std::sin(qR)) * 2. * amplitude *
+                      A_sqrtamu2b_sqrtu;
   }
 }
 
 //
-void Supercell::findReference(const Dtset& dtset) {
+void Supercell::findReference(const Dtset &dtset) {
   using namespace geometry;
   using std::max;
   using std::min;
@@ -211,47 +206,53 @@ void Supercell::findReference(const Dtset& dtset) {
   vec3d ref_vec[3];
   vec3d super_vec[3];
 
-  //double super_volume = det(_rprim);
-  //double ref_volume = det(ref_rprim);
-  unsigned multiplicity = static_cast<unsigned>(std::rint(_natom/dtset.natom())); 
-  for ( int i = 1 ; i < 4 ; ++i ) {
-    super_vec[i-1] = {{ _rprim[mat3dind(i,1)], _rprim[mat3dind(i,2)], _rprim[mat3dind(i,3)] }};
-    ref_vec[i-1] = {{ ref_rprim[mat3dind(i,1)], ref_rprim[mat3dind(i,2)], ref_rprim[mat3dind(i,3)] }};
-    _dim[i-1] = std::round(norm(super_vec[i-1])/norm(ref_vec[i-1]));
+  // double super_volume = det(_rprim);
+  // double ref_volume = det(ref_rprim);
+  unsigned multiplicity =
+      static_cast<unsigned>(std::rint(_natom / dtset.natom()));
+  for (int i = 1; i < 4; ++i) {
+    super_vec[i - 1] = {{_rprim[mat3dind(i, 1)], _rprim[mat3dind(i, 2)],
+                         _rprim[mat3dind(i, 3)]}};
+    ref_vec[i - 1] = {{ref_rprim[mat3dind(i, 1)], ref_rprim[mat3dind(i, 2)],
+                       ref_rprim[mat3dind(i, 3)]}};
+    _dim[i - 1] = std::round(norm(super_vec[i - 1]) / norm(ref_vec[i - 1]));
   }
-  if ( static_cast<unsigned>(_dim[0]*_dim[1]*_dim[2]) != multiplicity 
-      || _natom != multiplicity*dtset.natom() )
-    throw EXCEPTION("Volume multiplicity does not match cell multiplicity", ERRDIV);
+  if (static_cast<unsigned>(_dim[0] * _dim[1] * _dim[2]) != multiplicity ||
+      _natom != multiplicity * dtset.natom())
+    throw EXCEPTION("Volume multiplicity does not match cell multiplicity",
+                    ERRDIV);
 
-  //std::clog << _dim[0] << " " << _dim[1] << " " << _dim[2] << std::endl;
+  // std::clog << _dim[0] << " " << _dim[1] << " " << _dim[2] << std::endl;
 
   auto ref_typat = dtset.typat();
   auto ref_znucl = dtset.znucl();
   std::vector<vec3d> ref_xred(dtset.xred());
 #pragma omp parallel for schedule(static)
-  for (unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom) {
+  for (unsigned iatom = 0; iatom < dtset.natom(); ++iatom) {
     auto &vec = ref_xred[iatom];
-    for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
-      while ( vec[coord] >= 1.0 ) vec[coord] -= 1.0;
-      while ( vec[coord] < 0 ) vec[coord] += 1.0;
+    for (unsigned coord = 0; coord < 3; ++coord) {
+      while (vec[coord] >= 1.0)
+        vec[coord] -= 1.0;
+      while (vec[coord] < 0)
+        vec[coord] += 1.0;
     }
   }
 
-  //Check we have the same znucl
-  if ( ref_znucl.size() != _znucl.size() )
-    throw EXCEPTION("znucl have not the same size !",ERRDIV);
+  // Check we have the same znucl
+  if (ref_znucl.size() != _znucl.size())
+    throw EXCEPTION("znucl have not the same size !", ERRDIV);
 
-  std::vector<int> ref2super(_znucl.size()+1);
-  for ( unsigned z = 0 ; z < ref_znucl.size() ; ++z ) {
-    for ( unsigned find = 0 ; find < _znucl.size() ; ++ find ) {
-      if ( _znucl[find] == ref_znucl[z] ) {
-        ref2super[z+1] = find+1;
+  std::vector<int> ref2super(_znucl.size() + 1);
+  for (unsigned z = 0; z < ref_znucl.size(); ++z) {
+    for (unsigned find = 0; find < _znucl.size(); ++find) {
+      if (_znucl[find] == ref_znucl[z]) {
+        ref2super[z + 1] = find + 1;
         break;
       }
     }
 
-    if ( _znucl[ref2super[z+1]-1] != ref_znucl[z] )
-      throw EXCEPTION("znucl are not the same !",ERRDIV);
+    if (_znucl[ref2super[z + 1] - 1] != ref_znucl[z])
+      throw EXCEPTION("znucl are not the same !", ERRDIV);
   }
 
   _baseAtom.resize(_natom);
@@ -261,46 +262,55 @@ void Supercell::findReference(const Dtset& dtset) {
   // This might be very slow but is the easiest and should always work
   Exception e;
 #pragma omp parallel for schedule(static), shared(e)
-  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) { // For each supercell atom
+  for (unsigned iatom = 0; iatom < _natom; ++iatom) { // For each supercell atom
     vec3d pos = _xred[iatom];
-    for ( unsigned coord = 0 ; coord < 3 ; ++coord ) {
-      while ( pos[coord] >= 1.0 ) pos[coord] -= 1.0;
-      while ( pos[coord] < 0 ) pos[coord] += 1.0;
+    for (unsigned coord = 0; coord < 3; ++coord) {
+      while (pos[coord] >= 1.0)
+        pos[coord] -= 1.0;
+      while (pos[coord] < 0)
+        pos[coord] += 1.0;
     }
     unsigned guess[3] = {0};
     // Reduce search area
     //*
-    for ( unsigned i = 0 ; i < 3 ; ++ i ) {
+    for (unsigned i = 0; i < 3; ++i) {
       const double normvec = norm(ref_vec[i]);
-      guess[i] = (unsigned) max(0.e0,dot(_rprim*pos,ref_vec[i])/(normvec*normvec)-1);
-      guess[i] = (unsigned) min(guess[i],(unsigned)_dim[i]-1);
-      if (guess[i]==0) guess[i]=_dim[i]-1;
+      guess[i] = (unsigned)max(
+          0.e0, dot(_rprim * pos, ref_vec[i]) / (normvec * normvec) - 1);
+      guess[i] = (unsigned)min(guess[i], (unsigned)_dim[i] - 1);
+      if (guess[i] == 0)
+        guess[i] = _dim[i] - 1;
     }
-    //std::clog << "Guess " << guess[0] << " " << guess[1] << " " << guess[2] << std::endl;
+    // std::clog << "Guess " << guess[0] << " " << guess[1] << " " << guess[2]
+    // << std::endl;
     //*/
 
     unsigned match = (unsigned)(-1);
-    vec3d R = {{0.e0,0.e0,0.e0}};
+    vec3d R = {{0.e0, 0.e0, 0.e0}};
     double closest = 1e12;
-    //const unsigned research[3] = {(unsigned)_dim[0],(unsigned)_dim[1],(unsigned)_dim[2]};
-    const unsigned research[3] = {4,4,4};
-    for ( unsigned ref_iatom = 0 ; ref_iatom < dtset.natom() ; ++ref_iatom ) { // Scan each reference atom
-      if ( ref2super[ref_typat[ref_iatom]] != _typat[iatom] ) continue;
+    // const unsigned research[3] =
+    // {(unsigned)_dim[0],(unsigned)_dim[1],(unsigned)_dim[2]};
+    const unsigned research[3] = {4, 4, 4};
+    for (unsigned ref_iatom = 0; ref_iatom < dtset.natom();
+         ++ref_iatom) { // Scan each reference atom
+      if (ref2super[ref_typat[ref_iatom]] != _typat[iatom])
+        continue;
 
-      for ( unsigned i = guess[0] ; i < guess[0]+research[0] ; ++i) {
-        const double fi = (double) (i%(unsigned)_dim[0]);
-        for ( unsigned j = guess[1] ; j < guess[1]+research[1] ; ++j) {
-          const double fj = (double) (j%(unsigned)_dim[1]);
-          for ( unsigned k = guess[2] ; k < guess[2]+research[2] ; ++k ) {
-            const double fk = (double) (k%(unsigned)_dim[2]);
-            vec3d cell = {{ fi, fj, fk }};
-            vec3d vecdiff = ref_xred[ref_iatom]+cell;
-            for( int d = 0 ; d < 3 ; ++d ) vecdiff[d] /= _dim[d];
-            vecdiff = vecdiff-pos;
+      for (unsigned i = guess[0]; i < guess[0] + research[0]; ++i) {
+        const double fi = (double)(i % (unsigned)_dim[0]);
+        for (unsigned j = guess[1]; j < guess[1] + research[1]; ++j) {
+          const double fj = (double)(j % (unsigned)_dim[1]);
+          for (unsigned k = guess[2]; k < guess[2] + research[2]; ++k) {
+            const double fk = (double)(k % (unsigned)_dim[2]);
+            vec3d cell = {{fi, fj, fk}};
+            vec3d vecdiff = ref_xred[ref_iatom] + cell;
+            for (int d = 0; d < 3; ++d)
+              vecdiff[d] /= _dim[d];
+            vecdiff = vecdiff - pos;
             recenter(vecdiff);
             vecdiff = _rprim * vecdiff;
             double distance = norm(vecdiff);
-            if ( distance < closest ) {
+            if (distance < closest) {
               match = ref_iatom;
               R = cell;
               closest = distance;
@@ -309,43 +319,48 @@ void Supercell::findReference(const Dtset& dtset) {
         }
       }
     }
-    if ( match == (unsigned) -1 )
+    if (match == (unsigned)-1)
 #pragma omp critical
     {
-      e.ADD("Error finding reference atom for atom supercell "+utils::to_string(iatom+1),ERRDIV);
+      e.ADD("Error finding reference atom for atom supercell " +
+                utils::to_string(iatom + 1),
+            ERRDIV);
     }
     _baseAtom[iatom] = match;
     _cellCoord[iatom] = R;
   }
-  if ( e.getReturnValue() != 0 ) throw e;
+  if (e.getReturnValue() != 0)
+    throw e;
   //*
-  std::vector<unsigned> check(dtset.natom(),0);
-  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+  std::vector<unsigned> check(dtset.natom(), 0);
+  for (unsigned iatom = 0; iatom < _natom; ++iatom) {
     ++check[_baseAtom[iatom]];
-    //std::clog << "Atom " << iatom << ":\t" << _baseAtom[iatom] << "\t" << std::endl;
-    //print(_cellCoord[iatom],std::clog);
+    // std::clog << "Atom " << iatom << ":\t" << _baseAtom[iatom] << "\t" <<
+    // std::endl; print(_cellCoord[iatom],std::clog);
   }
   bool error = false;
-  for ( auto k : check ) {
-    //std::clog << k << " " << (double)k/(_dim[0]*_dim[1]*_dim[2]) << std::endl;
-    if ( k != (unsigned)(_dim[0]*_dim[1]*_dim[2]) )  error = true;
+  for (auto k : check) {
+    // std::clog << k << " " << (double)k/(_dim[0]*_dim[1]*_dim[2]) <<
+    // std::endl;
+    if (k != (unsigned)(_dim[0] * _dim[1] * _dim[2]))
+      error = true;
   }
-  if ( error )
-    throw EXCEPTION("Mapping on reference structure failed",ERRDIV);
+  if (error)
+    throw EXCEPTION("Mapping on reference structure failed", ERRDIV);
   //*/
 }
 
 //
-void Supercell::setReference(const Supercell& supercell) {
-  if ( _natom != supercell._natom )
-    throw EXCEPTION("Number of atoms mismatches",ERRDIV);
+void Supercell::setReference(const Supercell &supercell) {
+  if (_natom != supercell._natom)
+    throw EXCEPTION("Number of atoms mismatches", ERRDIV);
 
-  if ( supercell._znucl.size() != _znucl.size() )
-    throw EXCEPTION("znucl have not the same size !",ERRDIV);
+  if (supercell._znucl.size() != _znucl.size())
+    throw EXCEPTION("znucl have not the same size !", ERRDIV);
 
-  for ( unsigned z = 0 ; z < _znucl.size() ; ++z ) {
-    if ( supercell._znucl[z] != _znucl[z] )
-      throw EXCEPTION("znucl are not the same !",ERRDIV);
+  for (unsigned z = 0; z < _znucl.size(); ++z) {
+    if (supercell._znucl[z] != _znucl[z])
+      throw EXCEPTION("znucl are not the same !", ERRDIV);
   }
 
   _dim = supercell._dim;
@@ -354,155 +369,175 @@ void Supercell::setReference(const Supercell& supercell) {
 }
 
 //
-std::vector<double> Supercell::getDisplacement(const Dtset &dtset, const bool rmBmass) {
+std::vector<double> Supercell::getDisplacement(const Dtset &dtset,
+                                               const bool rmBmass) {
   using namespace geometry;
-  if ( _baseAtom.size() != _natom 
-      || _cellCoord.size() != _natom 
-      || _znucl.size() != dtset.znucl().size() )
-    throw EXCEPTION("Construct reference first",ERRDIV);
+  if (_baseAtom.size() != _natom || _cellCoord.size() != _natom ||
+      _znucl.size() != dtset.znucl().size())
+    throw EXCEPTION("Construct reference first", ERRDIV);
 
-  for ( unsigned z = 0 ; z < dtset.znucl().size() ; ++z ) {
+  for (unsigned z = 0; z < dtset.znucl().size(); ++z) {
     bool found = false;
-    for ( unsigned find = 0 ; find < _znucl.size() ; ++find ) {
-      if ( _znucl[find] == dtset.znucl()[z] ) {
+    for (unsigned find = 0; find < _znucl.size(); ++find) {
+      if (_znucl[find] == dtset.znucl()[z]) {
         found = true;
         break;
       }
     }
-    if ( !found )
-      throw EXCEPTION("znucl are not the same !",ERRDIV);
+    if (!found)
+      throw EXCEPTION("znucl are not the same !", ERRDIV);
   }
 
   unsigned natom = dtset.natom();
-  if ( natom*static_cast<unsigned>(_dim[0]*_dim[1]*_dim[2]) != _natom )
-    throw EXCEPTION("Hmm supercell and dtset are incoherent",ERRDIV);
+  if (natom * static_cast<unsigned>(_dim[0] * _dim[1] * _dim[2]) != _natom)
+    throw EXCEPTION("Hmm supercell and dtset are incoherent", ERRDIV);
 
-  auto rprim = dtset.rprim();
-
-  std::vector<double> displacements(3*_natom,0);
-  auto& ref_xred = dtset.xred();
-#pragma omp parallel for schedule(static), shared(displacements,ref_xred)
-  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+  std::vector<double> displacements(3 * _natom, 0);
+  auto &ref_xred = dtset.xred();
+#pragma omp parallel for schedule(static), shared(displacements, ref_xred)
+  for (unsigned iatom = 0; iatom < _natom; ++iatom) {
     vec3d ref_xred_in_supercell;
-    for ( int d = 0 ; d < 3 ; ++d )
-      ref_xred_in_supercell[d] = (_cellCoord[iatom][d]+ref_xred[_baseAtom[iatom]][d])/_dim[d];
+    for (int d = 0; d < 3; ++d)
+      ref_xred_in_supercell[d] =
+          (_cellCoord[iatom][d] + ref_xred[_baseAtom[iatom]][d]) / _dim[d];
     vec3d disp = _xred[iatom] - ref_xred_in_supercell;
     recenter(disp);
-    disp = _rprim*disp;
-    for ( unsigned d = 0 ; d < 3 ; ++ d )
-      displacements[iatom*3+d] = disp[d];
+    disp = _rprim * disp;
+    for (unsigned d = 0; d < 3; ++d)
+      displacements[iatom * 3 + d] = disp[d];
   }
 
-  if ( rmBmass ) {
+  if (rmBmass) {
     // Compute center of mass of displacement and set it to 0
     double norm = 0;
     double bmass[3] = {0};
     double totalMass = 0e0;
-    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-      double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
+    for (unsigned iatom = 0; iatom < _natom; ++iatom) {
+      double mass =
+          MendeTable.mass[_znucl[_typat[iatom] -
+                                 1]] /**phys::amu_emass*/; // type starts at 1
       totalMass += mass;
-      for ( unsigned d = 0 ; d < 3 ; ++ d ){
-        bmass[d] +=  mass*displacements[iatom*3+d];
-        norm += mass*displacements[iatom*3+d]*displacements[iatom*3+d];
+      for (unsigned d = 0; d < 3; ++d) {
+        bmass[d] += mass * displacements[iatom * 3 + d];
+        norm +=
+            mass * displacements[iatom * 3 + d] * displacements[iatom * 3 + d];
       }
     }
-    for ( unsigned d = 0 ; d < 3 ; ++ d )
+    for (unsigned d = 0; d < 3; ++d)
       bmass[d] /= totalMass;
 
-    //std::clog << "Before Bmass norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
-    //std::clog << "Bmass was at " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
+    // std::clog << "Before Bmass norm^2 " <<  norm*phys::b2A*phys::b2A << "
+    // sqrt() " << sqrt(norm)*phys::b2A << std::endl; std::clog << "Bmass was at
+    // " << bmass[0] << " " << bmass[1] << " " << bmass[2] << std::endl;
 
     norm = 0;
-    for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-      double mass = MendeTable.mass[_znucl[_typat[iatom]-1]]/**phys::amu_emass*/; // type starts at 1
-      for ( unsigned d = 0 ; d < 3 ; ++ d ){
-        displacements[iatom*3+d] -= bmass[d];
-        norm+=mass*displacements[iatom*3+d]*displacements[iatom*3+d];
-        //std::clog << phys::b2A*displacements[iatom*3+d] << " ";
+    for (unsigned iatom = 0; iatom < _natom; ++iatom) {
+      double mass =
+          MendeTable.mass[_znucl[_typat[iatom] -
+                                 1]] /**phys::amu_emass*/; // type starts at 1
+      for (unsigned d = 0; d < 3; ++d) {
+        displacements[iatom * 3 + d] -= bmass[d];
+        norm +=
+            mass * displacements[iatom * 3 + d] * displacements[iatom * 3 + d];
+        // std::clog << phys::b2A*displacements[iatom*3+d] << " ";
       }
-      //std::clog << std::endl;
+      // std::clog << std::endl;
     }
-//  std::clog << "norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " << sqrt(norm)*phys::b2A << std::endl;
+    //  std::clog << "norm^2 " <<  norm*phys::b2A*phys::b2A << " sqrt() " <<
+    //  sqrt(norm)*phys::b2A << std::endl;
   }
   _fft.clear();
   return displacements;
 }
 
-std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, const DispDB::qptTree& modes,Norming normalized, bool absolute) {
+std::vector<double> Supercell::projectOnModes(const Dtset &dtset, DispDB &db,
+                                              const DispDB::qptTree &modes,
+                                              Norming normalized,
+                                              bool absolute) {
   using namespace geometry;
-  if ( _baseAtom.size() != _natom 
-      || _cellCoord.size() != _natom 
-      || _znucl.size() != dtset.znucl().size() )
+  if (_baseAtom.size() != _natom || _cellCoord.size() != _natom ||
+      _znucl.size() != dtset.znucl().size())
     this->findReference(dtset);
 
   std::vector<double> displacements;
   try {
     displacements = this->getDisplacement(dtset);
-  }
-  catch (Exception &e) {
-    e.ADD("Cannot compute displacements",ERRDIV);
+  } catch (Exception &e) {
+    e.ADD("Cannot compute displacements", ERRDIV);
     throw e;
   }
-  std::vector<double> mass(dtset.natom(),0.);
+  std::vector<double> mass(dtset.natom(), 0.);
   // Keep mass in atomic mass unit since eigen vectors are normalized like this.
-  for ( unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom ) {
-    mass[iatom] = MendeTable.mass[dtset.znucl()[dtset.typat()[iatom]-1]]*phys::amu_emass; // type starts at 1
+  for (unsigned iatom = 0; iatom < dtset.natom(); ++iatom) {
+    mass[iatom] = MendeTable.mass[dtset.znucl()[dtset.typat()[iatom] - 1]] *
+                  phys::amu_emass; // type starts at 1
   }
 
   double norm2_qpt = 0.;
   double norm2_tot = 0.;
   double norm_final = 1;
-  const double b_sqrtu2A_sqrtamu = phys::b2A/sqrt(phys::amu_emass);
+  const double b_sqrtu2A_sqrtamu = phys::b2A / sqrt(phys::amu_emass);
 
   std::vector<double> results;
 
-  //if ( normalized == NORMALL ) {
-    auto normq = this->amplitudes(dtset,displacements);
-    for ( auto& v : normq )
-      norm2_tot += v[3]*v[3];
+  // if ( normalized == NORMALL ) {
+  auto normq = this->amplitudes(dtset, displacements);
+  for (auto &v : normq)
+    norm2_tot += v[3] * v[3];
   //}
-  if ( normalized == NORMALL ) norm_final = sqrt(norm2_tot);
-  if ( norm_final < 1e-10 ) norm_final = 1.; // Avoir divide by 0
+  if (normalized == NORMALL)
+    norm_final = sqrt(norm2_tot);
+  if (norm_final < 1e-10)
+    norm_final = 1.; // Avoir divide by 0
 
-  //std::clog << "Distortion amplitude [A]: " << sqrt(norm2_tot) << std::endl;
+  // std::clog << "Distortion amplitude [A]: " << sqrt(norm2_tot) << std::endl;
 
   double normProjection = 0;
   // For all qpt;
-  for ( auto qpt = modes.begin() ; qpt != modes.end() ; ++qpt ) {
-    auto& qpoint = qpt->first;
+  for (auto qpt = modes.begin(); qpt != modes.end(); ++qpt) {
+    auto &qpoint = qpt->first;
     unsigned dq = db.getQpt(qpoint);
-    if ( !absolute&& qpt->first != vec3d({0,0,0}) ) {
-      Exception e = EXCEPTION(" Projection is complex but real part only is reported (absolute==false) for qpt "+to_string(qpt->first),ERRWAR);
+    if (!absolute && qpt->first != vec3d({0, 0, 0})) {
+      Exception e = EXCEPTION(" Projection is complex but real part only is "
+                              "reported (absolute==false) for qpt " +
+                                  to_string(qpt->first),
+                              ERRWAR);
       std::clog << e.fullWhat() << std::endl;
     }
 
-    auto filtered = this->filterDisp(qpoint,displacements);
+    auto filtered = this->filterDisp(qpoint, displacements);
     norm2_qpt = 0.;
-    for ( unsigned iatomUC = 0 ; iatomUC < 3*_natom/(_dim[0]*_dim[1]*_dim[2]) ; ++iatomUC ) {
-      norm2_qpt += mass[iatomUC/3]*std::norm(filtered[iatomUC]);
+    for (unsigned iatomUC = 0;
+         iatomUC < 3 * _natom / (_dim[0] * _dim[1] * _dim[2]); ++iatomUC) {
+      norm2_qpt += mass[iatomUC / 3] * std::norm(filtered[iatomUC]);
     }
-    if ( norm2_qpt < 1e-10 ) norm2_qpt = 1.; // Avoir divide by 0
-    //std::cerr << "Norm qpt " << sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu << std::endl;
+    if (norm2_qpt < 1e-10)
+      norm2_qpt = 1.; // Avoir divide by 0
+    // std::cerr << "Norm qpt " << sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu <<
+    // std::endl;
 
     // Renormalize for projection
-    for ( unsigned iatomUC = 0 ; iatomUC < 3*_natom/(_dim[0]*_dim[1]*_dim[2]) ; ++iatomUC ) {
+    for (unsigned iatomUC = 0;
+         iatomUC < 3 * _natom / (_dim[0] * _dim[1] * _dim[2]); ++iatomUC) {
       filtered[iatomUC] /= std::sqrt(norm2_qpt);
     }
 
-    for ( auto& vib : qpt->second ) {
-      auto mymode = db.getMode(dq,vib.imode);
+    for (auto &vib : qpt->second) {
+      auto mymode = db.getMode(dq, vib.imode);
 
-    //double normE = 0;
-      std::complex<double> projection(0,0);
-      for ( unsigned iall = 0 ; iall < filtered.size() ; ++iall ) {
-        projection += mass[iall/3]*filtered[iall]*mymode[iall];
-        //normE += mass[iall/3]*mymode[iall].real()*mymode[iall].real();
+      // double normE = 0;
+      std::complex<double> projection(0, 0);
+      for (unsigned iall = 0; iall < filtered.size(); ++iall) {
+        projection += mass[iall / 3] * filtered[iall] * mymode[iall];
+        // normE += mass[iall/3]*mymode[iall].real()*mymode[iall].real();
       }
-      //std::cerr << "Norme mode " << normE << std::endl;
+      // std::cerr << "Norme mode " << normE << std::endl;
       double proj = (absolute ? std::abs(projection) : projection.real());
-      proj = (normalized == NORMQ ? proj : proj*std::sqrt(norm2_qpt)*b_sqrtu2A_sqrtamu/norm_final);
+      proj = (normalized == NORMQ ? proj
+                                  : proj * std::sqrt(norm2_qpt) *
+                                        b_sqrtu2A_sqrtamu / norm_final);
       results.push_back(proj);
-      normProjection += proj*proj;
+      normProjection += proj * proj;
     }
   }
   results.push_back(std::sqrt(normProjection));
@@ -510,161 +545,182 @@ std::vector<double> Supercell::projectOnModes(const Dtset& dtset, DispDB& db, co
   return results;
 }
 
-std::vector<std::complex<double>> Supercell::filterDisp(const geometry::vec3d& qpt, const std::vector<double>& disp){
-  const int nx = (int) _dim[0];
-  const int ny = (int) _dim[1];
-  const int nz = (int) _dim[2];
-  const int nyh = ny/2+1;
-  const int nzh = nz/2+1;
+std::vector<std::complex<double>>
+Supercell::filterDisp(const geometry::vec3d &qpt,
+                      const std::vector<double> &disp) {
+  const int nx = (int)_dim[0];
+  const int ny = (int)_dim[1];
+  const int nz = (int)_dim[2];
+  const int nyh = ny / 2 + 1;
+  const int nzh = nz / 2 + 1;
   std::vector<std::complex<double>> dispq;
 
-  int selectx = (int) ( qpt[0]*nx );
-  int selecty = (int) ( qpt[1]*ny );
-  int selectz = (int) ( qpt[2]*nz );
+  int selectx = (int)(qpt[0] * nx);
+  int selecty = (int)(qpt[1] * ny);
+  int selectz = (int)(qpt[2] * nz);
 
-  if ( qpt[0] < 0. )
+  if (qpt[0] < 0.)
     selectx *= -1;
-  if ( qpt[1] < 0. )
+  if (qpt[1] < 0.)
     selecty *= -1;
-  if ( qpt[2] < 0. )
+  if (qpt[2] < 0.)
     selectz *= -1.;
 
-  if ( qpt[0] > 0.5 )
-    selectx = 1-selectx;
-  if ( qpt[1] > 0.5 )
-    selecty = 1-selecty;
-  if ( qpt[2] > 0.5 )
-    selectz = 1-selectz;
-
+  if (qpt[0] > 0.5)
+    selectx = 1 - selectx;
+  if (qpt[1] > 0.5)
+    selecty = 1 - selecty;
+  if (qpt[2] > 0.5)
+    selectz = 1 - selectz;
 
   this->fft(disp);
-  int natomUC = _natom/(nx*ny*nz);
+  int natomUC = _natom / (nx * ny * nz);
   auto begin = _fft.begin();
-  std::advance(begin,(selectx*nyh*nzh+selecty*nzh+selectz)*natomUC*3);
+  std::advance(begin,
+               (selectx * nyh * nzh + selecty * nzh + selectz) * natomUC * 3);
   auto end = begin;
-  std::advance(end,3*natomUC);
-  dispq.resize(3*natomUC);
-  std::copy(begin,end,dispq.begin());
+  std::advance(end, 3 * natomUC);
+  dispq.resize(3 * natomUC);
+  std::copy(begin, end, dispq.begin());
 
   return dispq;
 }
 
-std::vector<std::array<double,4>> Supercell::amplitudes(const Dtset& dtset, const std::vector<double>& displacement) {
-  const int nx = (int) _dim[0];
-  const int ny = (int) _dim[1];
-  const int nz = (int) _dim[2];
-  const int nxh = nx/2+1;
-  const int nyh = ny/2+1;
-  const int nzh = nz/2+1;
-  const int natomUC = _natom/(nx*ny*nz);
-  const double b_sqrtu2A_sqrtamu = phys::b2A/sqrt(phys::amu_emass);
+std::vector<std::array<double, 4>>
+Supercell::amplitudes(const Dtset &dtset,
+                      const std::vector<double> &displacement) {
+  const int nx = (int)_dim[0];
+  const int ny = (int)_dim[1];
+  const int nz = (int)_dim[2];
+  const int nxh = nx / 2 + 1;
+  const int nyh = ny / 2 + 1;
+  const int nzh = nz / 2 + 1;
+  const int natomUC = _natom / (nx * ny * nz);
+  const double b_sqrtu2A_sqrtamu = phys::b2A / sqrt(phys::amu_emass);
 
-  std::vector<std::array<double,4>> amplitudes(nxh*nyh*nzh);
+  std::vector<std::array<double, 4>> amplitudes(nxh * nyh * nzh);
 
-  std::vector<std::complex<double>> dispq(3*natomUC);
+  std::vector<std::complex<double>> dispq(3 * natomUC);
 
-  if ( _baseAtom.size() != _natom 
-      || _cellCoord.size() != _natom 
-      || _znucl.size() != dtset.znucl().size() )
+  if (_baseAtom.size() != _natom || _cellCoord.size() != _natom ||
+      _znucl.size() != dtset.znucl().size())
     this->findReference(dtset);
 
   std::vector<double> calculatedDisplacements;
-  if (displacement.size() != 3*_natom ) {
+  if (displacement.size() != 3 * _natom) {
     try {
       calculatedDisplacements = this->getDisplacement(dtset);
-    }
-    catch (Exception &e) {
-      e.ADD("Cannot compute displacements",ERRDIV);
+    } catch (Exception &e) {
+      e.ADD("Cannot compute displacements", ERRDIV);
       throw e;
     }
   }
-  std::vector<double> mass(dtset.natom(),0.);
-  for ( unsigned iatom = 0 ; iatom < dtset.natom() ; ++iatom ) {
-    mass[iatom] = MendeTable.mass[dtset.znucl()[dtset.typat()[iatom]-1]]*phys::amu_emass; // type starts at 1
+  std::vector<double> mass(dtset.natom(), 0.);
+  for (unsigned iatom = 0; iatom < dtset.natom(); ++iatom) {
+    mass[iatom] = MendeTable.mass[dtset.znucl()[dtset.typat()[iatom] - 1]] *
+                  phys::amu_emass; // type starts at 1
   }
-  this->fft((displacement.size()!=3*_natom) ? calculatedDisplacements:displacement);
+  this->fft((displacement.size() != 3 * _natom) ? calculatedDisplacements
+                                                : displacement);
 
-  for ( int qx = 0 ; qx < nxh ; ++qx ) {
-    for ( int qy = 0 ; qy < nyh ; ++qy ) {
-      for ( int qz = 0 ; qz < nzh ; ++qz ) {
+  for (int qx = 0; qx < nxh; ++qx) {
+    for (int qy = 0; qy < nyh; ++qy) {
+      for (int qz = 0; qz < nzh; ++qz) {
         auto dispq = _fft.begin();
-        std::advance(dispq,(qx*nyh*nzh+qy*nzh+qz)*natomUC*3);
+        std::advance(dispq, (qx * nyh * nzh + qy * nzh + qz) * natomUC * 3);
         double norm2_disp = 0.;
-        for ( int iatomUC = 0 ; iatomUC < 3*natomUC ; ++iatomUC ) {
-          norm2_disp += mass[iatomUC/3]*std::norm(dispq[iatomUC]);
+        for (int iatomUC = 0; iatomUC < 3 * natomUC; ++iatomUC) {
+          norm2_disp += mass[iatomUC / 3] * std::norm(dispq[iatomUC]);
         }
-        if ( norm2_disp < 1e-10 ) norm2_disp = 0;
-        amplitudes[qx*nyh*nzh+qy*nzh+qz] = {{(double)qx/(double)nx,(double)qy/(double)ny,(double)qz/(double)nz,std::sqrt(norm2_disp)*b_sqrtu2A_sqrtamu}};
+        if (norm2_disp < 1e-10)
+          norm2_disp = 0;
+        amplitudes[qx * nyh * nzh + qy * nzh + qz] = {
+            {(double)qx / (double)nx, (double)qy / (double)ny,
+             (double)qz / (double)nz,
+             std::sqrt(norm2_disp) * b_sqrtu2A_sqrtamu}};
       }
     }
   }
   return amplitudes;
 }
 
-void Supercell::fft(const std::vector<double>& dispr) {
+void Supercell::fft(const std::vector<double> &dispr) {
 #ifdef HAVE_FFTW3
-  const int nx = (int) _dim[0];
-  const int ny = (int) _dim[1];
-  const int nz = (int) _dim[2];
-  const int nzh = nz/2+1;
-  const int natomUC = _natom/(nx*ny*nz);
-  const int howmany = 3*natomUC;
-  const double inv_vol = 1./(double)(nx*ny*nz);
-  const int idist = nx*ny*nz; const int odist = nx*ny*nzh;
-  const int *inembed = NULL; const int *onembed = NULL;
-  const int istride = 1; const int ostride = 1;
-  const int n[3]={nx,ny,nz};
+  const int nx = (int)_dim[0];
+  const int ny = (int)_dim[1];
+  const int nz = (int)_dim[2];
+  const int nzh = nz / 2 + 1;
+  const int natomUC = _natom / (nx * ny * nz);
+  const int howmany = 3 * natomUC;
+  const double inv_vol = 1. / (double)(nx * ny * nz);
+  const int idist = nx * ny * nz;
+  const int odist = nx * ny * nzh;
+  const int *inembed = NULL;
+  const int *onembed = NULL;
+  const int istride = 1;
+  const int ostride = 1;
+  const int n[3] = {nx, ny, nz};
 
   double *fft_in;
   fftw_complex *fft_out;
   fftw_plan plan_forward;
 
-  if ( dispr.size() != _natom*3 ) throw EXCEPTION("Vector has not the expected size",ERRDIV);
-  if ( _fft.size() > 0 ) return; // Consider the FFT is already done
+  if (dispr.size() != _natom * 3)
+    throw EXCEPTION("Vector has not the expected size", ERRDIV);
+  if (_fft.size() > 0)
+    return; // Consider the FFT is already done
 
-  fft_in = (double*) fftw_malloc( sizeof ( double ) * nx * ny * nz * howmany);
-  fft_out = (fftw_complex*) fftw_malloc( sizeof ( fftw_complex ) * nx * ny * nzh * howmany );
+  fft_in = (double *)fftw_malloc(sizeof(double) * nx * ny * nz * howmany);
+  fft_out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * nx * ny * nzh *
+                                        howmany);
 
-  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+  for (unsigned iatom = 0; iatom < _natom; ++iatom) {
     const int ref_atom = _baseAtom[iatom];
-    auto& R = _cellCoord[iatom];
-    for ( unsigned dim = 0 ; dim < 3 ; ++dim ) {
-      int start_fft = (ref_atom*3+dim)*idist;
-      fft_in[start_fft+((unsigned)R[0]*ny+(unsigned)R[1])*nz+(unsigned)R[2]] = dispr[iatom*3+dim];
+    auto &R = _cellCoord[iatom];
+    for (unsigned dim = 0; dim < 3; ++dim) {
+      int start_fft = (ref_atom * 3 + dim) * idist;
+      fft_in[start_fft + ((unsigned)R[0] * ny + (unsigned)R[1]) * nz +
+             (unsigned)R[2]] = dispr[iatom * 3 + dim];
     }
   }
 
-
-#pragma omp critical (supercell_fft)
+#pragma omp critical(supercell_fft)
   {
 #ifdef HAVE_FFTW3_THREADS
     fftw_plan_with_nthreads(1);
 #endif
-    plan_forward = fftw_plan_many_dft_r2c(3, n, howmany,
-        fft_in, inembed, istride, idist, 
-        fft_out, onembed, ostride, odist, FFTW_ESTIMATE);
+    plan_forward =
+        fftw_plan_many_dft_r2c(3, n, howmany, fft_in, inembed, istride, idist,
+                               fft_out, onembed, ostride, odist, FFTW_ESTIMATE);
   }
 
   fftw_execute(plan_forward);
 
-  int nxh = nx/2+1;
-  int nyh = nx/2+1;
-  _fft.resize(nxh*nyh*nzh*natomUC*3);
-  bool nx_even = (nx%2==0);
-  bool ny_even = (ny%2==0);
+  int nxh = nx / 2 + 1;
+  int nyh = nx / 2 + 1;
+  _fft.resize(nxh * nyh * nzh * natomUC * 3);
+  bool nx_even = (nx % 2 == 0);
+  bool ny_even = (ny % 2 == 0);
 
-#define outIndice(dim,iatom,qx,qy,qz) ((iatom*3+dim)*odist+(qx*ny+qy)*nzh+qz)
-#define dispqIndice(dim,iatom,qx,qy,qz) ( ((((qx*nyh+qy)*nzh+qz)*natomUC+iatom)*3)+dim )
-  for ( int qx = 0 ; qx < nxh ; ++qx ) {
-    double fx = ( qx == 0 || ( nx_even &&  qx == nxh-1 ) ) ? 1 : 2;
-    for ( int qy = 0 ; qy < nyh ; ++qy ) {
-      double fy = ( qy == 0 || ( ny_even &&  qy == nyh-1 ) ) ? 1 : 2;
-      if ( fx*fy == 4 ) fy=1;
-      for ( int qz = 0 ; qz < nzh ; ++qz ) {
-        for ( int iatom = 0 ; iatom < natomUC ; ++iatom ) {
-          for ( int dim = 0 ; dim < 3 ; ++dim ) {
-            _fft[dispqIndice(dim,iatom,qx,qy,qz)].real(fx*fy*fft_out[outIndice(dim,iatom,qx,qy,qz)][0]*inv_vol);
-            _fft[dispqIndice(dim,iatom,qx,qy,qz)].imag(fx*fy*fft_out[outIndice(dim,iatom,qx,qy,qz)][1]*inv_vol);
+#define outIndice(dim, iatom, qx, qy, qz)                                      \
+  ((iatom * 3 + dim) * odist + (qx * ny + qy) * nzh + qz)
+#define dispqIndice(dim, iatom, qx, qy, qz)                                    \
+  (((((qx * nyh + qy) * nzh + qz) * natomUC + iatom) * 3) + dim)
+  for (int qx = 0; qx < nxh; ++qx) {
+    double fx = (qx == 0 || (nx_even && qx == nxh - 1)) ? 1 : 2;
+    for (int qy = 0; qy < nyh; ++qy) {
+      double fy = (qy == 0 || (ny_even && qy == nyh - 1)) ? 1 : 2;
+      if (fx * fy == 4)
+        fy = 1;
+      for (int qz = 0; qz < nzh; ++qz) {
+        for (int iatom = 0; iatom < natomUC; ++iatom) {
+          for (int dim = 0; dim < 3; ++dim) {
+            _fft[dispqIndice(dim, iatom, qx, qy, qz)].real(
+                fx * fy * fft_out[outIndice(dim, iatom, qx, qy, qz)][0] *
+                inv_vol);
+            _fft[dispqIndice(dim, iatom, qx, qy, qz)].imag(
+                fx * fy * fft_out[outIndice(dim, iatom, qx, qy, qz)][1] *
+                inv_vol);
           }
         }
       }
@@ -673,19 +729,18 @@ void Supercell::fft(const std::vector<double>& dispr) {
 #undef outIndice
 #undef dispqIndice
 
-#pragma omp critical (supercell_fft)
-  {
-    fftw_destroy_plan(plan_forward);
-  }
+#pragma omp critical(supercell_fft)
+  { fftw_destroy_plan(plan_forward); }
   fftw_free(fft_in);
   fftw_free(fft_out);
 #else
-  (void) dispr;
-  throw EXCEPTION("FFTW3 is required for this operation.",ERRDIV);
+  (void)dispr;
+  throw EXCEPTION("FFTW3 is required for this operation.", ERRDIV);
 #endif
 }
 
-void Supercell::getRefCoord(int iatom, int &refAtom, int &x, int &y, int &z) const {
+void Supercell::getRefCoord(int iatom, int &refAtom, int &x, int &y,
+                            int &z) const {
   refAtom = _baseAtom[iatom];
   x = _cellCoord[iatom][0];
   y = _cellCoord[iatom][1];

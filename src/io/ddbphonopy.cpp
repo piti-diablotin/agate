@@ -118,7 +118,7 @@ void DdbPhonopy::readFromFile(const std::string& filename) {
     std::string bornfile = utils::dirname(filename)+"/BORN";
     std::ifstream born(bornfile);
     if ( born ) {
-      _zion.resize(_typat.size()); 
+      _zion.resize(_typat.size(),0); 
       unsigned iline = 0;
       std::string line;
       utils::getline(born,line,iline); // First line is an conversion factor eventually.
@@ -161,15 +161,16 @@ void DdbPhonopy::buildFrom(const Dtset& dtset) {
       break;
     }
   }
-  if ( currentZ.size() != _natom ) {
-    throw EXCEPTION("Number of Zeff is smaller than natom is not supported yet",ERRDIV);
+  if ( currentZ.size() > 0 && currentZ.size() != _natom ) {
+    auto e = EXCEPTION("Number of Zeff is smaller than natom is not supported yet",ERRWAR);
+    std::clog << e.fullWhat() << std::endl;
 #ifdef HAVE_SPGLIB
     SpglibDataset* spgDtset = this->getSpgDtset(0.001*phys::A2b);
     if ( spgDtset != nullptr ) {
-      unsigned prevAtom = 0;
+      const geometry::mat3d zero = {0};
       for ( unsigned iatom = 0, izeff=0; iatom < _natom; ++iatom ) {
         unsigned eqatom = static_cast<unsigned>(spgDtset->equivalent_atoms[iatom]);
-        this->setZeff(iatom,eqatom == prevAtom ? currentZ[izeff] : currentZ[++izeff]);
+        this->setZeff(iatom,(iatom == eqatom ? currentZ[izeff++]:zero));
       }
     }
     spg_free_dataset(spgDtset);

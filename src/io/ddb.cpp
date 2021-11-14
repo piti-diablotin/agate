@@ -199,10 +199,8 @@ geometry::mat3d Ddb::getZeff(const unsigned iatom) const {
     throw EXCEPTION("Atom "+utils::to_string(iatom)+" is not in DDB", ERRDIV);
 
   auto data = this->getDdb(qpt);
-  mat3d zeff;
-  mat3d count;
-  for ( auto &e : count ) e = 0e0;
-  for ( auto &e : zeff ) e = 0e0;
+  mat3d zeff = {0};
+  mat3d count = {0};
   const double twopi = 2*phys::pi;
 	
 	/* Read values from ddb into _zeff*/
@@ -382,6 +380,20 @@ void Ddb::setZeff(const unsigned iatom, const geometry::mat3d &zeff) {
 
   mat3d rprimTranspose = transpose(_rprim);
   geometry::mat3d d2red = (rprimTranspose * (zeff  * _gprim))*twopi;
+
+  for ( int i = 0 ; i < 2 ; ++i ) {
+    for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 ) {
+      for ( unsigned idir2 = 0 ; idir2 < 3 ; ++idir2 ) {
+        auto alreadyIn = std::find_if(block.begin(),block.end(),[=](
+              const std::pair<std::array<unsigned,4>,std::complex<double>>& entry) { 
+            auto& array = entry.first;
+            return ( array[0] == idir1 && array[1] ==(_natom+1) && array[2] == idir2 && array[3]==iatom) || 
+            ( array[0] == idir2 && array[1] ==iatom && array[2] == idir1 && array[3]==(_natom+1)); 
+            });
+        if ( alreadyIn != block.end() ) block.erase(alreadyIn);
+      }
+    }
+  }
 
   for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 )
     for ( unsigned idir2 = 0 ; idir2 < 3 ; ++idir2 ) {

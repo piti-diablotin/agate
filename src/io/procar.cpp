@@ -70,7 +70,7 @@ void Procar::readFromFile(const std::string& filename) {
     std::getline(procar,tmp,':');
     procar >> natom;
 
-    if ( procar.eof() ) break;
+    if ( procar && procar.eof() ) break;
     if ( !procar )
       throw EXCEPTION("Cannot read properly the parameters",ERRDIV);
 

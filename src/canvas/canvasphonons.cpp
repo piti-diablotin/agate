@@ -161,9 +161,9 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
      * we can assume this is true. The user should know what he does.
      * We cannot do in an other way since qpoints.yaml does not always provide
      * the structure (1.10 at least does not)
-     */
     if ( !(*_ddb==_reference) ) 
       throw EXCEPTION("It seems reference and DDB are different structures",ERRDIV);
+     */
     _ddb->buildFrom(_reference); 
     DispDB disp;
     try {

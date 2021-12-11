@@ -88,7 +88,7 @@ void EigParserPHBST::readFromFile(const std::string& filename) {
 
   geometry::vec3d prev_kpt = {{0.,0.,0.}};
   double length = 0.0;
-
+  double initLength =0.0;
   for ( unsigned ikpt = 0 ; ikpt < kpts ; ++ikpt ) {
     int status = nc_inq_varid(ncid, "qpoints", &varid);
     size_t start2[] = {ikpt,0};
@@ -122,7 +122,12 @@ void EigParserPHBST::readFromFile(const std::string& filename) {
 
     _eigenDisp.push_back(std::move(disp));
     if ( ikpt == 0 ) prev_kpt = kpt;
-    length += geometry::norm(geometry::operator-(kpt,prev_kpt));
+    if ( ikpt == 1 )
+       initLength = geometry::norm(geometry::operator-(kpt,prev_kpt));
+    if (geometry::norm(geometry::operator-(kpt,prev_kpt)) > 10*initLength)
+       length += 0;
+    else
+       length += geometry::norm(geometry::operator-(kpt,prev_kpt));
     _kpts.push_back(kpt);
     _lengths.push_back(length);
     prev_kpt = kpt;

@@ -32,6 +32,11 @@
 std::map<GLFWwindow*, std::array<float,2> > WinGlfw3::_offsets; ///< Declare the static variable here so it is done once for all
 #endif
 
+namespace {
+  std::map<GLFWwindow*, std::array<float,2>> scalings_;
+  std::map<GLFWwindow*,WinGlfw3*> glfwPtr_;
+}
+
 //
 WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int mode) : Window(canvas, width, height),
 #ifdef HAVE_GLFW3
@@ -71,34 +76,52 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
     _height = vmode->height;
   }
 
+  // Prepare windows creation
   //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 16);
-#ifdef __APPLE__
-  glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
-#endif
+  glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE); // Use real pixel size of framebuffer
 
+  std::clog << "Create " << _width << " x " << _height<< std::endl;
   if ( (_win = glfwCreateWindow(_width, _height, PACKAGE_STRING, monitor, nullptr) ) == nullptr )
     throw EXCEPTION("Failed to open GLFW window",ERRDIV);
 
+  glfwPtr_[_win]=this;
   glfwMakeContextCurrent(_win);
 
   glfwSwapInterval(1); // On card that support vertical sync, activate it.
-  glfwGetFramebufferSize(_win,&_width,&_height);
   _offsets[_win][0] = 0.0;
   _offsets[_win][1] = 0.0;
   glfwSetScrollCallback(_win,WheelCallback);
   glfwSetCharCallback(_win,CharCallback);
   glfwSetKeyCallback(_win,KeyCallback);
-#if defined(HAVE_GLFW3_CONTENTSCALE) && defined(__linux__)
-  float xscale, yscale;
-  glfwGetWindowContentScale(_win, &xscale, &yscale);
-  _width *= xscale;
-  _height *= yscale;
-  _optioni["fontSize"] *= ( xscale+yscale )/2.;
+
+  glfwPollEvents();  // Fix for GLFW 3.3 Scale factor wrong if before polling
+                     // (https://github.com/glfw/glfw/issues/1968)
+
+  glfwGetFramebufferSize(_win,&_width,&_height); // OpenGL size
+  glfwSetFramebufferSizeCallback(_win,[](GLFWwindow* win, int width, int height)
+      {
+      std::clog << "New Framebuffer size " << width << "x" << height << std::endl;
+      glfwPtr_[win]->_width=width;
+      glfwPtr_[win]->_height=height;
+      });
+  std::clog << "Frame buffer is " << _width << " x "<<_height << std::endl;
+  scalings_[_win] = {0};
+#if GLFW_VERSION_MAJOR >= 3 && GLFW_VERSION_MINOR >= 3
+  glfwGetWindowContentScale(_win, &scalings_[_win][0], &scalings_[_win][1]);
+  glfwSetWindowContentScaleCallback(_win,[](GLFWwindow* win, float xscale, float yscale)
+      {
+      std::clog << "New content scale" << xscale<< "x" << yscale<< std::endl;
+      auto average = (xscale+yscale)/2.;
+      glfwPtr_[win]->_optioni["fontSize"] *= average/(( scalings_[win][0]+scalings_[win][1])/2.);
+      scalings_[win][0]=xscale;
+      scalings_[win][1]=yscale;
+      });
+  std::clog << "Scaling is " << scalings_[_win][0]<< " x "<< scalings_[_win][1]<< std::endl;
+  _optioni["fontSize"] *= ( scalings_[_win][0]+scalings_[_win][1])/2.;
 #endif
-  glfwSetWindowSize(_win,_width,_height);
   _render._render.setSize(_optioni["fontSize"]);
 
 #else
@@ -157,18 +180,13 @@ void WinGlfw3::setTitle(const std::string& title) {
 
 //
 void WinGlfw3::setSize(const int width, const int height) {
-  _width = width;
-  _height = height;
 #ifdef HAVE_GLFW3
-  glfwSetWindowSize(_win,_width,_height);
+  glfwSetWindowSize(_win,width*scalings_[_win][0],height*scalings_[_win][1]);
 #endif
 }
 
 //
 void WinGlfw3::getSize(int &width, int &height) {
-#ifdef HAVE_GLFW3
-  glfwGetFramebufferSize(_win,&_width, &_height);
-#endif
   width = _width;
   height = _height;
 }

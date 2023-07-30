@@ -130,10 +130,6 @@ void DropCallback(GLFWwindow *win, int count, const char** paths){
  * @param para signal received
  */
 void handle_signal (int para) {
-  if ( ptrwin == nullptr ) {
-    std::cerr << "No window created.\nExiting." << std::endl;
-    exit(1);
-  }
   switch(para) {
     case SIGABRT :
       std::cerr << "Abord signal received." << std::endl;
@@ -158,6 +154,10 @@ void handle_signal (int para) {
     default : 
       std::cerr << "Unknown signal received." << std::endl;
       break;
+  }
+  if ( ptrwin == nullptr ) {
+    std::cerr << "No window created.\nExiting." << std::endl;
+    exit(1);
   }
   ptrwin->exit();
   std::cerr << "Window has been asked to close." << std::endl;

@@ -121,7 +121,7 @@ Window::Window(pCanvas& canvas, const int width, const int height)
       _snake(nullptr),
 #endif
       _canvas(canvas.release()),
-      _arrow() {
+      _arrow(nullptr) {
   utils::fftw3Init();
   _background[0] = 0.f;
   _background[1] = 0.f;
@@ -287,7 +287,7 @@ Window::Window()
       _snake(nullptr),
 #endif
       _canvas(),
-      _arrow() {
+      _arrow(nullptr) {
   utils::fftw3Init();
   _background[0] = 0.f;
   _background[1] = 0.f;

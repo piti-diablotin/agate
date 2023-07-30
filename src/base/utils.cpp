@@ -46,7 +46,7 @@
 #include <curl/curl.h>
 #endif
 
-#if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
+#if defined(HAVE_SPGLIB)
 #  ifdef __cplusplus
 extern "C"{
 #  endif

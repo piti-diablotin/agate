@@ -37,6 +37,7 @@
 #endif
 
 #include <string>
+#include <cstdint>
 
 #ifdef HAVE_SSH
 #include <libssh/libssh.h>

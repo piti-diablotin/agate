@@ -483,6 +483,7 @@ std::string agateVersion(){
 
 std::string agateLatestVersion(){
 #ifdef HAVE_CURL
+#if defined(__GNUC__) && __GNUC_PREREQ(4,9)
   static std::string latest;
   if ( latest.empty() ) {
     latest = PACKAGE_VERSION;
@@ -494,29 +495,32 @@ std::string agateLatestVersion(){
       char curl_error[CURL_ERROR_SIZE];
       curl_easy_setopt(curl,CURLOPT_URL, "https://github.com/piti-diablotin/agate/releases/latest");
       curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0);
-      curl_easy_setopt(curl,CURLOPT_WRITEDATA,(void *) &result);
-      size_t (*callback)(char* ptr, size_t size, size_t nmemb, void *strstream)=
+      curl_easy_setopt(curl, CURLOPT_HEADERDATA, (void*) &result);
+      size_t (*callback)(char* ptr, size_t size, size_t nmemb, void *strstream) = 
         [](char* ptr, size_t size, size_t nmemb, void *strstream) -> size_t
         {
           static_cast<std::stringstream*>(strstream)->write(ptr,size*nmemb);
           return size*nmemb;
         };
-      curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,callback);
+      curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, callback);
       curl_easy_setopt(curl,CURLOPT_ERRORBUFFER,curl_error);
       res = curl_easy_perform(curl);
       if ( res == CURLE_OK ) {
         curl_easy_cleanup(curl);
         curl_global_cleanup();
-        std::regex re("\\d+.\\d+.\\d+");
+        std::regex re(R"(location: https:\/\/github.com\/piti-diablotin\/agate\/releases\/tag\/v(\d+\.\d+\.\d+))");
         std::smatch match;
         std::string search(result.str());
         if ( std::regex_search(search,match,re) ) {
-          latest = match[0];
+          latest = match[1];
         }
       }
     }
   }
   return latest;
+#else
+  return PACKAGE_VERSION;
+#endif
 #else
   return PACKAGE_VERSION;
 #endif

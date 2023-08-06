@@ -27,6 +27,14 @@
 #include "window/winglfw2.hpp"
 #include "base/exception.hpp"
 
+#ifdef HAVE_GLFW2
+#include <GL/glfw.h>
+#endif
+
+namespace {
+    [[maybe_unused]] std::queue<unsigned int>* inputCharPtr_ = nullptr;
+}
+
 //
 WinGlfw2::WinGlfw2(pCanvas &canvas, const int width, const int height, const int mode) : Window(canvas, width, height),
   _stateKey(),
@@ -67,14 +75,18 @@ WinGlfw2::WinGlfw2(pCanvas &canvas, const int width, const int height, const int
 
   if ( !glfwOpenWindow(width, height, 
         desktop.RedBits, desktop.GreenBits, desktop.BlueBits,
-        8, 24, 0, mode) ) // alpha, depth, stencil, GLFW_FULLSCREEN
+        8, 24, 0, mode==WinGlfw2::window ? GLFW_WINDOW : GLFW_FULLSCREEN) ) // alpha, depth, stencil, GLFW_FULLSCREEN
     throw EXCEPTION("Failed to open GLFW2 window",ERRDIV);
 
   glfwSetWindowTitle(PACKAGE_STRING);
   //glfwEnable(GLFW_STICKY_KEYS);
   glfwSwapInterval(1); // On card that support vertical sync, activate it.
   glfwGetWindowSize(&_width,&_height);
-  glfwSetCharCallback(CharCallback);
+  inputCharPtr_ = &_inputChar;
+  glfwSetCharCallback([](int character, int action){
+      if ( action == GLFW_PRESS )
+        inputCharPtr_->push(static_cast<unsigned int>(character));
+      });
 #else
   throw EXCEPTION("GLFW2 support is not available.\nConsider compiling the code with OpenGL+GLFW",ERRDIV);
 #endif
@@ -268,9 +280,29 @@ bool WinGlfw2::getCharPress(unsigned key) {
 #endif
 }
 
+void WinGlfw2::swapBuffers() {
 #ifdef HAVE_GLFW2
-void GLFWCALL WinGlfw2::CharCallback(int character, int action) {
-  if ( action == GLFW_PRESS )
-    _inputChar.push(static_cast<unsigned int>(character));
-}
+      glfwSwapBuffers();
 #endif
+    }
+
+void WinGlfw2::pollEvents() {
+#ifdef HAVE_GLFW2
+  glfwPollEvents();
+#endif
+}
+
+bool WinGlfw2::exitMainLoop() { 
+#ifdef HAVE_GLFW2
+  return !glfwGetWindowParam( GLFW_OPENED );
+#else
+  return true;
+#endif
+}
+
+void WinGlfw2::exit() { 
+  _exit = true; 
+#ifdef HAVE_GLFW2
+  glfwCloseWindow();
+#endif
+}

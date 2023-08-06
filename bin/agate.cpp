@@ -105,7 +105,6 @@ void initInput(int argc, const char** argv) {
 }
 
 
-#ifdef HAVE_GLFW3_DROP
 /**
  * Function that will be call by GLFW3 if something is dropped in the window.
  * We only try to read the first file. 
@@ -113,8 +112,8 @@ void initInput(int argc, const char** argv) {
  * @param count The number of files dropped
  * @param paths Path of each file dropped in the window.
  */
-void DropCallback(GLFWwindow *win, int count, const char** paths){
-  std::clog << "Dropping to window " << win << std::endl;
+void DropCallback(int count, const char** paths){
+  std::clog << "Dropping to window." << std::endl;
   try {
     initInput(count, paths);
   }
@@ -122,7 +121,6 @@ void DropCallback(GLFWwindow *win, int count, const char** paths){
     std::cerr << e.fullWhat() << std::endl;
   }
 }
-#endif
 
 
 /** 
@@ -130,10 +128,6 @@ void DropCallback(GLFWwindow *win, int count, const char** paths){
  * @param para signal received
  */
 void handle_signal (int para) {
-  if ( ptrwin == nullptr ) {
-    std::cerr << "No window created.\nExiting." << std::endl;
-    exit(1);
-  }
   switch(para) {
     case SIGABRT :
       std::cerr << "Abord signal received." << std::endl;
@@ -159,8 +153,13 @@ void handle_signal (int para) {
       std::cerr << "Unknown signal received." << std::endl;
       break;
   }
-  ptrwin->exit();
-  std::cerr << "Window has been asked to close." << std::endl;
+  if ( ptrwin == nullptr ) {
+    std::cerr << "No window created.\nExiting." << std::endl;
+  }
+  else {
+    ptrwin->exit();
+    std::cerr << "Window has been asked to close." << std::endl;
+  }
   exit(1);
 }
 
@@ -279,9 +278,12 @@ int main(int argc, char** argv) {
 #ifdef HAVE_GLFW3
       WinGlfw3::init();
       ptrwin = new WinGlfw3(crystal,width,height);
-#ifdef HAVE_GLFW3_DROP
-      reinterpret_cast<WinGlfw3*>(ptrwin)->setDropCallback(DropCallback);
-#endif
+      try {
+        reinterpret_cast<WinGlfw3*>(ptrwin)->setDropCallback(DropCallback);
+      }
+      catch(Exception &e){
+        std::clog << e.fullWhat() << std::endl;
+      }
 #elif defined(HAVE_GLFW2)
       WinGlfw2::init();
       ptrwin = new WinGlfw2(crystal,width,height);
@@ -312,7 +314,12 @@ int main(int argc, char** argv) {
       std::istringstream stream("1");
       crystal->alter("wait",stream);
     }
-    crystal->setGraph(new Gnuplot);
+    try {
+      crystal->setGraph(new Gnuplot);
+    }
+    catch(Exception&e){
+      std::clog << e.fullWhat() << std::endl;
+    }
 
     ptrwin->canvas(crystal);
 

@@ -29,6 +29,7 @@
 #include <cmath>
 #include <regex>
 #include <map>
+#include <cerrno>
 
 //
 Gnuplot::Gnuplot() : Graph(),
@@ -38,6 +39,10 @@ Gnuplot::Gnuplot() : Graph(),
   _custom()
 {
   _gp.reset(popen("gnuplot","w"));
+  if (errno != 0) {
+    pclose(_gp.release());
+    _gp=nullptr;
+  }
   if ( _gp.get() == nullptr )
     throw EXCEPTION("Unable to open pipe for gnuplot",ERRABT);
   _header << "reset" << std::endl;

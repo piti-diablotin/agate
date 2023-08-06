@@ -54,13 +54,7 @@
 #include "canvas/canvasphonons.hpp"
 #include "canvas/canvaspos.hpp"
 
-using std::abs;
-
 int runSnake();
-
-std::queue<unsigned int>
-    Window::_inputChar;  ///< Store all character dropped by the glfw callback
-                         ///< function.
 
 #ifdef HAVE_GL
 /*

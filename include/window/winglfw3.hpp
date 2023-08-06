@@ -43,6 +43,7 @@
 #include <string>
 #include <map>
 #include <array>
+#include <functional>
 #ifdef HAVE_GL
 # ifdef __APPLE__
 #  include <OpenGL/gl.h>
@@ -50,9 +51,8 @@
 #  include <GL/gl.h>
 # endif
 #endif
-#ifdef HAVE_GLFW3
-#  include <GLFW/glfw3.h>
-#endif
+
+struct GLFWwindow;
 
 /** 
  * Wrapper for GLFW3
@@ -61,36 +61,13 @@ class WinGlfw3 : public Window {
 
   private :
 
-    static const unsigned _maxKeys = 350;      ///< Maximum number of keys that can be monitored
-#ifdef HAVE_GLFW3
+    static constexpr unsigned _maxKeys = 350;      ///< Maximum number of keys that can be monitored
     GLFWwindow           *_win;                ///< opaque  handler for window
-#endif
     bool                  _stateKey[_maxKeys]; ///< Keep track of the status of the keys
     bool                  _stateMouse[8];      ///< Keep track of the status of the keys
-
-#ifdef HAVE_GLFW3
-    static std::map<GLFWwindow*, std::array<float,2> > _offsets;    ///< Offset of all the windows. To enable the callback function to access it.
-
-    /**
-     * Callback function for mouse wheel
-     */
-    static void WheelCallback(GLFWwindow* win, double xoffset, double yoffset);
-
-    /**
-     * Callback function for input char
-     */
-    static void CharCallback(GLFWwindow* win, unsigned int codepoint);
-
-    /**
-     * Callback function for input key (ctrl+v ...)
-     */
-    static void KeyCallback(GLFWwindow* win, int key, int scancode, int action, int mods);
-
-    /**
-     * Callback function for error handling
-     */
-    static void ErrorCallback(int noeglfw, const char *message);
-#endif
+    std::array<float,2>   _offsets;
+    std::array<float,2>   _scalings;
+    std::function<void(int,const char**)> _dropCallback;
 
   protected :
 
@@ -138,33 +115,18 @@ class WinGlfw3 : public Window {
     /**
      * Swap the buffers if using several buffers for drawing.
      */
-    void swapBuffers() {
-#ifdef HAVE_GLFW3
-      glfwSwapBuffers(_win);
-      glfwPollEvents();
-#endif
-    }
+    void swapBuffers();
 
     /**
      * Poll events in the queue
      */
-    void pollEvents() {
-#ifdef HAVE_GLFW3
-      glfwPollEvents();
-#endif
-    }
+    void pollEvents();
 
     /**
      * Function to exit the main loop
      * @return true if loop should finish/
      */
-    bool exitMainLoop() { 
-#ifdef HAVE_GLFW3
-      return 0<glfwWindowShouldClose( _win );
-#else
-      return true;
-#endif
-    }
+    bool exitMainLoop();
 
   public :
 
@@ -247,14 +209,12 @@ class WinGlfw3 : public Window {
      */
     void move(const int x, const int y);
 
-#ifdef HAVE_GLFW3_DROP
     /**
      * Set the drop callback function for the current window.
      * @param cbfun The callback function to call when something
      * is dropped into the window.
      */
-    void setDropCallback(GLFWdropfun cbfun);
-#endif
+    void setDropCallback(std::function<void(int,const char**)> cbfun);
 
     /**
      * Close the current window

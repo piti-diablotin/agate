@@ -70,7 +70,6 @@ extern "C" {
 #include <fftw3.h>
 #endif
 #include <random>
-#include <regex>
 
 using Agate::Mendeleev;
 

@@ -483,7 +483,6 @@ std::string agateVersion(){
 
 std::string agateLatestVersion(){
 #ifdef HAVE_CURL
-#if defined(__GNUC__) && __GNUC_PREREQ(4,9)
   static std::string latest;
   if ( latest.empty() ) {
     latest = PACKAGE_VERSION;
@@ -518,9 +517,6 @@ std::string agateLatestVersion(){
     }
   }
   return latest;
-#else
-  return PACKAGE_VERSION;
-#endif
 #else
   return PACKAGE_VERSION;
 #endif

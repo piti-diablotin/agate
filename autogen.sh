@@ -265,7 +265,12 @@ EOF
   cat configure.tmp configure2 > configure.ac
   rm configure.tmp
 
-  LIBTOOLIZE=$(which glibtoolize  libtoolize)
+  LIBTOOLIZE=$(which glibtoolize 2> /dev/null || which libtoolize 2> /dev/null)
+  if [ -z "$LIBTOOLIZE" ]
+  then
+    echo "Missign libtoolize or glibtoolize"
+    exit 1
+  fi
   #if test "$OSTYPE" = "darwin*" 
   #then
   #  LIBTOOLIZE=glibtoolize 

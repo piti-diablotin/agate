@@ -89,7 +89,9 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
   //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 16);
+#ifdef __APPLE__
   glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE); // Use real pixel size of framebuffer
+#endif
 
   if ( (_win = glfwCreateWindow(_width, _height, PACKAGE_STRING, monitor, nullptr) ) == nullptr )
     throw EXCEPTION("Failed to open GLFW window",ERRDIV);

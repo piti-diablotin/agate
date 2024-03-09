@@ -35,6 +35,17 @@
 #include <cstring>
 #include <iomanip>
 
+#ifdef HAVE_SSH
+#include <libssh/libssh.h>
+#include <libssh/sftp.h>
+
+#if defined(__GNUC__) &&                        \
+  (LIBSSH_VERSION_MINOR >= 10) ||               \
+  (LIBSSH_VERSION_MAJOR > 0)
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+#endif
+
 //
 Ssh::Ssh() :
 #ifdef HAVE_SSH

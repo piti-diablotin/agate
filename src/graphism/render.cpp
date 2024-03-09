@@ -32,6 +32,13 @@
 #include <cmath>
 #include <bitset>
 
+#ifdef HAVE_FREETYPE
+#include <ft2build.h> 
+#include FT_FREETYPE_H
+#define RENDERGRAY (FT_LOAD_RENDER)
+#define RENDERMONO (FT_LOAD_RENDER|FT_LOAD_MONOCHROME)
+#endif
+
 
 //
 Render::Render() : 
@@ -43,7 +50,7 @@ Render::Render() :
   _pixelRatio(1),
 #endif
   _fontfile(""),
-  _renderMode(RENDERMONO),
+  _renderMode(Mode::Mono),
   _temp(nullptr)
 {
 #ifdef HAVE_FREETYPE
@@ -58,7 +65,7 @@ Render::Render() :
 
 
 //
-Render::Render(const std::string& filename, const size_t size, const long renderMode) : 
+Render::Render(const std::string& filename, const size_t size, const Mode renderMode) : 
 #ifdef HAVE_FREETYPE
   _library(nullptr),
   _face(nullptr),
@@ -293,6 +300,17 @@ void Render::setSize(const size_t size) {
   //_slot = _face->glyph;
 }
 
+//
+void Render::setPixelRatio(const int ratio){
+#ifdef HAVE_FREETYPE
+  _pixelRatio = ratio;
+  this->setSize(_size); // Force to regenerate.
+#else
+  Exception e = EXCEPTION("PixelRation not used : no freetype support",ERRWAR);
+  std::clog << e.fullWhat() << std::endl;
+  (void) ratio;
+#endif
+}
 
 //
 void Render::setSizeR(const int toadd) {
@@ -307,6 +325,12 @@ void Render::setSizeR(const int toadd) {
 #endif
 }
 
+void Render::setRender(const Mode mode) {
+  if ( (mode != Mode::Gray) && (mode != Mode::Mono) )
+    throw EXCEPTION("Error while setting new render mode",ERRDIV);
+  _renderMode = mode;
+  this->regenerate();
+}
 
 //
 void Render::render(const char* string, BufferRender& buffer, const unsigned char color[]) {
@@ -370,7 +394,7 @@ void Render::regenerate() {
     using namespace std;
     try {
       /* load glyph image into the slot (erase previous one) */
-      int error = FT_Load_Char( _face, C, _renderMode );
+      int error = FT_Load_Char( _face, C, _renderMode==Mode::Mono?RENDERMONO:RENDERGRAY);
       if ( error ) {
         std::stringstream message ; message << "Error loading charachter " << C << ".";
         throw EXCEPTION(message.str(),ERRDIV);
@@ -386,7 +410,7 @@ void Render::regenerate() {
       x_max = start_x + bitmap->width;
 
       switch (_renderMode) {
-        case RENDERMONO : {
+        case Mode::Mono: {
                             //*
                             for ( FT_Int i = start_y, q = 0; q < min((FT_Int)bitmap->rows,_size); i+=line, ++q ) { // each line
                               for ( FT_Int j = start_x, p = 0; p < bitmap->pitch ; ++p ) { // each byte 
@@ -398,7 +422,7 @@ void Render::regenerate() {
                             }
                             break;
                           }
-        case RENDERGRAY : {
+        case Mode::Gray: {
                             for ( FT_Int i = start_y, q = 0; q < min((FT_Int)bitmap->rows,_size); i+=line, ++q )
                               for ( FT_Int j = start_x, p = 0; j < x_max; ++j, ++p )
                                 _temp[i+j] |= bitmap->buffer[q * bitmap->width + p];

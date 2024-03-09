@@ -59,7 +59,7 @@
 
 TextRender::TextRender() : _doRender(false), _isOk(false), _color(), _render(), _buffer(Render::BufferRender(200,200) ) {
   try {
-    _render = Render(DEFAULT_FONT,20,RENDERGRAY);
+    _render = Render(DEFAULT_FONT,20,Render::Mode::Gray);
     _isOk = true;
     _doRender = true;
     _buffer.setType(Buffer<unsigned int>::TYPE_TEXT);

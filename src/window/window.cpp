@@ -54,13 +54,7 @@
 #include "canvas/canvasphonons.hpp"
 #include "canvas/canvaspos.hpp"
 
-using std::abs;
-
 int runSnake();
-
-std::queue<unsigned int>
-    Window::_inputChar;  ///< Store all character dropped by the glfw callback
-                         ///< function.
 
 #ifdef HAVE_GL
 /*
@@ -169,7 +163,7 @@ Window::Window(pCanvas& canvas, const int width, const int height)
   _optioni["ntime"] = 0;
   _optioni["fontSize"] = 20;
   _render._render.setSize(_optioni["fontSize"]);
-  _render._render.setRender(RENDERGRAY);
+  _render._render.setRender(Render::Mode::Gray);
 
 #if defined(HAVE_GL) && defined(HAVE_GLEXT)
   std::clog << "OpenGL might use VBO" << std::endl;
@@ -700,8 +694,7 @@ bool Window::userInput(std::stringstream& info) {
               case 'A': {
                 msaa = !msaa;
                 msaa ? glEnable(GL_MULTISAMPLE) : glDisable(GL_MULTISAMPLE);
-                msaa ? _render._render.setRender(RENDERGRAY)
-                     : _render._render.setRender(RENDERMONO);
+                _render._render.setRender(msaa ? Render::Mode::Gray : Render::Mode::Mono);
                 break;
               }
 #endif

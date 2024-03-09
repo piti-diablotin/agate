@@ -38,44 +38,28 @@
 
 #include <cstddef>
 #include <string>
-#ifdef HAVE_FREETYPE
-#include <ft2build.h> 
-#include FT_FREETYPE_H
-#endif
 #include "graphism/buffer.hpp"
 
-/// @def RENDERGRAY
-/// @brief Macro to render a text in gray mode (antialiasing).
-/// @see render();
-#ifdef HAVE_FREETYPE
-#define RENDERGRAY (FT_LOAD_RENDER)
-#else
-#define RENDERGRAY 0
-#endif
-
-/// @def RENDERMONO
-/// @brief Macro to render a text in black and white mode.
-/// @see render();
-#ifdef HAVE_FREETYPE
-#define RENDERMONO (FT_LOAD_RENDER|FT_LOAD_MONOCHROME)
-#else
-#define RENDERMONO 1
-#endif
+struct FT_LibraryRec_;
+struct FT_FaceRec_;
+struct FT_GlyphSlotRec_;
 
 /// Class that allows to render a string in pixel.
 class Render {
+  public:
+    enum class Mode {Mono,Gray};
 
   private :
 
 #ifdef HAVE_FREETYPE
-    FT_Library     _library;      ///< handle to library.
-    FT_Face        _face;         ///< handle to face object.
-    FT_GlyphSlot   _slot;         ///< handle the buffer of the face render.
-    FT_Int         _size;         ///< size in pixel of the rendering (height).
-    FT_Int         _pixelRatio;   ///< Height/widht of a pixel (can be 2 if in terminal).
+    FT_LibraryRec_*   _library;      ///< handle to library.
+    FT_FaceRec_*      _face;         ///< handle to face object.
+    FT_GlyphSlotRec_* _slot;         ///< handle the buffer of the face render.
 #endif
+    int            _size;         ///< size in pixel of the rendering (height).
+    int            _pixelRatio;   ///< Height/widht of a pixel (can be 2 if in terminal).
     std::string    _fontfile;     ///< Font file to use for rendering.
-    long           _renderMode;   ///< Render to load : gray or monochrome.
+    Mode           _renderMode;   ///< Render to load : gray or monochrome.
     unsigned char* _temp;         ///< Temporary array containing all glyph for on font/size.
 
     /// Regenerate the _temp attribut that contains all pre rendered glyph.
@@ -96,7 +80,7 @@ class Render {
     /// @param filename The font use for the rendering.
     /// @param size The size in pixel for the rendering
     /// @param renderMode Mode to render the text.
-    Render(const std::string& filename, const size_t size, const long renderMode = RENDERMONO);
+    Render(const std::string& filename, const size_t size, const Mode renderMode = Mode::Mono);
 
     /// Copy a rendere if needed.
     /// @param render The render to copy.
@@ -133,16 +117,7 @@ class Render {
 
     /// Set the ratio height/width of one pixel.
     /// @param ratio The ratio height/width of one pixel.
-    void setPixelRatio(const int ratio){
-#ifdef HAVE_FREETYPE
-      _pixelRatio = ratio;
-      this->setSize(_size); // Force to regenerate.
-#else
-      Exception e = EXCEPTION("PixelRation not used : no freetype support",ERRWAR);
-      std::clog << e.fullWhat() << std::endl;
-      (void) ratio;
-#endif
-    }
+    void setPixelRatio(const int ratio);
 
     /// Increase or decrease the font size.
     /// @param toadd Number of pixels to add or remove from the font size
@@ -150,12 +125,7 @@ class Render {
 
     /// Change render mode.
     /// @param mode New mode to use.
-    inline void setRender(const long mode) {
-      if ( (mode != RENDERGRAY) && (mode != RENDERMONO) )
-        throw EXCEPTION("Error while setting new render mode",ERRDIV);
-      _renderMode = mode;
-      this->regenerate();
-    }
+    void setRender(const Mode mode);
 
     /// Render a string to buffer that has a correct size value
     /// @param string The text to render
@@ -173,15 +143,9 @@ class Render {
 
     /// Get the font size.
     /// @return the font size.
-#ifdef HAVE_FREETYPE
-    inline FT_Int getSize() {
+    inline int getSize() {
       return _size;
     }
-#else
-    inline int getSize() {
-      return 0;
-    }
-#endif
 
     /// Allow to know if the render is set or not so it can be used.
     /// @return True if ready, false otherwise.

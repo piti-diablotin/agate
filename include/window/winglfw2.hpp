@@ -41,19 +41,6 @@
 #include "io/configparser.hpp"
 #include "canvas/canvas.hpp"
 #include <string>
-#ifdef HAVE_GLFW2
-#  include <GL/glfw.h>
-#else
-# define GLFW_WINDOW 0     ///< Fake variable
-# define GLFW_FULLSCREEN 1 ///< Fake variable
-#endif
-#ifdef HAVE_GL
-# ifdef __APPLE__
-#  include <OpenGL/gl.h>
-# else
-#  include <GL/gl.h>
-# endif
-#endif
 
 /** 
  * Wrapper for GLFW2
@@ -65,13 +52,6 @@ class WinGlfw2 : public Window {
     static const unsigned _maxKeys = 350;      ///< Maximum number of keys that can be monitored
     bool                  _stateKey[_maxKeys]; ///< Keep track of the status of the keys
     bool                  _stateMouse[8];      ///< Keep track of the status of the keys
-
-#ifdef HAVE_GLFW2
-    /**
-     * Callback function for input char
-     */
-    static void GLFWCALL CharCallback(int character, int action);
-#endif
 
   protected :
 
@@ -119,37 +99,23 @@ class WinGlfw2 : public Window {
     /**
      * Swap the buffers if using several buffers for drawing.
      */
-    void swapBuffers() {
-#ifdef HAVE_GLFW2
-      glfwSwapBuffers();
-#endif
-    }
+    void swapBuffers();
 
     /**
      * Poll events in the queue
      */
-    void pollEvents() {
-#ifdef HAVE_GLFW2
-      glfwPollEvents();
-#endif
-    }
+    void pollEvents();
 
     /**
      * Function to exit the main loop
      * @return true if loop should finish/
      */
-    bool exitMainLoop() { 
-#ifdef HAVE_GLFW2
-      return !glfwGetWindowParam( GLFW_OPENED );
-#else
-      return true;
-#endif
-    }
+    bool exitMainLoop();
 
   public :
 
-    const static int window     = GLFW_WINDOW; ///< Open a window with borders.
-    const static int fullscreen = GLFW_FULLSCREEN; ///< Open a window in fullscreen.
+    static const int window     = 0; ///< Open a window with borders.
+    static const int fullscreen = 1; ///< Open a window in fullscreen.
 
     /**
      * Initialize GLFW
@@ -219,12 +185,7 @@ class WinGlfw2 : public Window {
     /**
      * Close the current window
      */
-    void exit() { 
-      _exit = true; 
-#ifdef HAVE_GLFW2
-      glfwCloseWindow();
-#endif
-    }
+    void exit();
 
 
 };

@@ -27,10 +27,21 @@
 #include "window/winglfw3.hpp"
 #include "base/exception.hpp"
 #include <cmath>
-
 #ifdef HAVE_GLFW3
-std::map<GLFWwindow*, std::array<float,2> > WinGlfw3::_offsets; ///< Declare the static variable here so it is done once for all
+#include <GLFW/glfw3.h>
 #endif
+
+namespace {
+#ifdef HAVE_GLFW3
+  std::map<GLFWwindow*,WinGlfw3*> glfwPtr_;
+
+#endif
+  void ErrorCallback(int noeglfw, const char *message) {
+    Exception e = EXCEPTION(std::string(message)+std::string("\nError code:")
+        +utils::to_string(noeglfw),ERRDIV);
+    std::clog << e.fullWhat() << std::endl;
+  }
+}
 
 //
 WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int mode) : Window(canvas, width, height),
@@ -38,12 +49,14 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
   _win(nullptr),
 #endif
   _stateKey(),
-  _stateMouse()
+  _stateMouse(),
+  _offsets {0},
+  _scalings {1}
 {
   for ( unsigned key = 0 ; key < _maxKeys ; ++key )
-  _stateKey[key] = false;
+    _stateKey[key] = false;
   for ( unsigned key = 0 ; key < 8 ; ++key )
-  _stateMouse[key] = false;
+    _stateMouse[key] = false;
   if ( mode != WinGlfw3::window && mode != WinGlfw3::fullscreen ) 
     throw EXCEPTION("Bad mode for creating GLFW3 window.\nTry WinGlfw3::window or WinGlfw3::fullscreen",ERRDIV);
 
@@ -71,35 +84,73 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
     _height = vmode->height;
   }
 
+  // Prepare windows creation
   //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 16);
 #ifdef __APPLE__
-  glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
+  glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE); // Use real pixel size of framebuffer
 #endif
 
   if ( (_win = glfwCreateWindow(_width, _height, PACKAGE_STRING, monitor, nullptr) ) == nullptr )
     throw EXCEPTION("Failed to open GLFW window",ERRDIV);
 
+  glfwPtr_[_win]=this;
   glfwMakeContextCurrent(_win);
 
   glfwSwapInterval(1); // On card that support vertical sync, activate it.
-  glfwGetFramebufferSize(_win,&_width,&_height);
-  _offsets[_win][0] = 0.0;
-  _offsets[_win][1] = 0.0;
-  glfwSetScrollCallback(_win,WheelCallback);
-  glfwSetCharCallback(_win,CharCallback);
-  glfwSetKeyCallback(_win,KeyCallback);
-#if defined(HAVE_GLFW3_CONTENTSCALE) && defined(__linux__)
-  float xscale, yscale;
-  glfwGetWindowContentScale(_win, &xscale, &yscale);
-  _width *= xscale;
-  _height *= yscale;
-  _optioni["fontSize"] *= ( xscale+yscale )/2.;
-#endif
-  glfwSetWindowSize(_win,_width,_height);
+  glfwPollEvents();  // Fix for GLFW 3.3 Scale factor wrong if before polling
+                     // (https://github.com/glfw/glfw/issues/1968)
+
+  glfwGetFramebufferSize(_win,&_width,&_height); // OpenGL size
+  glfwSetFramebufferSizeCallback(_win,[](GLFWwindow* win, int width, int height)
+      {
+      glfwPtr_[win]->_width=width;
+      glfwPtr_[win]->_height=height;
+      });
+
+  glfwSetScrollCallback(_win,[](GLFWwindow* win, double xoffset, double yoffset) {
+      try {
+        glfwPtr_[win]->_offsets[0] = (float) xoffset;
+        glfwPtr_[win]->_offsets[1] = (float) yoffset;
+      }
+      catch(...){
+        Exception e = EXCEPTION("Failed to recorded scrolling event",ERRDIV);
+        std::cerr << e.fullWhat() << std::endl;
+      }
+    });
+  glfwSetCharCallback(_win,[](GLFWwindow* win, unsigned int codepoint) {
+      if ( codepoint  < _maxKeys ) 
+        glfwPtr_[win]->_inputChar.push(codepoint);
+      });
+  glfwSetKeyCallback(_win,[](GLFWwindow* win, int key, int scancode, int action, int mods) {
+      (void) scancode;
+      if ( mods == GLFW_MOD_CONTROL && key == GLFW_KEY_V && action == GLFW_PRESS ) {
+        const char* text = glfwGetClipboardString(win);
+        if ( text ) {
+          unsigned c = 0;
+          while( text[c] != '\0' )
+            glfwPtr_[win]->_inputChar.push(text[c++]);
+        }
+      }
+    });
+
+#if GLFW_VERSION_MAJOR >= 3 && GLFW_VERSION_MINOR >= 3
+  glfwGetWindowContentScale(_win, &_scalings[0], &_scalings[1]);
+  glfwSetWindowContentScaleCallback(_win,[](GLFWwindow* win, float xscale, float yscale)
+      {
+      auto winptr = glfwPtr_[win];
+      auto average = (xscale+yscale)/2.;
+      winptr->_optioni["fontSize"] *= average/(( winptr->_scalings[0]+winptr->_scalings[1])/2.);
+      winptr->_scalings[0]=xscale;
+      winptr->_scalings[1]=yscale;
+      winptr->_render._render.setSize(glfwPtr_[win]->_optioni["fontSize"]);
+      });
+
+  _optioni["fontSize"] *= ( _scalings[0]+_scalings[1])/2.;
   _render._render.setSize(_optioni["fontSize"]);
+#endif
 
 #else
   throw EXCEPTION("GLFW support is not available.\nConsider compiling the code with OpenGL+GLFW",ERRDIV);
@@ -157,18 +208,13 @@ void WinGlfw3::setTitle(const std::string& title) {
 
 //
 void WinGlfw3::setSize(const int width, const int height) {
-  _width = width;
-  _height = height;
 #ifdef HAVE_GLFW3
-  glfwSetWindowSize(_win,_width,_height);
+  glfwSetWindowSize(_win,width*_scalings[0],height*_scalings[1]);
 #endif
 }
 
 //
 void WinGlfw3::getSize(int &width, int &height) {
-#ifdef HAVE_GLFW3
-  glfwGetFramebufferSize(_win,&_width, &_height);
-#endif
   width = _width;
   height = _height;
 }
@@ -251,9 +297,9 @@ bool WinGlfw3::getMousePress(unsigned int key) {
 void WinGlfw3::getWheelOffset(float &wheel) {
   // FIXME !
 #ifdef HAVE_GLFW3
-  wheel = floor(_offsets[_win][1]);
-  _offsets[_win][0]=0;
-  _offsets[_win][1]=0;
+  wheel = floor(_offsets[1]);
+  _offsets[0]=0;
+  _offsets[1]=0;
   //wheel = glfwGetMouseWheel();
 #else
   wheel = 0.f;
@@ -298,51 +344,34 @@ bool WinGlfw3::getChar(unsigned key) {
   return pressed;
 }
 
-//
+void WinGlfw3::swapBuffers() {
 #ifdef HAVE_GLFW3
-void WinGlfw3::WheelCallback(GLFWwindow* win, double xoffset, double yoffset) {
-  try {
-    _offsets[win][0] = (float) xoffset;
-    _offsets[win][1] = (float) yoffset;
-  }
-  catch(...){
-    Exception e = EXCEPTION("Failed to recorded scrolling event",ERRDIV);
-    std::cerr << e.fullWhat() << std::endl;
-  }
+  glfwSwapBuffers(_win);
+  glfwPollEvents();
+#endif
 }
 
-//
+void WinGlfw3::pollEvents() {
+#ifdef HAVE_GLFW3
+  glfwPollEvents();
+#endif
+}
 
+bool WinGlfw3::exitMainLoop() { 
+#ifdef HAVE_GLFW3
+  return 0<glfwWindowShouldClose( _win );
+#else
+  return true;
+#endif
+}
+
+void WinGlfw3::setDropCallback(std::function<void(int, const char**)> callback){
+  _dropCallback = callback;
 #ifdef HAVE_GLFW3_DROP
-void WinGlfw3::setDropCallback(GLFWdropfun cbfun){
-  glfwSetDropCallback(_win,cbfun);
-}
+  glfwSetDropCallback(_win,[](GLFWwindow* win, int count, const char** paths){
+      glfwPtr_[win]->_dropCallback(count,paths);
+      });
+#else
+  throw EXCEPTION("Drag&Drop not available",ERRWAR);
 #endif
-
-//
-void WinGlfw3::ErrorCallback(int noeglfw, const char *message) {
-  Exception e = EXCEPTION(std::string(message)+std::string("\nError code:")
-      +utils::to_string(noeglfw),ERRDIV);
-  std::clog << e.fullWhat() << std::endl;
 }
-
-//
-void WinGlfw3::CharCallback(GLFWwindow* win, unsigned int codepoint) {
-  if ( codepoint  < _maxKeys ) 
-    _inputChar.push(codepoint);
-  (void) win;
-}
-
-//
-void WinGlfw3::KeyCallback(GLFWwindow* win, int key, int scancode, int action, int mods) {
-  (void) scancode;
-  if ( mods == GLFW_MOD_CONTROL && key == GLFW_KEY_V && action == GLFW_PRESS ) {
-    const char* text = glfwGetClipboardString(win);
-    if ( text ) {
-      unsigned c = 0;
-      while( text[c] != '\0' )
-        _inputChar.push(text[c++]);
-    }
-  }
-}
-#endif

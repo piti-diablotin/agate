@@ -39,20 +39,18 @@
 #include <string>
 #include <cstdint>
 
-#ifdef HAVE_SSH
-#include <libssh/libssh.h>
-#include <libssh/sftp.h>
-#endif
-
 /** 
  * Small class to list an retrieve file from remote SSH server
  */
+struct ssh_session_struct;
+struct sftp_session_struct;
+
 class Ssh {
 
   private :
 #ifdef HAVE_SSH
-    ssh_session  _sshSession;
-    sftp_session _sftpSession;
+    ssh_session_struct*  _sshSession;
+    sftp_session_struct* _sftpSession;
 #endif
     std::string _hostname;
     std::string _user;

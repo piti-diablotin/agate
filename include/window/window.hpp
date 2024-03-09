@@ -149,7 +149,7 @@ class Window {
     pCanvas _canvas; ///< Canvas to use
     std::unique_ptr<TriArrow> _arrow;
 
-    static std::queue<unsigned int> _inputChar; ///< Store all character dropped by the glfw callback function.
+    std::queue<unsigned int> _inputChar; ///< Store all character dropped by the glfw callback function.
 
     /**
      * Start OpenGl with the correct option

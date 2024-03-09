@@ -29,6 +29,7 @@
 #include <cmath>
 #include <regex>
 #include <map>
+#include <cerrno>
 
 //
 Gnuplot::Gnuplot() : Graph(),
@@ -37,9 +38,12 @@ Gnuplot::Gnuplot() : Graph(),
   _buffer(),
   _custom()
 {
-  _gp.reset(popen("gnuplot","w"));
-  if ( _gp.get() == nullptr )
+  errno = 0;
+  auto* fd = popen("gnuplot","w");
+  auto ret = pclose(fd);
+  if ( ret != 0 )
     throw EXCEPTION("Unable to open pipe for gnuplot",ERRABT);
+  _gp.reset(popen("gnuplot","w"));
   _header << "reset" << std::endl;
   _header << "set style data line" << std::endl;
   _header << "set autoscale xy" << std::endl;
@@ -52,10 +56,9 @@ Gnuplot::~Gnuplot() {
   if ( _gp != nullptr ) {
     fprintf(_gp.get(),"%s\n","quit");
     fflush(_gp.get());
-    r_val = pclose(_gp.get());
-    _gp.release();
-    if (r_val == -1) {
-      Exception e(EXCEPTION("Can not close gnuplot", ERRABT));
+    r_val = pclose(_gp.release());
+    if (r_val != 0) {
+      Exception e(EXCEPTION("Gnuplot returned non-zero code", ERRABT));
       std::cerr << e.fullWhat() << std::endl;
     }
   }
@@ -106,7 +109,7 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
   total << "set title '" << _title << "'" << std::endl;
   total << _buffer.str();
 
-  if ( _gp.get() != nullptr ) {
+  if ( _gp != nullptr ) {
     fprintf(_gp.get(),"%s\n",total.str().c_str());
     fflush(_gp.get());
   }
@@ -157,7 +160,7 @@ void Gnuplot::plot(const std::vector<double> &x, const std::list<std::vector<dou
   total << "set title '" << _title << "'" << std::endl;
   total << _buffer.str();
 
-  if ( _gp.get() != nullptr ) {
+  if ( _gp != nullptr ) {
     fprintf(_gp.get(),"%s\n",total.str().c_str());
     fflush(_gp.get());
   }
@@ -207,7 +210,7 @@ void Gnuplot::plot(const std::list<std::pair<std::vector<double>,std::vector<dou
   total << "set title '" << _title << "'" << std::endl;
   total << _buffer.str();
 
-  if ( _gp.get() != nullptr ) {
+  if ( _gp != nullptr ) {
     fprintf(_gp.get(),"%s\n",total.str().c_str());
     fflush(_gp.get());
   }
@@ -218,7 +221,7 @@ void Gnuplot::save(const std::string &filename) {
   std::stringstream com;
   this->dump(com,filename);
 
-  if ( _gp.get() != nullptr ) {
+  if ( _gp != nullptr ) {
     fprintf(_gp.get(),"%s\n",com.str().c_str());
     fflush(_gp.get());
   }

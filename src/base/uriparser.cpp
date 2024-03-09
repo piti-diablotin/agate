@@ -30,6 +30,9 @@
 #include <regex>
 #include <iostream>
 #include <fstream>
+#ifdef HAVE_SSH
+#include <libssh/libssh.h>
+#endif
 
 //
 UriParser::UriParser() :

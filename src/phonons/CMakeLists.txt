@@ -1,0 +1,7 @@
+set(LIBAGATE_SRC
+  ${LIBAGATE_SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/dispdb.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/phononmode.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/supercell.cpp
+  PARENT_SCOPE
+)

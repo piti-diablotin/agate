@@ -1,0 +1,5 @@
+include(CMakeFindDependencyMacro)
+
+set(findPackageCommonOptions CONFIG NO_CMAKE_PACKAGE_REGISTRY NO_CMAKE_SYSTEM_PACKAGE_REGISTRY)
+
+include("${CMAKE_CURRENT_LIST_DIR}/agateTargets.cmake")

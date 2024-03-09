@@ -1,0 +1,7 @@
+set(LIBAGATE_SRC
+  ${LIBAGATE_SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/octaangles.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/octahedra.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/octalengths.cpp
+  PARENT_SCOPE
+)

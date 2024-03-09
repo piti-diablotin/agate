@@ -24,7 +24,7 @@
  */
 
 
-#include "window/winfake.hpp"
+#include "winfake.hpp"
 #ifdef HAVE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>

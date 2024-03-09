@@ -1,0 +1,9 @@
+set(LIBAGATE_SRC
+  ${LIBAGATE_SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/canvas.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/canvasdensity.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/canvaslocal.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/canvasphonons.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/canvaspos.cpp
+  PARENT_SCOPE
+)

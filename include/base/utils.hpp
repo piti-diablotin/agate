@@ -110,7 +110,6 @@ namespace utils {
    * @return the converted integer number
    */
   inline int stoi(const std::string& str) {
-#ifdef HAVE_STOI
     try {
       return std::stoi(str);
     }
@@ -123,14 +122,6 @@ namespace utils {
     catch(...) {
       throw EXCEPTION("Bad cast string -> int",ERRDIV);
     }
-#else
-    long int val = strtol(str.c_str(), nullptr, 10);
-    if ( errno == ERANGE 
-        || val > ((1<<(sizeof(int)*8)/2)-1) 
-        || val < -((1<<(sizeof(int)*8)/2)-1) ) 
-      throw std::out_of_range("Bad string number");
-    return (int) val;
-#endif
   }
 
   /**
@@ -144,13 +135,7 @@ namespace utils {
     std::string s(str);
     size_t pos(s.find_first_of("Dd"));
     if (pos != std::string::npos) s[pos] = 'e';
-#ifdef HAVE_STOD
     return std::stod(s);
-#else
-    double val = strtod(s.c_str(), nullptr);
-    if ( errno == ERANGE ) throw std::out_of_range("Bad string number");
-    return val;
-#endif
   }
 
   /**
@@ -347,6 +332,8 @@ namespace utils {
    * @return the full string
    */
   std::string readString(std::istream& stream);
+
+  void backtrace();
 }
 
 #endif  // UTILS_HPP

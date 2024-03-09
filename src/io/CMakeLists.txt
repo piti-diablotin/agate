@@ -1,0 +1,29 @@
+set(LIBAGATE_SRC
+  ${LIBAGATE_SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/abibin.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/abihdr.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cifparser.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/configparser.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ddbabinit.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ddb.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ddboutcar.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ddbphonopy.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/dtset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/eigparser.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/eigparsereig.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/eigparserelectrons.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/eigparserfatbands.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/eigparsergsr.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/eigparserphbst.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/eigparserphfrq.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/eigparserphonons.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/eigparserphonopy.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/electrondos.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/etsfnc.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/outcar.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/parser.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/phonopydtset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/poscar.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/procar.cpp
+  PARENT_SCOPE
+)

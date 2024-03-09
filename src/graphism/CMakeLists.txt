@@ -1,0 +1,14 @@
+set(LIBAGATE_SRC
+  ${LIBAGATE_SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/imagesaver.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/render.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/textrender.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/triarrow.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tricloud.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tricube.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tricylinder.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/trimap.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/triobj.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/trisphere.cpp
+  PARENT_SCOPE
+)

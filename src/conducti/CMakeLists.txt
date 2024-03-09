@@ -1,0 +1,6 @@
+set(LIBAGATE_SRC
+  ${LIBAGATE_SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/abiopt.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/conducti.cpp
+  PARENT_SCOPE
+)

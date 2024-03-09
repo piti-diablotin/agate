@@ -1,0 +1,16 @@
+set(LIBAGATE_SRC
+  ${LIBAGATE_SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/histcustommodes.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/histdata.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/histdatadtset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/histdatagsr.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/histdataheff.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/histdatamd.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/histdatanc.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/histdataoutnc.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/histdatapolydtset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/histdataxyz.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/multibinit.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/vaspxml.cpp
+  PARENT_SCOPE
+)

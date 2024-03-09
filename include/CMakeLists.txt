@@ -1,0 +1,13 @@
+set(LIBAGATE_HEADERS)
+
+add_subdirectory(base)
+add_subdirectory(bind)
+add_subdirectory(canvas)
+add_subdirectory(conducti)
+add_subdirectory(graphism)
+add_subdirectory(hist)
+add_subdirectory(io)
+add_subdirectory(phonons)
+add_subdirectory(plot)
+add_subdirectory(shape)
+add_subdirectory(window)

@@ -24,7 +24,7 @@
  */
 
 
-#include "window/winglfw3.hpp"
+#include "winglfw3.hpp"
 #include "base/exception.hpp"
 #include <cmath>
 #ifdef HAVE_GLFW3
@@ -51,7 +51,8 @@ WinGlfw3::WinGlfw3(pCanvas &canvas, const int width, const int height, const int
   _stateKey(),
   _stateMouse(),
   _offsets {0},
-  _scalings {1}
+  _scalings {1},
+  _dropCallback([](int,const char**){})
 {
   for ( unsigned key = 0 ; key < _maxKeys ; ++key )
     _stateKey[key] = false;

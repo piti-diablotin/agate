@@ -35,10 +35,8 @@
 #include <execinfo.h>
 #include "io/parser.hpp"
 #include "io/configparser.hpp"
-#include "hist/histdatanc.hpp"
-#include "window/winglfw2.hpp"
-#include "window/winglfw3.hpp"
-#include "window/winfake.hpp"
+#include "winglfw3.hpp"
+#include "winfake.hpp"
 #include "canvas/canvaspos.hpp"
 #include "base/utils.hpp"
 #include "plot/gnuplot.hpp"
@@ -51,9 +49,7 @@ Window* ptrwin = nullptr; ///< Pointer to the window if created
 void Version(){
   int major, minor, rev;
   utils::Version();
-#ifdef HAVE_GLFW2
-  WinGlfw2::version(major, minor, rev);
-#elif defined(HAVE_GLFW3)
+#ifdef HAVE_GLFW3
   WinGlfw3::version(major, minor, rev);
 #else
   (void)(major);
@@ -128,6 +124,7 @@ void DropCallback(int count, const char** paths){
  * @param para signal received
  */
 void handle_signal (int para) {
+  utils::backtrace();
   switch(para) {
     case SIGABRT :
       std::cerr << "Abord signal received." << std::endl;
@@ -165,22 +162,6 @@ void handle_signal (int para) {
 
 
 /**
- * Handle when the terminate function is called
- */
-void handle_terminate() {
-    void *trace_elems[20];
-    int trace_elem_count(backtrace( trace_elems, 20 ));
-    char **stack_syms(backtrace_symbols( trace_elems, trace_elem_count ));
-    for ( int i = 0 ; i < trace_elem_count ; ++i )
-    {
-        std::cerr << stack_syms[i] << std::endl;
-    }
-    free( stack_syms );
-    exit(1);
-}
-
-
-/**
  * Main Program
  * @param argc Number of argument on the command line.
  * @param argv Array of strings for each argument.
@@ -197,7 +178,6 @@ int main(int argc, char** argv) {
   signal(SIGKILL,handle_signal);
   signal(SIGQUIT,handle_signal);
 #endif
-  std::set_terminate (handle_terminate);
 
   int rvalue = 0;
   Parser parser(argc,argv);
@@ -284,9 +264,6 @@ int main(int argc, char** argv) {
       catch(Exception &e){
         std::clog << e.fullWhat() << std::endl;
       }
-#elif defined(HAVE_GLFW2)
-      WinGlfw2::init();
-      ptrwin = new WinGlfw2(crystal,width,height);
 #else
       std::clog << "Using no window mode" << std::endl;
       useopengl = false;
@@ -378,9 +355,7 @@ int main(int argc, char** argv) {
 
   if ( !parser.getOption<bool>("term") ) {
 #ifdef HAVE_GL
-#ifdef HAVE_GLFW2
-    WinGlfw2::end();
-#elif defined(HAVE_GLFW3)
+#if defined(HAVE_GLFW3)
     WinGlfw3::end();
 #else
     Winfake::end();

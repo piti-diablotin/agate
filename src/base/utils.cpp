@@ -25,6 +25,8 @@
 
 
 #include "base/utils.hpp"
+#include <cxxabi.h>
+#include <execinfo.h>
 #include <sstream>
 #include <utility>
 #include <locale>
@@ -175,24 +177,6 @@ namespace utils {
 #else
     out << " * GLEXT....: no" << std::endl;
 #endif
-
-#if defined(HAVE_GLFW2) || defined(HAVE_GLFW3)
-    out << " * GLFW.....: yes" << std::endl;
-#  ifdef HAVE_GLFW3
-    out << "              (version 3)" << std::endl;
-#  else
-    out << "              (version 2)" << std::endl;
-#  endif
-#else
-    out << " * GLFW.....: no" << std::endl;
-#endif
-
-//#if defined(HAVE_QT)
-//    out << " * Qt.......: yes" << std::endl;
-//    //out << "              (" << QT_VERSION_STR << ")" << std::endl;
-//#else
-//    out << " * Qt.......: no" << std::endl;
-//#endif
 
 #ifdef HAVE_LIBJPEG
     out << " * LibJPEG..: yes" << std::endl;
@@ -588,6 +572,22 @@ std::string readString(std::istream& stream) {
 #endif
   }
   return fullString;
+}
+
+void backtrace() {
+  const int maxTraces = 100;
+  void* array[maxTraces];
+  char** strings;
+
+  auto nbTraces = ::backtrace(array, maxTraces);
+  strings = ::backtrace_symbols(array, nbTraces);
+  if (strings) {
+    std::cout << nbTraces << " stack frames." << std::endl;
+    for (int i = 0; i < nbTraces; ++i) {
+      std::cout << strings[i] << std::endl;
+    }
+    ::free(strings);
+  }
 }
 
 }

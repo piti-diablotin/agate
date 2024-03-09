@@ -1,0 +1,13 @@
+set(LIBAGATE_SRC
+  ${LIBAGATE_SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/exception.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/fraction.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mendeleev.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/phys.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ssh.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/unitconverter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/uriparser.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
+  PARENT_SCOPE
+)

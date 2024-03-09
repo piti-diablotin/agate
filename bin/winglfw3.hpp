@@ -38,7 +38,6 @@
 #endif
 
 #include "window/window.hpp"
-#include "io/configparser.hpp"
 #include "canvas/canvas.hpp"
 #include <string>
 #include <map>

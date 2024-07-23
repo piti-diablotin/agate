@@ -152,7 +152,7 @@ void HistCustomModes::animateModes(const DispDB::qptTree &condensedModes,
                    qpt != condensedModes.end(); ++qpt) {
                 for (auto vib : qpt->second) {
                   supercell.makeDisplacement(qpt->first, _db, vib.imode,
-                                             vib.amplitude, theta);
+                                             vib.amplitude, vib.phase+theta);
                 }
               }
               this->push(supercell);
@@ -592,7 +592,7 @@ void HistCustomModes::buildInsert(Supercell &supercell, const unsigned itime) {
          iqpt != _condensedModes[itime].end(); ++iqpt) {
       for (auto vib : iqpt->second) {
         supercell.makeDisplacement(iqpt->first, _db, vib.imode, vib.amplitude,
-                                   0);
+                                   vib.phase);
       }
     }
   }

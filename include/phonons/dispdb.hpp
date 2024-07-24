@@ -90,7 +90,7 @@ class DispDB {
     typedef struct qMode { 
       unsigned imode;
       double amplitude;
-	  double phase;
+      double phase;
       double energy;
       bool operator==(const qMode& m1) const { return imode == m1.imode ;}
     } qMode;

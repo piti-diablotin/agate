@@ -37,6 +37,7 @@
 
 //
 CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
+  _amplitudeDisplacement(1),
   _displacements(),
   _reference(),
   _supercell(),

@@ -51,7 +51,7 @@ class CanvasPhonons : public CanvasPos {
   private :
 
     double    _amplitudeDisplacement; ///< pre-Factor to increase displacement amplitude.
-	double    _phasePhi;
+    double    _phasePhi;
     DispDB    _displacements; ///< List of all eigen displacement;
     Dtset     _reference;     ///< reference structure to build supercell
     Supercell _supercell;  ///< Supercell to draw with displacements;

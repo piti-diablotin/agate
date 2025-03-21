@@ -1416,16 +1416,35 @@ if test x"$glsupport" = x"yes"; then
 
   TMP_LIBS=$LIBS
 
-  # GLFW2
-  AC_CHECK_HEADER([$GL_PREFIX/glfw.h],[glfw2_check_h=yes],[glfw2_check_h=no])
-  AC_CHECK_LIB([glfw],[glfwOpenWindow],[glfw2_check_lib=yes;glfw_suf=''],[
-                AC_CHECK_LIB([glfw2],[glfwOpenWindow],[glfw2_check_lib=yes;glfw_suf=2],[glfw2_check_lib=no;glfw_ver=0])])
-
-  
   # GLFW3
   AC_CHECK_HEADER([GLFW/glfw3.h],[glfw3_check_h=yes],[glfw3_check_h=no])
-  AC_CHECK_LIB([glfw],[glfwCreateWindow],[glfw3_check_lib=yes;glfw_suf=''],[
-                AC_CHECK_LIB([glfw3],[glfwCreateWindow],[glfw3_check_lib=yes;glfw_suf=3],[glfw3_check_lib=no],[$GLFW_EXTRA])])
+  LIBS="$TMP_LIBS $GLFW_EXTRA";
+  AC_CHECK_LIB([glfw3], [glfwCreateWindow],[glfw3_check_lib=yes;glfw_suf=3],[
+    AS_UNSET([ac_cv_lib_glfw3_glfwCreateWindow]);LIBS="$TMP_LIBS";
+    AC_CHECK_LIB([glfw3], [glfwCreateWindow],[glfw3_check_lib=yes;glfw_suf=3;GLFW_EXTRA=''],[
+      AS_UNSET([ac_cv_lib_glfw_glfwCreateWindow]);LIBS="$TMP_LIBS $GLFW_EXTRA";
+      AC_CHECK_LIB([glfw], [glfwCreateWindow],[glfw3_check_lib=yes;glfw_suf=''], [
+        AS_UNSET([ac_cv_lib_glfw_glfwCreateWindow]);LIBS="$TMP_LIBS";
+        AC_CHECK_LIB([glfw], [glfwCreateWindow],[glfw3_check_lib=yes;glfw_suf='';GLFW_EXTRA=''],[
+          glfw3_check_lib=no
+        ])
+      ])
+    ])
+  ])
+
+  # GLFW2
+  if test x"$glfw3_check_lib" = x"no"; then
+    LIBS="$TMP_LIBS";
+    AC_CHECK_LIB([glfw2], [glfwOpenWindow],[glfw2_check_lib=yes;glfw_suf=2],[
+      AS_UNSET([ac_cv_lib_glfw_glfwOpenWindow]);LIBS="$TMP_LIBS";
+      AC_CHECK_LIB([glfw], [glfwOpenWindow],[glfw2_check_lib=yes;glfw_suf=''],[
+        glfw2_check_lib=no
+      ])
+    ])
+  else
+    glfw2_check_h="no"
+    glfw2_check_lib="no"
+  fi
 
   have_glfw_usable="no"
   glfw_version=""

@@ -40,6 +40,15 @@
 #include "phonons/supercell.hpp"
 #include "hist/histdatamd.hpp"
 
+#  ifdef __cplusplus
+extern "C"{
+#  endif
+#  include "spglib.h"
+#  ifdef __cplusplus
+}
+#  endif
+
+
 using namespace Agate;
 
 //
@@ -117,11 +126,13 @@ Dtset::Dtset(const HistData &hist, const unsigned itime) :
   }
 
   try {
-    const HistDataMD& md = dynamic_cast<const HistDataMD&>(hist);
-    const double* vel = md.getVel(itime);
-    if ( vel != nullptr ){
-      for ( unsigned iatom = 0; iatom < _natom; ++iatom ) {
-        _velocities.push_back({{vel[iatom*3], vel[iatom*3+1], vel[iatom*3+2]}});
+    const HistDataMD* md = dynamic_cast<const HistDataMD*>(&hist);
+    if ( md != nullptr) {
+      const double* vel = md->getVel(itime);
+      if ( vel != nullptr ){
+        for ( unsigned iatom = 0; iatom < _natom; ++iatom ) {
+          _velocities.push_back({{vel[iatom*3], vel[iatom*3+1], vel[iatom*3+2]}});
+        }
       }
     }
   }
@@ -1026,7 +1037,7 @@ void Dtset::getSymmetries(std::vector<geometry::mat3d> &rotations, std::vector<g
 #endif
 }
 
-SpglibDataset* Dtset::getSpgDtset(double symprec) const {
+void* Dtset::getSpgDtset(double symprec) const {
 #ifdef HAVE_SPGLIB
   double (*lattice)[3] = (double(*)[3]) &_rprim[0];
   double *positions = new double[_natom*3];

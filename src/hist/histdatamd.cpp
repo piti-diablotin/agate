@@ -165,7 +165,7 @@ HistDataMD& HistDataMD::operator = (const HistDataMD& hist){
 
 //
 const double* HistDataMD::getVel(unsigned time) const {
-  if ( time > _ntime )
+  if ( time > _ntime || time >= _velocities.size() )
     throw EXCEPTION(std::string("Out of range for velocities ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
   return &_velocities[time*3*_natom];
@@ -173,7 +173,7 @@ const double* HistDataMD::getVel(unsigned time) const {
 
 //
 double HistDataMD::getEkin(unsigned time) const {
-  if ( time > _ntime )
+  if ( time > _ntime || time >= _ekin.size() )
     throw EXCEPTION(std::string("Out of range for ekin ")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
   return _ekin[time];
@@ -181,7 +181,7 @@ double HistDataMD::getEkin(unsigned time) const {
 
 //
 double HistDataMD::getTemperature(unsigned time) const {
-  if ( time > _ntime )
+  if ( time > _ntime || time >= _temperature.size() )
     throw EXCEPTION(std::string("Out of range for temperature")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
   return _temperature[time];
@@ -189,7 +189,7 @@ double HistDataMD::getTemperature(unsigned time) const {
 
 //
 double HistDataMD::getPressure(unsigned time) const {
-  if ( time > _ntime )
+  if ( time > _ntime || time >= _pressure.size() )
     throw EXCEPTION(std::string("Out of range for pressure")+utils::to_string(time)+
         std::string("/")+utils::to_string(_ntime),ERRDIV);
   return _pressure[time];
@@ -350,7 +350,7 @@ void HistDataMD::printThermo(unsigned tbegin, unsigned tend, std::ostream &out) 
 
   for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
     geometry::mat3d rprimd;
-    std::copy(&_rprimd[itime*3*3],&_rprimd[itime*3*3+9],rprimd.begin());
+    std::copy_n(&_rprimd[itime*3*3],9,rprimd.begin());
     volume[itime-tbegin] = geometry::det(rprimd);
   }
 
@@ -758,7 +758,7 @@ std::list<std::vector<double>> HistDataMD::getPDOS(unsigned tbegin, unsigned ten
     for ( int u = 0 ; u < howmany ; ++u ) {
       auto ptrpdos = pdos.begin();
       std::advance(ptrpdos,u);
-      std::copy(&fft_out[u*n],&fft_out[(u+1)*n],ptrpdos->begin());
+      std::copy_n(&fft_out[u*n],n,ptrpdos->begin());
     }
   }
 

@@ -60,12 +60,14 @@ void Outcar::readFromFile(const std::string& filename) {
     std::string line;
     unsigned int iline = 0;
     _znucl.clear();
+    int step = 0;
     while ( utils::getline(outcar,line,iline) ) {
       size_t pos;
       if ( (pos=line.find("NION")) != std::string::npos ) {
         std::istringstream str(line.substr(pos+7));
         str >> _natom;
         _xred.resize(_natom);
+        ++step;
       }
       else if ( (pos=line.find("ions per type")) != std::string::npos ) {
         std::istringstream str(line.substr(pos+15));
@@ -79,6 +81,7 @@ void Outcar::readFromFile(const std::string& filename) {
           for ( unsigned i = 0 ; i < ntypat ; ++ i ) _typat.push_back(itypat);
         }
         _ntypat = itypat;
+        ++step;
       }
       else if ( (pos=line.find("direct lattice vectors")) != std::string::npos ) {
         for ( unsigned i = 1 ; i < 4 ; ++i ) {
@@ -87,6 +90,7 @@ void Outcar::readFromFile(const std::string& filename) {
           str >> _rprim[mat3dind(i,1)] >> _rprim[mat3dind(i,2)] >> _rprim[mat3dind(i,3)];
         }
         for ( auto& r : _rprim ) r *= phys::A2b;
+        ++step;
       }
       else if ( (pos=line.find("position of ions in fractional coordinates")) != std::string::npos ) {
         for ( unsigned i = 0 ; i < _natom ; ++i ) {
@@ -94,18 +98,23 @@ void Outcar::readFromFile(const std::string& filename) {
           std::istringstream str(line);
           str >> _xred[i][0] >> _xred[i][1] >> _xred[i][2];
         }
+        ++step;
       }
       else if ( (pos=line.find("POMASS")) != std::string::npos ) {
         std::istringstream str(line.substr(pos+8));
         double mass;
         str >> mass;
         _znucl.push_back(Agate::Mendeleev::znucl(mass));
+        ++step;
       }
     }
     outcar.close();
+    if (step < 5){
+      throw EXCEPTION("Missing some elements",ERRABT);
+    }
     _gprim = geometry::invertTranspose(_rprim);
     geometry::changeBasis(_rprim, _xcart, _xred, false);
-    _znucl.pop_back(); // Remove last POMASS which is in OUTCAR POMASS = M1 M2 M3 ....
+    if (!_znucl.empty()) _znucl.pop_back(); // Remove last POMASS which is in OUTCAR POMASS = M1 M2 M3 ....
     if ( _znucl.size() != _ntypat ) {
       std::ostringstream str;
       str << "Found " << _ntypat << " types of atom but znucl size is " << _znucl.size();

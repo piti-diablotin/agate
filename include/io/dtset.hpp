@@ -43,15 +43,7 @@
 #include "base/geometry.hpp"
 #include "io/configparser.hpp"
 #include "hist/histdata.hpp"
-#ifdef HAVE_SPGLIB
-#  ifdef __cplusplus
-extern "C" {
-#  endif
-#  include "spglib/spglib.h"
-#  ifdef __cplusplus
-}
-#  endif
-#endif
+
 
 /**
  * Equivalent of the dataset_type in Abinit
@@ -257,10 +249,7 @@ class Dtset {
      * Return the SpglibDataset calculated by Spglib
      * See Spglib documentation to know what's inside.
      */
-#ifndef HAVE_SPGLIB
-#define SpglibDataset void
-#endif
-    SpglibDataset* getSpgDtset(double symprec) const;
+    void* getSpgDtset(double symprec) const;
 
 
     /**

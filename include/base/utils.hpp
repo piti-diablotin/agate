@@ -292,6 +292,11 @@ namespace utils {
           T value;
           basic >> value;
           if ( basic.fail() ) throw EXCEPTION("",1);
+          if constexpr (std::is_floating_point<T>::value) {
+            if (std::abs(value) < 1e-12) {
+              value = 0;
+            }
+          }
           return  value;
         }
       };

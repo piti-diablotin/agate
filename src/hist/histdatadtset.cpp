@@ -231,7 +231,7 @@ void HistDataDtset::readFromFile(const std::string& filename) {
         _ntime = 1;
         _typat.resize(_natom*nimage);
         for ( unsigned img = 1 ; img < nimage ; ++img ) {
-          std::copy(&_typat[0],&_typat[_natom],&_typat[_natom*img]);
+          std::copy_n(&_typat[0],_natom,&_typat[_natom*img]);
         }
         _natom *= nimage;
         std::vector<double> mdtemp(2);

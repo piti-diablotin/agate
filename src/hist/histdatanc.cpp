@@ -483,8 +483,8 @@ void HistDataNC::readFromFile(const std::string& filename) {
     _typat.resize(_natom);
     _spinat.resize(_natom*_xyz*_ntime);
     for ( unsigned img = 1 ; img < nimage ; ++img ) {
-      std::copy(&_typat[0],&_typat[natomImg],&_typat[natomImg*img]);
-      std::copy(&_spinat[0],&_spinat[natomImg*3],&_spinat[natomImg*3*img]);
+      std::copy_n(&_typat[0],natomImg,&_typat[natomImg*img]);
+      std::copy_n(&_spinat[0],natomImg*3,&_spinat[natomImg*3*img]);
     }
   }
 
@@ -724,7 +724,7 @@ void HistDataNC::readFromFile(const std::string& filename) {
 
             // Duplicate spinat at while we don't have the time evolution.
             if ( has_spinat )
-              std::copy(&_spinat[0],&_spinat[_natom*_xyz],&_spinat[ltime*_natom*_xyz]);
+              std::copy_n(&_spinat[0],_natom*_xyz,&_spinat[ltime*_natom*_xyz]);
           }
           _ntimeAvail += adjust_count;
         }

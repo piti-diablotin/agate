@@ -66,9 +66,9 @@ target_compile_definitions(libagate
 )
 
 target_link_libraries(libagate
-  PUBLIC
+  PRIVATE
+  Spglib::symspg
   netCDF::netcdf
-  symspg_static
   yaml-cpp
   $<$<BOOL:${Threads_FOUND}>:Threads::Threads>
   $<$<BOOL:${OpenMP_FOUND}>:OpenMP::OpenMP_CXX>

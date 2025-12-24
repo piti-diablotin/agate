@@ -213,8 +213,8 @@ void CanvasLocal::updateOctahedra(int z) {
     const double *rprimd = _histdata->getRprimd(0);
 
     this->buildBorders(0,false);
-    std::copy(&histXcart[0],&histXcart[_natom*3],&xcartTotal[0]);
-    std::copy(&_xcartBorders[0],&_xcartBorders[_onBorders.size()*3],&xcartTotal[_natom*3]);
+    std::copy_n(&histXcart[0],_natom*3,&xcartTotal[0]);
+    std::copy_n(&_xcartBorders[0],_onBorders.size()*3,&xcartTotal[_natom*3]);
 
     try {
       Octahedra::u3f angles;

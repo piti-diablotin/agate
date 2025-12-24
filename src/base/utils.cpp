@@ -52,7 +52,7 @@
 #  ifdef __cplusplus
 extern "C"{
 #  endif
-#  include "spglib/spglib.h"
+#  include "spglib.h"
 #  ifdef __cplusplus
 }
 #  endif

@@ -225,9 +225,8 @@ void CanvasPos::updateOctahedra(int z) {
     const double *rprimd = _histdata->getRprimd(_itime);
 
     this->buildBorders(_itime, false);
-    std::copy(&histXcart[0], &histXcart[_natom * 3], &xcartTotal[0]);
-    std::copy(&_xcartBorders[0], &_xcartBorders[_onBorders.size() * 3],
-              &xcartTotal[_natom * 3]);
+    std::copy_n(&histXcart[0], _natom * 3, &xcartTotal[0]);
+    std::copy_n(&_xcartBorders[0], _onBorders.size() * 3, &xcartTotal[_natom * 3]);
 
     try {
       for (unsigned iatom = 0; iatom < _natom + _onBorders.size(); ++iatom)

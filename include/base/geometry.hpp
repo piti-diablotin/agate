@@ -355,8 +355,20 @@ namespace geometry {
   inline void recenter(vec3d& vec) {
     for (auto &v : vec) 
     { 
-      while ( v <= -0.5 ) ++v;
-      while ( v > 0.5 ) --v;
+      while ( v <= -0.5 ) v+=1.0;
+      while ( v > 0.5 ) v-=1.0;
+    }
+  }
+
+   /** 
+   * Periodize the coordinated so the "reduced coordinates" are between [0;1[;
+   * @param vec1 vector of reduced coordinated
+   */
+  inline void periodize(vec3d& vec) {
+    for (auto &v : vec) 
+    { 
+      while ( v < 0. ) v+=1.0;
+      while ( v >= 1. ) v-=1.0;
     }
   }
 

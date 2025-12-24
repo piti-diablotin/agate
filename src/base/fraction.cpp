@@ -25,6 +25,7 @@
 
 
 #include "base/fraction.hpp"
+#include <exception>
 #include <sstream>
 #include <cmath>
 #include <iostream>
@@ -96,13 +97,24 @@ void Fraction::compute()
     }
   }
   if ( _denominator != 0 && _numerator != 0 ) {
-    int sign = _numerator*_denominator;
-    _denominator = std::abs(_denominator);
-    _numerator = std::abs(_numerator);
-    int div = pgcd(_numerator,_denominator);
-    _numerator/=div;
-    _denominator/=div;
-    if ( sign < 0 ) _numerator *= -1;
+    try {
+      int signA = std::copysign(1,_numerator);
+      int signB = std::copysign(1,_denominator);
+      int sign = signA * signB;
+      _denominator = std::abs(_denominator);
+      _numerator = std::abs(_numerator);
+      int div = pgcd(_numerator,_denominator);
+      if(div ==0) {
+        throw std::exception();
+      }
+      _numerator/=div;
+      _denominator/=div;
+      _numerator *= sign;
+    }
+    catch(...) {
+      _denominator = 0 ;
+      _numerator = 0;
+    }
   }
 }
 
@@ -111,7 +123,6 @@ Fraction::Fraction() :
   _denominator(0),
   _float(INFINITY)
 {
-  this->compute();
 }
 
 Fraction::Fraction(int num, int denom) :
@@ -119,7 +130,6 @@ Fraction::Fraction(int num, int denom) :
   _denominator(denom),
   _float((double)num/(double)denom)
 {
-  this->compute();
 }
 
 Fraction::Fraction(double val) :

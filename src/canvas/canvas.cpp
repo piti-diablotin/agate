@@ -711,6 +711,7 @@ void Canvas::help(std::ostream &out) {
   out << setw(45) << "" << setw(59) << "etotal: Total electronic energy" << endl;
   out << setw(45) << "" << setw(59) << "entropy: Electronic entropy" << endl;
   out << setw(45) << "" << setw(59) << "positions (x|y|z)(x|y|z) [cartesian|reduced]: The atomic position in cartedisan or reduced coordinates (default is cartesian) in the chosen plan" << endl;
+  out << setw(45) << "" << setw(59) << "polarization ddb file_DDB: The polarization calculated with the displacement of atoms and Zeffs" << endl;
   out << setw(45) << "" << setw(59) << "msd: Mean Square displacement Function" << endl;
   out << setw(45) << "" << setw(59) << "pacf: Position AutoCorrelation Function" << endl;
   out << setw(45) << "" << setw(59) << "vacf: Velocity AutoCorrelation Function" << endl;

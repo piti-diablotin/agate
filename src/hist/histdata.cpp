@@ -47,7 +47,7 @@
 #  ifdef __cplusplus
 extern "C" {
 #  endif
-#  include "spglib/spglib.h"
+#  include "spglib.h"
 #  ifdef __cplusplus
 }
 #  endif
@@ -939,7 +939,7 @@ std::pair<std::vector<double>,std::vector<double>> HistData::getPDF(unsigned znu
 #pragma omp parallel for  schedule(static), if(tend-tbegin>=nthread), reduction(+:factor), firstprivate(Rmax2)
   for ( int itime = tbegin ; itime < (int) tend ; ++itime ) {
     mat3d rprimd;
-    std::copy(&_rprimd[itime*3*3],&_rprimd[itime*3*3+9],rprimd.begin());
+    std::copy_n(&_rprimd[itime*3*3],9,rprimd.begin());
     std::array<vec3d,3> rprimv;
     rprimv[0] = {{ rprimd[0], rprimd[3], rprimd[6] }};
     rprimv[1] = {{ rprimd[1], rprimd[4], rprimd[7] }};
@@ -1475,7 +1475,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 #pragma omp parallel for schedule(static)
     for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
       geometry::mat3d rprimd;
-      std::copy(&_rprimd[itime*3*3],&_rprimd[itime*3*3+9],rprimd.begin());
+      std::copy_n(&_rprimd[itime*3*3],9,rprimd.begin());
       volume[itime-tbegin] = scaleV*geometry::det(rprimd)*dunit*dunit*dunit;
     }
     y.push_back(std::move(volume));
@@ -1546,7 +1546,7 @@ void HistData::plot(unsigned tbegin, unsigned tend, std::istream &stream, Graph 
 #pragma omp parallel for schedule(static)
       for ( unsigned itime = tbegin ; itime < tend ; ++itime ) {
         geometry::mat3d rprim;
-        std::copy(&_rprimd[itime*3*3],&_rprimd[itime*3*3+9],&rprim[0]);
+        std::copy_n(&_rprimd[itime*3*3],9,&rprim[0]);
         geometry::vec3d angles = geometry::angle(rprim);
         alpha[itime-tbegin]=angles[0];
         beta[itime-tbegin]=angles[1];

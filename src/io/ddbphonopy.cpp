@@ -33,6 +33,16 @@
 #include "base/phys.hpp"
 #include "base/mendeleev.hpp"
 
+#ifdef HAVE_SPGLIB
+#  ifdef __cplusplus
+extern "C" {
+#  endif
+#  include "spglib.h"
+#  ifdef __cplusplus
+}
+#  endif
+#endif
+
 //
 DdbPhonopy::DdbPhonopy() : Ddb() {
   _haveMasses = true;
@@ -165,7 +175,7 @@ void DdbPhonopy::buildFrom(const Dtset& dtset) {
     auto e = EXCEPTION("Number of Zeff is smaller than natom is not supported yet",ERRWAR);
     std::clog << e.fullWhat() << std::endl;
 #ifdef HAVE_SPGLIB
-    SpglibDataset* spgDtset = this->getSpgDtset(0.001*phys::A2b);
+    auto* spgDtset = static_cast<SpglibDataset*>(this->getSpgDtset(0.001*phys::A2b));
     if ( spgDtset != nullptr ) {
       const geometry::mat3d zero = {0};
       for ( unsigned iatom = 0, izeff=0; iatom < _natom; ++iatom ) {

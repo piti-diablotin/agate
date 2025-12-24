@@ -6,7 +6,7 @@ project(
   LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -15,38 +15,39 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Export compile_commands.json" F
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   include(CheckCXXCompilerFlag)
   check_cxx_compiler_flag(-Weffc++ CXX_HAS_WEFF)
-    check_cxx_compiler_flag(-Wextra CXX_HAS_WEXTRA)
-    check_cxx_compiler_flag(-Wall CXX_HAS_WALL)
-    check_cxx_compiler_flag(-Wno-uninitialized CXX_HAS_WNOINITIALIZED)
-    check_cxx_compiler_flag(-Werror CXX_HAS_WERROR)
-    if(CXX_HAS_WEFF)
-      set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Weffc++")
-    endif()
-    if(CXX_HAS_WEXTRA)
-      set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wextra")
-    endif()
-    if(CXX_HAS_WALL)
-      set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
-    endif()
-    if(CXX_HAS_WNOINITIALIZED)
-      set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wno-uninitialized")
-    endif()
-    if(CXX_HAS_WERROR)
-      #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror")
-    endif()
+  check_cxx_compiler_flag(-Wextra CXX_HAS_WEXTRA)
+  check_cxx_compiler_flag(-Wall CXX_HAS_WALL)
+  check_cxx_compiler_flag(-Wno-uninitialized CXX_HAS_WNOINITIALIZED)
+  check_cxx_compiler_flag(-Werror CXX_HAS_WERROR)
+  if(CXX_HAS_WEFF)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Weffc++")
+  endif()
+  if(CXX_HAS_WEXTRA)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wextra")
+  endif()
+  if(CXX_HAS_WALL)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+  endif()
+  if(CXX_HAS_WNOINITIALIZED)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wno-uninitialized")
+  endif()
+  if(CXX_HAS_WERROR)
+    #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror")
+  endif()
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(FetchContent)
 include(GNUInstallDirs)
 
-find_program(GIT_EXE git)
-if(GIT_EXE)
+find_package(Git)
+if(Git_FOUND)
   execute_process(
-    COMMAND ${GIT_EXE} log -1 --format=%h
+    COMMAND ${GIT_EXECUTABLE} log -1 --format=%h
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
   )
 endif()
 
@@ -77,19 +78,16 @@ if(NOT Eigen3_FOUND)
   )
   FetchContent_MakeAvailable(Eigen3)
 endif()
-find_package(Spglib 1.15.0 COMPONENTS static QUIET) # Spglib::symspg 
+find_package(Spglib 2.0 REQUIRED) # Spglib::symspg 
 if(NOT Spglib_FOUND)
   FetchContent_Declare(
     Spglib
     GIT_REPOSITORY https://github.com/spglib/spglib.git
-    GIT_TAG v2.0.2
+    GIT_TAG v2.6.0
   )
   set(SPGLIB_SHARED_LIBS OFF)
+  set(SPGLIB_USE_OMP ON)
   FetchContent_MakeAvailable(Spglib)
-  FetchContent_GetProperties(Spglib SOURCE_DIR Spglib_SOURCE_DIR)
-  target_include_directories(symspg_static PUBLIC ${Spglib_SOURCE_DIR}/src/)
-  file(MAKE_DIRECTORY ${Spglib_SOURCE_DIR}/src/spglib)
-  file(COPY ${Spglib_SOURCE_DIR}/src/spglib.h DESTINATION ${Spglib_SOURCE_DIR}/src/spglib/)
 endif()
 find_package(yaml-cpp) # yaml-cpp::yaml-cpp
 if(NOT yaml-cpp_FOUND)
@@ -129,8 +127,7 @@ add_executable(agate
 
 target_link_libraries(agate
   PRIVATE
-  libagate
-  symspg_static
+  agate::agate
   $<$<BOOL:${glfw3_FOUND}>:glfw>
 )
 
@@ -139,4 +136,5 @@ target_compile_definitions(agate
   PACKAGE="${PROJECT_NAME}"
   PACKAGE_STRING="${PROJECT_NAME} ${PROJECT_VERSION}"
   $<$<BOOL:${glfw3_FOUND}>:HAVE_GLFW3>
+  $<$<BOOL:${glfw3_FOUND}>:HAVE_GLFW3_DROP>
 )

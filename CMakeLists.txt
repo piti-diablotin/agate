@@ -108,16 +108,17 @@ find_package(glfw3 3.3) # glfw
 find_package(JPEG) # JPEG::JPEG
 find_package(PNG) # PNG::PNG
 
-get_property(importTargetsAfter DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTY IMPORTED_TARGETS)
-list(REMOVE_ITEM importTargetsAfter ${importTargets})
+#get_property(importTargetsAfter DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTY IMPORTED_TARGETS)
+#list(REMOVE_ITEM importTargetsAfter ${importTargets})
 
-message("${importTargetsAfter}")
+#message("${importTargetsAfter}")
 
 include(CheckIncludeFile)
 check_include_file_cxx("getopt.h" GETOPT_H)
 
 add_subdirectory(include)
 add_subdirectory(src)
+add_subdirectory(test)
 
 add_executable(agate
   bin/agate.cpp

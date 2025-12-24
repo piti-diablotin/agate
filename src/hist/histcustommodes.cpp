@@ -322,12 +322,13 @@ void HistCustomModes::strainDist(
       _strainDist[itime] = this->getStrainMatrix(amplitudes);
     }
   } else if (_randomType == Normal) {
+    // avoid assert if deviation is 0 -> set 0.1
     std::normal_distribution<double> isoRng((isoMax + isoMin) / 2,
-                                            (isoMax - isoMin) / 6);
+                                            iso ? std::abs(isoMax - isoMin) / 6 : 0.1);
     std::normal_distribution<double> tetraRng((tetraMax + tetraMin) / 2,
-                                              (tetraMax - tetraMin) / 6);
+                                              tetra ? std::abs(tetraMax - tetraMin) / 6 : 0.1);
     std::normal_distribution<double> shearRng((shearMax + shearMin) / 2,
-                                              (shearMax - shearMin) / 6);
+                                              shear ? std::abs(shearMax - shearMin) / 6 : 0.1);
     for (unsigned itime = 0; itime < ntime; ++itime) {
       std::array<double, 3> amplitudes({0});
       if (iso)

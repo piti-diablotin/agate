@@ -33,7 +33,6 @@
 #include <sstream>
 #include <exception>
 #include <execinfo.h>
-#include <cxxabi.h>
 #include "io/parser.hpp"
 #include "io/configparser.hpp"
 #include "winglfw3.hpp"
@@ -44,40 +43,6 @@
 
 Window* ptrwin = nullptr; ///< Pointer to the window if created
                           
-
-void print_stacktrace()
-{
-    void* addrlist[64];
-    int addrlen = ::backtrace(addrlist, 64);
-
-    char** symbollist = ::backtrace_symbols(addrlist, addrlen);
-
-    for (int i = 0; i < addrlen; i++)
-    {
-        std::string sym(symbollist[i]);
-
-        size_t begin = sym.find('(');
-        size_t end   = sym.find('+', begin);
-
-        if (begin != std::string::npos && end != std::string::npos)
-        {
-            std::string mangled = sym.substr(begin + 1, end - begin - 1);
-
-            int status;
-            char* demangled = abi::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
-            if (status == 0)
-            {
-                sym.replace(begin + 1, end - begin - 1, demangled);
-            }
-            free(demangled);
-        }
-
-        std::cerr << sym << std::endl;
-    }
-
-    free(symbollist);
-}
-
 
 /**
  * Simple function to display the name and version of the package and what window manager we use.
@@ -164,7 +129,6 @@ void handle_signal (int para) {
   switch(para) {
     case SIGABRT :
       std::cerr << "Abord signal received." << std::endl;
-      print_stacktrace();
       break;
     case SIGFPE :
       std::cerr << "Floating point exception." << std::endl;
@@ -174,7 +138,6 @@ void handle_signal (int para) {
       break;
     case SIGSEGV :
       std::cerr << "Segmentation fault occured." << std::endl;
-      print_stacktrace();
       break;
     case SIGTERM :
     case SIGINT :

@@ -49,6 +49,7 @@ target_compile_definitions(libagate
   $<$<BOOL:${GETOPT_H}>:HAVE_GETOPT_H>
   $<$<VERSION_GREATER_EQUAL:CURL_VERSION_STRING,"7.85.0">:CURL_7850>
   $<$<BOOL:${Threads_FOUND}>:HAVE_CPPTHREAD>
+  $<$<BOOL:${Threads_FOUND}>:HAVE_CPPTHREAD_YIELD>
   $<$<BOOL:${OpenMP_FOUND}>:HAVE_OMP>
   $<$<BOOL:${Readline_FOUND}>:HAVE_READLINE>
   $<$<BOOL:${CURL_FOUND}>:HAVE_CURL>

@@ -575,19 +575,36 @@ std::string readString(std::istream& stream) {
 }
 
 void backtrace() {
-  const int maxTraces = 100;
-  void* array[maxTraces];
-  char** strings;
+  const int maxAddrlist = 64;
+    void* addrlist[maxAddrlist];
+  int addrlen = ::backtrace(addrlist, maxAddrlist);
 
-  auto nbTraces = ::backtrace(array, maxTraces);
-  strings = ::backtrace_symbols(array, nbTraces);
-  if (strings) {
-    std::cout << nbTraces << " stack frames." << std::endl;
-    for (int i = 0; i < nbTraces; ++i) {
-      std::cout << strings[i] << std::endl;
+  char** symbollist = ::backtrace_symbols(addrlist, addrlen);
+
+  for (int i = 0; i < addrlen; i++)
+  {
+    std::string sym(symbollist[i]);
+
+    size_t begin = sym.find('(');
+    size_t end   = sym.find('+', begin);
+
+    if (begin != std::string::npos && end != std::string::npos)
+    {
+      auto mangled = sym.substr(begin + 1, end - begin - 1);
+
+      int status;
+      char* demangled = abi::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
+      if (status == 0)
+      {
+        sym.replace(begin + 1, end - begin - 1, demangled);
+      }
+      ::free(demangled);
     }
-    ::free(strings);
+
+    std::cerr << sym << std::endl;
   }
+
+  free(symbollist);
 }
 
 }

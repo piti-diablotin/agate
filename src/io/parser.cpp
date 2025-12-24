@@ -84,7 +84,7 @@ void Parser::parse(){
   //int opt_num = 0;
   //std::clog << forGetopts << std::endl;
 
-  while ( (c = getopt_long(_argc,_argv,forGetopts.c_str(),options,nullptr)) != -1 ){
+  while ( (c = getopt_long(_argc,_argv,forGetopts.c_str(),options,nullptr)) != -1 && c != 0xFF && c != 0xFFFFFFFF ){
     try {
       auto testOpt = _options.begin();
       for ( ; testOpt != _options.end() ; ++testOpt ) {

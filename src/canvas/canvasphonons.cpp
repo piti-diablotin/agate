@@ -54,6 +54,7 @@ CanvasPhonons::CanvasPhonons(bool drawing) : CanvasPos(drawing),
 //
 CanvasPhonons::CanvasPhonons(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
   _amplitudeDisplacement(1),
+  _phasePhi(0),
   _displacements(),
   _reference(),
   _supercell(),
@@ -90,6 +91,7 @@ CanvasPhonons::CanvasPhonons(CanvasPos &&canvas) : CanvasPos(std::move(canvas)),
 //
 CanvasPhonons::CanvasPhonons(const CanvasPos &canvas) : CanvasPos(canvas.opengl()),
   _amplitudeDisplacement(1),
+  _phasePhi(0),
   _displacements(),
   _reference(),
   _supercell(),
@@ -356,7 +358,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 
     for ( unsigned vib : inputModes ) {
       double nrj = _displacements.getEnergyMode(vib);
-      DispDB::qMode vibnrj = {vib,_amplitudeDisplacement,nrj};
+      DispDB::qMode vibnrj = {vib,_amplitudeDisplacement,_phasePhi,nrj};
       auto it = _condensedModes.insert(
           std::pair<geometry::vec3d,std::vector<DispDB::qMode>>(
             qpt,
@@ -424,7 +426,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
 
     for ( unsigned vib : inputModes ) {
       double nrj = _displacements.getEnergyMode(vib);
-      DispDB::qMode vibnrj {vib,_amplitudeDisplacement,nrj};
+      DispDB::qMode vibnrj {vib,_amplitudeDisplacement,_phasePhi,nrj};
       auto it = std::find(myqptmodes.begin(),myqptmodes.end(),vibnrj);
       if ( it == myqptmodes.end() )
         myqptmodes.push_back(vibnrj);
@@ -509,6 +511,34 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
     if ( modif == 0 )
       _amplitudeDisplacement = amp;
+    rebuild = true;
+  }
+  else if ( token == "phase" ) {
+    double phi;
+    stream >> phi;
+    if ( stream.fail() ) {
+      throw EXCEPTION("phase is followed by a double precision number",ERRDIV);
+    }
+    unsigned modif = 0 ;
+    auto &myqptmodes = _qptModes->second;
+    while ( !stream.eof() ) {
+      unsigned vib;
+      stream >> vib;
+      if ( stream.fail() ) break;
+      --vib;
+      ++modif;
+      if ( vib >= (unsigned)_reference.natom()*3 ) {
+        throw EXCEPTION("The mode number is wrong",ERRDIV);
+      }
+      for ( auto it = myqptmodes.begin(); it != myqptmodes.end() ; ++it){
+        if ( it->imode == vib ) {
+          it->phase = phi;
+          break;
+        }
+      }
+    }
+    if ( modif == 0 )
+      _phasePhi = phi;
     rebuild = true;
   }
   else if ( token == "ntime" ) {
@@ -990,7 +1020,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
     for ( auto qpt = _condensedModes.begin() ; qpt != _condensedModes.end() ; ++qpt ) {
       for ( auto vib : qpt->second ) {
-        structure.makeDisplacement(qpt->first,_displacements,vib.imode,vib.amplitude,0);
+        structure.makeDisplacement(qpt->first,_displacements,vib.imode,vib.amplitude,vib.phase);
       }
     }
     std::string output = (parser.hasToken("output") ? parser.getToken<std::string>("output") : utils::noSuffix(traj)+"_pumped.in");

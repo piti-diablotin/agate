@@ -12,6 +12,36 @@ add_subdirectory(plot)
 add_subdirectory(shape)
 add_subdirectory(window)
 
+set(DEFAULT_TTF_CANDIDATES
+  /usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf
+  /usr/share/fonts/noto/NotoSans-Regular.ttf
+  /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+  /usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf
+  /Library/Fonts/Arial.ttf
+  /System/Library/Fonts/Supplemental/Arial.ttf
+  /System/Library/Fonts/HelveticaNeueDeskInterface.ttc
+)
+
+set(DEFAULT_TTF_FONT "")
+foreach(font ${DEFAULT_TTF_CANDIDATES})
+  if(EXISTS "${font}")
+    set(DEFAULT_TTF_FONT "${font}")
+    break()
+  endif()
+endforeach()
+
+if(NOT DEFAULT_TTF_FONT)
+  message(FATAL_ERROR "No default TTF font found on this system")
+endif()
+
+option(USE_CUSTOM_TTF_FONT "Override default TTF font" OFF)
+if(USE_CUSTOM_TTF_FONT)
+  set(DEFAULT_TTF_FONT "${CUSTOM_TTF_FONT}" CACHE FILEPATH "Path to TTF font")
+endif()
+
+message(STATUS "Using default TTF font: ${DEFAULT_TTF_FONT}")
+
+
 add_library(libagate 
   ${LIBAGATE_SRC}
 )
@@ -36,7 +66,7 @@ target_compile_definitions(libagate
   COMPILE_CXXFLAGS="${CMAKE_CXX_FLAGS}"
   COMPILE_LDFLAGS="${CMAKE_CXX_FLAGS}"
   COMPILE_LIBS="${CMAKE_CXX_FLAGS}"
-  DEFAULT_FONT="/usr/share/fonts/noto/NotoSans-Regular.ttf"
+  DEFAULT_FONT="${DEFAULT_TTF_FONT}"
   PACKAGE_NAME="${PROJECT_NAME}"
   PACKAGE_VERSION="${PROJECT_VERSION}"
   PACKAGE_STRING="${PROJECT_NAME} ${PROJECT_VERSION}"
@@ -77,7 +107,7 @@ target_link_libraries(libagate
   $<$<BOOL:${CURL_FOUND}>:CURL::libcurl>
   $<$<BOOL:${LibXml2_FOUND}>:LibXml2::LibXml2>
   $<$<BOOL:${Freetype_FOUND}>:Freetype::Freetype>
-  $<$<BOOL:${FFTW3_FOUND}>:FFTW3::fftw3q>
+  $<$<BOOL:${FFTW3_FOUND}>:FFTW::fftw3>
   $<$<BOOL:${libssh_FOUND}>:ssh>
   $<$<BOOL:${OpenGL_FOUND}>:OpenGL::GL>
   $<$<BOOL:${JPEG_FOUND}>:JPEG::JPEG>

@@ -85,10 +85,9 @@ if(NOT Spglib_FOUND)
   FetchContent_Declare(
     Spglib
     GIT_REPOSITORY https://github.com/spglib/spglib.git
-    GIT_TAG v2.6.0
+    GIT_TAG v2.1.0
   )
   set(SPGLIB_SHARED_LIBS OFF)
-  set(SPGLIB_USE_OMP ON)
   FetchContent_MakeAvailable(Spglib)
 endif()
 find_package(yaml-cpp) # yaml-cpp::yaml-cpp
@@ -103,7 +102,15 @@ if(NOT yaml-cpp_FOUND)
   set(YAML_CPP_INSTALL OFF)
   FetchContent_MakeAvailable(yaml-cpp)
 endif()
-find_package(FFTW3) # FFTW3::fftw3l FFTW3::fftw3l_omp
+
+#find_package(FFTW3 COMPONENTS DOUBLE) # FFTW3::fftw3q Not working on old ubuntu
+pkg_check_modules(FFTW_DOUBLE REQUIRED fftw3)
+add_library(FFTW::fftw3 INTERFACE IMPORTED)
+target_include_directories(FFTW::fftw3 INTERFACE ${FFTW_DOUBLE_INCLUDE_DIRS})
+target_link_libraries(FFTW::fftw3 INTERFACE ${FFTW_DOUBLE_LIBRARIES})
+target_compile_options(FFTW::fftw3 INTERFACE ${FFTW_DOUBLE_CFLAGS_OTHER})
+set(FFTW3_FOUND TRUE)
+
 find_package(libssh) # ssh:ssh
 
 find_package(OpenGL COMPONENTS OpenGL) # OpenGL::GL

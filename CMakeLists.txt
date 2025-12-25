@@ -71,6 +71,7 @@ find_package(LibXml2) # LibXml2::LibXml2
 find_package(Freetype) # Freetype::Freetype
 find_package(Eigen3 3.3 NO_MODULE) # EIGEN3_INCLUDE_DIR
 if(NOT Eigen3_FOUND)
+  message(STATUS "Fetching eigen3")
   FetchContent_Declare(
     Eigen3
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
@@ -78,8 +79,9 @@ if(NOT Eigen3_FOUND)
   )
   FetchContent_MakeAvailable(Eigen3)
 endif()
-find_package(Spglib 2.0 REQUIRED) # Spglib::symspg 
+find_package(Spglib 2.0 QUIET) # Spglib::symspg 
 if(NOT Spglib_FOUND)
+  message(STATUS "Fetching Spglib")
   FetchContent_Declare(
     Spglib
     GIT_REPOSITORY https://github.com/spglib/spglib.git
@@ -91,6 +93,7 @@ if(NOT Spglib_FOUND)
 endif()
 find_package(yaml-cpp) # yaml-cpp::yaml-cpp
 if(NOT yaml-cpp_FOUND)
+  message(STATUS "Fetching yaml-cpp")
   FetchContent_Declare(
     yaml-cpp
     GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git

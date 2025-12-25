@@ -147,6 +147,7 @@ target_link_libraries(agate
 )
 
 target_compile_definitions(agate
+  PRIVATE
   PACKAGE="${PROJECT_NAME}"
   PACKAGE_STRING="${PROJECT_NAME} ${PROJECT_VERSION}"
   $<$<BOOL:${glfw3_FOUND}>:HAVE_GLFW3>

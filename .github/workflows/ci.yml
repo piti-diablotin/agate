@@ -78,11 +78,19 @@ jobs:
       # =========================
       - name: Configure CMake
         run: |
-          echo Readline_PREFIX=$(brew --prefix readline) >> $GITHUB_ENV
-          cmake -S . -B build \
-                -G Ninja \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DENABLE_TESTS=ON
+          if [[ "${{ matrix.os }}" == macos* ]]; then
+            cmake -S . -B build \
+                  -G Ninja \
+                  -DCMAKE_BUILD_TYPE=Release \
+                  -DENABLE_TESTS=ON \
+                  -DReadline_ROOT="$(brew --prefix readline)"
+
+          else
+            cmake -S . -B build \
+                  -G Ninja \
+                  -DCMAKE_BUILD_TYPE=Release \
+                  -DENABLE_TESTS=ON
+          fi
 
       # =========================
       # Build

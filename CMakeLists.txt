@@ -69,7 +69,11 @@ endif()
 
 find_package(LibXml2) # LibXml2::LibXml2
 find_package(Freetype) # Freetype::Freetype
-find_package(Eigen3 3.3 NO_MODULE) # EIGEN3_INCLUDE_DIR
+find_package(Eigen3 NO_MODULE) # EIGEN3_INCLUDE_DIR
+if(Eigen3_VERSION VERSION_LESS "3.3")
+  message(WARNING "Eigen ≥ 3.3 required (found ${Eigen3_VERSION})")
+    set(Eigen3_FOUND FALSE)
+endif()
 if(NOT Eigen3_FOUND)
   message(STATUS "Fetching eigen3")
   FetchContent_Declare(

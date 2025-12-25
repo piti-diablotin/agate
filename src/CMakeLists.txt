@@ -102,6 +102,7 @@ target_link_libraries(libagate
   Spglib::symspg
   netCDF::netcdf
   yaml-cpp
+  Eigen3::Eigen
   $<$<BOOL:${Threads_FOUND}>:Threads::Threads>
   $<$<BOOL:${OpenMP_FOUND}>:OpenMP::OpenMP_CXX>
   $<$<BOOL:${Readline_FOUND}>:${Readline_LIBRARY}>

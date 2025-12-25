@@ -30,14 +30,18 @@
 #include <sstream>
 #include <fcntl.h>
 #include <chrono>
-#include <vector>
-#include <cmath>
 #include <cstring>
 #include <iomanip>
 
 #ifdef HAVE_SSH
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
+
+#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(0,8,0)
+#define HAVE_SSH_SESSION_IS_KNOWN_SERVER
+#define HAVE_SSH_GET_SERVER_PUBLICKEY 
+#define HAVE_SSH_SESSION_UPDATE_KNOWN_HOSTS
+#endif
 
 #if defined(__GNUC__) &&                        \
   (LIBSSH_VERSION_MINOR >= 10) ||               \

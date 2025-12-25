@@ -1,0 +1,102 @@
+name: Build & Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-20.04
+          - ubuntu-22.04
+          - ubuntu-24.04
+          - macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # =========================
+      # Install dependencies
+      # =========================
+      - name: Install dependencies (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            libncurses5-dev \
+            libjpeg8-dev \
+            libpng-dev \
+            libnetcdf-dev \
+            libcurl3-dev \
+            libfreetype6-dev \
+            libglfw3-dev \
+            libeigen3-dev \
+            fontconfig \
+            ttf-ubuntu-font-family \
+            libxml2-dev \
+            gnuplot-qt \
+            libyaml-cpp-dev \
+            libfftw3-dev \
+            libssh-dev \
+            libreadline-dev \
+            cxxtest \
+
+
+      - name: Install dependencies (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew update
+          brew install \
+            cmake \
+            ninja \
+            ncurses \
+            jpeg \
+            libpng \
+            netcdf \
+            curl \
+            freetype \
+            glfw \
+            eigen \
+            libxml2 \
+            gnuplot \
+            yaml-cpp \
+            fftw \
+            libssh \
+            readline \
+            cxxtest \
+
+
+      # =========================
+      # Configure
+      # =========================
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build \
+                -G Ninja \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DENABLE_TESTS=ON
+
+      # =========================
+      # Build
+      # =========================
+      - name: Build
+        run: |
+          cmake --build build
+
+      # =========================
+      # Test
+      # =========================
+      - name: Run tests
+        run: |
+          cd build/test
+          ctest --output-on-failure
+

@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/piti-diablotin/agate.svg?branch=master)](https://travis-ci.com/piti-diablotin/agate)
+![Build & Test](https://github.com/piti-diablotin/agate/actions/workflows/ci.yml/badge.svg)
 [![Downloads](https://img.shields.io/github/downloads/piti-diablotin/agate/latest/total.svg)](https://github.com/piti-diablotin/agate/releases/latest)
 [![DOI](https://zenodo.org/badge/103832429.svg)](https://zenodo.org/badge/latestdoi/103832429)
 

@@ -122,10 +122,10 @@ find_package(glfw3 3.3) # glfw
 find_package(JPEG) # JPEG::JPEG
 find_package(PNG) # PNG::PNG
 
-#get_property(importTargetsAfter DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTY IMPORTED_TARGETS)
-#list(REMOVE_ITEM importTargetsAfter ${importTargets})
+get_property(importTargetsAfter DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTY IMPORTED_TARGETS)
+list(REMOVE_ITEM importTargetsAfter ${importTargets})
 
-#message("${importTargetsAfter}")
+message("${importTargetsAfter}")
 
 include(CheckIncludeFile)
 check_include_file_cxx("getopt.h" GETOPT_H)
@@ -147,7 +147,6 @@ target_link_libraries(agate
 )
 
 target_compile_definitions(agate
-  PUBLIC
   PACKAGE="${PROJECT_NAME}"
   PACKAGE_STRING="${PROJECT_NAME} ${PROJECT_VERSION}"
   $<$<BOOL:${glfw3_FOUND}>:HAVE_GLFW3>

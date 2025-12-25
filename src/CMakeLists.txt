@@ -91,6 +91,7 @@ target_compile_definitions(libagate
   $<$<BOOL:${PNG_FOUND}>:HAVE_LIBPNG>
   $<$<BOOL:${glfw3_FOUND}>:HAVE_GLFW3>
   PUBLIC
+  $<$<PLATFORM_ID:Darwin>:GL_SILENCE_DEPRECATION>
   $<$<BOOL:${OpenGL_FOUND}>:HAVE_GL>
   $<$<BOOL:${OpenGL_FOUND}>:HAVE_GLEXT>
   _NOEXCEPT=noexcept

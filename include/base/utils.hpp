@@ -1,7 +1,7 @@
 /**
  * @file include/utils.hpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
@@ -39,11 +39,7 @@
 #include <vector>
 #include <list>
 #include <string>
-#ifndef HAVE_STOD
-#include <cstdlib>
-#endif
 #include <stdexcept>
-#include <numeric>
 #include <cmath>
 #include <regex>
 #include <vector>
@@ -251,7 +247,7 @@ namespace utils {
    * Get the directory path of current filename
    * Equivalent to dirname in bash
    * @param filenmae the file to treat
-   * @return The absolute path of the file 
+   * @return The absolute path of the file
    */
   std::string dirname(std::string filename);
 

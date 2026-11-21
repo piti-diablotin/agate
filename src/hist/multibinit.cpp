@@ -1,7 +1,7 @@
 /**
  * @file src/epigenexml.cpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
@@ -83,7 +83,7 @@ void Multibinit::readFromFile(const std::string& filename) {
       throw EXCEPTION(std::string("File ")+filename+" is a vierge XML document",ERRABT);
 
     //Count number of atoms
-    xmlXPathInit();
+    xmlInitParser();
     if ( (cptr = xmlXPathNewContext(doc)) == nullptr )
       throw EXCEPTION("Error while creating XPath context",ERRABT);
 
@@ -103,12 +103,12 @@ void Multibinit::readFromFile(const std::string& filename) {
 
         //Get number of type
         iatom = 0;
-        double amu [_natom];
+        std::vector<double> amu(_natom);
         for(i=0; i<int(_natom); i++){
           amu[i] = 0 ;
         }
 
-        while (node != nullptr) {   
+        while (node != nullptr) {
           if ((!xmlStrcmp(node->name, (const  xmlChar *) "atom"))) {
             uri = xmlGetProp(node, (const  xmlChar *) "mass");
             present = 0;
@@ -124,7 +124,7 @@ void Multibinit::readFromFile(const std::string& filename) {
             }
             xmlFree(uri);
           }
-          node = node->next; 
+          node = node->next;
         }
 
         // Resize the array typat
@@ -147,7 +147,7 @@ void Multibinit::readFromFile(const std::string& filename) {
         iatom = 0;
         while ( node != nullptr ) {
           if ((!xmlStrcmp(node->name, (const  xmlChar *) "unit_cell"))) {
-            key = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);      
+            key = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
             std::istringstream str;
             str.str(reinterpret_cast<char*>(key));
             for(mu=0;mu<3;mu++){
@@ -159,7 +159,7 @@ void Multibinit::readFromFile(const std::string& filename) {
               }
             }
             xmlFree(key);
-          }           
+          }
 
           if ((!xmlStrcmp(node->name, (const  xmlChar *) "atom"))) {
             uri = xmlGetProp(node, (const  xmlChar *) "mass");
@@ -202,12 +202,12 @@ void Multibinit::readFromFile(const std::string& filename) {
               else{
                 printf(" error: The number of atom doesn't match with the XML file\n");
                 exit(0);
-              } 
+              }
               node2 = node2->next;
             }
           }
-          node = node->next; 
-        } 
+          node = node->next;
+        }
       }
     }
     else throw EXCEPTION("Error while accessing atominfo node", ERRABT);
@@ -244,10 +244,10 @@ void Multibinit::readFromFile(const std::string& filename) {
     }
 
     //Do some tests
-    if ( ntypat > int(_znucl.size())) 
+    if ( ntypat > int(_znucl.size()))
       throw EXCEPTION("Inconsistency between the number of type of atoms and the declared number of type",ERRABT);
 
-    if ( _natom != _typat.size() ) 
+    if ( _natom != _typat.size() )
       throw EXCEPTION("Inconsistency between the number of atoms and the declared number of atoms",ERRDIV);
 
     xmlCleanupParser();

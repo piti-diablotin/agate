@@ -60,7 +60,7 @@ find_package(CURL) # CURL::libcurl
 find_package(netCDF) # netCDF::netcdf
 if(NOT netCDF_FOUND)
   FetchContent_Declare(
-    netCDF 
+    netCDF
     GIT_REPOSITORY https://github.com/Unidata/netcdf-c.git
     GIT_TAG v4.9.2
   )
@@ -83,7 +83,7 @@ if(NOT Eigen3_FOUND)
   )
   FetchContent_MakeAvailable(Eigen3)
 endif()
-find_package(Spglib 2.0 QUIET) # Spglib::symspg 
+find_package(Spglib 2.0 QUIET) # Spglib::symspg
 if(NOT Spglib_FOUND)
   message(STATUS "Fetching Spglib")
   FetchContent_Declare(
@@ -137,8 +137,13 @@ add_subdirectory(test)
 
 add_executable(agate
   bin/agate.cpp
-  bin/winglfw3.cpp 
-  bin/winfake.cpp 
+  bin/winglfw3.cpp
+  bin/winfake.cpp
+)
+
+target_compile_definitions(agate
+  PUBLIC
+  $<$<BOOL:${glfw3_FOUND}>:HAVE_GLFW3>
 )
 
 target_link_libraries(agate

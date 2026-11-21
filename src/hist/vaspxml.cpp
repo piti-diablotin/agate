@@ -1,7 +1,7 @@
 /**
  * @file src/vaspxml.cpp
  *
- * @brief Read a vasprun.xml 
+ * @brief Read a vasprun.xml
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
@@ -79,7 +79,7 @@ void VaspXML::readFromFile(const std::string& filename) {
       throw EXCEPTION(std::string("File ")+filename+" is a vierge XML document",ERRABT);
 
     // Count calculation steps.
-    xmlXPathInit();
+    xmlInitParser();
     if ( (cptr = xmlXPathNewContext(doc)) == nullptr )
       throw EXCEPTION("Error while creating XPath context",ERRABT);
 
@@ -87,7 +87,7 @@ void VaspXML::readFromFile(const std::string& filename) {
       throw EXCEPTION("Error while creating XPath context",ERRABT);
     ( xobj->type == XPATH_NUMBER ) ?  _ntime = xmlXPathCastToNumber(xobj)
       : throw EXCEPTION("Error while evaluating number of calculations", ERRABT);
-    
+
     // Get dtion = POTIM
     if ( (xobj = xmlXPathEvalExpression( BAD_CAST "//incar", cptr)) == NULL )
       throw EXCEPTION("Error while creating XPath context",ERRABT);
@@ -100,7 +100,7 @@ void VaspXML::readFromFile(const std::string& filename) {
             dtion = utils::stod(reinterpret_cast<char*>(key))/phys::atu2fs;
             xmlFree(key);
           }
-          node = node->next; 
+          node = node->next;
         }
       }
     }
@@ -170,16 +170,16 @@ void VaspXML::readFromFile(const std::string& filename) {
               }
             }
           }
-          node = node->next; 
+          node = node->next;
         }
       }
       else throw EXCEPTION("Error while accessing atominfo node", ERRDIV);
-      if ( ntypat > _znucl.size() ) 
+      if ( ntypat > _znucl.size() )
         throw EXCEPTION("Inconsistency between the number of type of atoms and the declared number of type",ERRABT);
     }
     xmlXPathFreeObject(xobj);
 
-    if ( _natom != _typat.size() ) 
+    if ( _natom != _typat.size() )
       throw EXCEPTION("Inconsistency between the number of atoms and the declared number of atoms",ERRDIV);
 
     _xcart  .resize(_ntime*_natom*_xyz);
@@ -205,7 +205,7 @@ void VaspXML::readFromFile(const std::string& filename) {
       while ( node != nullptr ) {
         if ( !xmlStrcmp( node->name, (const xmlChar*)"crystal") ) {
           xmlNodePtr basis = node->xmlChildrenNode;
-          while ( basis != nullptr 
+          while ( basis != nullptr
               && xmlStrcmp(basis->name,(const xmlChar*)"varray")
               && xmlStrcmp(xmlGetProp(basis,(const xmlChar*)"name"),(const xmlChar*)"basis")
               ) {
@@ -233,7 +233,7 @@ void VaspXML::readFromFile(const std::string& filename) {
             basis = basis->next;
           }
         }
-        else if ( !xmlStrcmp( node->name, (const xmlChar*)"varray") 
+        else if ( !xmlStrcmp( node->name, (const xmlChar*)"varray")
             && !xmlStrcmp( xmlGetProp(node,(const xmlChar*)"name"), (const xmlChar*)"positions") ) {
           xmlNodePtr pos = node->xmlChildrenNode;
           // basis now go through vectors <v>
@@ -254,7 +254,7 @@ void VaspXML::readFromFile(const std::string& filename) {
             pos = pos->next;
           }
         }
-        else if ( !xmlStrcmp( node->name, (const xmlChar*)"varray") 
+        else if ( !xmlStrcmp( node->name, (const xmlChar*)"varray")
             && !xmlStrcmp( xmlGetProp(node,(const xmlChar*)"name"), (const xmlChar*)"velocities") ) {
           xmlNodePtr pos = node->xmlChildrenNode;
           // basis now go through vectors <v>
@@ -282,12 +282,12 @@ void VaspXML::readFromFile(const std::string& filename) {
     auto getForcesStressEnergies = [&](xmlNodePtr calculation, int itime){
       const double forceConversion = phys::b2A/phys::Ha2eV;
       const double stressConversion = -1e-1/(phys::Ha/(phys::b2A*phys::b2A*phys::b2A)*1e21); // kbar -> Ha/bohr^3 and add - because vasp seems to store -sigma
-      if ( xmlStrcmp(calculation->name,(const xmlChar*)"calculation") ) 
+      if ( xmlStrcmp(calculation->name,(const xmlChar*)"calculation") )
         return;
 
       xmlNodePtr node = calculation->xmlChildrenNode;
       while ( node != nullptr ) {
-        if ( !xmlStrcmp( node->name, (const xmlChar*)"varray") 
+        if ( !xmlStrcmp( node->name, (const xmlChar*)"varray")
             && !xmlStrcmp(xmlGetProp(node,(const xmlChar*)"name"),(const xmlChar*)"forces")
            ) {
           xmlNodePtr forces = node->xmlChildrenNode;
@@ -309,7 +309,7 @@ void VaspXML::readFromFile(const std::string& filename) {
             forces = forces->next;
           }
         }
-        else if ( !xmlStrcmp( node->name, (const xmlChar*)"varray") 
+        else if ( !xmlStrcmp( node->name, (const xmlChar*)"varray")
             && !xmlStrcmp(xmlGetProp(node,(const xmlChar*)"name"),(const xmlChar*)"stress")
             ) {
           xmlNodePtr stress = node->xmlChildrenNode;

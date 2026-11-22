@@ -1,7 +1,7 @@
 /**
  * @file src/utils.cpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
@@ -32,6 +32,7 @@
 #include <locale>
 #include <iomanip>
 #include <dirent.h>
+#include <stacktrace>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <iostream>
@@ -193,7 +194,7 @@ namespace utils {
   }
 
 
-  // 
+  //
   template<typename T>
     std::string to_string(T num) {
 #ifdef HAVE_TO_STRING_DONT_USE
@@ -333,7 +334,7 @@ namespace utils {
     sum.precision(10);
     if ( y.size() < 2 ) {
       sum << " Mean value: " ;
-      sum.setf(std::ios::right,std::ios::adjustfield); 
+      sum.setf(std::ios::right,std::ios::adjustfield);
       const double meanV = utils::mean(y.begin()->begin(),y.begin()->end());
       const double deviationV = utils::deviation(y.begin()->begin(),y.begin()->end(),meanV);
       sum << std::setw(19) << meanV << " +/- " << std::setw(17) << deviationV << std::endl;
@@ -479,7 +480,7 @@ std::string agateLatestVersion(){
       curl_easy_setopt(curl,CURLOPT_URL, "https://github.com/piti-diablotin/agate/releases/latest");
       curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0);
       curl_easy_setopt(curl, CURLOPT_HEADERDATA, (void*) &result);
-      size_t (*callback)(char* ptr, size_t size, size_t nmemb, void *strstream) = 
+      size_t (*callback)(char* ptr, size_t size, size_t nmemb, void *strstream) =
         [](char* ptr, size_t size, size_t nmemb, void *strstream) -> size_t
         {
           static_cast<std::stringstream*>(strstream)->write(ptr,size*nmemb);
@@ -509,8 +510,8 @@ std::string agateLatestVersion(){
 std::string spglibVersion(){
   std::ostringstream out;
 #if defined(HAVE_SPGLIB) && defined(HAVE_SPGLIB_VERSION)
-  out << spg_get_major_version() << "." 
-    << spg_get_minor_version() << "." 
+  out << spg_get_major_version() << "."
+    << spg_get_minor_version() << "."
     << spg_get_micro_version();
 #endif
   return out.str();
@@ -575,37 +576,10 @@ std::string readString(std::istream& stream) {
 }
 
 void backtrace() {
-  const int maxAddrlist = 64;
-    void* addrlist[maxAddrlist];
-  int addrlen = ::backtrace(addrlist, maxAddrlist);
-
-  char** symbollist = ::backtrace_symbols(addrlist, addrlen);
-
-  for (int i = 0; i < addrlen; i++)
-  {
-    std::string sym(symbollist[i]);
-
-    size_t begin = sym.find('(');
-    size_t end   = sym.find('+', begin);
-
-    if (begin != std::string::npos && end != std::string::npos)
-    {
-      auto mangled = sym.substr(begin + 1, end - begin - 1);
-
-      int status;
-      char* demangled = abi::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
-      if (status == 0)
-      {
-        sym.replace(begin + 1, end - begin - 1, demangled);
-      }
-      ::free(demangled);
-    }
-
-    std::cerr << sym << std::endl;
+  for(const auto& entry : std::stacktrace::current()) {
+    std::cout << entry.description() << " - " << entry.source_file() << ":"
+              << entry.source_line() << "\n";
   }
-
-  free(symbollist);
 }
 
 }
-

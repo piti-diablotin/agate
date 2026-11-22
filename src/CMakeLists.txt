@@ -74,6 +74,7 @@ target_compile_definitions(libagate
 
 target_link_libraries(libagate
   PRIVATE
+  stdc++exp
   Spglib::symspg
   netCDF::netcdf
   $<IF:$<TARGET_EXISTS:yaml-cpp::yaml-cpp>,yaml-cpp::yaml-cpp,yaml-cpp>

@@ -40,7 +40,7 @@
 #include "base/geometry.hpp"
 #include "phonons/dispdb.hpp"
 
-/** 
+/**
  * Creat a supercell based on a Dtset for agiven q-point
  * and then displace atom w/r to an eigen displacement
  * TODO : Finish the implementation
@@ -69,7 +69,7 @@ class Supercell : public Dtset{
      * Constructor.
      */
     Supercell(const Dtset& dtset, const geometry::vec3d& qpt);
-    
+
     /**
      * Constructor.
      */
@@ -113,7 +113,7 @@ class Supercell : public Dtset{
 
     /**
      * Set the reference structure to this Dtset.
-     * We need to find the dimensions of the supercell with respect to the dtset and then find the corresponding indices 
+     * We need to find the dimensions of the supercell with respect to the dtset and then find the corresponding indices
      * of each atom in each cell with respect to the supercell
      * @param dtset The supposed reference structure
      */
@@ -126,7 +126,7 @@ class Supercell : public Dtset{
     void setReference(const Supercell& supercell);
 
     /**
-     * Extract the displacements of all atoms with respect to the dtset 
+     * Extract the displacements of all atoms with respect to the dtset
      * which should be the same as the reference dtset
      * Internally, we calculate the displacement u as r = (1+eta)(R+tau) + u
      * @param dtset The reference dtset

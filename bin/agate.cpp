@@ -31,8 +31,6 @@
 #include <csignal>
 #include <fstream>
 #include <sstream>
-#include <exception>
-#include <execinfo.h>
 #include "io/parser.hpp"
 #include "io/configparser.hpp"
 #include "winglfw3.hpp"
@@ -42,7 +40,7 @@
 #include "plot/gnuplot.hpp"
 
 Window* ptrwin = nullptr; ///< Pointer to the window if created
-                          
+
 
 /**
  * Simple function to display the name and version of the package and what window manager we use.
@@ -104,7 +102,7 @@ void initInput(int argc, const char** argv) {
 
 /**
  * Function that will be call by GLFW3 if something is dropped in the window.
- * We only try to read the first file. 
+ * We only try to read the first file.
  * @param win The window in which the file was dropped.
  * @param count The number of files dropped
  * @param paths Path of each file dropped in the window.
@@ -120,7 +118,7 @@ void DropCallback(int count, const char** paths){
 }
 
 
-/** 
+/**
  * Handle signals
  * @param para signal received
  */
@@ -147,7 +145,7 @@ void handle_signal (int para) {
 #endif
       std::cerr << "Killing process." << std::endl;
       break;
-    default : 
+    default :
       std::cerr << "Unknown signal received." << std::endl;
       break;
   }

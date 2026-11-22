@@ -1,7 +1,7 @@
 /**
  * @file src/./uriparser.cpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@uliege.be>
  *
@@ -53,9 +53,9 @@ UriParser::~UriParser() {
 
 
 bool UriParser::parse(const std::string &uri) {
-#if GCC_VERSION >= 40900 
+#if GCC_VERSION >= 40900
   std::regex rg("(http|https|sftp|ftp|scp)://(([^/: ]*)(:([^/ :]*))?@)?([^/ :]*)(:([0-9]+))?(/.*)?");
-#else 
+#else
   std::regex rg("(http|https|sftp|ftp|scp)://");
 #endif
 
@@ -76,7 +76,7 @@ bool UriParser::parse(const std::string &uri) {
   if ( cm.size() == 0 ) return false;
   if ( cm.size() != 10 ) throw EXCEPTION("Unable to parse URI",ERRDIV);
 
-#if GCC_VERSION < 40900 
+#if GCC_VERSION < 40900
   throw EXCEPTION("Detected URI but regex support does not allow to parse the URI",ERRDIV);
 #endif
 
@@ -157,7 +157,7 @@ std::string UriParser::getFile() const {
       }
       else  {
         std::clog << "Abort" << std::endl;
-        return nullptr;;
+        return "";
       }
     }
     try {

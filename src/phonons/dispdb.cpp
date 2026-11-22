@@ -1,7 +1,7 @@
 /**
  * @file src/dispdb.cpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
@@ -49,7 +49,9 @@ DispDB::DispDB() :
   _qpts(),
   _modes(),
   _linResE(),
-  _energies()
+  _energies(),
+  _angularMoments(),
+  _mass()
 {
   _iqpt = _qpts.end();
 }
@@ -63,7 +65,9 @@ DispDB::DispDB(unsigned natom) :
   _qpts(),
   _modes(),
   _linResE(),
-  _energies()
+  _energies(),
+  _angularMoments(),
+  _mass()
 {
   _iqpt = _qpts.end();
 }
@@ -79,6 +83,7 @@ void DispDB::clear() {
   _modes.clear();
   _energies.clear();
   _linResE.clear();
+  _angularMoments.clear();
 }
 
 //
@@ -86,7 +91,7 @@ void DispDB::readFromFile(std::string filename, unsigned natom) {
   if ( natom == (unsigned) -1 && _natom == (unsigned)-1 )
     throw EXCEPTION("Need to know how many atoms you have",ERRDIV);
   if ( natom != (unsigned) -1 ) _natom = natom;
-  try { 
+  try {
     this->readAnaddb(filename);
   }
   catch ( Exception &e ) {
@@ -132,7 +137,7 @@ void DispDB::readAnaddb(std::string filename) {
     parser.setFile(filename);
     parser.setContent(content);
     unsigned eivec;
-    if ( (eivec = parser.getToken<unsigned>("eivec")) != 1 && eivec != 2 ) 
+    if ( (eivec = parser.getToken<unsigned>("eivec")) != 1 && eivec != 2 )
       throw EXCEPTION("eivec should be equal to 1 or 2",ERRABT);
 
     try {
@@ -141,9 +146,16 @@ void DispDB::readAnaddb(std::string filename) {
       _nmode = 3*_natom;
       _modes.resize(_nqpt*_nmode*3*_natom); // nqpt * nmode * 1vector per atom
       _energies.resize(_nqpt*_nmode);
+      auto ntypat = parser.getToken<unsigned>("ntypat");
+      auto znucl = parser.getToken<unsigned>("znucl", ntypat);
+      auto typat = parser.getToken<unsigned>("typat", _natom);
+      _mass.resize(_natom);
+      for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+        _mass[iatom] = MendeTable.mass[znucl.at(typat.at(iatom)-1)]*phys::amu_emass; // type starts at 1
+      }
     }
     catch ( Exception &e ){
-      e.ADD("Input variable nph1l is mandatory",e.getReturnValue());
+      e.ADD("Input variable missing in definition", e.getReturnValue());
       throw e;
     }
   }
@@ -222,7 +234,7 @@ void DispDB::readAnaddb(std::string filename) {
         _modes[iqpt*_nmode*3*_natom+imode*3*_natom+idisp*3+1].imag(utils::stod(fields[2]));
         _modes[iqpt*_nmode*3*_natom+imode*3*_natom+idisp*3+2].imag(utils::stod(fields[3]));
         vecreal = true;
-        if ( (unsigned) ++idisp == _natom ) { 
+        if ( (unsigned) ++idisp == _natom ) {
           idisp = -1;
           inmode = false;
           if ( (unsigned) imode == _nmode-1 ) {
@@ -261,6 +273,37 @@ void DispDB::readAnaddb(std::string filename) {
   _iqpt = _qpts.end();
 }
 
+void DispDB::computeAngularMoments() {
+  _angularMoments.resize(_nqpt*_nmode*3);
+  for ( unsigned iqpt = 0 ; iqpt < _nqpt ; ++iqpt ) {
+    //std::cout << "Qpt-" << iqpt << "\t" << _qpts[iqpt][0] << "\t" << _qpts[iqpt][1] << "\t" << _qpts[iqpt][2] << std::endl;
+    for ( unsigned imode = 0 ; imode < _nmode ; ++imode ) {
+      for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+        const double norm = iatom < _mass.size() ? std::sqrt(_mass[iatom]) : 1;  // Need eigvec and not eigdisp
+        const auto& x = _modes[((iqpt*_nmode+imode)*_natom + iatom)*3+0];
+        const auto& y = _modes[((iqpt*_nmode+imode)*_natom + iatom)*3+1];
+        const auto& z = _modes[((iqpt*_nmode+imode)*_natom + iatom)*3+2];
+        const auto a0 = x.real()*norm;
+        const auto b0 = x.imag()*norm;
+        const auto a1 = y.real()*norm;
+        const auto b1 = y.imag()*norm;
+        const auto a2 = z.real()*norm;
+        const auto b2 = z.imag()*norm;
+        _angularMoments[(iqpt*_nmode + imode)*3 + 0] +=  2*(a1*b2-a2*b1); // Re(y)*Im(z)-Re(z)*Im(y)
+        _angularMoments[(iqpt*_nmode + imode)*3 + 1] += -2*(a0*b2-a2*b0); //-Re(x)*Im(z)+Re(z)*Im(x)
+        _angularMoments[(iqpt*_nmode + imode)*3 + 2] +=  2*(a0*b1-a1*b0); // Re(x)*Im(y)-Re(y)*Im(x)
+      }
+      _angularMoments[(iqpt*_nmode + imode)*3 + 0] *= -1;
+      _angularMoments[(iqpt*_nmode + imode)*3 + 1] *= -1;
+      _angularMoments[(iqpt*_nmode + imode)*3 + 2] *= -1;
+      //std::cout << "  Angular moment-" << imode << "\t"
+      //  << _angularMoments[(iqpt*_nmode + imode)*3 + 0] << "\t"
+      //  << _angularMoments[(iqpt*_nmode + imode)*3 + 1] << "\t"
+      //  << _angularMoments[(iqpt*_nmode + imode)*3 + 2] << std::endl;
+    }
+  }
+}
+
 void DispDB::computeFromDDB(Ddb &ddb) {
   unsigned natom = ddb.natom();
   if ( _natom != (unsigned) -1 && _natom != natom )
@@ -273,7 +316,11 @@ void DispDB::computeFromDDB(Ddb &ddb) {
   _nmode = 3*_natom;
   _modes.resize(_nqpt*_nmode*3*_natom); // nqpt * nmode * 1vector per atom
   _energies.resize(_nqpt*_nmode);
-  // little print loop for _qpts (Marcus) 
+  _mass.resize(_natom);
+  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+    _mass[iatom] = MendeTable.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]*phys::amu_emass; // type starts at 1
+  }
+  // little print loop for _qpts (Marcus)
   /*
   for (int i = 0 ; i < _qpts.size(); i++) {
 	std::cout<<"_qpts in dispdb";
@@ -281,7 +328,7 @@ void DispDB::computeFromDDB(Ddb &ddb) {
 } */
   if ( _nqpt > 0 ) {
     PhononMode modes(natom);
-    try { 
+    try {
       modes.computeASR(ddb);
     }
     catch (Exception &e) {
@@ -289,6 +336,7 @@ void DispDB::computeFromDDB(Ddb &ddb) {
       std::clog << e.fullWhat() << std::endl;
     }
     modes.computeAllEigen(ddb,&_energies[0],&_modes[0]);
+    this->computeAngularMoments();
   }
   else {
     Exception e = EXCEPTION("There is no qpt in this DDB",ERRWAR);
@@ -301,12 +349,13 @@ void DispDB::loadFromEigParserPhonon(EigParserPhonons& eigparser) {
   eigparser.setUnit("Ha");
   _qpts = eigparser.getKpts();
   _nmode = eigparser.getNband();
-  if ( eigparser.getDtset().natom() != _natom )
+  const auto& dtset = eigparser.getDtset();
+  if ( dtset.natom() != _natom )
     throw EXCEPTION("Bad value for natom in the band structure file",ERRDIV);
   if ( _natom*3 != _nmode )
     throw EXCEPTION("Bad value for nband in the band structure file",ERRDIV);
   auto disp = eigparser.getEigenDisp();
-  if ( disp.size() == 0 ) 
+  if ( disp.size() == 0 )
     throw EXCEPTION("Displacements are empty",ERRDIV);
   if ( disp.size() != _qpts.size() )
     throw EXCEPTION("Numbers of qpt and eigen displacements are different",ERRDIV);
@@ -318,6 +367,11 @@ void DispDB::loadFromEigParserPhonon(EigParserPhonons& eigparser) {
     for ( unsigned m = 0 ; m < _nmode*_nmode ; ++m )
       _modes[iqpt*_nmode*_nmode+m] = cplx(disp[iqpt][2*m],disp[iqpt][2*m+1]);
   }
+  _mass.resize(_natom);
+  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+    _mass[iatom] = MendeTable.mass[dtset.znucl().at(dtset.typat().at(iatom)-1)]*phys::amu_emass; // type starts at 1
+  }
+  this->computeAngularMoments();
 }
 
 
@@ -340,7 +394,7 @@ bool DispDB::hasQpt(const vec3d qpt) const {
       _qpts.end(),
       [&qpt](vec3d iqpt) {
       return ( norm(qpt-iqpt) < 1e-6 );
-      } 
+      }
       );
 }
 
@@ -352,7 +406,7 @@ void DispDB::setQpt(const vec3d qpt) {
       _qpts.end(),
       [&qpt](vec3d iqpt) {
       return ( norm(qpt-iqpt) < 1e-6 );
-      } 
+      }
       );
   if ( _iqpt == _qpts.end() )
     throw EXCEPTION("Qpt not found",ERRDIV);
@@ -366,7 +420,7 @@ unsigned DispDB::getQpt(const vec3d qpt) const {
       _qpts.end(),
       [&qpt](vec3d iqpt) {
       return ( norm(qpt-iqpt) < 1e-6 );
-      } 
+      }
       );
   if ( myqpt == _qpts.end() )
     throw EXCEPTION("Qpt not found",ERRDIV);
@@ -419,6 +473,27 @@ std::vector<DispDB::cplx>::const_iterator DispDB::getMode(unsigned dq, unsigned 
 }
 
 //
+std::vector<double>::const_iterator DispDB::getAngularMoment(unsigned imode) {
+  if ( _iqpt == _qpts.end() )
+    throw EXCEPTION("Select first a qpt with setQpt",ERRDIV);
+  unsigned dq = std::distance(_qpts.begin(),_iqpt);
+  if ( imode >=  _nmode )
+    throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
+  return _angularMoments.begin()+(dq*_nmode + imode)*3;
+}
+
+//
+std::vector<double>::const_iterator DispDB::getAngularMoments(unsigned dq, unsigned imode) const{
+  if ( dq >= _qpts.size() )
+    throw EXCEPTION("dq is too large",ERRDIV);
+  auto iqpt = _qpts.begin();
+  std::advance(iqpt,dq);
+  if ( imode >=  _nmode )
+    throw EXCEPTION("Mode number "+utils::to_string(imode)+" does not exist",ERRDIV);
+  return _angularMoments.begin()+dq*_nmode*3;
+  }
+
+//
 double DispDB::getEnergyMode(unsigned dq, unsigned imode) const {
   if ( dq >= _qpts.size() )
     throw EXCEPTION("dq is too large",ERRDIV);
@@ -450,6 +525,9 @@ DispDB& DispDB::operator += ( const DispDB& disp ) {
     _nqpt += disp._nqpt;
   }
 
+  if (_mass.empty() ) {
+  }
+
   _qpts.reserve(_nqpt);
   _modes.reserve(_nqpt*_nmode*3*_natom); // nqpt * nmode * 1vector per atom
   _energies.reserve(_nqpt*_nmode);
@@ -459,6 +537,8 @@ DispDB& DispDB::operator += ( const DispDB& disp ) {
     _qpts = disp._qpts;
     _modes = disp._modes;
     _energies = disp._energies;
+    _mass = disp._mass;
+    _angularMoments = disp._angularMoments;
   }
   else {
     for ( unsigned iqpt = 0 ; iqpt < disp._qpts.size() ; ++iqpt ){
@@ -475,6 +555,10 @@ DispDB& DispDB::operator += ( const DispDB& disp ) {
         std::copy(disp._energies.begin()+iqpt*_nmode,
                   disp._energies.begin()+(iqpt+1)*_nmode,
                   _energies.begin()+oldNqpt*_nmode);
+        _angularMoments.resize((oldNqpt+1)*_nmode*3);
+        std::copy(disp._angularMoments.begin()+iqpt*_nmode*3,
+                  disp._angularMoments.begin()+(iqpt+1)*_nmode*3,
+                  _angularMoments.begin()+oldNqpt*_nmode*3);
       }
     }
   }
@@ -517,6 +601,26 @@ void DispDB::printModes(const geometry::vec3d& qpt, std::ostream &output) const 
   }
 }
 
+void DispDB::printAngularMoments(const geometry::vec3d& qpt, std::ostream &output) const {
+  if ( !this->hasQpt(qpt) )
+    throw EXCEPTION(geometry::to_string(qpt)+" cannot be found",ERRDIV);
+
+  unsigned dq = this->getQpt(qpt);
+  output.setf(std::ios::right,std::ios::adjustfield);
+  output << "#  Mode";
+  output << std::setw(23) << "x" << std::setw(23) << "y" << std::setw(24) << "z\n";
+
+  output.setf(std::ios::scientific,std::ios::floatfield);
+  output.precision(14);
+  for ( unsigned imode = 0 ; imode < _nmode ; ++imode) {
+    output << std::setw(7) << imode+1;
+    for ( unsigned coord = 0 ; coord < 3 ; ++coord) {
+      output << std::setw(23) << _angularMoments[(dq*_nmode + imode)*3 + coord];
+    }
+    output << "\n";
+  }
+}
+
 void DispDB::readOutcar(const std::string &filename) {
   std::vector<int> znucl;
   std::vector<int> typat;
@@ -538,9 +642,10 @@ void DispDB::readOutcar(const std::string &filename) {
   _qpts.resize(1,{0,0,0});
   _modes.resize(_nqpt*_nmode*3*_natom,cplx(0.0,0.0)); // nqpt * nmode * 1vector per atom
   _energies.resize(_nqpt*_nmode);
+  _mass.reserve(_natom);
   _iqpt = _qpts.end();
 
-  std::ifstream outcar(filename,std::ios::in);  
+  std::ifstream outcar(filename,std::ios::in);
   if ( !outcar)
     throw EXCEPTION("Error while opening file " + filename, ERRDIV);
 
@@ -562,11 +667,11 @@ void DispDB::readOutcar(const std::string &filename) {
         double sign = 1.0;
         if ( dummy == "f" ) str >> dummy;  // read "="
         else if ( dummy == "f/i=" ) sign = -1.0;
-        else 
+        else
           throw EXCEPTION("Bad reading for type of frequency line "+utils::to_string(iline)+ " " + dummy,ERRDIV);
         str >> _energies[_nmode-1-i];
         _energies[_nmode-1-i] *= sign*eunit; // Convert to Ha and set the correct sign
-        if ( (i+1) != imode ) 
+        if ( (i+1) != imode )
           throw EXCEPTION("Reading mode "+utils::to_string(imode)+" but expecting "+utils::to_string(i+1),ERRDIV);
         utils::getline(outcar,line,iline);  // X Y Z dx dy dz
         for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
@@ -587,11 +692,16 @@ void DispDB::readOutcar(const std::string &filename) {
   if ( !found )
     throw EXCEPTION("Could not find eigen displacements",ERRDIV);
 
-  // Renormalize 
+  for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
+    double mass = MendeTable.mass[znucl[typat[iatom]-1]]*phys::amu_emass;
+    _mass[iatom] = mass;
+  }
+
+  // Renormalize
   for ( unsigned imode = 0 ; imode < _nmode ; ++imode ) {
     double norm = 0.;
     for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
-      double mass = MendeTable.mass[znucl[typat[iatom]-1]]*phys::amu_emass;
+      const double mass = _mass[iatom];
       for ( unsigned idir = 0 ; idir < 3 ; ++idir ) {
         norm += mass*std::norm(_modes[imode*3*_natom+iatom*3+idir]);
       }

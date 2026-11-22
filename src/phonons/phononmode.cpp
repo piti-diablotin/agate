@@ -1,7 +1,7 @@
 /**
  * @file src/phononmode.cpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
@@ -47,9 +47,9 @@ PhononMode::PhononMode() :
   _eigenDisp(),
   _frequencies(),
   _gprim(),
-  _rprim(),	
+  _rprim(),
   _asr(),
-  _zeff(),  
+  _zeff(),
 #endif
   _mass()
 {
@@ -99,7 +99,7 @@ void PhononMode::resize(const unsigned natom) {
   _eigenDisp.resize(3*_natom,3*natom);
   _frequencies.resize(3*_natom);
   _zeff.resize(_natom);
-#endif 
+#endif
   _mass.resize(_natom);
 }
 
@@ -141,13 +141,13 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d &E_vec, double E_A
   (void) ddb;
 #else
 	/*---- Get necessary Data ---*/
-	
+
 	//double E_Amp;
 	//std::vector<double> E_vec(3);
-        //E_vec = {1,0,0}; 
-	//E_Amp = 10000; 
-	
-	_natom = ddb.natom();  					/// get natom 
+        //E_vec = {1,0,0};
+	//E_Amp = 10000;
+
+	_natom = ddb.natom();  					/// get natom
   _zeff.resize(_natom);
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom )
     _zeff[iatom] = ddb.getZeff(iatom); 		/// get BEC-Tensors
@@ -159,7 +159,7 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d &E_vec, double E_A
 	double cell_V; 						/// get unit cell volume (bohr^3)
 	cell_V = geometry::det(rprim);
 	cell_V = cell_V*phys::b2A*phys::b2A*phys::b2A;
-       	
+
 	/*Following lines: get Eigenfrequencies and Modes at Gamma */
 	PhononMode gamma(_natom);
 	gamma.computeASR(ddb);
@@ -167,60 +167,60 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d &E_vec, double E_A
 	std::vector<double> freq_gamma(3*_natom);
 	std::vector<complex> disp_gamma(3*_natom*3*_natom);
 	gamma.computeEigen(&freq_gamma[0],&disp_gamma[0]);
-	for (unsigned m = 0; m < freq_gamma.size(); ++m){	/// Transform mode energies from Ha in THz                
-		freq_gamma[m] = phys::Ha2THz * freq_gamma[m];	
+	for (unsigned m = 0; m < freq_gamma.size(); ++m){	/// Transform mode energies from Ha in THz
+		freq_gamma[m] = phys::Ha2THz * freq_gamma[m];
 		if (freq_gamma[m] < -1)
-			throw EXCEPTION("NEGATIVE PHONON FREQUENCY FOUND: The linear response to an Electric-Field calculation makes only sense in stable structures. Fully relax your structure",ERRDIV);	
+			throw EXCEPTION("NEGATIVE PHONON FREQUENCY FOUND: The linear response to an Electric-Field calculation makes only sense in stable structures. Fully relax your structure",ERRDIV);
 	}
   _mass.resize(_natom);
   for ( unsigned iatom = 0 ; iatom < _natom ; ++iatom ) {
     _mass[iatom] = MendeTable.mass[ddb.znucl().at(ddb.typat().at(iatom)-1)]; // type starts at 1
-  }	
-  for ( unsigned i = 0; i < disp_gamma.size(); ++i ) {             
+  }
+  for ( unsigned i = 0; i < disp_gamma.size(); ++i ) {
     disp_gamma[i] = disp_gamma[i]*sqrt(phys::amu_emass);
   }
 
-	/*--------- Calculate diplacement under electric filed ---------*/ 
+	/*--------- Calculate diplacement under electric filed ---------*/
 	/* 1. Calculate polarity of each mode and store*/
-	/*** organization pol[i] = p(olarity)_m(ode)_(direction)x, p_m_y, p_m_z, p_m+1_x...*/	 
+	/*** organization pol[i] = p(olarity)_m(ode)_(direction)x, p_m_y, p_m_z, p_m+1_x...*/
 	std::vector<double> pol(3*freq_gamma.size());
-	for (unsigned m = 3; m < freq_gamma.size(); ++m) { 
+	for (unsigned m = 3; m < freq_gamma.size(); ++m) {
 		for ( unsigned alpha = 0; alpha < 3; ++alpha) {
-			for (unsigned i = 0; i < _natom; ++i) { 
-				for(unsigned gamma = 0; gamma < 3; ++gamma) {				
-				pol[m*3+alpha] = pol[m*3+alpha] + _zeff[i][geometry::mat3dind( alpha+1, gamma+1)] * disp_gamma[(m*3*_natom) + 3*i + gamma].real(); 	
+			for (unsigned i = 0; i < _natom; ++i) {
+				for(unsigned gamma = 0; gamma < 3; ++gamma) {
+				pol[m*3+alpha] = pol[m*3+alpha] + _zeff[i][geometry::mat3dind( alpha+1, gamma+1)] * disp_gamma[(m*3*_natom) + 3*i + gamma].real();
 				}
-			}		
-		} 
+			}
+		}
 	}
-	/*2. Calculate Displacements Matrix under Electric Field */ 
-	/*** Size of Matrix tau = 9*iatom ***/ 
-	/*** Organisatzion tau = d(isp)_(atom)i_(direc)_x_E(field)x, d_i_y_Ex, d_i_z_Ex, d_i_x_Ey... ***/ 
+	/*2. Calculate Displacements Matrix under Electric Field */
+	/*** Size of Matrix tau = 9*iatom ***/
+	/*** Organisatzion tau = d(isp)_(atom)i_(direc)_x_E(field)x, d_i_y_Ex, d_i_z_Ex, d_i_x_Ey... ***/
 	std::vector<double> tau(9*_natom);
-	for (unsigned m = 0	; m < freq_gamma.size(); ++m) { 
+	for (unsigned m = 0	; m < freq_gamma.size(); ++m) {
 		for (unsigned i = 0; i < _natom; ++i) {
-			for ( unsigned E_al = 0; E_al < 3; ++E_al) {			 
+			for ( unsigned E_al = 0; E_al < 3; ++E_al) {
 			tau[9*i+3*E_al+0] = tau[9*i+3*E_al+0] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 0].real()/(1e05*freq_gamma[m]*freq_gamma[m]);
 			tau[9*i+3*E_al+1] = tau[9*i+3*E_al+1] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 1].real()/(1e05*freq_gamma[m]*freq_gamma[m]);
-			tau[9*i+3*E_al+2] = tau[9*i+3*E_al+2] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 2].real()/(1e05*freq_gamma[m]*freq_gamma[m]);				
+			tau[9*i+3*E_al+2] = tau[9*i+3*E_al+2] + phys::fac*pol[3*m + E_al]*disp_gamma[(m*3*_natom) + 3*i + 2].real()/(1e05*freq_gamma[m]*freq_gamma[m]);
 			}
 		}
 	}
 
-	/*3. Calculate Real Space displacement in Angstrom  */ 
+	/*3. Calculate Real Space displacement in Angstrom  */
 	/*			E_field * tau 		    */
 	std::vector<double> disp_E(3*_natom);
-	
-	for (unsigned i = 0 ; i < _natom; ++i){ 
-		disp_E[3*i + 0] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 0] + E_Amp*E_vec[1]*tau[9*i + 3] + E_Amp*E_vec[2]*tau[9*i + 6]);  
+
+	for (unsigned i = 0 ; i < _natom; ++i){
+		disp_E[3*i + 0] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 0] + E_Amp*E_vec[1]*tau[9*i + 3] + E_Amp*E_vec[2]*tau[9*i + 6]);
 		disp_E[3*i + 1] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 1] + E_Amp*E_vec[1]*tau[9*i + 4] + E_Amp*E_vec[2]*tau[9*i + 7]);
-		disp_E[3*i + 2] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 2] + E_Amp*E_vec[1]*tau[9*i + 6] + E_Amp*E_vec[2]*tau[9*i + 8]);  
+		disp_E[3*i + 2] = phys::A2b*(E_Amp*E_vec[0]*tau[9*i + 2] + E_Amp*E_vec[1]*tau[9*i + 6] + E_Amp*E_vec[2]*tau[9*i + 8]);
 	}
-	
+
 	/*   Calculate vibronic dielectric constant  */
-        /*Currently not used but kept if ever needed */ 
-	geometry::mat3d diel; 
-	for (unsigned m = 3; m < freq_gamma.size(); ++m) { 
+        /*Currently not used but kept if ever needed */
+	geometry::mat3d diel;
+	for (unsigned m = 3; m < freq_gamma.size(); ++m) {
 		diel[geometry::mat3dind( 1, 1)] = diel[geometry::mat3dind( 1, 1)] + pol[m*3]*pol[m*3]/(freq_gamma[m]*freq_gamma[m]);
 		diel[geometry::mat3dind( 1, 2)] = diel[geometry::mat3dind( 1, 2)] + pol[m*3]*pol[m*3+1]/(freq_gamma[m]*freq_gamma[m]);
 		diel[geometry::mat3dind( 1, 3)] = diel[geometry::mat3dind( 1, 3)] + pol[m*3]*pol[m*3+2]/(freq_gamma[m]*freq_gamma[m]);
@@ -231,16 +231,16 @@ std::vector<double> PhononMode::lin_res(const geometry::vec3d &E_vec, double E_A
 
 		diel[geometry::mat3dind( 3, 1)] = diel[geometry::mat3dind( 3, 1)] + pol[m*3+2]*pol[m*3]/(freq_gamma[m]*freq_gamma[m]);
 		diel[geometry::mat3dind( 3, 2)] = diel[geometry::mat3dind( 3, 2)] + pol[m*3+2]*pol[m*3+1]/(freq_gamma[m]*freq_gamma[m]);
-		diel[geometry::mat3dind( 3, 3)] = diel[geometry::mat3dind( 3, 3)] + pol[m*3+2]*pol[m*3+2]/(freq_gamma[m]*freq_gamma[m]);	
-	} 
+		diel[geometry::mat3dind( 3, 3)] = diel[geometry::mat3dind( 3, 3)] + pol[m*3+2]*pol[m*3+2]/(freq_gamma[m]*freq_gamma[m]);
+	}
         diel = geometry::sc_mult(diel, phys::fac/(phys::Eps_0 * cell_V));
-	
-	/*4. returen displacement under electric field */ 
+
+	/*4. returen displacement under electric field */
 	return disp_E;
 #endif
 }
 
- 
+
 //
 void PhononMode::computeForceCst(const std::vector<Ddb::d2der>& ddb) {
   if ( _natom == 0 )
@@ -301,7 +301,7 @@ void PhononMode::computeForceCst(const std::vector<Ddb::d2der>& ddb) {
       for ( unsigned idir1 = 0 ; idir1 < 3 ; ++idir1 ) {
         Eigen::Vector3cd d2red;
         d2red[0] = _d2cart(ipert2*3  ,ipert1*3+idir1);
-        d2red[1] = _d2cart(ipert2*3+1,ipert1*3+idir1); 
+        d2red[1] = _d2cart(ipert2*3+1,ipert1*3+idir1);
         d2red[2] = _d2cart(ipert2*3+2,ipert1*3+idir1);
         const Eigen::Vector3cd d2cart(_gprim * d2red);
         _d2cart(ipert2*3  ,ipert1*3+idir1) = d2cart[0];
@@ -370,7 +370,7 @@ void PhononMode::applyASR() {
 
   for ( unsigned ipert1 = 0 ; ipert1 < _natom ; ++ipert1 ) {
     const unsigned iblock1 = ipert1*3;
-    //_d2cart.block(iblock1,iblock1, 3, 3) -= _asr.block(iblock1,0,3,3) 
+    //_d2cart.block(iblock1,iblock1, 3, 3) -= _asr.block(iblock1,0,3,3)
     _d2cart(iblock1  ,iblock1  ) -= _asr(iblock1  ,0);
     _d2cart(iblock1  ,iblock1+1) -= _asr(iblock1  ,1);
     _d2cart(iblock1  ,iblock1+2) -= _asr(iblock1  ,2);
@@ -444,7 +444,7 @@ void PhononMode::computeEigen(double *freq, complex *mode ) {
       << std::setw(14) << _frequencies[imode*3+2] << std::endl;
       */
   }
-  
+
   for ( unsigned imode = 0 ; imode < 3*_natom ; ++imode ) {
     auto mode = _eigenVec.col(imode).normalized();
     for ( unsigned iatom = 0 ; iatom < 3*_natom ; ++iatom ) {
@@ -469,7 +469,7 @@ void PhononMode::computeEigen(double *freq, complex *mode ) {
   }
   if ( mode != nullptr ) {
     //copy eigendisp
-    // Be carefull, each column is a mode but Matrix are colWise by default whereas the modes are "rowwise" mode by mode |mode 1      |mode 2      | 
+    // Be carefull, each column is a mode but Matrix are colWise by default whereas the modes are "rowwise" mode by mode |mode 1      |mode 2      |
     Eigen::Map<Eigen::Matrix<complex,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>> mdisp(mode,3*_natom,3*_natom);
     mdisp = _eigenDisp;
   }

@@ -1,7 +1,7 @@
 /**
  * @file src/canvasphonons.cpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
@@ -125,7 +125,7 @@ CanvasPhonons::~CanvasPhonons() {
 void CanvasPhonons::openFile(const std::string& filename) {
   HistData* hist = nullptr;
   try {
-    hist = HistData::getHist(filename,_wait); 
+    hist = HistData::getHist(filename,_wait);
     if ( _status == PAUSE ) _status = UPDATE;
     _histdata.reset(nullptr);
     this->clear();
@@ -138,7 +138,7 @@ void CanvasPhonons::openFile(const std::string& filename) {
     bool disploaded = this->readDdb(filename);
     _qptModes = _condensedModes.end();
     this->buildAnimation();
-    if ( !disploaded ) 
+    if ( !disploaded )
       throw EXCEPTION("You need to load a \"DDB\" file now",ERRWAR);
   }
   catch (Exception& e) {
@@ -155,18 +155,18 @@ void CanvasPhonons::openFile(const std::string& filename) {
 
 bool CanvasPhonons::readDdb(const std::string& filename) {
   // Try to read a DDB file
-  try { 
+  try {
     _ddb.reset(Ddb::getDdb(filename));
     /*
      * This is bad because we are not sure the _reference structure
-     * is the same as the ddb but if the number of elements is correct 
+     * is the same as the ddb but if the number of elements is correct
      * we can assume this is true. The user should know what he does.
      * We cannot do in an other way since qpoints.yaml does not always provide
      * the structure (1.10 at least does not)
-    if ( !(*_ddb==_reference) ) 
+    if ( !(*_ddb==_reference) )
       throw EXCEPTION("It seems reference and DDB are different structures",ERRDIV);
      */
-    _ddb->buildFrom(_reference); 
+    _ddb->buildFrom(_reference);
     DispDB disp;
     try {
       disp.computeFromDDB(*_ddb.get());
@@ -186,7 +186,7 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
   catch (Exception& e) {
     //e.ADD("Not a DDB file",ERRDIV);
     if ( _ddb != nullptr ) _ddb.reset(nullptr);
-    if ( e.getReturnValue() == ERRABT )  
+    if ( e.getReturnValue() == ERRABT )
       std::clog << e.fullWhat() << std::endl;
     else {
       EigParser* eig = nullptr;
@@ -219,7 +219,7 @@ bool CanvasPhonons::readDdb(const std::string& filename) {
 
 //
 bool CanvasPhonons::selectQpt(geometry::vec3d qpt) {
-  using namespace geometry; 
+  using namespace geometry;
   for ( DispDB::qptTree::iterator myQpt = _condensedModes.begin() ;
       myQpt != _condensedModes.end() ; ++myQpt ) {
     if ( geometry::norm(qpt-myQpt->first) < 1e-6 ) {
@@ -242,7 +242,7 @@ void CanvasPhonons::appendFile(const std::string& filename) {
   catch (Exception& e) {
     if ( e.getReturnValue() != ERRDIV )
       std::cerr << e.fullWhat() << std::endl;
-    if ( !this->readDdb(filename) ) 
+    if ( !this->readDdb(filename) )
       throw EXCEPTION("You need to load a compatible DDB file",ERRWAR);
   }
   if ( _status == PAUSE ) _status = UPDATE;
@@ -278,9 +278,9 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
   parser.setSensitive(true);
   parser.setContent(line);
 
-  //if ( _ddb == nullptr ) 
+  //if ( _ddb == nullptr )
   //  throw EXCEPTION("First load a DDB",ERRDIV);
- 
+
   if ( token == "qpt" ) {
     geometry::vec3d qpt;
     std::string x, y, z;
@@ -310,7 +310,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       out << "Q-point " << Fraction(qpt[0]) << " " << Fraction(qpt[1]) << " " << Fraction(qpt[2]) << " added";
       rebuild = true;
     }
-    else 
+    else
       out << "Q-point " << Fraction(qpt[0]) << " " << Fraction(qpt[1]) << " " << Fraction(qpt[2]) << " selected";
     throw EXCEPTION(out.str(),ERRCOM);
   }
@@ -464,22 +464,22 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
       std::string unit = utils::tolower(parser.getToken<std::string>("eunit"));
       eunit = UnitConverter::getUnit(unit);
     }
-      
+
     for ( auto iqpt = _condensedModes.begin() ; iqpt != _condensedModes.end() ; ++iqpt ) {
       std::sort(iqpt->second.begin(),iqpt->second.end(),
           [](DispDB::qMode v1,DispDB::qMode v2) { return v1.imode < v2.imode; }
           );
       std::cout << "Qpt : " << Fraction(iqpt->first[0]) << "  " << Fraction(iqpt->first[1]) << "  " << Fraction(iqpt->first[2]) << std::endl;
       std::cout << "  Modes      : ";
-      for ( auto imode : iqpt->second ) 
+      for ( auto imode : iqpt->second )
         std::cout << std::setw(12) << imode.imode+1 << "  ";
       std::cout << std::endl;
       std::cout << "  Amplitudes : ";
-      for ( auto imode : iqpt->second ) 
+      for ( auto imode : iqpt->second )
         std::cout << std::setw(12) << imode.amplitude << "  ";
       std::cout << std::endl;
       std::cout << "  Energies   : ";
-      for ( auto imode : iqpt->second ) 
+      for ( auto imode : iqpt->second )
         std::cout << std::setw(12) << imode.energy*eunit << "  ";
       std::cout << std::endl;
     }
@@ -653,7 +653,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
           v->at(itime) = projection[imode++];
       }
       catch ( Exception &e) {
-#pragma omp critical 
+#pragma omp critical
         etmp += e;
       }
     }
@@ -664,7 +664,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
 /*
     try {
-      if ( _gplot == nullptr ) 
+      if ( _gplot == nullptr )
         _gplot.reset(new Gnuplot);
 
       _gplot->setWinTitle(_info);
@@ -756,7 +756,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
           v->at(itime) = myqpt[iqpt++][3];
       }
       catch ( Exception &e) {
-#pragma omp critical 
+#pragma omp critical
         etmp += e;
       }
     }
@@ -767,7 +767,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
 /*
     try {
-      if ( _gplot == nullptr ) 
+      if ( _gplot == nullptr )
         _gplot.reset(new Gnuplot);
 
       _gplot->setWinTitle(_info);
@@ -813,9 +813,22 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     }
   }
   else if ( token == "dynmat" ) {
-    if ( _ddb.get() == nullptr ) 
+    if ( _ddb.get() == nullptr )
       throw EXCEPTION("You need to load a DDB first",ERRDIV);
     _ddb->dump(_qptModes->first);
+  }
+  else if ( token == "angularmoments" ) {
+    auto qpt = _qptModes->first;
+    std::string output =
+        (parser.hasToken("output")
+             ? parser.getToken<std::string>("output")
+             : "angular_moments_" + utils::to_string(qpt[0]) + "-" +
+                   utils::to_string(qpt[1]) + "-" + utils::to_string(qpt[2]) +
+                   ".out");
+    std::ofstream file(output.c_str(),std::ios::out);
+    _displacements.printAngularMoments(_qptModes->first,file);
+    file.close();
+    throw EXCEPTION(std::string("Angular moments file ")+output+std::string(" written."), ERRCOM);
   }
   else if ( token == "eigendisp" ) {
     auto qpt = _qptModes->first;
@@ -831,7 +844,7 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     throw EXCEPTION(std::string("Eigen Displ file ")+output+std::string(" written."), ERRCOM);
   }
   else if ( token == "dumpDDB" || token == "dDDB" ) {
-    if ( _ddb.get() == nullptr ) 
+    if ( _ddb.get() == nullptr )
       throw EXCEPTION("You need to load a DDB first",ERRDIV);
     std::string filename;
     filename = utils::readString(stream);
@@ -1028,7 +1041,27 @@ void CanvasPhonons::my_alter(std::string token, std::istringstream &stream) {
     delete hist;
     throw EXCEPTION("Phonons pumped to "+output,ERRCOM);
   }
-  else { 
+  else if ( token == "polarization" ) {
+    HistCustomModes *hist = new HistCustomModes(_reference,_displacements);
+    hist->animateAngularMoment(_condensedModes,_ntime);
+    if ( _ntime > 1 ) {
+      _drawSpins[3] = true;
+      _drawSpins[4] = true;
+      _display |= DISP_ATOM;
+    }
+    else { //Display vectors
+      _drawSpins[3] = false;
+      _drawSpins[4] = false;
+      _display &= ~DISP_ATOM;
+    }
+    auto save = _octahedra_z;
+    this->setHist(*hist);
+    this->nLoop(-2);
+    if ( _status == PAUSE && _histdata->ntime() > 1 ) _status = START;
+    for ( auto z : save )
+      this->updateOctahedra(z);
+  }
+  else {
     CanvasPos::my_alter(token,stream);
     return;
   }
@@ -1068,6 +1101,7 @@ void CanvasPhonons::help(std::ostream &out) {
   out << setw(40) << ":add qx qy qz imode" << setw(59) << "Freeze the mode imode at the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":a or :append filename" << setw(59) << "Use file filename to get the eigen displacements." << endl;
   out << setw(40) << ":dynmat" << setw(59) << "Dump the dynamial matrix at the current q-point in reduced coordinates into dynmat-qx-qy-qz.out" << endl;
+  out << setw(40) << ":angularmoments [output=FILE]" << setw(59) << "Dump the angular moments at the current q-point into FILE or angular_moments_qx_qy_qz.out" << endl;
   out << setw(40) << ":eigendisp [output=FILE]" << setw(59) << "Dump the eigen displacements at the current q-point into FILE or eigen_displacements_qx_qy_qz.out" << endl;
   out << setw(40) << ":dDDB or :dumpDDB filename" << setw(59) << "Dump all the dynamial matrix into Abinit DDB format. WARNING : header is missing !!" << endl;
   out << setw(40) << ":findqpt filename" << setw(59) << "List the square amplitudes of each Qpt in filename" << endl;
@@ -1075,6 +1109,7 @@ void CanvasPhonons::help(std::ostream &out) {
   out << setw(40) << ":madd" << setw(59) << "Freeze the mode imode at the selected qpt (or the last added)." << endl;
   out << setw(40) << ":mremove or :mrm" << setw(59) << "Remove the mode imode at the selected qpt (or the last added)." << endl;
   out << setw(40) << ":ntime N" << setw(59) << "Generate the animation for N times." << endl;
+  out << setw(40) << ":polarization" << setw(59) << "Display the angular moments at the current Qpt" << endl;
   out << setw(40) << ":pump structure=filename [time=X] [output=filename]" << setw(59) << "Pump the current condensed phonons on top of the structure filename. In case of a trajectory, select time step with time (starts at 0)." << endl;
   out << setw(40) << ":qpt qx qy qz" << setw(59) << "Select or add the q-pt [qx qy qz]." << endl;
   out << setw(40) << ":remove or :rm qx qy qz" << setw(59) << "Remove the q-pt from the frozen modes." << endl;

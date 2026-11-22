@@ -173,6 +173,22 @@ void HistCustomModes::animateModes(const DispDB::qptTree &condensedModes,
   }
 }
 
+void HistCustomModes::animateAngularMoment(const DispDB::qptTree &condensedModes, const unsigned ntime) {
+  if (ntime > 1) {
+    throw EXCEPTION("Not yet implemented",ERRDIV);
+  }
+  /*
+  this->buildFromDtset(_reference);
+      for (auto qpt = condensedModes.begin(); qpt != condensedModes.end();
+           ++qpt) {
+        _db.setQpt(qpt->first);
+        for
+        _db.getAngularMoment(
+      }
+      this->buildFromDtset(supercellRef);
+      */
+}
+
 void HistCustomModes::zachariasAmplitudes(const double temperature,
                                           const unsigned ntime,
                                           const geometry::vec3d &supercell) {

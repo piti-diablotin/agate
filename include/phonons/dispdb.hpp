@@ -1,7 +1,7 @@
 /**
  * @file include/dispdb.hpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@cea.fr>
  *
@@ -47,7 +47,7 @@ using geometry::vec3d;
 using geometry::norm;
 
 
-/** 
+/**
  *
  */
 class DispDB {
@@ -70,24 +70,32 @@ class DispDB {
      */
     void readOutcar(const std::string &filename);
 
+    /**
+     * Compute the angular moment for each mode
+     * L_qu = -ih sum_iatom (gamma_qu(iatom)* vectoriel gamma_qu(iatom)
+     */
+    void computeAngularMoments();
+
   protected :
 
     unsigned _natom;                    ///< Number of atoms in the cell (input)
     unsigned _nqpt;                     ///< Number of qpt int the DB
     unsigned _nmode;                    ///< Number of modes per qpt in the DB
-    std::vector<vec3d>::iterator _iqpt; ///< Activated qpt to find modes 
+    std::vector<vec3d>::iterator _iqpt; ///< Activated qpt to find modes
 
     std::vector<vec3d>  _qpts;          ///< List all the qpts coordinates
     std::vector<cplx>   _modes;         ///< List all the eigen displacements
     std::vector<cplx>   _linResE;       ///< Linear Response E displacements
     std::vector<double> _energies;      ///< List all the energies of each mode
+    std::vector<double> _angularMoments;///< List all the angular moments of each mode
+    std::vector<double> _mass;          ///< List for atom mass to renormalized the modes
 
   public :
 
     /**
      * Define a type for storing one mode
      */
-    typedef struct qMode { 
+    typedef struct qMode {
       unsigned imode;
       double amplitude;
       double phase;
@@ -141,11 +149,11 @@ class DispDB {
     void loadFromEigParserPhonon(EigParserPhonons& eigparser);
 
     /**
-     * Compute linear response to electric field 
+     * Compute linear response to electric field
      * The direction is given by x y z and the amplitude by A
      * @param Edir Direction of the electric field
      * @param A Amplitude of the E field
-     * @param ddb Derivative data base 
+     * @param ddb Derivative data base
      */
     void linearResponseE(std::vector<double> &Edir, double A, Ddb &ddb);
 
@@ -190,6 +198,21 @@ class DispDB {
     std::vector<DispDB::cplx>::const_iterator getMode(unsigned dq, unsigned imode) const;
 
     /**
+     * Get the angular moment for a given mode of the activated qpt (_iqpt)
+     * @param imode The ith mode of the _iqpt qpt
+     * @return the starting point to acces de desired angular moment (3 components)
+     */
+    std::vector<double>::const_iterator getAngularMoment(unsigned imode);
+
+    /**
+     * Get all the angular moments for a given mode of the activated qpt (_iqpt)
+     * @param dq is the ith qpt to acces (or internally the distance to _qpts.begin()
+     * @param imode The ith mode of the _iqpt qpt
+     * @return the starting point to access de angulars moments (x y z x y z x y z...)
+     */
+    std::vector<double>::const_iterator getAngularMoments(unsigned dq, unsigned imode) const;
+
+    /**
      * Get energy of a given mode
      * @param imode The ith mode of the _iqpt qpt
      * @return the energy of the desired mode
@@ -218,6 +241,13 @@ class DispDB {
      * @param out the output stream to write into
      */
     void printModes(const vec3d &qpt, std::ostream &output) const;
+
+    /**
+     * Print the angular moments of the given qpt into the output stream
+     * @param qpt the Qpt tu consider
+     * @param out the output stream to write into
+     */
+    void printAngularMoments(const vec3d &qpt, std::ostream &output) const;
 };
 
 #endif  // DISPDB_HPP

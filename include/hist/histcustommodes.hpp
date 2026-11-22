@@ -1,7 +1,7 @@
 /**
  * @file include/./histcustommodes.hpp
  *
- * @brief 
+ * @brief
  *
  * @author Jordan Bieder <jordan.bieder@uliege.be>
  *
@@ -44,7 +44,7 @@
 #include <map>
 #include <random>
 
-/** 
+/**
  * This class is designe to build a Hist object with either
  * user definied phonon modes and amplitude or with populating
  * the phonons using a DispDB and thermal factor (see Zacharias 2016)
@@ -74,12 +74,12 @@ class HistCustomModes : public HistDataDtset {
      */
     enum StrainDistBound { IsoMin, IsoMax, TetraMin, TetraMax, ShearMin, ShearMax };
 
-    /** 
+    /**
      * @brief Define the Random type to use
      */
     enum RandomType { Uniform, Normal };
-    
-     /** 
+
+     /**
      * @brief Define the Distribution type to use
      */
 
@@ -150,6 +150,13 @@ class HistCustomModes : public HistDataDtset {
     void animateModes(const DispDB::qptTree &condensedModes, const unsigned ntime);
 
     /**
+     * @brief animateAngularMoment will animate the angular moments of the reference structure
+     * @param condensedModes The angular moments to display
+     * @param ntime The number of time to animate the angular moments.
+     */
+    void animateAngularMoment(const DispDB::qptTree &condensedModes, const unsigned ntime);
+
+    /**
      * @brief zachariasAmplitudes build the amplitudes to condensed the phonons at a given temperature
      * using the Bose Einstein distribution
      * @see Phys. Rev. B 94, 075125
@@ -175,7 +182,7 @@ class HistCustomModes : public HistDataDtset {
     geometry::mat3d getStrainMatrix(const std::array<double,3>& amplitudes);
 
     /**
-     * Set de possible directions to apply tetra strain 
+     * Set de possible directions to apply tetra strain
      * @param x allow tetra strain along x
      * @param y allow tetra strain along y
      * @param z allow tetra strain along z
@@ -183,7 +190,7 @@ class HistCustomModes : public HistDataDtset {
     void setStrainTetraDir(bool x, bool y, bool z);
 
     /**
-     * Set de possible directions to apply shear strain 
+     * Set de possible directions to apply shear strain
      * @param xy allow shear strain along xy
      * @param xz allow shear strain along xz
      * @param yz allow shear strain along yz
@@ -260,7 +267,7 @@ class HistCustomModes : public HistDataDtset {
     void push(const Dtset& dtset);
 
     /**
-     * @brief Build the supercell with respecto to _condensedModes and _strainDist for time itime 
+     * @brief Build the supercell with respecto to _condensedModes and _strainDist for time itime
      * and push the structure into the hist
      * The memory must be available.
      * @see push to know how it is pushed
@@ -288,7 +295,7 @@ class HistCustomModes : public HistDataDtset {
     void setInstableModes(const InstableModes instableModes);
 
     /**
-     * @brief Get the amplitudes of the displacements that can be condensed 
+     * @brief Get the amplitudes of the displacements that can be condensed
      * at time itime
      * @param itime the time of the HIST
      * @return A map of qpt / vector of qMode informations (number,amplitude,energy)
@@ -296,7 +303,7 @@ class HistCustomModes : public HistDataDtset {
     const DispDB::qptTree& getDispAmplitudes(const int itime);
 
     /**
-     * @brief Get the strain matrix used to distord the lattice at itime 
+     * @brief Get the strain matrix used to distord the lattice at itime
      * @param itime the time of the HIST
      * @return the strain matrix
      */

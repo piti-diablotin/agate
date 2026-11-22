@@ -123,18 +123,21 @@ void DropCallback(int count, const char** paths){
  * @param para signal received
  */
 void handle_signal (int para) {
-  utils::backtrace();
   switch(para) {
     case SIGABRT :
+      utils::backtrace();
       std::cerr << "Abord signal received." << std::endl;
       break;
     case SIGFPE :
+      utils::backtrace();
       std::cerr << "Floating point exception." << std::endl;
       break;
     case SIGILL :
+      utils::backtrace();
       std::cerr << "Illegal instruction exception." << std::endl;
       break;
     case SIGSEGV :
+      utils::backtrace();
       std::cerr << "Segmentation fault occured." << std::endl;
       break;
     case SIGTERM :
@@ -146,6 +149,7 @@ void handle_signal (int para) {
       std::cerr << "Killing process." << std::endl;
       break;
     default :
+      utils::backtrace();
       std::cerr << "Unknown signal received." << std::endl;
       break;
   }

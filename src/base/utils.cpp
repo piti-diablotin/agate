@@ -576,9 +576,12 @@ std::string readString(std::istream& stream) {
 }
 
 void backtrace() {
-  for(const auto& entry : std::stacktrace::current()) {
+  for(const auto& entry : std::stacktrace::current(3)) {
     std::cout << entry.description() << " - " << entry.source_file() << ":"
               << entry.source_line() << "\n";
+    if (entry.description().starts_with("main")) {
+      break;
+    }
   }
 }
 
